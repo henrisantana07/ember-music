@@ -19,55 +19,61 @@ interface YouTubeResultProps {
 
 export function YouTubeResult({ items, query }: YouTubeResultProps) {
   const [playingVideo, setPlayingVideo] = useState<YouTubeResultItem | null>(null)
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   if (items.length === 0) return null
 
   return (
     <>
-      <section className="mb-8">
-        <h2 className="text-xl font-bold mb-1">YouTube</h2>
-        <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-          Resultados para &ldquo;{query}&rdquo; &mdash; clique para ouvir
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+      <section>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {items.map((item) => (
             <button
               key={item.videoId}
               onClick={() => setPlayingVideo(item)}
-              className="flex gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors text-left"
+              onMouseEnter={() => setHoveredId(item.videoId)}
+              onMouseLeave={() => setHoveredId(null)}
+              className="group text-left rounded-lg overflow-hidden transition-colors"
+              style={{ backgroundColor: 'transparent' }}
             >
-              <div className="relative flex-shrink-0">
+              <div className="relative aspect-square rounded-md overflow-hidden" style={{ backgroundColor: 'var(--bg-elevated)' }}>
                 <img
                   src={item.thumbnails?.medium?.url ?? item.thumbnails?.default?.url ?? ''}
                   alt={item.title}
-                  className="w-24 h-auto rounded-md object-cover"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   loading="lazy"
                 />
                 <div
-                  className="absolute inset-0 rounded-md flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
-                  style={{ background: 'rgba(0,0,0,0.5)' }}
+                  className="absolute inset-0 flex items-center justify-center transition-opacity duration-200"
+                  style={{
+                    background: 'rgba(0,0,0,0.4)',
+                    opacity: hoveredId === item.videoId ? 1 : 0,
+                  }}
                 >
                   <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center"
-                    style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
+                    className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-transform duration-200"
+                    style={{
+                      background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
+                      transform: hoveredId === item.videoId ? 'scale(1)' : 'scale(0.9)',
+                    }}
                   >
-                    <svg className="w-5 h-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 ml-0.5" style={{ color: 'var(--bg-base)' }} fill="currentColor" viewBox="0 0 24 24">
                       <path d="M8 5v14l11-7z" />
                     </svg>
                   </div>
                 </div>
+                <span
+                  className="absolute top-2 right-2 text-[10px] font-bold px-1.5 py-0.5 rounded"
+                  style={{ backgroundColor: 'rgba(0,0,0,0.7)', color: 'var(--accent-solid)' }}
+                >
+                  YT
+                </span>
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-semibold line-clamp-2">{item.title}</h3>
-                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+              <div className="mt-2 px-0.5">
+                <p className="text-sm font-semibold truncate">{item.title}</p>
+                <p className="text-xs truncate mt-0.5" style={{ color: 'var(--text-secondary)' }}>
                   {item.channelTitle}
                 </p>
-                <span
-                  className="inline-block mt-2 text-xs font-medium px-2 py-0.5 rounded"
-                  style={{ background: 'var(--accent-muted)', color: 'var(--accent-solid)' }}
-                >
-                  YouTube
-                </span>
               </div>
             </button>
           ))}
