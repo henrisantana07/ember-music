@@ -13,6 +13,12 @@ interface YouTubeItem {
   publishedAt: string
 }
 
+interface YouTubeResponse {
+  results: YouTubeItem[]
+  nextPageToken: string | null
+  totalResults: number
+}
+
 const PAGE_SIZE = 20
 
 function SearchContent() {
@@ -24,61 +30,78 @@ function SearchContent() {
   const [results, setResults] = useState<YouTubeItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
-  const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(true)
-  const [totalResults, setTotalResults] = useState(0)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const sentinelRef = useRef<HTMLDivElement>(null)
+  const nextPageTokenRef = useRef<string | null>(null)
+  const queryRef = useRef(query)
   const seenIds = useRef(new Set<string>())
+  const loadingRef = useRef(false)
 
-  const doSearch = useCallback((q: string, off: number, append = false) => {
+  queryRef.current = query
+
+  const doSearch = useCallback(async (q: string, pageToken: string | null, append: boolean) => {
     const trimmedQ = q.trim()
     if (!trimmedQ) return
+
     setLoading(true)
+    loadingRef.current = true
     setError(false)
 
-    fetch(`/api/youtube?q=${encodeURIComponent(trimmedQ)}&maxResults=${PAGE_SIZE}`)
-      .then((r) => {
-        if (!r.ok) { setError(true); return { results: [] } }
-        return r.json()
-      })
-      .then((data) => {
-        const items = (data.results ?? []) as YouTubeItem[]
-        const newItems = append
-          ? items.filter((item) => !seenIds.current.has(item.videoId))
-          : items
+    try {
+      let url = `/api/youtube?q=${encodeURIComponent(trimmedQ)}&maxResults=${PAGE_SIZE}`
+      if (pageToken) url += `&pageToken=${pageToken}`
+
+      const res = await fetch(url)
+      if (!res.ok) { setError(true); return }
+
+      const data: YouTubeResponse = await res.json()
+      const items = data.results ?? []
+
+      if (append) {
+        const newItems = items.filter((item) => !seenIds.current.has(item.videoId))
         items.forEach((item) => seenIds.current.add(item.videoId))
-        setResults((prev) => append ? [...prev, ...newItems] : newItems)
-        setHasMore(items.length === PAGE_SIZE)
-        setTotalResults((prev) => append ? prev + newItems.length : newItems.length)
-      })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false))
+        setResults((prev) => [...prev, ...newItems])
+      } else {
+        seenIds.current.clear()
+        items.forEach((item) => seenIds.current.add(item.videoId))
+        setResults(items)
+      }
+
+      nextPageTokenRef.current = data.nextPageToken
+      setHasMore(!!data.nextPageToken)
+    } catch {
+      setError(true)
+    } finally {
+      setLoading(false)
+      loadingRef.current = false
+    }
   }, [])
 
   useEffect(() => {
     if (queryFromUrl) {
       setQuery(queryFromUrl)
-      setOffset(0)
-      seenIds.current.clear()
-      doSearch(queryFromUrl, 0, false)
+      nextPageTokenRef.current = null
+      doSearch(queryFromUrl, null, false)
     }
-  }, [queryFromUrl])
+  }, [queryFromUrl, doSearch])
 
   function startSearch(q: string) {
-    setOffset(0)
-    seenIds.current.clear()
-    doSearch(q, 0, false)
+    nextPageTokenRef.current = null
+    doSearch(q, null, false)
+  }
+
+  function loadMore() {
+    if (!nextPageTokenRef.current || loadingRef.current) return
+    doSearch(queryRef.current, nextPageTokenRef.current, true)
   }
 
   useEffect(() => {
     if (!hasMore || loading) return
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
-          const nextOffset = offset + PAGE_SIZE
-          setOffset(nextOffset)
-          doSearch(query, nextOffset, true)
+        if (entries[0].isIntersecting && hasMore && !loadingRef.current) {
+          loadMore()
         }
       },
       { rootMargin: '200px' }
@@ -86,7 +109,7 @@ function SearchContent() {
     const el = sentinelRef.current
     if (el) observer.observe(el)
     return () => observer.disconnect()
-  }, [hasMore, loading, offset, query, doSearch])
+  }, [hasMore, loading])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -111,8 +134,9 @@ function SearchContent() {
   function clearSearch() {
     setQuery('')
     setResults([])
-    setTotalResults(0)
     seenIds.current.clear()
+    nextPageTokenRef.current = null
+    setHasMore(true)
     router.push('/search', { scroll: false })
   }
 
@@ -170,7 +194,7 @@ function SearchContent() {
       ) : (
         <>
           <p className="text-sm mb-4" style={{ color: 'var(--text-disabled)' }}>
-            {totalResults} {totalResults === 1 ? 'resultado' : 'resultados'} no YouTube
+            {results.length} {results.length === 1 ? 'resultado' : 'resultados'} carregados
           </p>
           <YouTubeResult items={results} query={query} />
           {hasMore && <div ref={sentinelRef} className="h-10" />}
@@ -178,6 +202,11 @@ function SearchContent() {
             <div className="flex justify-center py-6">
               <div className="w-5 h-5 border-2 border-[var(--accent-from)] border-t-transparent rounded-full animate-spin" />
             </div>
+          )}
+          {!hasMore && results.length > 0 && (
+            <p className="text-center py-6 text-sm" style={{ color: 'var(--text-disabled)' }}>
+              Todos os resultados foram carregados
+            </p>
           )}
         </>
       )}

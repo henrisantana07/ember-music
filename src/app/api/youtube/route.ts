@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const q = searchParams.get('q')
   const maxResults = searchParams.get('maxResults') ?? '6'
+  const pageToken = searchParams.get('pageToken')
 
   if (!q) {
     return NextResponse.json({ error: 'Missing query parameter "q"' }, { status: 400 })
@@ -24,6 +25,7 @@ export async function GET(request: NextRequest) {
     url.searchParams.set('videoCategoryId', '10')
     url.searchParams.set('maxResults', maxResults)
     url.searchParams.set('key', API_KEY)
+    if (pageToken) url.searchParams.set('pageToken', pageToken)
 
     const res = await fetch(url.toString(), { next: { revalidate: 300 } })
 
@@ -35,17 +37,25 @@ export async function GET(request: NextRequest) {
 
     const data = await res.json()
 
-    const results = (data.items ?? []).map((item: Record<string, unknown>) => ({
-      id: item.id as Record<string, string>,
-      videoId: (item.id as Record<string, string>)?.videoId ?? '',
-      title: (item.snippet as Record<string, string>)?.title ?? '',
-      channelTitle: (item.snippet as Record<string, string>)?.channelTitle ?? '',
-      description: (item.snippet as Record<string, string>)?.description ?? '',
-      thumbnails: (item.snippet as Record<string, unknown>)?.thumbnails ?? {},
-      publishedAt: (item.snippet as Record<string, string>)?.publishedAt ?? '',
-    }))
+    const results = (data.items ?? []).map((item: Record<string, unknown>) => {
+      const id = item.id as Record<string, string> | undefined
+      const snippet = item.snippet as Record<string, unknown> | undefined
+      return {
+        videoId: id?.videoId ?? '',
+        title: (snippet?.title as string) ?? '',
+        channelTitle: (snippet?.channelTitle as string) ?? '',
+        description: (snippet?.description as string) ?? '',
+        thumbnails: (snippet?.thumbnails as Record<string, { url: string; width: number; height: number }>) ?? {},
+        publishedAt: (snippet?.publishedAt as string) ?? '',
+      }
+    })
 
-    return NextResponse.json({ results })
+    return NextResponse.json({
+      results,
+      nextPageToken: data.nextPageToken ?? null,
+      prevPageToken: data.prevPageToken ?? null,
+      totalResults: data.pageInfo?.totalResults ?? 0,
+    })
   } catch (err) {
     console.error('YouTube fetch failed:', err)
     return NextResponse.json({ error: 'Failed to fetch from YouTube' }, { status: 500 })
