@@ -133,7 +133,9 @@ function SearchResults({ query: q }: { query: string }) {
       <p className="text-sm mb-4" style={{ color: 'var(--text-disabled)' }}>
         {results.length} {results.length === 1 ? 'resultado' : 'resultados'} para &ldquo;{query}&rdquo;
       </p>
-      <YouTubeResult items={results} query={query} />
+      <div className="mb-6">
+        <YouTubeResult items={results} query={query} />
+      </div>
       {hasMore && <div ref={sentinelRef} className="h-10" />}
       {loading && results.length > 0 && (
         <div className="flex justify-center py-6">
