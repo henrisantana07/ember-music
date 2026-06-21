@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const endpoint = searchParams.get('endpoint') ?? 'search'
   const q = searchParams.get('q')
-  const id = searchParams.get('id')
+  const id = searchParams.get('id') ?? searchParams.get('album_id') ?? searchParams.get('artist_id')
   const limit = searchParams.get('limit') ?? '20'
   const offset = searchParams.get('offset') ?? '0'
   const type = searchParams.get('type') ?? 'track'
@@ -24,8 +24,7 @@ export async function GET(request: NextRequest) {
     switch (endpoint) {
       case 'search': {
         if (!q) return NextResponse.json({ error: 'Missing query' }, { status: 400 })
-        const index = Math.floor(Number(offset) / Number(limit))
-        const deezerPath = `/search/${type}?q=${encodeURIComponent(q)}&limit=${limit}&index=${index}`
+        const deezerPath = `/search/${type}?q=${encodeURIComponent(q.trim().replace(/\s+/g, ' '))}&limit=${limit}&index=${offset}`
         const data = await deezerFetch(deezerPath) as { data?: Record<string, unknown>[] }
         const items = data.data ?? []
         const result: Record<string, unknown[]> = {}
@@ -75,6 +74,7 @@ export async function GET(request: NextRequest) {
           artist: mapArtist(artistData),
           top_tracks: (topTracksData.data ?? []).map(mapTrack),
           albums: [],
+          results: [mapArtist(artistData)],
         })
       }
 

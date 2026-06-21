@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { TrackCard } from '@/components/TrackCard'
 import { ShareButton } from '@/components/ShareButton'
 import { usePlayerStore } from '@/lib/store'
 import type { Track } from '@/types/music'
@@ -12,18 +11,14 @@ export default function AlbumPage() {
   const albumId = params.id as string
   const [album, setAlbum] = useState<{
     id: string; name: string; image: string; artist_name: string; artist_id: string
-    releasedate: string; tracks: Track[]
+    release_date: string; tracks: Track[]
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const play = usePlayerStore((s) => s.play)
 
   useEffect(() => {
-    setLoading(true)
-    Promise.all([
-      fetch(`/api/spotify?endpoint=albums&id=${albumId}`).then((r) => r.json()),
-      fetch(`/api/spotify?endpoint=albums/tracks&album_id=${albumId}`).then((r) => r.json()),
-    ]).then(([albumRes, tracksRes]) => {
-      const a = albumRes?.results?.[0]
+    fetch(`/api/spotify?endpoint=albums&id=${albumId}`).then((r) => r.json()).then((albumRes) => {
+      const a = albumRes?.album ?? albumRes?.results?.[0]
       if (!a) { setLoading(false); return }
       setAlbum({
         id: a.id,
@@ -31,8 +26,8 @@ export default function AlbumPage() {
         image: a.image,
         artist_name: a.artist_name,
         artist_id: a.artist_id,
-        releasedate: a.releasedate,
-        tracks: tracksRes?.results ?? [],
+        release_date: a.release_date,
+        tracks: albumRes?.tracks ?? [],
       })
       setLoading(false)
     })
@@ -63,7 +58,7 @@ export default function AlbumPage() {
             {album.artist_name}
           </a>
           <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-            {album.releasedate?.slice(0, 4)} &middot; {album.tracks.length} músicas &middot; {minutes} min
+            {album.release_date?.slice(0, 4)} &middot; {album.tracks.length} músicas &middot; {minutes} min
           </p>
           <div className="flex items-center gap-3 mt-4">
             <button

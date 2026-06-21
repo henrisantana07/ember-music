@@ -1,6 +1,6 @@
 const CACHE = 'ember-music-v1'
 
-const PRECACHE_URLS = ['/', '/search', '/favorites', '/login', '/offline']
+const PRECACHE_URLS = ['/', '/buscar', '/favorites', '/login', '/offline']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

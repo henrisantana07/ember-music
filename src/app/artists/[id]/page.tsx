@@ -25,21 +25,16 @@ export default function ArtistPage() {
   const play = usePlayerStore((s) => s.play)
 
   useEffect(() => {
-    setLoading(true)
-    Promise.all([
-      fetch(`/api/spotify?endpoint=artists&id=${artistId}`).then((r) => r.json()),
-      fetch(`/api/spotify?endpoint=tracks&artist_id=${artistId}&order=popularity_desc&limit=50`).then((r) => r.json()),
-      fetch(`/api/spotify?endpoint=albums&artist_id=${artistId}&limit=20`).then((r) => r.json()),
-    ]).then(([artistRes, tracksRes, albumsRes]) => {
-      const a = artistRes?.results?.[0]
+    fetch(`/api/spotify?endpoint=artists&id=${artistId}&limit=50`).then((r) => r.json()).then((artistRes) => {
+      const a = artistRes?.artist ?? artistRes?.results?.[0]
       if (!a) { setLoading(false); return }
       setArtist({
         id: a.id,
         name: a.name,
         image: a.image || (a.album_image ? a.album_image.replace('/albums/', '/artists/') : '/placeholder.svg'),
         website: a.website,
-        tracks: tracksRes?.results ?? [],
-        albums: albumsRes?.results?.map((al: Record<string, string>) => ({
+        tracks: artistRes?.top_tracks ?? [],
+        albums: artistRes?.albums?.map((al: Record<string, string>) => ({
           id: al.id,
           name: al.name,
           image: al.image,
@@ -103,7 +98,7 @@ export default function ArtistPage() {
         <h2 className="text-xl font-bold mb-4">Músicas</h2>
         {artist.tracks && artist.tracks.length > 0 ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {artist.tracks.map((track, i) => (
+            {artist.tracks.map((track) => (
               <TrackCard key={track.id} track={track} tracks={artist.tracks!} />
             ))}
           </div>

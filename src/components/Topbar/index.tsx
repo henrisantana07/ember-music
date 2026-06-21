@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { saveSearchHistory } from '@/lib/search-history'
 import { SearchSuggestions } from '@/components/SearchSuggestions'
 import type { User } from '@supabase/supabase-js'
 
@@ -48,13 +49,19 @@ export function Topbar() {
     router.push('/login')
   }
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault()
-    if (searchQuery.trim()) {
+  async function submitSearch(query = searchQuery) {
+    const sanitized = query.trim().replace(/\s+/g, ' ')
+    if (sanitized) {
+      await saveSearchHistory(user, sanitized)
       setSearchFocused(false)
       inputRef.current?.blur()
-      router.push(`/?q=${encodeURIComponent(searchQuery.trim())}`)
+      router.push(`/buscar?q=${encodeURIComponent(sanitized)}`)
     }
+  }
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault()
+    void submitSearch()
   }
 
   return (
@@ -80,16 +87,19 @@ export function Topbar() {
             } as React.CSSProperties}
           />
         </div>
-        <SearchSuggestions
-          query={searchQuery}
-          visible={searchFocused}
-          onSelect={() => {
-            setSearchQuery('')
-            setSearchFocused(false)
-            inputRef.current?.blur()
-          }}
-          inputRef={inputRef}
-        />
+          <SearchSuggestions
+            query={searchQuery}
+            visible={searchFocused}
+            user={user}
+            onSearch={(query) => void submitSearch(query)}
+            onSelect={() => {
+              setSearchQuery('')
+              setSearchFocused(false)
+              inputRef.current?.blur()
+            }}
+            onClose={() => setSearchFocused(false)}
+            inputRef={inputRef}
+          />
       </form>
 
       <div className="relative" ref={dropdownRef}>
