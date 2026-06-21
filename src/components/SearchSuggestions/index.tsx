@@ -85,9 +85,13 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
         setSelectedIndex((prev) => Math.max(prev - 1, -1))
         break
       case 'Enter':
+        e.preventDefault()
         if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
-          e.preventDefault()
           selectItem(suggestions[selectedIndex])
+        } else {
+          onSelect()
+          setSuggestions([])
+          router.push(`/?q=${encodeURIComponent(query)}`)
         }
         break
       case 'Escape':
