@@ -135,6 +135,11 @@ export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
                     )}
                   </div>
                   <span className="flex-1 truncate">{pl.name}</span>
+                  {pl.collaborative && (
+                    <span className="text-[10px] mr-1 px-1.5 py-0.5 rounded" style={{ color: 'var(--accent-from)', backgroundColor: 'var(--accent-muted)' }}>
+                      Colab
+                    </span>
+                  )}
                   <span className="text-xs" style={{ color: 'var(--text-disabled)' }}>
                     {pl.track_count}
                   </span>

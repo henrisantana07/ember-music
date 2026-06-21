@@ -36,6 +36,30 @@ export type Database = {
         }
         Relationships: []
       }
+      followed_artists: {
+        Row: {
+          artist_data: Json | null
+          artist_id: string
+          followed_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          artist_data?: Json | null
+          artist_id: string
+          followed_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          artist_data?: Json | null
+          artist_id?: string
+          followed_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       listening_history: {
         Row: {
           id: string
@@ -97,27 +121,33 @@ export type Database = {
       }
       playlists: {
         Row: {
+          collaborative: boolean | null
           cover_url: string | null
           created_at: string | null
           description: string | null
           id: string
           name: string
+          share_token: string | null
           user_id: string
         }
         Insert: {
+          collaborative?: boolean | null
           cover_url?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           name: string
+          share_token?: string | null
           user_id: string
         }
         Update: {
+          collaborative?: boolean | null
           cover_url?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           name?: string
+          share_token?: string | null
           user_id?: string
         }
         Relationships: []

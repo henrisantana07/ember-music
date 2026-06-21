@@ -18,6 +18,11 @@ export async function GET(request: NextRequest) {
   const year = searchParams.get('year')
   const limit = searchParams.get('limit') ?? '20'
   const offset = searchParams.get('offset') ?? '0'
+  const id = searchParams.get('id')
+  const artist_id = searchParams.get('artist_id')
+  const album_id = searchParams.get('album_id')
+  const order = searchParams.get('order')
+  const tags = searchParams.get('tags')
 
   params.set('limit', limit)
   params.set('offset', offset)
@@ -26,10 +31,12 @@ export async function GET(request: NextRequest) {
     params.set('search', q)
   }
 
-  if (genre) {
-    params.set('tags', genre)
-  }
-
+  if (genre) params.set('tags', genre)
+  if (tags) params.set('tags', tags)
+  if (id) params.set('id', id)
+  if (artist_id) params.set('artist_id', artist_id)
+  if (album_id) params.set('album_id', album_id)
+  if (order) params.set('order', order)
   if (durationMin) params.set('duration_min', durationMin)
   if (durationMax) params.set('duration_max', durationMax)
   if (year) {

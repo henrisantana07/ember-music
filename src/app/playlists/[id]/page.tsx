@@ -1,18 +1,21 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useEffect, useState, Suspense } from 'react'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { usePlayerStore } from '@/lib/store'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { formatDuration } from '@/lib/jamendo'
+import { ShareButton } from '@/components/ShareButton'
 import type { JamendoTrack } from '@/types/jamendo'
 import type { Database } from '@/types/database'
 
 type PlaylistTrack = Database['public']['Tables']['playlist_tracks']['Row']
 
-export default function PlaylistPage() {
+function PlaylistContent() {
   const { id } = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
+  const token = searchParams.get('token')
   const router = useRouter()
   const supabase = createClient()
   const { play } = usePlayerStore()
@@ -24,20 +27,32 @@ export default function PlaylistPage() {
   const [editing, setEditing] = useState(false)
   const [editName, setEditName] = useState('')
   const [editDesc, setEditDesc] = useState('')
+  const [userId, setUserId] = useState<string | null>(null)
+  const [isOwner, setIsOwner] = useState(false)
 
   async function load() {
     setLoading(true)
-    const { data: pl, error } = await supabase
+    const { data: { user } } = await supabase.auth.getUser()
+    setUserId(user?.id ?? null)
+
+    let { data: pl, error } = await supabase
       .from('playlists')
       .select('*')
       .eq('id', id)
       .single()
 
     if (error || !pl) {
-      router.push('/')
-      return
+      if (!token) { router.push('/'); return }
+      const { data: plByToken } = await supabase
+        .from('playlists')
+        .select('*')
+        .eq('share_token', token)
+        .single()
+      if (!plByToken) { router.push('/'); return }
+      pl = plByToken
     }
 
+    setIsOwner(user?.id === pl.user_id)
     setPlaylist(pl)
     setEditName(pl.name)
     setEditDesc(pl.description ?? '')
@@ -85,6 +100,31 @@ export default function PlaylistPage() {
       .eq('playlist_id', id)
       .eq('track_id', trackId)
     setTracks((prev) => prev.filter((t) => t.track_id !== trackId))
+  }
+
+  async function handleShare() {
+    if (!playlist) return
+    if (playlist.share_token) {
+      const url = `${window.location.origin}/playlists/${id}?token=${playlist.share_token}`
+      if (navigator.share) {
+        await navigator.share({ title: playlist.name, text: `Ouça "${playlist.name}" no Ember Music`, url })
+      } else {
+        await navigator.clipboard.writeText(url)
+      }
+      return
+    }
+    const res = await fetch(`/api/playlists/${id}/share`, { method: 'POST' })
+    const data = await res.json()
+    if (data.share_token) {
+      setPlaylist((prev) => prev ? { ...prev, share_token: data.share_token, collaborative: true } : prev)
+      const url = `${window.location.origin}/playlists/${id}?token=${data.share_token}`
+      await navigator.clipboard.writeText(url)
+    }
+  }
+
+  async function handleRevokeShare() {
+    await fetch(`/api/playlists/${id}/share`, { method: 'DELETE' })
+    setPlaylist((prev) => prev ? { ...prev, share_token: null, collaborative: false } : prev)
   }
 
   function handlePlayAll() {
@@ -198,16 +238,40 @@ export default function PlaylistPage() {
 
             {!editing && (
               <>
-                <button onClick={() => setEditing(true)} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Editar">
+                <button onClick={handleShare} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Compartilhar">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
                   </svg>
                 </button>
-                <button onClick={handleDelete} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Excluir">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
+                {playlist.collaborative && playlist.share_token && (
+                  <button onClick={handleRevokeShare} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Desativar compartilhamento">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                  </button>
+                )}
+                {playlist.collaborative && (
+                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-from)' }}>
+                    Colaborativa
+                  </span>
+                )}
+                {isOwner && (
+                  <button onClick={() => setEditing(true)} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Editar">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                )}
+                {isOwner && (
+                  <button onClick={handleDelete} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Excluir">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                )}
+                {!isOwner && playlist.collaborative && (
+                  <ShareButton title={playlist.name} text={`Ouça "${playlist.name}" no Ember Music`} />
+                )}
               </>
             )}
           </div>
@@ -268,20 +332,34 @@ export default function PlaylistPage() {
                 {formatDuration(track.duration)}
               </span>
 
-              <button
-                onClick={(e) => { e.stopPropagation(); handleRemoveTrack(tracks[index].track_id) }}
-                className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ color: 'var(--text-secondary)' }}
-                title="Remover"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              {isOwner && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleRemoveTrack(tracks[index].track_id) }}
+                  className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ color: 'var(--text-secondary)' }}
+                  title="Remover"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </div>
           )
         })}
       </div>
     </div>
+  )
+}
+
+export default function PlaylistPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--accent-from)', borderTopColor: 'transparent' }} />
+      </div>
+    }>
+      <PlaylistContent />
+    </Suspense>
   )
 }

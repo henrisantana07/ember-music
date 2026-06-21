@@ -56,6 +56,12 @@ export function Player() {
     audio.src = currentTrack.audio
     audio.load()
 
+    fetch('/api/history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ track_id: currentTrack.id, track_data: currentTrack }),
+    }).catch(() => {})
+
     return () => {
       audio.removeEventListener('timeupdate', onTimeUpdate)
       audio.removeEventListener('loadedmetadata', onLoadedMetadata)

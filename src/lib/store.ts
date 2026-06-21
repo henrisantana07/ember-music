@@ -23,7 +23,8 @@ interface PlayerState {
   sleepTimerMinutes: number | null
   miniPlayer: boolean
 
-  play: (track: JamendoTrack, queue?: JamendoTrack[], playlistId?: string, playlistName?: string) => void
+  play: ((track: JamendoTrack, queue?: JamendoTrack[], playlistId?: string, playlistName?: string) => void)
+    & ((tracks: JamendoTrack[], index?: number, playlistId?: string, playlistName?: string) => void)
   pause: () => void
   resume: () => void
   togglePlay: () => void
@@ -69,23 +70,28 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   sleepTimerMinutes: null,
   miniPlayer: false,
 
-  play: (track, queue, playlistId, playlistName) => {
-    const q = queue ?? []
+  play: ((arg: JamendoTrack | JamendoTrack[], opt1?: unknown, opt2?: unknown, opt3?: unknown) => {
+    const tracks = Array.isArray(arg) ? arg : (opt1 as JamendoTrack[] | undefined) ?? []
+    const index = Array.isArray(arg) ? (opt1 as number | undefined) ?? 0 : tracks.findIndex((t) => t.id === arg.id)
+    const track = Array.isArray(arg) ? (tracks[index] ?? tracks[0]) : arg
+    const playlistId = Array.isArray(arg) ? (opt2 as string | undefined) : (opt2 as string | undefined)
+    const playlistName = Array.isArray(arg) ? (opt3 as string | undefined) : (opt3 as string | undefined)
+
     const shuffle = get().shuffle
-    const currentIndex = q.findIndex((t) => t.id === track.id)
+    const currentIndex = tracks.findIndex((t) => t.id === track.id)
     set({
       currentTrack: track,
       isPlaying: true,
       progress: 0,
       duration: 0,
-      queue: q,
-      originalQueue: q,
+      queue: tracks,
+      originalQueue: tracks,
       currentPlaylistId: playlistId ?? null,
       currentPlaylistName: playlistName ?? null,
-      shuffleOrder: shuffle ? generateShuffleOrder(q.length, Math.max(0, currentIndex)) : [],
+      shuffleOrder: shuffle ? generateShuffleOrder(tracks.length, Math.max(0, currentIndex)) : [],
       currentShuffleIndex: shuffle ? 0 : Math.max(0, currentIndex),
     })
-  },
+  }) as PlayerState['play'],
 
   pause: () => set({ isPlaying: false }),
   resume: () => set({ isPlaying: true }),
