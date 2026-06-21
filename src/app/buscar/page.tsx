@@ -31,11 +31,8 @@ function SearchPageInner() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const query = normalizeQuery(searchParams.get('q') ?? '')
-  const selectedGenres = useMemo(() => searchParams.get('genres')?.split(',').filter(Boolean) ?? [], [searchParams])
   const artistFilter = searchParams.get('artist') ?? ''
   const durationFilter = (searchParams.get('duration') ?? '') as DurationFilter
-  const yearFrom = searchParams.get('from') ?? ''
-  const yearTo = searchParams.get('to') ?? ''
 
   const [tracks, setTracks] = useState<Track[]>([])
   const [albums, setAlbums] = useState<Album[]>([])
@@ -87,30 +84,17 @@ function SearchPageInner() {
     router.replace(`/buscar?${params.toString()}`)
   }
 
-  function removeFilter(key: string, value?: string) {
-    if (key === 'genres' && value) {
-      updateParam('genres', selectedGenres.filter((genre) => genre !== value).join(','))
-      return
-    }
+  function removeFilter(key: string) {
     updateParam(key, '')
   }
 
   function clearFilters() {
     const params = new URLSearchParams(searchParams.toString())
-      ;['genres', 'artist', 'duration', 'from', 'to'].forEach((key) => params.delete(key))
+    ;['artist', 'duration'].forEach((key) => params.delete(key))
     router.replace(`/buscar?${params.toString()}`)
   }
 
-  function clearYearFilter() {
-    const params = new URLSearchParams(searchParams.toString())
-    params.delete('from')
-    params.delete('to')
-    router.replace(`/buscar?${params.toString()}`)
-  }
-
-  const genreOptions = useMemo(() => Array.from(new Set(artists.flatMap((artist) => artist.genres))).filter(Boolean).sort(), [artists])
   const artistOptions = useMemo(() => Array.from(new Set([...artists.map((artist) => artist.name), ...tracks.map((track) => track.artist_name)])).filter(Boolean).sort(), [artists, tracks])
-  const years = useMemo(() => Array.from(new Set(albums.map((album) => album.release_date?.slice(0, 4)).filter(Boolean))).sort(), [albums])
 
   const filteredTracks = useMemo(() => tracks.filter((track) => {
     const artistOk = !artistFilter || track.artist_name.toLowerCase().includes(artistFilter.toLowerCase())
@@ -118,15 +102,11 @@ function SearchPageInner() {
   }), [artistFilter, durationFilter, tracks])
 
   const filteredAlbums = useMemo(() => albums.filter((album) => {
-    const artistOk = !artistFilter || album.artist_name.toLowerCase().includes(artistFilter.toLowerCase())
-    const year = Number(album.release_date?.slice(0, 4))
-    const fromOk = !yearFrom || (year && year >= Number(yearFrom))
-    const toOk = !yearTo || (year && year <= Number(yearTo))
-    return artistOk && fromOk && toOk
-  }), [albums, artistFilter, yearFrom, yearTo])
+    return !artistFilter || album.artist_name.toLowerCase().includes(artistFilter.toLowerCase())
+  }), [albums, artistFilter])
 
   const filteredArtists = useMemo(() => artists.filter((artist) => !artistFilter || artist.name.toLowerCase().includes(artistFilter.toLowerCase())), [artistFilter, artists])
-  const activeFilterCount = selectedGenres.length + Number(!!artistFilter) + Number(!!durationFilter) + Number(!!yearFrom || !!yearTo)
+  const activeFilterCount = Number(!!artistFilter) + Number(!!durationFilter)
   const hasResults = filteredTracks.length > 0 || filteredAlbums.length > 0 || filteredArtists.length > 0
 
   if (!query) {
