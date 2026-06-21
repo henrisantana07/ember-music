@@ -2,17 +2,13 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { usePlayerStore } from '@/lib/store'
-import type { JamendoTrack } from '@/types/jamendo'
+import { useYouTubePlayer } from '@/hooks/use-youtube-player'
 
-interface SuggestionItem {
-  type: 'track' | 'artist'
-  id: string
-  name: string
-  artist_name?: string
-  image?: string
-  audio?: string
-  duration?: number
+interface YouTubeSuggestion {
+  videoId: string
+  title: string
+  channelTitle: string
+  thumbnails: Record<string, { url: string; width: number; height: number }>
 }
 
 interface SearchSuggestionsProps {
@@ -22,11 +18,11 @@ interface SearchSuggestionsProps {
 }
 
 export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestionsProps) {
-  const [suggestions, setSuggestions] = useState<SuggestionItem[]>([])
+  const [suggestions, setSuggestions] = useState<YouTubeSuggestion[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const router = useRouter()
-  const play = usePlayerStore((s) => s.play)
+  const { play: playYouTube } = useYouTubePlayer()
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const panelRef = useRef<HTMLDivElement>(null)
 
@@ -40,7 +36,8 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/jamendo/suggest?q=${encodeURIComponent(query)}`)
+        const res = await fetch(`/api/youtube?q=${encodeURIComponent(query)}&maxResults=5`)
+        if (!res.ok) { setSuggestions([]); return }
         const data = await res.json()
         setSuggestions(data.results ?? [])
         setSelectedIndex(-1)
@@ -51,7 +48,9 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
       }
     }, 250)
 
-    return () => clearTimeout(debounceRef.current)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
   }, [query])
 
   useEffect(() => {
@@ -98,28 +97,10 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
     setSelectedIndex(-1)
   }, [suggestions])
 
-  function selectItem(item: SuggestionItem) {
+  function selectItem(item: YouTubeSuggestion) {
     onSelect()
     setSuggestions([])
-    if (item.type === 'artist') {
-      router.push(`/artists/${item.id}`)
-    } else {
-      play({
-        id: item.id,
-        name: item.name,
-        artist_name: item.artist_name ?? '',
-        duration: item.duration ?? 0,
-        image: item.image ?? '',
-        audio: item.audio ?? '',
-      } as JamendoTrack, [{
-        id: item.id,
-        name: item.name,
-        artist_name: item.artist_name ?? '',
-        duration: item.duration ?? 0,
-        image: item.image ?? '',
-        audio: item.audio ?? '',
-      }] as JamendoTrack[])
-    }
+    playYouTube(item.videoId)
   }
 
   if (query.length < 2 || suggestions.length === 0) return null
@@ -138,7 +119,7 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
 
       {suggestions.map((item, idx) => (
         <button
-          key={`${item.type}-${item.id}`}
+          key={item.videoId}
           onClick={() => selectItem(item)}
           className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
           style={{
@@ -147,36 +128,27 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
           onMouseEnter={() => setSelectedIndex(idx)}
         >
           <div className="relative w-10 h-10 flex-shrink-0 rounded-md overflow-hidden" style={{ backgroundColor: 'var(--bg-elevated)' }}>
-            {item.image ? (
-              <img src={item.image} alt="" className="w-full h-full object-cover" loading="lazy" />
+            {item.thumbnails?.default?.url ? (
+              <img src={item.thumbnails.default.url} alt="" className="w-full h-full object-cover" loading="lazy" />
             ) : (
               <div className="w-full h-full flex items-center justify-center" style={{ color: 'var(--text-disabled)' }}>
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  {item.type === 'artist' ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z" />
-                  )}
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
                 </svg>
               </div>
             )}
             <span
               className="absolute bottom-0.5 right-0.5 text-[9px] font-bold px-1 rounded"
-              style={{
-                backgroundColor: item.type === 'artist' ? 'var(--accent-muted)' : 'var(--bg-elevated)',
-                color: item.type === 'artist' ? 'var(--accent-solid)' : 'var(--text-secondary)',
-              }}
+              style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--accent-solid)' }}
             >
-              {item.type === 'artist' ? 'A' : 'M'}
+              YT
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{item.name}</p>
-            {item.artist_name && (
-              <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
-                {item.artist_name}
-              </p>
-            )}
+            <p className="text-sm font-medium truncate">{item.title}</p>
+            <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
+              {item.channelTitle}
+            </p>
           </div>
         </button>
       ))}
@@ -184,7 +156,7 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
         className="px-4 py-2 text-xs border-t flex items-center justify-between"
         style={{ borderColor: 'var(--bg-elevated)', color: 'var(--text-disabled)' }}
       >
-        <span>Resultados para &ldquo;{query}&rdquo;</span>
+        <span>YouTube &mdash; &ldquo;{query}&rdquo;</span>
         <button
           onClick={() => {
             onSelect()
