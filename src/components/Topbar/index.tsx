@@ -53,7 +53,7 @@ export function Topbar() {
     if (searchQuery.trim()) {
       setSearchFocused(false)
       inputRef.current?.blur()
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      router.push(`/?q=${encodeURIComponent(searchQuery.trim())}`)
     }
   }
 

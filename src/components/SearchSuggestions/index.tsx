@@ -168,7 +168,7 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
         <button
           onClick={() => {
             onSelect()
-            router.push(`/search?q=${encodeURIComponent(query)}`)
+            router.push(`/?q=${encodeURIComponent(query)}`)
           }}
           className="font-medium"
           style={{ color: 'var(--accent-solid)' }}
