@@ -80,17 +80,16 @@ export function Topbar() {
             } as React.CSSProperties}
           />
         </div>
-        {searchFocused && (
-          <SearchSuggestions
-            query={searchQuery}
-            onSelect={() => {
-              setSearchQuery('')
-              setSearchFocused(false)
-              inputRef.current?.blur()
-            }}
-            inputRef={inputRef}
-          />
-        )}
+        <SearchSuggestions
+          query={searchQuery}
+          visible={searchFocused}
+          onSelect={() => {
+            setSearchQuery('')
+            setSearchFocused(false)
+            inputRef.current?.blur()
+          }}
+          inputRef={inputRef}
+        />
       </form>
 
       <div className="relative" ref={dropdownRef}>
