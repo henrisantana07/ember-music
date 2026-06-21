@@ -2,16 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useYouTubePlayer } from '@/hooks/use-youtube-player'
 import { usePlayerStore } from '@/lib/store'
 import type { JamendoTrack } from '@/types/jamendo'
-
-interface YouTubeSuggestion {
-  videoId: string
-  title: string
-  channelTitle: string
-  thumbnails: Record<string, { url: string; width: number; height: number }>
-}
 
 interface SearchSuggestionsProps {
   query: string
@@ -20,21 +12,16 @@ interface SearchSuggestionsProps {
 }
 
 export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestionsProps) {
-  const [ytSuggestions, setYtSuggestions] = useState<YouTubeSuggestion[]>([])
   const [jamendoSuggestions, setJamendoSuggestions] = useState<JamendoTrack[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const router = useRouter()
-  const { play: playYouTube } = useYouTubePlayer()
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const panelRef = useRef<HTMLDivElement>(null)
-  const ytSeenIds = useRef(new Set<string>())
 
   useEffect(() => {
     if (query.length < 2) {
-      setYtSuggestions([])
       setJamendoSuggestions([])
-      ytSeenIds.current.clear()
       return
     }
 
@@ -42,19 +29,7 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
       try {
-        const [ytRes, jamRes] = await Promise.all([
-          fetch(`/api/youtube?q=${encodeURIComponent(query)}&maxResults=3`),
-          fetch(`/api/jamendo?endpoint=tracks&search=${encodeURIComponent(query)}&limit=3&order=popularity_week`),
-        ])
-
-        if (ytRes.ok) {
-          const ytData = await ytRes.json()
-          const ytResults = (ytData.results ?? []) as YouTubeSuggestion[]
-          const deduped = ytResults.filter((item) => !ytSeenIds.current.has(item.videoId))
-          const ids = new Set(ytResults.map((r: YouTubeSuggestion) => r.videoId))
-          ids.forEach((id: string) => ytSeenIds.current.add(id))
-          setYtSuggestions(deduped)
-        }
+        const jamRes = await fetch(`/api/jamendo?endpoint=tracks&search=${encodeURIComponent(query)}&limit=3&order=popularity_week`)
 
         if (jamRes.ok) {
           const jamData = await jamRes.json()
@@ -63,7 +38,6 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
 
         setSelectedIndex(-1)
       } catch {
-        setYtSuggestions([])
         setJamendoSuggestions([])
       } finally {
         setLoading(false)
@@ -79,7 +53,6 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
     function handleClick(e: MouseEvent) {
       if (panelRef.current && !panelRef.current.contains(e.target as Node) &&
           inputRef.current && !inputRef.current.contains(e.target as Node)) {
-        setYtSuggestions([])
         setJamendoSuggestions([])
       }
     }
@@ -88,49 +61,42 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
   }, [inputRef])
 
   const allItems = useCallback(() => {
-    const items: ({ type: 'jamendo'; track: JamendoTrack } | { type: 'youtube'; item: YouTubeSuggestion })[] = []
-    jamendoSuggestions.forEach((t) => items.push({ type: 'jamendo', track: t }))
-    ytSuggestions.forEach((i) => items.push({ type: 'youtube', item: i }))
-    return items
-  }, [jamendoSuggestions, ytSuggestions])
+    return jamendoSuggestions
+  }, [jamendoSuggestions])
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     const items = allItems()
-    if (items.length === 0) return
 
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault()
+        if (items.length === 0) return
         setSelectedIndex((prev) => Math.min(prev + 1, items.length - 1))
         break
       case 'ArrowUp':
         e.preventDefault()
+        if (items.length === 0) return
         setSelectedIndex((prev) => Math.max(prev - 1, -1))
         break
       case 'Enter':
+        e.preventDefault()
         if (selectedIndex >= 0 && selectedIndex < items.length) {
-          e.preventDefault()
-          const item = items[selectedIndex]
-          setYtSuggestions([])
           setJamendoSuggestions([])
-          if (item.type === 'youtube') {
-            onSelect()
-            playYouTube(item.item.videoId)
-          } else {
-            onSelect()
-            const { play } = usePlayerStore.getState()
-            if (typeof play === 'function') {
-              play(item.track, jamendoSuggestions)
-            }
+          onSelect()
+          const { play } = usePlayerStore.getState()
+          if (typeof play === 'function') {
+            play(items[selectedIndex], jamendoSuggestions)
           }
+        } else {
+          onSelect()
+          router.push(`/?q=${encodeURIComponent(query)}`)
         }
         break
       case 'Escape':
-        setYtSuggestions([])
         setJamendoSuggestions([])
         break
     }
-  }, [allItems, selectedIndex, onSelect, query, playYouTube, jamendoSuggestions])
+  }, [allItems, selectedIndex, onSelect, query, jamendoSuggestions, router])
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown)
@@ -139,20 +105,18 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
 
   useEffect(() => {
     setSelectedIndex(-1)
-  }, [ytSuggestions, jamendoSuggestions])
+  }, [jamendoSuggestions])
 
   function playJamendo(track: JamendoTrack) {
     onSelect()
-    setYtSuggestions([])
     setJamendoSuggestions([])
     const { play } = usePlayerStore.getState()
     if (typeof play === 'function') {
-      const tracks = jamendoSuggestions
-      play(track, tracks)
+      play(track, jamendoSuggestions)
     }
   }
 
-  const hasAny = ytSuggestions.length > 0 || jamendoSuggestions.length > 0
+  const hasAny = jamendoSuggestions.length > 0
   if (query.length < 2 || !hasAny) return null
 
   return (
@@ -180,7 +144,7 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
               style={{ backgroundColor: 'transparent' }}
               onMouseEnter={() => {
                 const items = allItems()
-                const idx = items.findIndex((i) => i.type === 'jamendo' && i.track.id === track.id)
+                const idx = items.findIndex((i) => i.id === track.id)
                 if (idx >= 0) setSelectedIndex(idx)
               }}
             >
@@ -203,58 +167,6 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
               </div>
             </button>
           ))}
-        </>
-      )}
-
-      {ytSuggestions.length > 0 && (
-        <>
-          <div className="px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-disabled)' }}>
-            Vídeos
-          </div>
-          {ytSuggestions.map((item, idx) => {
-            const items = allItems()
-            const actualIdx = items.findIndex((i) => i.type === 'youtube' && i.item.videoId === item.videoId)
-            return (
-              <button
-                key={item.videoId}
-                onClick={() => {
-                  onSelect()
-                  setYtSuggestions([])
-                  setJamendoSuggestions([])
-                  playYouTube(item.videoId)
-                }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
-                style={{
-                  backgroundColor: actualIdx === selectedIndex ? 'var(--bg-elevated)' : 'transparent',
-                }}
-                onMouseEnter={() => setSelectedIndex(actualIdx)}
-              >
-                <div className="relative w-10 h-10 flex-shrink-0 rounded-md overflow-hidden" style={{ backgroundColor: 'var(--bg-elevated)' }}>
-                  {item.thumbnails?.default?.url ? (
-                    <img src={item.thumbnails.default.url} alt="" className="w-full h-full object-cover" loading="lazy" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center" style={{ color: 'var(--text-disabled)' }}>
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
-                      </svg>
-                    </div>
-                  )}
-                  <span
-                    className="absolute bottom-0.5 right-0.5 text-[9px] font-bold px-1 rounded"
-                    style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--accent-solid)' }}
-                  >
-                    YT
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{item.title}</p>
-                  <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
-                    {item.channelTitle}
-                  </p>
-                </div>
-              </button>
-            )
-          })}
         </>
       )}
 

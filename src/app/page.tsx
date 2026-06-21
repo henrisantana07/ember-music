@@ -1,31 +1,14 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef, Suspense } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { SectionRow } from '@/components/SectionRow'
-import { YouTubeResult } from '@/components/YouTubeResult'
 import { TrackCardSkeleton } from '@/components/Skeleton'
 import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
 import { createClient } from '@/lib/supabase/client'
 import type { JamendoTrack } from '@/types/jamendo'
 
-interface YouTubeItem {
-  videoId: string
-  title: string
-  channelTitle: string
-  description: string
-  thumbnails: Record<string, { url: string; width: number; height: number }>
-  publishedAt: string
-}
-
-interface YouTubeResponse {
-  results: YouTubeItem[]
-  nextPageToken: string | null
-  totalResults: number
-}
-
 const PAGE_SIZE = 10
-const YT_PAGE_SIZE = 20
 
 function HomePageInner() {
   const searchParams = useSearchParams()
@@ -41,15 +24,7 @@ function HomePageInner() {
 function SearchResults({ query: q }: { query: string }) {
   const query = q
   const [jamendoResults, setJamendoResults] = useState<JamendoTrack[]>([])
-  const [ytResults, setYtResults] = useState<YouTubeItem[]>([])
   const [loadingJamendo, setLoadingJamendo] = useState(true)
-  const [loadingYt, setLoadingYt] = useState(false)
-  const [ytError, setYtError] = useState(false)
-  const [hasMore, setHasMore] = useState(true)
-  const sentinelRef = useRef<HTMLDivElement>(null)
-  const nextPageTokenRef = useRef<string | null>(null)
-  const loadingYtRef = useRef(false)
-  const ytSeenIds = useRef(new Set<string>())
 
   useEffect(() => {
     async function fetchJamendo() {
@@ -68,70 +43,7 @@ function SearchResults({ query: q }: { query: string }) {
     fetchJamendo()
   }, [query])
 
-  const doYtSearch = useCallback(async (pageToken: string | null, append: boolean) => {
-    if (!query.trim()) return
-    setLoadingYt(true)
-    loadingYtRef.current = true
-    setYtError(false)
-
-    try {
-      let url = `/api/youtube?q=${encodeURIComponent(query)}&maxResults=${YT_PAGE_SIZE}`
-      if (pageToken) url += `&pageToken=${pageToken}`
-
-      const res = await fetch(url)
-      if (!res.ok) { setYtError(true); return }
-
-      const data: YouTubeResponse = await res.json()
-      const items = data.results ?? []
-
-      if (append) {
-        const newItems = items.filter((item) => !ytSeenIds.current.has(item.videoId))
-        items.forEach((item) => ytSeenIds.current.add(item.videoId))
-        setYtResults((prev) => [...prev, ...newItems])
-      } else {
-        ytSeenIds.current.clear()
-        items.forEach((item) => ytSeenIds.current.add(item.videoId))
-        setYtResults(items)
-      }
-
-      nextPageTokenRef.current = data.nextPageToken
-      setHasMore(!!data.nextPageToken)
-    } catch {
-      setYtError(true)
-    } finally {
-      setLoadingYt(false)
-      loadingYtRef.current = false
-    }
-  }, [query])
-
-  useEffect(() => {
-    setYtResults([])
-    nextPageTokenRef.current = null
-    ytSeenIds.current.clear()
-    setHasMore(true)
-    doYtSearch(null, false)
-  }, [doYtSearch])
-
-  function loadMore() {
-    if (!nextPageTokenRef.current || loadingYtRef.current) return
-    doYtSearch(nextPageTokenRef.current, true)
-  }
-
-  useEffect(() => {
-    if (!hasMore || loadingYt) return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingYtRef.current) loadMore()
-      },
-      { rootMargin: '200px' }
-    )
-    const el = sentinelRef.current
-    if (el) observer.observe(el)
-    return () => observer.disconnect()
-  }, [hasMore, loadingYt])
-
-  const loading = loadingJamendo || (loadingYt && ytResults.length === 0)
-  const noResults = !loadingJamendo && jamendoResults.length === 0 && !loadingYt && ytResults.length === 0 && !ytError
+  const noResults = !loadingJamendo && jamendoResults.length === 0
 
   if (noResults) {
     return <p className="text-center py-10" style={{ color: 'var(--text-disabled)' }}>Nenhum resultado encontrado para &ldquo;{query}&rdquo;</p>
@@ -152,27 +64,6 @@ function SearchResults({ query: q }: { query: string }) {
         </div>
       ) : jamendoResults.length > 0 && (
         <SectionRow title="Músicas" tracks={jamendoResults} />
-      )}
-
-      {ytError ? (
-        <p className="text-sm mb-4" style={{ color: 'var(--error)' }}>Erro ao carregar vídeos do YouTube.</p>
-      ) : ytResults.length > 0 && (
-        <section className="mb-12">
-          <h2 className="text-xl font-bold mb-4">Vídeos</h2>
-          <YouTubeResult items={ytResults} query={query} />
-        </section>
-      )}
-
-      {hasMore && !ytError && <div ref={sentinelRef} className="h-10" />}
-      {loadingYt && ytResults.length > 0 && (
-        <div className="flex justify-center py-6">
-          <div className="w-5 h-5 border-2 border-[var(--accent-from)] border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
-      {!hasMore && !ytError && ytResults.length > 0 && (
-        <p className="text-center py-6 text-sm" style={{ color: 'var(--text-disabled)' }}>
-          Todos os vídeos foram carregados
-        </p>
       )}
     </>
   )
