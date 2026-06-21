@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense, useCallback } from 'react'
+import { useState, useEffect, Suspense, useCallback, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { TrackCard } from '@/components/TrackCard'
 import { YouTubeResult } from '@/components/YouTubeResult'
@@ -46,6 +46,7 @@ function SearchContent() {
   const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(true)
   const [totalResults, setTotalResults] = useState(0)
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   function buildParams(q: string, g: string, dIdx: number, y: string, off: number) {
     const params = new URLSearchParams()
@@ -62,12 +63,13 @@ function SearchContent() {
   }
 
   const doSearch = useCallback((q: string, g: string, dIdx: number, y: string, off: number, append = false) => {
+    const trimmedQ = q.trim()
     setLoading(true)
-    const params = buildParams(q, g, dIdx, y, off)
+    const params = buildParams(trimmedQ, g, dIdx, y, off)
 
     Promise.all([
       fetch(`/api/jamendo?${params.toString()}`).then((r) => r.json()),
-      !append && q ? fetch(`/api/youtube?q=${encodeURIComponent(q)}&maxResults=6`).then((r) => {
+      !append && trimmedQ ? fetch(`/api/youtube?q=${encodeURIComponent(trimmedQ)}&maxResults=6`).then((r) => {
         if (!r.ok) { setYtAvailable(false); return { results: [] } }
         setYtAvailable(true)
         return r.json()
@@ -77,7 +79,7 @@ function SearchContent() {
       setResults((prev) => append ? [...prev, ...tracks] : tracks)
       setHasMore(tracks.length === PAGE_SIZE)
       setTotalResults(jamendoData.headers?.results_count ?? 0)
-      if (!append && q) {
+      if (!append && trimmedQ) {
         setYtResults(ytData.results ?? [])
       }
     }).catch(console.error)
@@ -107,8 +109,30 @@ function SearchContent() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    router.push(`/search?q=${encodeURIComponent(query)}`, { scroll: false })
-    startSearch(query, genre, durationIdx, year)
+    const trimmed = query.trim()
+    if (trimmed) {
+      router.push(`/search?q=${encodeURIComponent(trimmed)}`, { scroll: false })
+      startSearch(trimmed, genre, durationIdx, year)
+    }
+  }
+
+  function handleQueryChange(value: string) {
+    setQuery(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      if (value.trim()) {
+        router.push(`/search?q=${encodeURIComponent(value.trim())}`, { scroll: false })
+        startSearch(value.trim(), genre, durationIdx, year)
+      }
+    }, 400)
+  }
+
+  function clearSearch() {
+    setQuery('')
+    setResults([])
+    setYtResults([])
+    setTotalResults(0)
+    router.push('/search', { scroll: false })
   }
 
   const selectedDurStyle = {
@@ -116,6 +140,8 @@ function SearchContent() {
     color: 'var(--accent-solid)',
     borderColor: 'var(--accent-solid)',
   } as React.CSSProperties
+
+  const hasAnyFilter = query || genre || durationIdx > 0 || year
 
   return (
     <div>
@@ -127,15 +153,27 @@ function SearchContent() {
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar faixas ou artistas..."
-            className="w-full pl-12 pr-4 py-3 rounded-xl text-base border-none focus:outline-none focus:ring-2"
+            onChange={(e) => handleQueryChange(e.target.value)}
+            placeholder="Buscar faixas, artistas, álbuns..."
+            className="w-full pl-12 pr-12 py-3 rounded-xl text-base border-none focus:outline-none focus:ring-2 transition-all"
             style={{
               backgroundColor: 'var(--bg-surface)',
               color: 'var(--text-primary)',
               '--tw-ring-color': 'var(--accent-solid)',
             } as React.CSSProperties}
           />
+          {query && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="absolute right-4 top-1/2 -translate-y-1/2"
+              style={{ color: 'var(--text-disabled)' }}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
       </form>
 
@@ -195,16 +233,18 @@ function SearchContent() {
         />
       </div>
 
-      {loading && results.length === 0 ? (
+      {!hasAnyFilter ? (
+        <p className="text-center py-10" style={{ color: 'var(--text-disabled)' }}>
+          Digite algo ou selecione filtros para começar
+        </p>
+      ) : loading && results.length === 0 && ytResults.length === 0 ? (
         <div className="flex items-center gap-3 py-10">
           <div className="w-5 h-5 border-2 border-[var(--accent-from)] border-t-transparent rounded-full animate-spin" />
           <span style={{ color: 'var(--text-secondary)' }}>Buscando...</span>
         </div>
       ) : results.length === 0 && ytResults.length === 0 ? (
         <p className="text-center py-10" style={{ color: 'var(--text-disabled)' }}>
-          {query || genre || durationIdx > 0 || year
-            ? 'Nenhum resultado encontrado'
-            : 'Digite algo para buscar'}
+          Nenhum resultado encontrado
         </p>
       ) : (
         <>
