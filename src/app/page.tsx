@@ -1,16 +1,23 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { SectionRow } from '@/components/SectionRow'
 import { TrackCardSkeleton } from '@/components/Skeleton'
+import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
 import { createClient } from '@/lib/supabase/client'
 import type { JamendoTrack } from '@/types/jamendo'
+
+const PAGE_SIZE = 10
 
 export default function HomePage() {
   const [trending, setTrending] = useState<JamendoTrack[]>([])
   const [recent, setRecent] = useState<JamendoTrack[]>([])
   const [recommended, setRecommended] = useState<JamendoTrack[]>([])
+  const [moreTracks, setMoreTracks] = useState<JamendoTrack[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [moreOffset, setMoreOffset] = useState(PAGE_SIZE * 2)
   const supabase = createClient()
 
   useEffect(() => {
@@ -62,6 +69,25 @@ export default function HomePage() {
     fetchData()
   }, [])
 
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return
+    setLoadingMore(true)
+    try {
+      const res = await fetch(`/api/jamendo?endpoint=tracks&limit=${PAGE_SIZE}&offset=${moreOffset}`)
+      const data = await res.json()
+      const tracks = data.results ?? []
+      setMoreTracks((prev) => [...prev, ...tracks])
+      setHasMore(tracks.length === PAGE_SIZE)
+      setMoreOffset((prev) => prev + PAGE_SIZE)
+    } catch (err) {
+      console.error('Failed to load more tracks:', err)
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [loadingMore, hasMore, moreOffset])
+
+  const { sentinelRef } = useInfiniteScroll({ onLoadMore: loadMore, hasMore, loading: loadingMore })
+
   return (
     <div>
       <div className="mb-6">
@@ -91,6 +117,18 @@ export default function HomePage() {
           )}
           <SectionRow title="Em alta no Jamendo" tracks={trending} />
           <SectionRow title="Descobertas recentes" tracks={recent} />
+
+          {moreTracks.length > 0 && (
+            <SectionRow title="Continue explorando" tracks={moreTracks} />
+          )}
+
+          {hasMore && <div ref={sentinelRef} className="h-4" />}
+
+          {loadingMore && (
+            <div className="flex justify-center py-6">
+              <div className="w-5 h-5 border-2 border-[var(--accent-from)] border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
         </>
       )}
     </div>
