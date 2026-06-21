@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+:root {
+  --bg-base: #0A0908;
+  --bg-surface: #161311;
+  --bg-elevated: #211C18;
+
+  --accent-from: #FF6A00;
+  --accent-to: #FFC400;
+  --accent-solid: #FF8800;
+  --accent-muted: #C9620022;
+
+  --text-primary: #F5F1ED;
+  --text-secondary: #A39B92;
+  --text-disabled: #5C564F;
+
+  --success: #4CAF6D;
+  --error: #E5484D;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 48px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-inter, system-ui, -apple-system, sans-serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
+}
+
+.gradient-accent-text {
+  background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
+  color: var(--bg-base);
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 10px 24px;
+  cursor: pointer;
+  transition: opacity 150ms ease;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.card-hover {
+  transition: all 200ms ease;
+  border-radius: var(--radius-md);
+}
+
+.card-hover:hover {
+  background-color: var(--bg-elevated);
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--accent-solid);
+  outline-offset: 2px;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--text-disabled);
+  border-radius: 3px;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
