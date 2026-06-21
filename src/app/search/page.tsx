@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { TrackCard } from '@/components/TrackCard'
+import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
 import type { JamendoTrack } from '@/types/jamendo'
 
 const GENRES = [
@@ -17,6 +18,8 @@ const DURATION_OPTIONS = [
   { label: 'Longa (> 6min)', min: 360, max: undefined },
 ]
 
+const PAGE_SIZE = 20
+
 function SearchContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -28,16 +31,11 @@ function SearchContent() {
   const [year, setYear] = useState('')
   const [results, setResults] = useState<JamendoTrack[]>([])
   const [loading, setLoading] = useState(false)
+  const [offset, setOffset] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
+  const [totalResults, setTotalResults] = useState(0)
 
-  useEffect(() => {
-    if (queryFromUrl) {
-      setQuery(queryFromUrl)
-      doSearch(queryFromUrl, genre, durationIdx, year)
-    }
-  }, [queryFromUrl])
-
-  function doSearch(q: string, g: string, dIdx: number, y: string) {
-    setLoading(true)
+  function buildParams(q: string, g: string, dIdx: number, y: string, off: number) {
     const params = new URLSearchParams()
     params.set('endpoint', 'search')
     if (q) params.set('q', q)
@@ -46,18 +44,52 @@ function SearchContent() {
     if (durOpt.min !== undefined) params.set('duration_min', String(durOpt.min))
     if (durOpt.max !== undefined) params.set('duration_max', String(durOpt.max))
     if (y) params.set('year', y)
+    params.set('limit', String(PAGE_SIZE))
+    params.set('offset', String(off))
+    return params
+  }
+
+  const doSearch = useCallback((q: string, g: string, dIdx: number, y: string, off: number, append = false) => {
+    setLoading(true)
+    const params = buildParams(q, g, dIdx, y, off)
 
     fetch(`/api/jamendo?${params.toString()}`)
       .then((res) => res.json())
-      .then((data) => setResults(data.results ?? []))
+      .then((data) => {
+        const tracks = data.results ?? []
+        setResults((prev) => append ? [...prev, ...tracks] : tracks)
+        setHasMore(tracks.length === PAGE_SIZE)
+        setTotalResults(data.headers?.results_count ?? 0)
+      })
       .catch(console.error)
       .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    if (queryFromUrl) {
+      setQuery(queryFromUrl)
+      setOffset(0)
+      doSearch(queryFromUrl, genre, durationIdx, year, 0, false)
+    }
+  }, [queryFromUrl])
+
+  function startSearch(q: string, g: string, dIdx: number, y: string) {
+    setOffset(0)
+    doSearch(q, g, dIdx, y, 0, false)
   }
+
+  const loadMore = useCallback(() => {
+    const nextOffset = offset + PAGE_SIZE
+    setOffset(nextOffset)
+    doSearch(query, genre, durationIdx, year, nextOffset, true)
+  }, [offset, query, genre, durationIdx, year, doSearch])
+
+  const { sentinelRef } = useInfiniteScroll({ onLoadMore: loadMore, hasMore, loading })
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     router.push(`/search?q=${encodeURIComponent(query)}`, { scroll: false })
-    doSearch(query, genre, durationIdx, year)
+    startSearch(query, genre, durationIdx, year)
   }
 
   const selectedDurStyle = {
@@ -93,8 +125,9 @@ function SearchContent() {
           <button
             key={g}
             onClick={() => {
-              setGenre(g === genre ? '' : g)
-              setTimeout(() => doSearch(query, g === genre ? '' : g, durationIdx, year), 0)
+              const newGenre = g === genre ? '' : g
+              setGenre(newGenre)
+              setTimeout(() => startSearch(query, newGenre, durationIdx, year), 0)
             }}
             className="px-3 py-1.5 rounded-full text-sm border transition-colors"
             style={
@@ -114,7 +147,7 @@ function SearchContent() {
             key={idx}
             onClick={() => {
               setDurationIdx(idx)
-              setTimeout(() => doSearch(query, genre, idx, year), 0)
+              setTimeout(() => startSearch(query, genre, idx, year), 0)
             }}
             className="px-3 py-1.5 rounded-full text-sm border transition-colors"
             style={
@@ -132,7 +165,7 @@ function SearchContent() {
           value={year}
           onChange={(e) => {
             setYear(e.target.value)
-            setTimeout(() => doSearch(query, genre, durationIdx, e.target.value), 0)
+            setTimeout(() => startSearch(query, genre, durationIdx, e.target.value), 0)
           }}
           className="w-20 px-3 py-1.5 rounded-full text-sm border"
           style={{
@@ -143,7 +176,7 @@ function SearchContent() {
         />
       </div>
 
-      {loading ? (
+      {loading && results.length === 0 ? (
         <div className="flex items-center gap-3 py-10">
           <div className="w-5 h-5 border-2 border-[var(--accent-from)] border-t-transparent rounded-full animate-spin" />
           <span style={{ color: 'var(--text-secondary)' }}>Buscando...</span>
@@ -155,11 +188,22 @@ function SearchContent() {
             : 'Digite algo para buscar'}
         </p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {results.map((track) => (
-            <TrackCard key={track.id} track={track} tracks={results} />
-          ))}
-        </div>
+        <>
+          <p className="text-sm mb-4" style={{ color: 'var(--text-disabled)' }}>
+            {totalResults} {totalResults === 1 ? 'resultado' : 'resultados'}
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {results.map((track) => (
+              <TrackCard key={track.id} track={track} tracks={results} />
+            ))}
+          </div>
+          {hasMore && <div ref={sentinelRef} className="h-10" />}
+          {loading && results.length > 0 && (
+            <div className="flex justify-center py-6">
+              <div className="w-5 h-5 border-2 border-[var(--accent-from)] border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+        </>
       )}
     </div>
   )

@@ -3,6 +3,8 @@
 import { create } from 'zustand'
 import type { JamendoTrack } from '@/types/jamendo'
 
+export type RepeatMode = 'none' | 'one' | 'all'
+
 interface PlayerState {
   currentTrack: JamendoTrack | null
   isPlaying: boolean
@@ -10,8 +12,16 @@ interface PlayerState {
   progress: number
   duration: number
   queue: JamendoTrack[]
+  originalQueue: JamendoTrack[]
+  shuffleOrder: number[]
+  currentShuffleIndex: number
   currentPlaylistId: string | null
   currentPlaylistName: string | null
+  repeat: RepeatMode
+  shuffle: boolean
+  crossfadeDuration: number
+  sleepTimerMinutes: number | null
+  miniPlayer: boolean
 
   play: (track: JamendoTrack, queue?: JamendoTrack[], playlistId?: string, playlistName?: string) => void
   pause: () => void
@@ -25,6 +35,20 @@ interface PlayerState {
   addToQueue: (track: JamendoTrack) => void
   clearQueue: () => void
   setCurrentPlaylist: (id: string | null, name: string | null) => void
+  setRepeat: (mode: RepeatMode) => void
+  toggleShuffle: () => void
+  setCrossfadeDuration: (seconds: number) => void
+  setSleepTimer: (minutes: number | null) => void
+  toggleMiniPlayer: () => void
+}
+
+function generateShuffleOrder(length: number, currentIndex: number): number[] {
+  const indices = Array.from({ length }, (_, i) => i).filter((i) => i !== currentIndex)
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]]
+  }
+  return [currentIndex, ...indices]
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
@@ -34,18 +58,32 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   progress: 0,
   duration: 0,
   queue: [],
+  originalQueue: [],
+  shuffleOrder: [],
+  currentShuffleIndex: 0,
   currentPlaylistId: null,
   currentPlaylistName: null,
+  repeat: 'none',
+  shuffle: false,
+  crossfadeDuration: 0,
+  sleepTimerMinutes: null,
+  miniPlayer: false,
 
   play: (track, queue, playlistId, playlistName) => {
+    const q = queue ?? []
+    const shuffle = get().shuffle
+    const currentIndex = q.findIndex((t) => t.id === track.id)
     set({
       currentTrack: track,
       isPlaying: true,
       progress: 0,
       duration: 0,
-      queue: queue ?? [],
+      queue: q,
+      originalQueue: q,
       currentPlaylistId: playlistId ?? null,
       currentPlaylistName: playlistName ?? null,
+      shuffleOrder: shuffle ? generateShuffleOrder(q.length, Math.max(0, currentIndex)) : [],
+      currentShuffleIndex: shuffle ? 0 : Math.max(0, currentIndex),
     })
   },
 
@@ -54,18 +92,51 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   togglePlay: () => set((s) => ({ isPlaying: !s.isPlaying })),
 
   next: () => {
-    const { queue, currentTrack } = get()
+    const { queue, currentTrack, repeat, shuffle, shuffleOrder, currentShuffleIndex } = get()
     if (queue.length === 0) return
+
+    if (repeat === 'one') {
+      set({ progress: 0, duration: 0 })
+      return
+    }
+
+    if (shuffle && shuffleOrder.length > 0) {
+      const nextIdx = currentShuffleIndex + 1
+      if (nextIdx >= shuffleOrder.length) {
+        if (repeat === 'all') {
+          const newOrder = generateShuffleOrder(queue.length, -1)
+          set({ currentTrack: queue[newOrder[0]], currentShuffleIndex: 0, shuffleOrder: newOrder, progress: 0, duration: 0 })
+        }
+        return
+      }
+      const trackIdx = shuffleOrder[nextIdx]
+      if (trackIdx < queue.length) {
+        set({ currentTrack: queue[trackIdx], isPlaying: true, currentShuffleIndex: nextIdx, progress: 0, duration: 0 })
+      }
+      return
+    }
+
     const currentIndex = queue.findIndex((t) => t.id === currentTrack?.id)
     const nextIndex = currentIndex + 1
     if (nextIndex < queue.length) {
       set({ currentTrack: queue[nextIndex], isPlaying: true, progress: 0, duration: 0 })
+    } else if (repeat === 'all' && queue.length > 0) {
+      set({ currentTrack: queue[0], isPlaying: true, progress: 0, duration: 0 })
     }
   },
 
   prev: () => {
-    const { queue, currentTrack } = get()
+    const { queue, currentTrack, shuffle, shuffleOrder, currentShuffleIndex } = get()
     if (queue.length === 0) return
+
+    if (shuffle && shuffleOrder.length > 0) {
+      const prevIdx = currentShuffleIndex - 1
+      if (prevIdx >= 0 && shuffleOrder[prevIdx] < queue.length) {
+        set({ currentTrack: queue[shuffleOrder[prevIdx]], isPlaying: true, currentShuffleIndex: prevIdx, progress: 0, duration: 0 })
+      }
+      return
+    }
+
     const currentIndex = queue.findIndex((t) => t.id === currentTrack?.id)
     const prevIndex = currentIndex - 1
     if (prevIndex >= 0) {
@@ -77,8 +148,30 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   setProgress: (progress) => set({ progress }),
   setDuration: (duration) => set({ duration }),
 
-  addToQueue: (track) => set((s) => ({ queue: [...s.queue, track] })),
-  clearQueue: () => set({ queue: [], currentPlaylistId: null, currentPlaylistName: null }),
+  addToQueue: (track) => set((s) => ({ queue: [...s.queue, track], originalQueue: [...s.originalQueue, track] })),
+  clearQueue: () => set({ queue: [], originalQueue: [], shuffleOrder: [], currentShuffleIndex: 0, currentPlaylistId: null, currentPlaylistName: null }),
 
   setCurrentPlaylist: (id, name) => set({ currentPlaylistId: id, currentPlaylistName: name }),
+
+  setRepeat: (mode) => set({ repeat: mode }),
+
+  toggleShuffle: () => {
+    const { shuffle, queue, currentTrack } = get()
+    if (shuffle) {
+      set({ shuffle: false, shuffleOrder: [], currentShuffleIndex: 0 })
+    } else {
+      const currentIndex = queue.findIndex((t) => t.id === currentTrack?.id)
+      set({
+        shuffle: true,
+        shuffleOrder: generateShuffleOrder(queue.length, Math.max(0, currentIndex)),
+        currentShuffleIndex: 0,
+      })
+    }
+  },
+
+  setCrossfadeDuration: (seconds) => set({ crossfadeDuration: seconds }),
+
+  setSleepTimer: (minutes) => set({ sleepTimerMinutes: minutes }),
+
+  toggleMiniPlayer: () => set((s) => ({ miniPlayer: !s.miniPlayer })),
 }))
