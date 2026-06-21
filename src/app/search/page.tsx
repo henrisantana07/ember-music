@@ -29,6 +29,7 @@ function SearchContent() {
   const [totalResults, setTotalResults] = useState(0)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const sentinelRef = useRef<HTMLDivElement>(null)
+  const seenIds = useRef(new Set<string>())
 
   const doSearch = useCallback((q: string, off: number, append = false) => {
     const trimmedQ = q.trim()
@@ -42,10 +43,14 @@ function SearchContent() {
         return r.json()
       })
       .then((data) => {
-        const items = data.results ?? []
-        setResults((prev) => append ? [...prev, ...items] : items)
+        const items = (data.results ?? []) as YouTubeItem[]
+        const newItems = append
+          ? items.filter((item) => !seenIds.current.has(item.videoId))
+          : items
+        items.forEach((item) => seenIds.current.add(item.videoId))
+        setResults((prev) => append ? [...prev, ...newItems] : newItems)
         setHasMore(items.length === PAGE_SIZE)
-        setTotalResults((prev) => append ? prev + items.length : items.length)
+        setTotalResults((prev) => append ? prev + newItems.length : newItems.length)
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false))
@@ -55,12 +60,14 @@ function SearchContent() {
     if (queryFromUrl) {
       setQuery(queryFromUrl)
       setOffset(0)
+      seenIds.current.clear()
       doSearch(queryFromUrl, 0, false)
     }
   }, [queryFromUrl])
 
   function startSearch(q: string) {
     setOffset(0)
+    seenIds.current.clear()
     doSearch(q, 0, false)
   }
 
@@ -105,6 +112,7 @@ function SearchContent() {
     setQuery('')
     setResults([])
     setTotalResults(0)
+    seenIds.current.clear()
     router.push('/search', { scroll: false })
   }
 

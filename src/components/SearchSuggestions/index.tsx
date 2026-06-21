@@ -25,10 +25,12 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
   const { play: playYouTube } = useYouTubePlayer()
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const panelRef = useRef<HTMLDivElement>(null)
+  const seenIds = useRef(new Set<string>())
 
   useEffect(() => {
     if (query.length < 2) {
       setSuggestions([])
+      seenIds.current.clear()
       return
     }
 
@@ -39,7 +41,13 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
         const res = await fetch(`/api/youtube?q=${encodeURIComponent(query)}&maxResults=5`)
         if (!res.ok) { setSuggestions([]); return }
         const data = await res.json()
-        setSuggestions(data.results ?? [])
+        const results = (data.results ?? []) as YouTubeSuggestion[]
+        const deduped = results.filter(
+          (item) => !seenIds.current.has(item.videoId)
+        )
+        const ids = new Set(results.map((r: YouTubeSuggestion) => r.videoId))
+        ids.forEach((id: string) => seenIds.current.add(id))
+        setSuggestions(deduped)
         setSelectedIndex(-1)
       } catch {
         setSuggestions([])
