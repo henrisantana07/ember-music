@@ -7,6 +7,15 @@ import { usePlayerStore } from '@/lib/store'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { formatDuration } from '@/lib/jamendo'
 import { ShareButton } from '@/components/ShareButton'
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext, sortableKeyboardCoordinates, useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import type { JamendoTrack } from '@/types/jamendo'
 import type { Database } from '@/types/database'
 
@@ -138,6 +147,37 @@ function PlaylistContent() {
 
   function handlePlayTrack(trackData: JamendoTrack, allTracks: JamendoTrack[]) {
     play(trackData, allTracks, id, playlist?.name)
+  }
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = tracks.findIndex((t) => t.id === active.id)
+    const newIndex = tracks.findIndex((t) => t.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const reordered = [...tracks]
+    const [moved] = reordered.splice(oldIndex, 1)
+    reordered.splice(newIndex, 0, moved)
+
+    setTracks(reordered)
+
+    const updates = reordered.map((t, i) => ({
+      id: t.id,
+      playlist_id: id,
+      track_id: t.track_id,
+      track_data: t.track_data,
+      position: i,
+    }))
+    for (const u of updates) {
+      await supabase.from('playlist_tracks').update({ position: u.position }).eq('id', u.id)
+    }
   }
 
   if (loading || !playlist) {
@@ -290,64 +330,115 @@ function PlaylistContent() {
           </div>
         )}
 
-        {parsedTracks.map((track, index) => {
-          if (!track) return null
-          const isActive = usePlayerStore.getState().currentTrack?.id === track.id
-          const isPlaying = usePlayerStore.getState().isPlaying
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={tracks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+            {parsedTracks.map((track, index) => {
+              if (!track) return null
+              const isActive = usePlayerStore.getState().currentTrack?.id === track.id
+              const isPlaying = usePlayerStore.getState().isPlaying
 
-          return (
-            <div
-              key={tracks[index].id}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg group transition-colors cursor-pointer hover:bg-white/5"
-              onClick={() => handlePlayTrack(track, parsedTracks.filter(Boolean) as JamendoTrack[])}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && handlePlayTrack(track, parsedTracks.filter(Boolean) as JamendoTrack[])}
-            >
-              <span className="w-6 text-center text-sm" style={{ color: 'var(--text-disabled)' }}>
-                {isActive ? (
-                  <span style={{ color: 'var(--accent-from)' }}>
-                    {isPlaying ? '♫' : '◼'}
-                  </span>
-                ) : (
-                  index + 1
-                )}
-              </span>
-
-              <img src={track.image} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
-
-              <div className="flex-1 min-w-0">
-                <p
-                  className="text-sm font-medium truncate"
-                  style={{ color: isActive ? 'var(--accent-from)' : 'var(--text-primary)' }}
-                >
-                  {track.name}
-                </p>
-                <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
-                  {track.artist_name}
-                </p>
-              </div>
-
-              <span className="text-xs" style={{ color: 'var(--text-disabled)' }}>
-                {formatDuration(track.duration)}
-              </span>
-
-              {isOwner && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleRemoveTrack(tracks[index].track_id) }}
-                  className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ color: 'var(--text-secondary)' }}
-                  title="Remover"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
-          )
-        })}
+              return (
+                <SortableTrackRow
+                  key={tracks[index].id}
+                  id={tracks[index].id}
+                  track={track}
+                  index={index}
+                  isActive={isActive}
+                  isPlaying={isPlaying}
+                  isOwner={isOwner}
+                  onClick={() => handlePlayTrack(track, parsedTracks.filter(Boolean) as JamendoTrack[])}
+                  onRemove={() => handleRemoveTrack(tracks[index].track_id)}
+                />
+              )
+            })}
+          </SortableContext>
+        </DndContext>
       </div>
+    </div>
+  )
+}
+
+function SortableTrackRow({
+  id, track, index, isActive, isPlaying, isOwner, onClick, onRemove,
+}: {
+  id: string
+  track: JamendoTrack
+  index: number
+  isActive: boolean
+  isPlaying: boolean
+  isOwner: boolean
+  onClick: () => void
+  onRemove: () => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : 'auto' as unknown as number,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-3 px-3 py-2 rounded-lg group transition-colors cursor-pointer hover:bg-white/5"
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onClick()}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="p-1 cursor-grab active:cursor-grabbing touch-none"
+        style={{ color: 'var(--text-disabled)' }}
+        onClick={(e) => e.stopPropagation()}
+        title="Arrastar"
+      >
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+        </svg>
+      </button>
+
+      <span className="w-6 text-center text-sm" style={{ color: 'var(--text-disabled)' }}>
+        {isActive ? (
+          <span style={{ color: 'var(--accent-from)' }}>
+            {isPlaying ? '♫' : '◼'}
+          </span>
+        ) : (
+          index + 1
+        )}
+      </span>
+
+      <img src={track.image} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate" style={{ color: isActive ? 'var(--accent-from)' : 'var(--text-primary)' }}>
+          {track.name}
+        </p>
+        <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
+          {track.artist_name}
+        </p>
+      </div>
+
+      <span className="text-xs" style={{ color: 'var(--text-disabled)' }}>
+        {formatDuration(track.duration)}
+      </span>
+
+      {isOwner && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onRemove() }}
+          className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+          style={{ color: 'var(--text-secondary)' }}
+          title="Remover"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      )}
     </div>
   )
 }

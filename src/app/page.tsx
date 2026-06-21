@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { SectionRow } from '@/components/SectionRow'
+import { TrackCardSkeleton } from '@/components/Skeleton'
 import { createClient } from '@/lib/supabase/client'
 import type { JamendoTrack } from '@/types/jamendo'
 
@@ -69,9 +70,19 @@ export default function HomePage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center gap-3">
-          <div className="w-5 h-5 border-2 border-[var(--accent-from)] border-t-transparent rounded-full animate-spin" />
-          <span style={{ color: 'var(--text-secondary)' }}>Carregando...</span>
+        <div className="space-y-6">
+          <div>
+            <div className="w-48 h-5 rounded mb-3" style={{ background: 'var(--bg-elevated)', animation: 'shimmer 1.5s infinite' }} />
+            <div className="flex gap-3 overflow-hidden">
+              {Array.from({ length: 6 }).map((_, i) => <TrackCardSkeleton key={i} />)}
+            </div>
+          </div>
+          <div>
+            <div className="w-48 h-5 rounded mb-3" style={{ background: 'var(--bg-elevated)', animation: 'shimmer 1.5s infinite' }} />
+            <div className="flex gap-3 overflow-hidden">
+              {Array.from({ length: 6 }).map((_, i) => <TrackCardSkeleton key={i} />)}
+            </div>
+          </div>
         </div>
       ) : (
         <>

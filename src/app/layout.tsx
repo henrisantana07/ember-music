@@ -6,6 +6,7 @@ import { Player } from '@/components/Player'
 import { Topbar } from '@/components/Topbar'
 import { PageTransition } from '@/components/PageTransition'
 import { PwaRegister } from '@/components/PwaRegister'
+import { KeyboardShortcuts } from '@/components/KeyboardShortcuts'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className={inter.variable}>
       <body className="flex flex-col h-screen overflow-hidden">
+        <KeyboardShortcuts />
         <div className="flex flex-1 overflow-hidden">
           <Sidebar />
           <div className="flex-1 flex flex-col overflow-hidden">
