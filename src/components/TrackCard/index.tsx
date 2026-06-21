@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import type { Json } from '@/types/database'
+import { PlaylistModal } from '@/components/PlaylistModal'
 
 interface TrackCardProps {
   track: JamendoTrack
@@ -17,6 +18,7 @@ export function TrackCard({ track, tracks }: TrackCardProps) {
   const { play, currentTrack, isPlaying, togglePlay } = usePlayerStore()
   const [isFav, setIsFav] = useState(false)
   const [user, setUser] = useState<User | null>(null)
+  const [playlistOpen, setPlaylistOpen] = useState(false)
   const supabase = createClient()
 
   const isActive = currentTrack?.id === track.id
@@ -61,6 +63,7 @@ export function TrackCard({ track, tracks }: TrackCardProps) {
   }
 
   return (
+    <>
     <div
       className="card-hover group p-3 cursor-pointer flex flex-col"
       onClick={handlePlay}
@@ -100,31 +103,42 @@ export function TrackCard({ track, tracks }: TrackCardProps) {
       <p className="text-xs truncate mt-0.5" style={{ color: 'var(--text-secondary)' }}>
         {track.artist_name}
       </p>
-      <div className="flex items-center justify-between mt-1">
-        <span className="text-xs" style={{ color: 'var(--text-disabled)' }}>
-          {formatDuration(track.duration)}
-        </span>
-        {user && (
-          <button onClick={handleFavorite} className="p-1">
-            <svg
-              className="w-4 h-4 transition-colors duration-150"
-              fill={isFav ? 'url(#favGradient)' : 'none'}
-              viewBox="0 0 24 24"
-              stroke={isFav ? 'none' : 'currentColor'}
-              strokeWidth={2}
-              style={isFav ? {} : { color: 'var(--text-disabled)' }}
-            >
-              <defs>
-                <linearGradient id="favGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="var(--accent-from)" />
-                  <stop offset="100%" stopColor="var(--accent-to)" />
-                </linearGradient>
-              </defs>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-          </button>
-        )}
-      </div>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-xs" style={{ color: 'var(--text-disabled)' }}>
+              {formatDuration(track.duration)}
+            </span>
+            <div className="flex items-center gap-0.5">
+              {user && (
+                <button onClick={(e) => { e.stopPropagation(); setPlaylistOpen(true) }} className="p-1 opacity-0 group-hover:opacity-100 transition-opacity" title="Adicionar à playlist">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--text-disabled)' }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+              )}
+              {user && (
+                <button onClick={handleFavorite} className="p-1">
+                  <svg
+                    className="w-4 h-4 transition-colors duration-150"
+                    fill={isFav ? 'url(#favGradient)' : 'none'}
+                    viewBox="0 0 24 24"
+                    stroke={isFav ? 'none' : 'currentColor'}
+                    strokeWidth={2}
+                    style={isFav ? {} : { color: 'var(--text-disabled)' }}
+                  >
+                    <defs>
+                      <linearGradient id="favGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="var(--accent-from)" />
+                        <stop offset="100%" stopColor="var(--accent-to)" />
+                      </linearGradient>
+                    </defs>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
     </div>
+      <PlaylistModal open={playlistOpen} onClose={() => setPlaylistOpen(false)} track={track} />
+    </>
   )
 }

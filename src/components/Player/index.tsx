@@ -21,6 +21,8 @@ export function Player() {
     progress,
     duration,
     queue,
+    currentPlaylistId,
+    currentPlaylistName,
     pause,
     resume,
     next,
@@ -128,6 +130,16 @@ export function Player() {
             <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
               {currentTrack.artist_name}
             </p>
+            {currentPlaylistId && (
+              <a
+                href={`/playlists/${currentPlaylistId}`}
+                className="text-[10px] truncate hover:underline"
+                style={{ color: 'var(--accent-from)' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {currentPlaylistName}
+              </a>
+            )}
           </div>
         </div>
 

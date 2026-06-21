@@ -10,8 +10,10 @@ interface PlayerState {
   progress: number
   duration: number
   queue: JamendoTrack[]
+  currentPlaylistId: string | null
+  currentPlaylistName: string | null
 
-  play: (track: JamendoTrack, queue?: JamendoTrack[]) => void
+  play: (track: JamendoTrack, queue?: JamendoTrack[], playlistId?: string, playlistName?: string) => void
   pause: () => void
   resume: () => void
   togglePlay: () => void
@@ -22,6 +24,7 @@ interface PlayerState {
   setDuration: (duration: number) => void
   addToQueue: (track: JamendoTrack) => void
   clearQueue: () => void
+  setCurrentPlaylist: (id: string | null, name: string | null) => void
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
@@ -31,14 +34,18 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   progress: 0,
   duration: 0,
   queue: [],
+  currentPlaylistId: null,
+  currentPlaylistName: null,
 
-  play: (track, queue) => {
+  play: (track, queue, playlistId, playlistName) => {
     set({
       currentTrack: track,
       isPlaying: true,
       progress: 0,
       duration: 0,
       queue: queue ?? [],
+      currentPlaylistId: playlistId ?? null,
+      currentPlaylistName: playlistName ?? null,
     })
   },
 
@@ -71,5 +78,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   setDuration: (duration) => set({ duration }),
 
   addToQueue: (track) => set((s) => ({ queue: [...s.queue, track] })),
-  clearQueue: () => set({ queue: [] }),
+  clearQueue: () => set({ queue: [], currentPlaylistId: null, currentPlaylistName: null }),
+
+  setCurrentPlaylist: (id, name) => set({ currentPlaylistId: id, currentPlaylistName: name }),
 }))

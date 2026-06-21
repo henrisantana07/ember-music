@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
+import { usePlaylistsStore } from '@/lib/playlists-store'
 
 const NAV_ITEMS = [
   { href: '/', label: 'Início', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -18,11 +19,13 @@ export function Sidebar() {
   const supabase = createClient()
 
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const { playlists, fetchPlaylists } = usePlaylistsStore()
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       if (data.user) {
         setUser(data.user)
+        fetchPlaylists()
         const { data: profile } = await supabase
           .from('profiles')
           .select('avatar_url')
@@ -44,7 +47,7 @@ export function Sidebar() {
         </Link>
       </div>
 
-      <nav className="flex-1 px-3 space-y-1">
+      <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
         {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href
           return (
@@ -66,6 +69,39 @@ export function Sidebar() {
                 <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
               </svg>
               {item.label}
+            </Link>
+          )
+        })}
+
+        {playlists.length > 0 && (
+          <div className="pt-4 pb-1">
+            <p className="px-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-disabled)' }}>
+              Playlists
+            </p>
+          </div>
+        )}
+
+        {playlists.map((pl) => {
+          const isActive = pathname === `/playlists/${pl.id}`
+          return (
+            <Link
+              key={pl.id}
+              href={`/playlists/${pl.id}`}
+              className="flex items-center gap-3 px-3 py-1.5 rounded-md text-sm transition-colors duration-150 relative"
+              style={{
+                color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+              }}
+            >
+              {isActive && (
+                <span
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full"
+                  style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
+                />
+              )}
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+              <span className="truncate">{pl.name}</span>
             </Link>
           )
         })}
