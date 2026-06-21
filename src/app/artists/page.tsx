@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { FollowButton } from '@/components/FollowButton'
+import { createClient } from '@/lib/supabase/client'
 
 interface FollowedArtist {
   artist_id: string
@@ -12,10 +13,30 @@ interface FollowedArtist {
 export default function ArtistsPage() {
   const [artists, setArtists] = useState<FollowedArtist[]>([])
   const [loading, setLoading] = useState(true)
+  const supabase = createClient()
 
   useEffect(() => {
-    setArtists([])
-    setLoading(false)
+    async function loadArtists() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setLoading(false)
+        return
+      }
+
+      const { data, error } = await supabase
+        .from('followed_artists')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('followed_at', { ascending: false })
+
+      if (error) {
+        console.error('Error fetching followed artists:', error)
+      } else {
+        setArtists(data as unknown as FollowedArtist[])
+      }
+      setLoading(false)
+    }
+    void loadArtists()
   }, [])
 
   if (loading) {
