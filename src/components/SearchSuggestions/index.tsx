@@ -108,28 +108,21 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
         setSelectedIndex((prev) => Math.max(prev - 1, -1))
         break
       case 'Enter':
-        e.preventDefault()
         if (selectedIndex >= 0 && selectedIndex < items.length) {
+          e.preventDefault()
           const item = items[selectedIndex]
+          setYtSuggestions([])
+          setJamendoSuggestions([])
           if (item.type === 'youtube') {
             onSelect()
-            setYtSuggestions([])
-            setJamendoSuggestions([])
             playYouTube(item.item.videoId)
           } else {
             onSelect()
-            setYtSuggestions([])
-            setJamendoSuggestions([])
             const { play } = usePlayerStore.getState()
             if (typeof play === 'function') {
               play(item.track, jamendoSuggestions)
             }
           }
-        } else {
-          onSelect()
-          setYtSuggestions([])
-          setJamendoSuggestions([])
-          router.push(`/?q=${encodeURIComponent(query)}`)
         }
         break
       case 'Escape':
