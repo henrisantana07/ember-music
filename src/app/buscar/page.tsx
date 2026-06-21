@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { SectionRow } from '@/components/SectionRow'
 import { TrackCard } from '@/components/TrackCard'
 import { TrackCardSkeleton } from '@/components/Skeleton'
+import { FollowButton } from '@/components/FollowButton'
 import type { Album, Artist, Track } from '@/types/music'
 
 type DurationFilter = '' | 'short' | 'medium' | 'long'
@@ -188,7 +189,22 @@ function EmptyShell({ title, text, popular }: { title: string; text: string; pop
 }
 
 function PeopleSection({ artists }: { artists: Artist[] }) {
-  return <section><h2 className="text-xl font-bold mb-4">Artistas</h2><div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">{artists.map((artist) => <a key={artist.id} href={`/artists/${artist.id}`} className="w-36 flex-shrink-0 p-3 rounded-xl text-center transition-colors hover:bg-white/5"><img src={artist.image || '/placeholder.svg'} alt={artist.name} className="w-full aspect-square rounded-full object-cover mb-3" loading="lazy" /><p className="text-sm font-semibold truncate">{artist.name}</p></a>)}</div></section>
+  return (
+    <section>
+      <h2 className="text-xl font-bold mb-4">Artistas</h2>
+      <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
+        {artists.map((artist) => (
+          <div key={artist.id} className="w-36 flex-shrink-0 p-3 rounded-xl text-center transition-colors hover:bg-white/5 flex flex-col items-center">
+            <a href={`/artists/${artist.id}`} className="w-full flex flex-col items-center">
+              <img src={artist.image || '/placeholder.svg'} alt={artist.name} className="w-full aspect-square rounded-full object-cover mb-3" loading="lazy" />
+              <p className="text-sm font-semibold truncate mb-3">{artist.name}</p>
+            </a>
+            <FollowButton artistId={artist.id} artistData={{ id: artist.id, name: artist.name, image: artist.image }} />
+          </div>
+        ))}
+      </div>
+    </section>
+  )
 }
 
 function AlbumSection({ albums }: { albums: Album[] }) {

@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { TrackCard } from '@/components/TrackCard'
 import type { Track } from '@/types/music'
+import { createClient } from '@/lib/supabase/client'
+import { getPlaybackHistory } from '@/lib/playback-history'
 
 function groupByDate(items: { played_at: string; track_data: Track }[]) {
   const groups: Record<string, typeof items> = {}
@@ -17,10 +19,16 @@ function groupByDate(items: { played_at: string; track_data: Track }[]) {
 export default function HistoryPage() {
   const [items, setItems] = useState<{ played_at: string; track_data: Track }[]>([])
   const [loading, setLoading] = useState(true)
+  const supabase = createClient()
 
   useEffect(() => {
-    setItems([])
-    setLoading(false)
+    async function loadHistory() {
+      const { data: { user } } = await supabase.auth.getUser()
+      const history = await getPlaybackHistory(user)
+      setItems(history.map(h => ({ played_at: h.played_at, track_data: h.track_data })))
+      setLoading(false)
+    }
+    void loadHistory()
   }, [])
 
   if (loading) {

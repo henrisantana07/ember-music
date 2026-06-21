@@ -6,6 +6,7 @@ import type { RepeatMode } from '@/lib/store'
 import { formatDuration } from '@/lib/spotify'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
+import { savePlaybackHistory } from '@/lib/playback-history'
 
 export function Player() {
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -30,6 +31,12 @@ export function Player() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
   }, [])
+
+  useEffect(() => {
+    if (isPlaying && currentTrack && user) {
+      void savePlaybackHistory(user, currentTrack)
+    }
+  }, [currentTrack, isPlaying, user])
 
   useEffect(() => {
     const audio = audioRef.current
