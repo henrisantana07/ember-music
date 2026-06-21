@@ -40,111 +40,138 @@ function HomePageInner() {
 
 function SearchResults({ query: q }: { query: string }) {
   const query = q
-  const [results, setResults] = useState<YouTubeItem[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(false)
+  const [jamendoResults, setJamendoResults] = useState<JamendoTrack[]>([])
+  const [ytResults, setYtResults] = useState<YouTubeItem[]>([])
+  const [loadingJamendo, setLoadingJamendo] = useState(true)
+  const [loadingYt, setLoadingYt] = useState(false)
+  const [ytError, setYtError] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const nextPageTokenRef = useRef<string | null>(null)
-  const loadingRef = useRef(false)
-  const seenIds = useRef(new Set<string>())
+  const loadingYtRef = useRef(false)
+  const ytSeenIds = useRef(new Set<string>())
 
-  const doSearch = useCallback(async (pageToken: string | null, append: boolean) => {
+  useEffect(() => {
+    async function fetchJamendo() {
+      if (!query.trim()) return
+      setLoadingJamendo(true)
+      try {
+        const res = await fetch(`/api/jamendo?endpoint=tracks&search=${encodeURIComponent(query)}&limit=10&order=popularity_week`)
+        if (!res.ok) return
+        const data = await res.json()
+        setJamendoResults(data.results ?? [])
+      } catch {
+      } finally {
+        setLoadingJamendo(false)
+      }
+    }
+    fetchJamendo()
+  }, [query])
+
+  const doYtSearch = useCallback(async (pageToken: string | null, append: boolean) => {
     if (!query.trim()) return
-    setLoading(true)
-    loadingRef.current = true
-    setError(false)
+    setLoadingYt(true)
+    loadingYtRef.current = true
+    setYtError(false)
 
     try {
       let url = `/api/youtube?q=${encodeURIComponent(query)}&maxResults=${YT_PAGE_SIZE}`
       if (pageToken) url += `&pageToken=${pageToken}`
 
       const res = await fetch(url)
-      if (!res.ok) { setError(true); return }
+      if (!res.ok) { setYtError(true); return }
 
       const data: YouTubeResponse = await res.json()
       const items = data.results ?? []
 
       if (append) {
-        const newItems = items.filter((item) => !seenIds.current.has(item.videoId))
-        items.forEach((item) => seenIds.current.add(item.videoId))
-        setResults((prev) => [...prev, ...newItems])
+        const newItems = items.filter((item) => !ytSeenIds.current.has(item.videoId))
+        items.forEach((item) => ytSeenIds.current.add(item.videoId))
+        setYtResults((prev) => [...prev, ...newItems])
       } else {
-        seenIds.current.clear()
-        items.forEach((item) => seenIds.current.add(item.videoId))
-        setResults(items)
+        ytSeenIds.current.clear()
+        items.forEach((item) => ytSeenIds.current.add(item.videoId))
+        setYtResults(items)
       }
 
       nextPageTokenRef.current = data.nextPageToken
       setHasMore(!!data.nextPageToken)
     } catch {
-      setError(true)
+      setYtError(true)
     } finally {
-      setLoading(false)
-      loadingRef.current = false
+      setLoadingYt(false)
+      loadingYtRef.current = false
     }
   }, [query])
 
   useEffect(() => {
-    setResults([])
+    setYtResults([])
     nextPageTokenRef.current = null
-    seenIds.current.clear()
+    ytSeenIds.current.clear()
     setHasMore(true)
-    doSearch(null, false)
-  }, [doSearch])
+    doYtSearch(null, false)
+  }, [doYtSearch])
 
   function loadMore() {
-    if (!nextPageTokenRef.current || loadingRef.current) return
-    doSearch(nextPageTokenRef.current, true)
+    if (!nextPageTokenRef.current || loadingYtRef.current) return
+    doYtSearch(nextPageTokenRef.current, true)
   }
 
   useEffect(() => {
-    if (!hasMore || loading) return
+    if (!hasMore || loadingYt) return
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingRef.current) loadMore()
+        if (entries[0].isIntersecting && hasMore && !loadingYtRef.current) loadMore()
       },
       { rootMargin: '200px' }
     )
     const el = sentinelRef.current
     if (el) observer.observe(el)
     return () => observer.disconnect()
-  }, [hasMore, loading])
+  }, [hasMore, loadingYt])
 
-  if (error) {
-    return <p className="text-center py-10" style={{ color: 'var(--error)' }}>Erro ao buscar no YouTube.</p>
-  }
+  const loading = loadingJamendo || (loadingYt && ytResults.length === 0)
+  const noResults = !loadingJamendo && jamendoResults.length === 0 && !loadingYt && ytResults.length === 0 && !ytError
 
-  if (loading && results.length === 0) {
-    return (
-      <div className="flex items-center gap-3 py-10">
-        <div className="w-5 h-5 border-2 border-[var(--accent-from)] border-t-transparent rounded-full animate-spin" />
-        <span style={{ color: 'var(--text-secondary)' }}>Buscando...</span>
-      </div>
-    )
-  }
-
-  if (results.length === 0 && !loading) {
+  if (noResults) {
     return <p className="text-center py-10" style={{ color: 'var(--text-disabled)' }}>Nenhum resultado encontrado para &ldquo;{query}&rdquo;</p>
   }
 
   return (
     <>
-      <p className="text-sm mb-4" style={{ color: 'var(--text-disabled)' }}>
-        {results.length} {results.length === 1 ? 'resultado' : 'resultados'} para &ldquo;{query}&rdquo;
+      <p className="text-sm mb-6" style={{ color: 'var(--text-disabled)' }}>
+        Resultados para &ldquo;{query}&rdquo;
       </p>
-      <div className="mb-6">
-        <YouTubeResult items={results} query={query} />
-      </div>
-      {hasMore && <div ref={sentinelRef} className="h-10" />}
-      {loading && results.length > 0 && (
+
+      {loadingJamendo ? (
+        <div className="mb-8">
+          <div className="w-36 h-5 rounded mb-3" style={{ background: 'var(--bg-elevated)', animation: 'shimmer 1.5s infinite' }} />
+          <div className="flex gap-3 overflow-hidden">
+            {Array.from({ length: 6 }).map((_, i) => <TrackCardSkeleton key={i} />)}
+          </div>
+        </div>
+      ) : jamendoResults.length > 0 && (
+        <SectionRow title="Músicas" tracks={jamendoResults} />
+      )}
+
+      {ytError ? (
+        <p className="text-sm mb-4" style={{ color: 'var(--error)' }}>Erro ao carregar vídeos do YouTube.</p>
+      ) : ytResults.length > 0 && (
+        <section className="mb-12">
+          <h2 className="text-xl font-bold mb-4">Vídeos</h2>
+          <YouTubeResult items={ytResults} query={query} />
+        </section>
+      )}
+
+      {hasMore && !ytError && <div ref={sentinelRef} className="h-10" />}
+      {loadingYt && ytResults.length > 0 && (
         <div className="flex justify-center py-6">
           <div className="w-5 h-5 border-2 border-[var(--accent-from)] border-t-transparent rounded-full animate-spin" />
         </div>
       )}
-      {!hasMore && results.length > 0 && (
+      {!hasMore && !ytError && ytResults.length > 0 && (
         <p className="text-center py-6 text-sm" style={{ color: 'var(--text-disabled)' }}>
-          Todos os resultados foram carregados
+          Todos os vídeos foram carregados
         </p>
       )}
     </>
