@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePlayerStore } from '@/lib/store'
-import type { SpotifyTrack } from '@/types/spotify'
+import type { Track } from '@/types/music'
 
 interface SearchSuggestionsProps {
   query: string
@@ -12,7 +12,7 @@ interface SearchSuggestionsProps {
 }
 
 export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestionsProps) {
-  const [suggestions, setSuggestions] = useState<SpotifyTrack[]>([])
+  const [suggestions, setSuggestions] = useState<Track[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const router = useRouter()
@@ -99,7 +99,7 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
     setSelectedIndex(-1)
   }, [suggestions])
 
-  function playTrack(track: SpotifyTrack) {
+  function playTrack(track: Track) {
     onSelect()
     setSuggestions([])
     const { play } = usePlayerStore.getState()

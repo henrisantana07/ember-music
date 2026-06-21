@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
-import type { SpotifyTrack } from '@/types/spotify'
+import type { Track } from '@/types/music'
 import type { Json } from '@/types/database'
 
 interface PlaylistModalProps {
   open: boolean
   onClose: () => void
-  track: SpotifyTrack
+  track: Track
 }
 
 export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {

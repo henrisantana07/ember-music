@@ -5,14 +5,14 @@ import { useParams } from 'next/navigation'
 import { TrackCard } from '@/components/TrackCard'
 import { ShareButton } from '@/components/ShareButton'
 import { usePlayerStore } from '@/lib/store'
-import type { SpotifyTrack } from '@/types/spotify'
+import type { Track } from '@/types/music'
 
 export default function AlbumPage() {
   const params = useParams()
   const albumId = params.id as string
   const [album, setAlbum] = useState<{
     id: string; name: string; image: string; artist_name: string; artist_id: string
-    releasedate: string; tracks: SpotifyTrack[]
+    releasedate: string; tracks: Track[]
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const play = usePlayerStore((s) => s.play)

@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { SpotifyTrack } from '@/types/spotify'
+import type { Track } from '@/types/music'
 import type { Database } from '@/types/database'
 
 type PlaylistTrack = Database['public']['Tables']['playlist_tracks']['Row']
@@ -137,15 +137,15 @@ function PlaylistContent() {
   }
 
   function handlePlayAll() {
-    const jamendoTracks: SpotifyTrack[] = tracks
-      .map((pt) => pt.track_data as unknown as SpotifyTrack)
+    const jamendoTracks: Track[] = tracks
+      .map((pt) => pt.track_data as unknown as Track)
       .filter(Boolean)
     if (jamendoTracks.length > 0) {
       play(jamendoTracks[0], jamendoTracks, id, playlist?.name)
     }
   }
 
-  function handlePlayTrack(trackData: SpotifyTrack, allTracks: SpotifyTrack[]) {
+  function handlePlayTrack(trackData: Track, allTracks: Track[]) {
     play(trackData, allTracks, id, playlist?.name)
   }
 
@@ -188,7 +188,7 @@ function PlaylistContent() {
     )
   }
 
-  const parsedTracks: (SpotifyTrack | null)[] = tracks.map((pt) => pt.track_data as unknown as SpotifyTrack | null)
+  const parsedTracks: (Track | null)[] = tracks.map((pt) => pt.track_data as unknown as Track | null)
   const totalDuration = parsedTracks.reduce((acc, t) => acc + (t?.duration ?? 0), 0)
 
   return (
@@ -346,7 +346,7 @@ function PlaylistContent() {
                   isActive={isActive}
                   isPlaying={isPlaying}
                   isOwner={isOwner}
-                  onClick={() => handlePlayTrack(track, parsedTracks.filter(Boolean) as SpotifyTrack[])}
+                  onClick={() => handlePlayTrack(track, parsedTracks.filter(Boolean) as Track[])}
                   onRemove={() => handleRemoveTrack(tracks[index].track_id)}
                 />
               )
@@ -362,7 +362,7 @@ function SortableTrackRow({
   id, track, index, isActive, isPlaying, isOwner, onClick, onRemove,
 }: {
   id: string
-  track: SpotifyTrack
+  track: Track
   index: number
   isActive: boolean
   isPlaying: boolean

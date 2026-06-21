@@ -1,6 +1,6 @@
 'use client'
 
-import type { SpotifyTrack } from '@/types/spotify'
+import type { Track } from '@/types/music'
 import { formatDuration } from '@/lib/spotify'
 import { usePlayerStore } from '@/lib/store'
 import { createClient } from '@/lib/supabase/client'
@@ -10,8 +10,8 @@ import type { Json } from '@/types/database'
 import { PlaylistModal } from '@/components/PlaylistModal'
 
 interface TrackCardProps {
-  track: SpotifyTrack
-  tracks?: SpotifyTrack[]
+  track: Track
+  tracks?: Track[]
 }
 
 export function TrackCard({ track, tracks }: TrackCardProps) {

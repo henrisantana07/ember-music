@@ -5,14 +5,14 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { TrackCard } from '@/components/TrackCard'
 import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
-import type { SpotifyTrack } from '@/types/spotify'
+import type { Track } from '@/types/music'
 import type { User } from '@supabase/supabase-js'
 
 const PAGE_SIZE = 20
 
 export default function FavoritesPage() {
   const [user, setUser] = useState<User | null>(null)
-  const [tracks, setTracks] = useState<SpotifyTrack[]>([])
+  const [tracks, setTracks] = useState<Track[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
@@ -37,7 +37,7 @@ export default function FavoritesPage() {
       .range(0, PAGE_SIZE - 1)
       .then(({ data }) => {
         if (data) {
-          const parsed = data.map((f) => f.track_data as unknown as SpotifyTrack).filter(Boolean)
+          const parsed = data.map((f) => f.track_data as unknown as Track).filter(Boolean)
           setTracks(parsed)
           setHasMore(parsed.length === PAGE_SIZE)
         }
@@ -56,7 +56,7 @@ export default function FavoritesPage() {
       .range(tracks.length, tracks.length + PAGE_SIZE - 1)
       .then(({ data }) => {
         if (data) {
-          const parsed = data.map((f) => f.track_data as unknown as SpotifyTrack).filter(Boolean)
+          const parsed = data.map((f) => f.track_data as unknown as Track).filter(Boolean)
           setTracks((prev) => [...prev, ...parsed])
           setHasMore(parsed.length === PAGE_SIZE)
         } else {

@@ -6,14 +6,14 @@ import { TrackCard } from '@/components/TrackCard'
 import { FollowButton } from '@/components/FollowButton'
 import { ShareButton } from '@/components/ShareButton'
 import { usePlayerStore } from '@/lib/store'
-import type { SpotifyTrack } from '@/types/spotify'
+import type { Track } from '@/types/music'
 
 interface ArtistData {
   id: string
   name: string
   image: string
   website?: string
-  tracks?: SpotifyTrack[]
+  tracks?: Track[]
   albums?: { id: string; name: string; image: string }[]
 }
 

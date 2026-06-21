@@ -1,11 +1,11 @@
 'use client'
 
-import type { SpotifyTrack } from '@/types/spotify'
+import type { Track } from '@/types/music'
 import { TrackCard } from '@/components/TrackCard'
 
 interface SectionRowProps {
   title: string
-  tracks: SpotifyTrack[]
+  tracks: Track[]
 }
 
 export function SectionRow({ title, tracks }: SectionRowProps) {

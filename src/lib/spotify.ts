@@ -1,4 +1,4 @@
-import type { SpotifyTrack } from '@/types/spotify'
+import type { Track } from '@/types/music'
 
 export function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60)
@@ -6,10 +6,8 @@ export function formatDuration(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-export function getTrackUrl(track: SpotifyTrack): string | null {
+export function getTrackUrl(track: Track): string | null {
   return track.audio
 }
 
-export function openSpotify(url: string) {
-  window.open(url, '_blank', 'noopener,noreferrer')
-}
+

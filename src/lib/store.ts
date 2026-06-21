@@ -1,18 +1,18 @@
 'use client'
 
 import { create } from 'zustand'
-import type { SpotifyTrack } from '@/types/spotify'
+import type { Track } from '@/types/music'
 
 export type RepeatMode = 'none' | 'one' | 'all'
 
 interface PlayerState {
-  currentTrack: SpotifyTrack | null
+  currentTrack: Track | null
   isPlaying: boolean
   volume: number
   progress: number
   duration: number
-  queue: SpotifyTrack[]
-  originalQueue: SpotifyTrack[]
+  queue: Track[]
+  originalQueue: Track[]
   shuffleOrder: number[]
   currentShuffleIndex: number
   currentPlaylistId: string | null
@@ -23,8 +23,8 @@ interface PlayerState {
   sleepTimerMinutes: number | null
   miniPlayer: boolean
 
-  play: ((track: SpotifyTrack, queue?: SpotifyTrack[], playlistId?: string, playlistName?: string) => void)
-    & ((tracks: SpotifyTrack[], index?: number, playlistId?: string, playlistName?: string) => void)
+  play: ((track: Track, queue?: Track[], playlistId?: string, playlistName?: string) => void)
+    & ((tracks: Track[], index?: number, playlistId?: string, playlistName?: string) => void)
   pause: () => void
   resume: () => void
   togglePlay: () => void
@@ -33,7 +33,7 @@ interface PlayerState {
   setVolume: (volume: number) => void
   setProgress: (progress: number) => void
   setDuration: (duration: number) => void
-  addToQueue: (track: SpotifyTrack) => void
+  addToQueue: (track: Track) => void
   clearQueue: () => void
   setCurrentPlaylist: (id: string | null, name: string | null) => void
   setRepeat: (mode: RepeatMode) => void
@@ -70,8 +70,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   sleepTimerMinutes: null,
   miniPlayer: false,
 
-  play: ((arg: SpotifyTrack | SpotifyTrack[], opt1?: unknown, opt2?: unknown, opt3?: unknown) => {
-    const tracks = Array.isArray(arg) ? arg : (opt1 as SpotifyTrack[] | undefined) ?? []
+  play: ((arg: Track | Track[], opt1?: unknown, opt2?: unknown, opt3?: unknown) => {
+    const tracks = Array.isArray(arg) ? arg : (opt1 as Track[] | undefined) ?? []
     const index = Array.isArray(arg) ? (opt1 as number | undefined) ?? 0 : tracks.findIndex((t) => t.id === arg.id)
     const track = Array.isArray(arg) ? (tracks[index] ?? tracks[0]) : arg
     const playlistId = Array.isArray(arg) ? (opt2 as string | undefined) : (opt2 as string | undefined)

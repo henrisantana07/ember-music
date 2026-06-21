@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { SectionRow } from '@/components/SectionRow'
 import { TrackCardSkeleton } from '@/components/Skeleton'
-import type { SpotifyTrack } from '@/types/spotify'
+import type { Track } from '@/types/music'
 
 function HomePageInner() {
   const searchParams = useSearchParams()
@@ -18,7 +18,7 @@ function HomePageInner() {
 }
 
 function SearchResults({ query }: { query: string }) {
-  const [tracks, setTracks] = useState<SpotifyTrack[]>([])
+  const [tracks, setTracks] = useState<Track[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -64,7 +64,7 @@ function SearchResults({ query }: { query: string }) {
 }
 
 function HomeContent() {
-  const [newReleases, setNewReleases] = useState<SpotifyTrack[]>([])
+  const [newReleases, setNewReleases] = useState<Track[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -87,7 +87,7 @@ function HomeContent() {
     <>
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-1">Bem-vindo ao Ember Music</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>Descubra música com Spotify</p>
+        <p style={{ color: 'var(--text-secondary)' }}>Descubra música com Deezer</p>
       </div>
 
       {loading ? (
