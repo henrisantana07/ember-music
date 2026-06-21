@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatDuration } from '@/lib/jamendo'
+import { formatDuration } from '@/lib/spotify'
 
 describe('formatDuration', () => {
   it('formats 0 seconds', () => {

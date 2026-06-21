@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { usePlayerStore } from '@/lib/store'
 import type { RepeatMode } from '@/lib/store'
-import { formatDuration, getDownloadUrl } from '@/lib/jamendo'
+import { formatDuration } from '@/lib/spotify'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 
@@ -53,14 +53,10 @@ export function Player() {
     audio.addEventListener('ended', onEnded)
 
     audio.volume = volume
-    audio.src = currentTrack.audio
-    audio.load()
-
-    fetch('/api/history', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ track_id: currentTrack.id, track_data: currentTrack }),
-    }).catch(() => {})
+    if (currentTrack.audio) {
+      audio.src = currentTrack.audio
+      audio.load()
+    }
 
     return () => {
       audio.removeEventListener('timeupdate', onTimeUpdate)
@@ -144,13 +140,6 @@ export function Player() {
     const newTime = x * duration
     audioRef.current.currentTime = newTime
     setProgress(newTime)
-  }
-
-  function handleDownload() {
-    if (!currentTrack) return
-    const url = getDownloadUrl(currentTrack)
-    if (!url) { showToast('Download não disponível'); return }
-    showToast('Download iniciado!')
   }
 
   const progressPercent = duration > 0 ? (progress / duration) * 100 : 0
@@ -312,12 +301,6 @@ export function Player() {
 
         <div className="w-72 flex items-center justify-end gap-2">
           <SleepTimerDropdown />
-
-          <button onClick={handleDownload} className="text-secondary hover:text-primary transition-colors p-1.5" title="Download">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-          </button>
 
           <div className="items-center gap-1.5 hidden md:flex">
             <svg className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

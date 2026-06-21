@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { usePlayerStore } from '@/lib/store'
 import { usePlaylistsStore } from '@/lib/playlists-store'
-import { formatDuration } from '@/lib/jamendo'
+import { formatDuration } from '@/lib/spotify'
 import { ShareButton } from '@/components/ShareButton'
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { JamendoTrack } from '@/types/jamendo'
+import type { SpotifyTrack } from '@/types/spotify'
 import type { Database } from '@/types/database'
 
 type PlaylistTrack = Database['public']['Tables']['playlist_tracks']['Row']
@@ -137,15 +137,15 @@ function PlaylistContent() {
   }
 
   function handlePlayAll() {
-    const jamendoTracks: JamendoTrack[] = tracks
-      .map((pt) => pt.track_data as unknown as JamendoTrack)
+    const jamendoTracks: SpotifyTrack[] = tracks
+      .map((pt) => pt.track_data as unknown as SpotifyTrack)
       .filter(Boolean)
     if (jamendoTracks.length > 0) {
       play(jamendoTracks[0], jamendoTracks, id, playlist?.name)
     }
   }
 
-  function handlePlayTrack(trackData: JamendoTrack, allTracks: JamendoTrack[]) {
+  function handlePlayTrack(trackData: SpotifyTrack, allTracks: SpotifyTrack[]) {
     play(trackData, allTracks, id, playlist?.name)
   }
 
@@ -188,7 +188,7 @@ function PlaylistContent() {
     )
   }
 
-  const parsedTracks: (JamendoTrack | null)[] = tracks.map((pt) => pt.track_data as unknown as JamendoTrack | null)
+  const parsedTracks: (SpotifyTrack | null)[] = tracks.map((pt) => pt.track_data as unknown as SpotifyTrack | null)
   const totalDuration = parsedTracks.reduce((acc, t) => acc + (t?.duration ?? 0), 0)
 
   return (
@@ -346,7 +346,7 @@ function PlaylistContent() {
                   isActive={isActive}
                   isPlaying={isPlaying}
                   isOwner={isOwner}
-                  onClick={() => handlePlayTrack(track, parsedTracks.filter(Boolean) as JamendoTrack[])}
+                  onClick={() => handlePlayTrack(track, parsedTracks.filter(Boolean) as SpotifyTrack[])}
                   onRemove={() => handleRemoveTrack(tracks[index].track_id)}
                 />
               )
@@ -362,7 +362,7 @@ function SortableTrackRow({
   id, track, index, isActive, isPlaying, isOwner, onClick, onRemove,
 }: {
   id: string
-  track: JamendoTrack
+  track: SpotifyTrack
   index: number
   isActive: boolean
   isPlaying: boolean

@@ -3,14 +3,18 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { SearchSuggestions } from '@/components/SearchSuggestions'
 import type { User } from '@supabase/supabase-js'
 
 export function Topbar() {
   const [user, setUser] = useState<User | null>(null)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchFocused, setSearchFocused] = useState(false)
   const router = useRouter()
   const supabase = createClient()
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
@@ -44,9 +48,50 @@ export function Topbar() {
     router.push('/login')
   }
 
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      setSearchFocused(false)
+      inputRef.current?.blur()
+      router.push(`/?q=${encodeURIComponent(searchQuery.trim())}`)
+    }
+  }
+
   return (
     <header className="h-16 flex items-center justify-between px-6 flex-shrink-0 relative" style={{ backgroundColor: 'var(--bg-base)' }}>
-      <div className="flex-1" />
+      <form onSubmit={handleSearch} className="flex-1 max-w-md relative">
+        <div className="relative">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            ref={inputRef}
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+            placeholder="O que você quer ouvir?"
+            className="w-full pl-10 pr-4 py-2 rounded-full text-sm border-none focus:outline-none focus:ring-2 transition-all"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              color: 'var(--text-primary)',
+              '--tw-ring-color': 'var(--accent-solid)',
+            } as React.CSSProperties}
+          />
+        </div>
+        {searchFocused && (
+          <SearchSuggestions
+            query={searchQuery}
+            onSelect={() => {
+              setSearchQuery('')
+              setSearchFocused(false)
+              inputRef.current?.blur()
+            }}
+            inputRef={inputRef}
+          />
+        )}
+      </form>
 
       <div className="relative" ref={dropdownRef}>
         {user ? (

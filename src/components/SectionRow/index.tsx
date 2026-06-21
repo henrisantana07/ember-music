@@ -1,11 +1,11 @@
 'use client'
 
-import type { JamendoTrack } from '@/types/jamendo'
+import type { SpotifyTrack } from '@/types/spotify'
 import { TrackCard } from '@/components/TrackCard'
 
 interface SectionRowProps {
   title: string
-  tracks: JamendoTrack[]
+  tracks: SpotifyTrack[]
 }
 
 export function SectionRow({ title, tracks }: SectionRowProps) {

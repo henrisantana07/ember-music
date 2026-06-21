@@ -6,14 +6,14 @@ import { TrackCard } from '@/components/TrackCard'
 import { FollowButton } from '@/components/FollowButton'
 import { ShareButton } from '@/components/ShareButton'
 import { usePlayerStore } from '@/lib/store'
-import type { JamendoTrack } from '@/types/jamendo'
+import type { SpotifyTrack } from '@/types/spotify'
 
 interface ArtistData {
   id: string
   name: string
   image: string
   website?: string
-  tracks?: JamendoTrack[]
+  tracks?: SpotifyTrack[]
   albums?: { id: string; name: string; image: string }[]
 }
 
@@ -27,9 +27,9 @@ export default function ArtistPage() {
   useEffect(() => {
     setLoading(true)
     Promise.all([
-      fetch(`/api/jamendo?endpoint=artists&id=${artistId}`).then((r) => r.json()),
-      fetch(`/api/jamendo?endpoint=tracks&artist_id=${artistId}&order=popularity_desc&limit=50`).then((r) => r.json()),
-      fetch(`/api/jamendo?endpoint=albums&artist_id=${artistId}&limit=20`).then((r) => r.json()),
+      fetch(`/api/spotify?endpoint=artists&id=${artistId}`).then((r) => r.json()),
+      fetch(`/api/spotify?endpoint=tracks&artist_id=${artistId}&order=popularity_desc&limit=50`).then((r) => r.json()),
+      fetch(`/api/spotify?endpoint=albums&artist_id=${artistId}&limit=20`).then((r) => r.json()),
     ]).then(([artistRes, tracksRes, albumsRes]) => {
       const a = artistRes?.results?.[0]
       if (!a) { setLoading(false); return }

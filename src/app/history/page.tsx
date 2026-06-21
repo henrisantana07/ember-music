@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { TrackCard } from '@/components/TrackCard'
-import type { JamendoTrack } from '@/types/jamendo'
+import type { SpotifyTrack } from '@/types/spotify'
 
-function groupByDate(items: { played_at: string; track_data: JamendoTrack }[]) {
+function groupByDate(items: { played_at: string; track_data: SpotifyTrack }[]) {
   const groups: Record<string, typeof items> = {}
   for (const item of items) {
     const date = new Date(item.played_at).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -15,14 +15,12 @@ function groupByDate(items: { played_at: string; track_data: JamendoTrack }[]) {
 }
 
 export default function HistoryPage() {
-  const [items, setItems] = useState<{ played_at: string; track_data: JamendoTrack }[]>([])
+  const [items, setItems] = useState<{ played_at: string; track_data: SpotifyTrack }[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/history')
-      .then((r) => r.json())
-      .then((data) => { setItems(data ?? []); setLoading(false) })
-      .catch(() => setLoading(false))
+    setItems([])
+    setLoading(false)
   }, [])
 
   if (loading) {

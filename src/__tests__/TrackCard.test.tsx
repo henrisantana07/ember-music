@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { TrackCard } from '@/components/TrackCard'
-import type { JamendoTrack } from '@/types/jamendo'
+import type { SpotifyTrack } from '@/types/spotify'
 
 vi.mock('@supabase/ssr', () => ({
   createBrowserClient: () => ({
@@ -18,17 +18,17 @@ vi.mock('@supabase/ssr', () => ({
   }),
 }))
 
-const mockTrack: JamendoTrack = {
+const mockTrack: SpotifyTrack = {
   id: '123',
   name: 'Test Song',
   artist_name: 'Test Artist',
   artist_id: 'artist1',
   album_name: 'Test Album',
+  album_id: 'album1',
   image: 'https://example.com/image.jpg',
-  audio: 'https://example.com/audio.mp3',
+  audio: 'https://example.com/preview.mp3',
   duration: 180,
-  position: 1,
-  tags: ['rock'],
+  spotify_url: 'https://open.spotify.com/track/123',
 }
 
 describe('TrackCard', () => {

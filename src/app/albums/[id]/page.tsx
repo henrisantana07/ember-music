@@ -5,14 +5,14 @@ import { useParams } from 'next/navigation'
 import { TrackCard } from '@/components/TrackCard'
 import { ShareButton } from '@/components/ShareButton'
 import { usePlayerStore } from '@/lib/store'
-import type { JamendoTrack } from '@/types/jamendo'
+import type { SpotifyTrack } from '@/types/spotify'
 
 export default function AlbumPage() {
   const params = useParams()
   const albumId = params.id as string
   const [album, setAlbum] = useState<{
     id: string; name: string; image: string; artist_name: string; artist_id: string
-    releasedate: string; tracks: JamendoTrack[]
+    releasedate: string; tracks: SpotifyTrack[]
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const play = usePlayerStore((s) => s.play)
@@ -20,8 +20,8 @@ export default function AlbumPage() {
   useEffect(() => {
     setLoading(true)
     Promise.all([
-      fetch(`/api/jamendo?endpoint=albums&id=${albumId}`).then((r) => r.json()),
-      fetch(`/api/jamendo?endpoint=albums/tracks&album_id=${albumId}`).then((r) => r.json()),
+      fetch(`/api/spotify?endpoint=albums&id=${albumId}`).then((r) => r.json()),
+      fetch(`/api/spotify?endpoint=albums/tracks&album_id=${albumId}`).then((r) => r.json()),
     ]).then(([albumRes, tracksRes]) => {
       const a = albumRes?.results?.[0]
       if (!a) { setLoading(false); return }

@@ -14,10 +14,8 @@ export default function ArtistsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/artists/follow')
-      .then((r) => r.json())
-      .then((data) => { setArtists(data ?? []); setLoading(false) })
-      .catch(() => setLoading(false))
+    setArtists([])
+    setLoading(false)
   }, [])
 
   if (loading) {

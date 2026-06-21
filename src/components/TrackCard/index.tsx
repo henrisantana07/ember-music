@@ -1,7 +1,7 @@
 'use client'
 
-import type { JamendoTrack } from '@/types/jamendo'
-import { formatDuration } from '@/lib/jamendo'
+import type { SpotifyTrack } from '@/types/spotify'
+import { formatDuration } from '@/lib/spotify'
 import { usePlayerStore } from '@/lib/store'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
@@ -10,8 +10,8 @@ import type { Json } from '@/types/database'
 import { PlaylistModal } from '@/components/PlaylistModal'
 
 interface TrackCardProps {
-  track: JamendoTrack
-  tracks?: JamendoTrack[]
+  track: SpotifyTrack
+  tracks?: SpotifyTrack[]
 }
 
 export function TrackCard({ track, tracks }: TrackCardProps) {
