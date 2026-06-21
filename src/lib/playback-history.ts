@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import type { Track } from '@/types/music'
+import type { Json } from '@/types/database'
 
 export interface PlaybackHistoryItem {
   id: string
@@ -38,7 +39,7 @@ export async function savePlaybackHistory(user: User | null, track: Track): Prom
     .insert({
       user_id: user.id,
       track_id: track.id,
-      track_data: track,
+      track_data: track as unknown as Json,
       played_at: new Date().toISOString(),
     })
   
