@@ -7,6 +7,7 @@ import { FollowButton } from '@/components/FollowButton'
 import { ShareButton } from '@/components/ShareButton'
 import { usePlayerStore } from '@/lib/store'
 import type { Track } from '@/types/music'
+import type { Json } from '@/types/database'
 
 interface ArtistData {
   id: string
@@ -83,12 +84,23 @@ export default function ArtistPage() {
           <h2 className="text-xl font-bold mb-4">Álbuns</h2>
           <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin">
             {artist.albums.slice(0, 10).map((album) => (
-              <a key={album.id} href={`/albums/${album.id}`}
-                className="flex-shrink-0 w-40 p-3 rounded-xl transition-colors hover:bg-white/5">
-                <img src={album.image || '/placeholder.svg'} alt={album.name}
-                  className="w-full aspect-square rounded-lg object-cover mb-2 shadow-md" />
-                <p className="text-sm font-medium truncate text-center">{album.name}</p>
-              </a>
+              <div key={album.id} className="flex-shrink-0 w-40 p-3 rounded-xl transition-colors hover:bg-white/5 group relative">
+                <a href={`/albums/${album.id}`} className="block">
+                  <div className="relative mb-2">
+                    <img src={album.image || '/placeholder.svg'} alt={album.name}
+                      className="w-full aspect-square rounded-lg object-cover shadow-md" />
+                    <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2 bg-black/40">
+                      <button className="p-1.5 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/30 transition-colors" title="Adicionar aos favoritos">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                      </button>
+                      <FollowButton artistId={artist.id} artistData={{ id: artist.id, name: artist.name, image: artist.image }} />
+                    </div>
+                  </div>
+                  <p className="text-sm font-medium truncate text-center">{album.name}</p>
+                </a>
+              </div>
             ))}
           </div>
         </section>

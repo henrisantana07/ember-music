@@ -8,6 +8,7 @@ import { TrackCard } from '@/components/TrackCard'
 import { TrackCardSkeleton } from '@/components/Skeleton'
 import { FollowButton } from '@/components/FollowButton'
 import type { Album, Artist, Track } from '@/types/music'
+import type { Json } from '@/types/database'
 
 type DurationFilter = '' | 'short' | 'medium' | 'long'
 
@@ -208,7 +209,32 @@ function PeopleSection({ artists }: { artists: Artist[] }) {
 }
 
 function AlbumSection({ albums }: { albums: Album[] }) {
-  return <section><h2 className="text-xl font-bold mb-4">Álbuns</h2><div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">{albums.map((album) => <a key={album.id} href={`/albums/${album.id}`} className="w-40 flex-shrink-0 p-3 rounded-xl transition-colors hover:bg-white/5"><img src={album.image || '/placeholder.svg'} alt={album.name} className="w-full aspect-square rounded-lg object-cover mb-3" loading="lazy" /><p className="text-sm font-semibold truncate">{album.name}</p><p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{album.artist_name}</p></a>)}</div></section>
+  return (
+    <section>
+      <h2 className="text-xl font-bold mb-4">Álbuns</h2>
+      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin">
+        {albums.map((album) => (
+          <div key={album.id} className="flex-shrink-0 w-40 p-3 rounded-xl transition-colors hover:bg-white/5 group relative">
+            <a href={`/albums/${album.id}`} className="block">
+              <div className="relative mb-2">
+                <img src={album.image || '/placeholder.svg'} alt={album.name} className="w-full aspect-square rounded-lg object-cover mb-3" loading="lazy" />
+                <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2 bg-black/40">
+                  <button className="p-1.5 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/30 transition-colors" title="Adicionar aos favoritos">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                  <FollowButton artistId={album.artist_id} artistData={{ id: album.artist_id, name: album.artist_name, image: '/placeholder.svg' }} />
+                </div>
+              </div>
+              <p className="text-sm font-semibold truncate">{album.name}</p>
+              <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{album.artist_name}</p>
+            </a>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
 }
 
 export default function SearchPage() {

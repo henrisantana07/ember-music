@@ -137,11 +137,11 @@ function PlaylistContent() {
   }
 
   function handlePlayAll() {
-    const jamendoTracks: Track[] = tracks
+    const tracksToPlay: Track[] = tracks
       .map((pt) => pt.track_data as unknown as Track)
       .filter(Boolean)
-    if (jamendoTracks.length > 0) {
-      play(jamendoTracks[0], jamendoTracks, id, playlist?.name)
+    if (tracksToPlay.length > 0) {
+      play(tracksToPlay[0], tracksToPlay, id, playlist?.name)
     }
   }
 
