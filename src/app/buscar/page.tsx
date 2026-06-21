@@ -113,7 +113,58 @@ function SearchPageInner() {
     return <EmptyShell title="Busque por músicas, artistas ou álbuns" text="Digite algo na barra acima para começar." popular={popular} />
   }
 
+  return (
+    <div className="space-y-6">
+      <div>
+        <p className="text-sm mb-1" style={{ color: 'var(--text-disabled)' }}>Resultados para</p>
+        <h1 className="text-3xl font-bold">&ldquo;{query}&rdquo;</h1>
+      </div>
 
+      <div className="sticky top-0 z-20 -mx-4 md:-mx-6 px-4 md:px-6 py-3 border-y border-white/5" style={{ backgroundColor: 'var(--bg-base)' }}>
+        <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+          <select disabled={genreOptions.length === 0} value="" onChange={(e) => updateParam('genres', [...selectedGenres, e.target.value].filter(Boolean).join(','))} className="rounded-full px-3 py-2 text-sm border border-white/10 disabled:opacity-50" style={{ backgroundColor: 'var(--bg-surface)' }} title={genreOptions.length === 0 ? 'A busca da Deezer não retorna gêneros para estes resultados' : 'Gênero'}>
+            <option value="">Gênero</option>
+            {genreOptions.filter((genre) => !selectedGenres.includes(genre)).map((genre) => <option key={genre} value={genre}>{genre}</option>)}
+          </select>
+          <ArtistFilter key={artistFilter} value={artistFilter} options={artistOptions} onChange={(value) => updateParam('artist', value)} />
+          <select value={durationFilter} onChange={(e) => updateParam('duration', e.target.value)} className="rounded-full px-3 py-2 text-sm border border-white/10" style={{ backgroundColor: 'var(--bg-surface)' }}>
+            <option value="">Duração</option>
+            <option value="short">Curtas (até 2min)</option>
+            <option value="medium">Médias (2-5min)</option>
+            <option value="long">Longas (5min+)</option>
+          </select>
+          <select value={yearFrom} onChange={(e) => updateParam('from', e.target.value)} className="rounded-full px-3 py-2 text-sm border border-white/10" style={{ backgroundColor: 'var(--bg-surface)' }}>
+            <option value="">Ano de</option>
+            {years.map((year) => <option key={year} value={year}>{year}</option>)}
+          </select>
+          <select value={yearTo} onChange={(e) => updateParam('to', e.target.value)} className="rounded-full px-3 py-2 text-sm border border-white/10" style={{ backgroundColor: 'var(--bg-surface)' }}>
+            <option value="">Ano até</option>
+            {years.map((year) => <option key={year} value={year}>{year}</option>)}
+          </select>
+        </div>
+        {activeFilterCount > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            {selectedGenres.map((genre) => <FilterChip key={genre} label={genre} onRemove={() => removeFilter('genres', genre)} />)}
+            {artistFilter && <FilterChip label={`Artista: ${artistFilter}`} onRemove={() => removeFilter('artist')} />}
+            {durationFilter && <FilterChip label={durationLabels[durationFilter as Exclude<DurationFilter, ''>]} onRemove={() => removeFilter('duration')} />}
+            {(yearFrom || yearTo) && <FilterChip label={`${yearFrom || '...'}-${yearTo || '...'}`} onRemove={clearYearFilter} />}
+            <button onClick={clearFilters} className="text-xs font-semibold px-3 py-1.5 rounded-full" style={{ color: 'var(--accent-solid)' }}>Limpar filtros</button>
+          </div>
+        )}
+      </div>
+
+      {loading && <ResultsSkeleton />}
+      {error && <ErrorState message={error} onRetry={() => setRetryNonce((value) => value + 1)} />}
+      {!loading && !error && !hasResults && <EmptyShell title={`Nenhum resultado para "${query}"`} text={`${activeFilterCount > 0 ? `Você tem ${activeFilterCount} filtros ativos. Tente remover alguns ou ` : 'Tente '}verificar a ortografia e usar termos mais gerais.`} popular={popular} />}
+      {!loading && !error && hasResults && (
+        <div className="space-y-10">
+          {filteredTracks.length > 0 && <section><h2 className="text-xl font-bold mb-4">Faixas</h2><div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">{filteredTracks.map((track) => <TrackCard key={track.id} track={track} tracks={filteredTracks} />)}</div></section>}
+          {filteredArtists.length > 0 && <PeopleSection artists={filteredArtists} />}
+          {filteredAlbums.length > 0 && <AlbumSection albums={filteredAlbums} />}
+        </div>
+      )}
+    </div>
+  )
 }
 
 function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
