@@ -3,6 +3,13 @@ import { NextRequest, NextResponse } from 'next/server'
 const API_KEY = process.env.YOUTUBE_API_KEY
 const BASE_URL = 'https://www.googleapis.com/youtube/v3'
 
+const cache = new Map<string, { data: unknown; timestamp: number }>()
+const CACHE_TTL = 10 * 60 * 1000
+
+function getCacheKey(q: string, maxResults: string, pageToken: string | null): string {
+  return `${q}:${maxResults}:${pageToken ?? ''}`
+}
+
 export async function GET(request: NextRequest) {
   if (!API_KEY) {
     return NextResponse.json({ error: 'YouTube API key not configured' }, { status: 500 })
@@ -17,6 +24,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Missing query parameter "q"' }, { status: 400 })
   }
 
+  const cacheKey = getCacheKey(q, maxResults, pageToken)
+  const cached = cache.get(cacheKey)
+
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return NextResponse.json(cached.data)
+  }
+
   try {
     const url = new URL(`${BASE_URL}/search`)
     url.searchParams.set('part', 'snippet')
@@ -27,7 +41,14 @@ export async function GET(request: NextRequest) {
     url.searchParams.set('key', API_KEY)
     if (pageToken) url.searchParams.set('pageToken', pageToken)
 
-    const res = await fetch(url.toString(), { next: { revalidate: 300 } })
+    const res = await fetch(url.toString())
+
+    if (res.status === 429) {
+      if (cached) {
+        return NextResponse.json(cached.data)
+      }
+      return NextResponse.json({ error: 'YouTube API quota exceeded. Try again later.' }, { status: 429 })
+    }
 
     if (!res.ok) {
       const errorBody = await res.text()
@@ -50,12 +71,16 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({
+    const response = {
       results,
       nextPageToken: data.nextPageToken ?? null,
       prevPageToken: data.prevPageToken ?? null,
       totalResults: data.pageInfo?.totalResults ?? 0,
-    })
+    }
+
+    cache.set(cacheKey, { data: response, timestamp: Date.now() })
+
+    return NextResponse.json(response)
   } catch (err) {
     console.error('YouTube fetch failed:', err)
     return NextResponse.json({ error: 'Failed to fetch from YouTube' }, { status: 500 })

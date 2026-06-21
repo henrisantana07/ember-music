@@ -38,7 +38,7 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/youtube?q=${encodeURIComponent(query)}&maxResults=5`)
+        const res = await fetch(`/api/youtube?q=${encodeURIComponent(query)}&maxResults=3`)
         if (!res.ok) { setSuggestions([]); return }
         const data = await res.json()
         const results = (data.results ?? []) as YouTubeSuggestion[]
@@ -54,7 +54,7 @@ export function SearchSuggestions({ query, onSelect, inputRef }: SearchSuggestio
       } finally {
         setLoading(false)
       }
-    }, 250)
+    }, 400)
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
