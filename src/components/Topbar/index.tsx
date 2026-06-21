@@ -13,8 +13,20 @@ export function Topbar() {
   const supabase = createClient()
   const dropdownRef = useRef<HTMLDivElement>(null)
 
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (data.user) {
+        setUser(data.user)
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', data.user.id)
+          .single()
+        if (profile?.avatar_url) setAvatarUrl(profile.avatar_url)
+      }
+    })
   }, [])
 
   useEffect(() => {
@@ -68,12 +80,16 @@ export function Topbar() {
             onClick={() => setShowDropdown(!showDropdown)}
             className="flex items-center gap-2 focus-ring rounded-full"
           >
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-              style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
-            >
-              {user.email?.[0].toUpperCase()}
-            </div>
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
+            ) : (
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+                style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
+              >
+                {user.email?.[0].toUpperCase()}
+              </div>
+            )}
           </button>
         ) : (
           <button
