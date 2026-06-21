@@ -3,8 +3,18 @@
 import { useState, useEffect, Suspense, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { TrackCard } from '@/components/TrackCard'
+import { YouTubeResult } from '@/components/YouTubeResult'
 import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
 import type { JamendoTrack } from '@/types/jamendo'
+
+interface YouTubeItem {
+  videoId: string
+  title: string
+  channelTitle: string
+  description: string
+  thumbnails: Record<string, { url: string; width: number; height: number }>
+  publishedAt: string
+}
 
 const GENRES = [
   'rock', 'pop', 'jazz', 'electronic', 'hiphop', 'classical',
@@ -30,6 +40,8 @@ function SearchContent() {
   const [durationIdx, setDurationIdx] = useState(0)
   const [year, setYear] = useState('')
   const [results, setResults] = useState<JamendoTrack[]>([])
+  const [ytResults, setYtResults] = useState<YouTubeItem[]>([])
+  const [ytAvailable, setYtAvailable] = useState(true)
   const [loading, setLoading] = useState(false)
   const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(true)
@@ -53,15 +65,22 @@ function SearchContent() {
     setLoading(true)
     const params = buildParams(q, g, dIdx, y, off)
 
-    fetch(`/api/jamendo?${params.toString()}`)
-      .then((res) => res.json())
-      .then((data) => {
-        const tracks = data.results ?? []
-        setResults((prev) => append ? [...prev, ...tracks] : tracks)
-        setHasMore(tracks.length === PAGE_SIZE)
-        setTotalResults(data.headers?.results_count ?? 0)
-      })
-      .catch(console.error)
+    Promise.all([
+      fetch(`/api/jamendo?${params.toString()}`).then((r) => r.json()),
+      !append && q ? fetch(`/api/youtube?q=${encodeURIComponent(q)}&maxResults=6`).then((r) => {
+        if (!r.ok) { setYtAvailable(false); return { results: [] } }
+        setYtAvailable(true)
+        return r.json()
+      }).catch(() => { setYtAvailable(false); return { results: [] } }) : Promise.resolve({ results: [] }),
+    ]).then(([jamendoData, ytData]) => {
+      const tracks = jamendoData.results ?? []
+      setResults((prev) => append ? [...prev, ...tracks] : tracks)
+      setHasMore(tracks.length === PAGE_SIZE)
+      setTotalResults(jamendoData.headers?.results_count ?? 0)
+      if (!append && q) {
+        setYtResults(ytData.results ?? [])
+      }
+    }).catch(console.error)
       .finally(() => setLoading(false))
   }, [])
 
@@ -181,7 +200,7 @@ function SearchContent() {
           <div className="w-5 h-5 border-2 border-[var(--accent-from)] border-t-transparent rounded-full animate-spin" />
           <span style={{ color: 'var(--text-secondary)' }}>Buscando...</span>
         </div>
-      ) : results.length === 0 ? (
+      ) : results.length === 0 && ytResults.length === 0 ? (
         <p className="text-center py-10" style={{ color: 'var(--text-disabled)' }}>
           {query || genre || durationIdx > 0 || year
             ? 'Nenhum resultado encontrado'
@@ -189,14 +208,28 @@ function SearchContent() {
         </p>
       ) : (
         <>
-          <p className="text-sm mb-4" style={{ color: 'var(--text-disabled)' }}>
-            {totalResults} {totalResults === 1 ? 'resultado' : 'resultados'}
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {results.map((track) => (
-              <TrackCard key={track.id} track={track} tracks={results} />
-            ))}
-          </div>
+          {ytResults.length > 0 && !loading && (
+            <YouTubeResult items={ytResults} query={query} />
+          )}
+
+          {ytAvailable === false && query && (
+            <p className="text-xs mb-4" style={{ color: 'var(--text-disabled)' }}>
+              YouTube indisponível — configure a chave da API do YouTube para ativar
+            </p>
+          )}
+
+          {results.length > 0 && (
+            <>
+              <p className="text-sm mb-4" style={{ color: 'var(--text-disabled)' }}>
+                {totalResults} {totalResults === 1 ? 'resultado' : 'resultados'} no Jamendo
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {results.map((track) => (
+                  <TrackCard key={track.id} track={track} tracks={results} />
+                ))}
+              </div>
+            </>
+          )}
           {hasMore && <div ref={sentinelRef} className="h-10" />}
           {loading && results.length > 0 && (
             <div className="flex justify-center py-6">
