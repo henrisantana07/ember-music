@@ -103,18 +103,15 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const { queue, currentTrack, repeat, shuffle, shuffleOrder, currentShuffleIndex } = get()
     if (queue.length === 0) return
 
-    if (repeat === 'one') {
-      set({ progress: 0, duration: 0 })
-      return
-    }
-
     if (shuffle && shuffleOrder.length > 0) {
       const nextIdx = currentShuffleIndex + 1
       if (nextIdx >= shuffleOrder.length) {
         if (repeat === 'all') {
           const newOrder = generateShuffleOrder(queue.length, -1)
           set({ currentTrack: queue[newOrder[0]], currentShuffleIndex: 0, shuffleOrder: newOrder, progress: 0, duration: 0 })
+          return
         }
+        set({ isPlaying: false })
         return
       }
       const trackIdx = shuffleOrder[nextIdx]
@@ -130,6 +127,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       set({ currentTrack: queue[nextIndex], isPlaying: true, progress: 0, duration: 0 })
     } else if (repeat === 'all' && queue.length > 0) {
       set({ currentTrack: queue[0], isPlaying: true, progress: 0, duration: 0 })
+    } else {
+      set({ isPlaying: false })
     }
   },
 

@@ -43,23 +43,33 @@ export function Player() {
   useEffect(() => {
     const audio = audioRef.current
     if (!audio || !currentTrack) return
-    if (isPlaying) audio.play().catch(() => {})
-    else audio.pause()
-  }, [isPlaying, currentTrack])
 
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio || !currentTrack) return
+    const onCanPlay = () => {
+      if (usePlayerStore.getState().isPlaying) {
+        audio.play().catch(() => {})
+      }
+    }
+
+    const onEnded = () => {
+      const { repeat: currentRepeat } = usePlayerStore.getState()
+      if (currentRepeat === 'one') {
+        audio.currentTime = 0
+        audio.play().catch(() => {})
+        return
+      }
+      next()
+    }
 
     const onTimeUpdate = () => {
       if (!isDragging) setProgress(audio.currentTime)
     }
-    const onLoadedMetadata = () => setDuration(audio.duration)
-    const onEnded = () => next()
 
+    const onLoadedMetadata = () => setDuration(audio.duration)
+
+    audio.addEventListener('canplay', onCanPlay)
+    audio.addEventListener('ended', onEnded)
     audio.addEventListener('timeupdate', onTimeUpdate)
     audio.addEventListener('loadedmetadata', onLoadedMetadata)
-    audio.addEventListener('ended', onEnded)
 
     audio.volume = volume
     if (currentTrack.audio) {
@@ -68,11 +78,24 @@ export function Player() {
     }
 
     return () => {
+      audio.removeEventListener('canplay', onCanPlay)
+      audio.removeEventListener('ended', onEnded)
       audio.removeEventListener('timeupdate', onTimeUpdate)
       audio.removeEventListener('loadedmetadata', onLoadedMetadata)
-      audio.removeEventListener('ended', onEnded)
     }
-  }, [currentTrack])
+  }, [currentTrack?.id])
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio || !currentTrack) return
+    if (isPlaying) {
+      if (audio.readyState >= 2) {
+        audio.play().catch(() => {})
+      }
+    } else {
+      audio.pause()
+    }
+  }, [isPlaying])
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume
