@@ -10,16 +10,81 @@ import { FastAverageColor } from 'fast-average-color'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import type { Json } from '@/types/database'
+import type { Track } from '@/types/music'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import {
   ChevronDown, Play, Pause, SkipBack, SkipForward,
   Shuffle, Repeat, Repeat1, Volume2, Volume1, VolumeX,
-  Music, Trash2,
+  Music, Trash2, GripVertical,
 } from 'lucide-react'
 
 const fac = new FastAverageColor()
 
 function getAudioEl(): HTMLAudioElement | null {
   return document.querySelector('audio')
+}
+
+function SortableQueueItem({ track, index, isCurrent, isPlaying, onPlay, onRemove }: {
+  track: Track; index: number; isCurrent: boolean; isPlaying: boolean;
+  onPlay: () => void; onRemove: () => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `${index}-${track.id}` })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    borderLeft: isCurrent ? '3px solid' : undefined,
+    borderImage: isCurrent ? 'linear-gradient(180deg, var(--accent-from), var(--accent-to)) 1' : undefined,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-1.5 px-2 py-2 rounded-lg group transition-colors ${
+        isCurrent ? 'bg-[var(--accent-muted)]' : 'hover:bg-[var(--bg-elevated)]'
+      }`}
+    >
+      <button {...attributes} {...listeners} className="p-0.5 cursor-grab active:cursor-grabbing touch-none" style={{ color: 'var(--text-disabled)' }} aria-label="Arrastar">
+        <GripVertical className="w-3.5 h-3.5" />
+      </button>
+
+      {isCurrent && isPlaying ? (
+        <div className="w-10 h-10 rounded flex-shrink-0 overflow-hidden relative flex items-center justify-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
+          <div className="animate-waveform">
+            <span /><span /><span />
+          </div>
+        </div>
+      ) : (
+        <button onClick={onPlay} className="w-10 h-10 rounded flex-shrink-0 overflow-hidden relative">
+          {track.image ? (
+            <img src={track.image} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
+              <Music className="w-4 h-4" style={{ color: 'var(--text-disabled)' }} />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <Play className="w-4 h-4 text-white" fill="white" />
+          </div>
+        </button>
+      )}
+
+      <div className="min-w-0 flex-1">
+        <p className={`text-sm truncate ${isCurrent ? 'font-semibold' : ''}`} style={{ color: isCurrent ? 'var(--accent-from)' : 'var(--text-primary)' }}>
+          {track.name}
+        </p>
+        <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
+        <p className="text-[10px]" style={{ color: 'var(--text-disabled)' }}>{formatDuration(Math.floor(track.duration))}</p>
+      </div>
+
+      <button onClick={onRemove} className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-disabled)' }} title="Remover da fila">
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  )
 }
 
 export default function NowPlaying() {
@@ -38,7 +103,7 @@ export default function NowPlaying() {
     togglePlay, next, prev,
     setVolume, setProgress, setDuration,
     setRepeat, toggleShuffle,
-    removeFromQueue, clearQueue,
+    removeFromQueue, reorderQueue, clearQueue,
   } = usePlayerStore()
 
   useEffect(() => {
@@ -163,6 +228,18 @@ export default function NowPlaying() {
 
   const RepeatIcon = repeat === 'one' ? Repeat1 : repeat === 'all' ? Repeat : null
   const repeatLabel: Record<RepeatMode, string> = { none: 'Sem repeat', one: 'Repeat 1', all: 'Repeat tudo' }
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  )
+
+  function handleDragEnd(event: { active: { id: string | number }; over: { id: string | number } | null }) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const fromIndex = parseInt(String(active.id).split('-')[0], 10)
+    const toIndex = parseInt(String(over.id).split('-')[0], 10)
+    reorderQueue(fromIndex, toIndex)
+  }
 
   function playTrackAt(queueIndex: number) {
     const track = queue[queueIndex]
@@ -343,60 +420,30 @@ export default function NowPlaying() {
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin px-1 space-y-0.5">
-            {queue.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-                <Music className="w-10 h-10 mb-3" style={{ color: 'var(--text-disabled)' }} />
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Nenhuma faixa na fila</p>
-              </div>
-            ) : (
-              queue.map((track, index) => {
-                const isCurrent = track.id === currentTrack.id
-                return (
-                  <div
-                    key={`${track.id}-${index}`}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg group transition-colors ${
-                      isCurrent ? 'bg-[var(--accent-muted)]' : 'hover:bg-[var(--bg-elevated)]'
-                    }`}
-                    style={isCurrent ? { borderLeft: '3px solid', borderImage: 'linear-gradient(180deg, var(--accent-from), var(--accent-to)) 1' } : undefined}
-                  >
-                    <button
-                      onClick={() => playTrackAt(index)}
-                      className="w-10 h-10 rounded flex-shrink-0 overflow-hidden relative"
-                    >
-                      {track.image ? (
-                        <img src={track.image} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
-                          <Music className="w-4 h-4" style={{ color: 'var(--text-disabled)' }} />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Play className="w-4 h-4 text-white" fill="white" />
-                      </div>
-                    </button>
-
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-sm truncate ${isCurrent ? 'font-semibold' : ''}`} style={{ color: isCurrent ? 'var(--accent-from)' : 'var(--text-primary)' }}>
-                        {track.name}
-                      </p>
-                      <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
-                      <p className="text-[10px]" style={{ color: 'var(--text-disabled)' }}>{formatDuration(Math.floor(track.duration))}</p>
-                    </div>
-
-                    <button
-                      onClick={() => removeFromQueue(index)}
-                      className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                      style={{ color: 'var(--text-disabled)' }}
-                      title="Remover da fila"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={queue.map((_, i) => `${i}-${queue[i].id}`)} strategy={verticalListSortingStrategy}>
+              <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin px-1 space-y-0.5">
+                {queue.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+                    <Music className="w-10 h-10 mb-3" style={{ color: 'var(--text-disabled)' }} />
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Nenhuma faixa na fila</p>
                   </div>
-                )
-              })
-            )}
-          </div>
+                ) : (
+                  queue.map((track, index) => (
+                    <SortableQueueItem
+                      key={`${index}-${track.id}`}
+                      track={track}
+                      index={index}
+                      isCurrent={track.id === currentTrack.id}
+                      isPlaying={isPlaying}
+                      onPlay={() => playTrackAt(index)}
+                      onRemove={() => removeFromQueue(index)}
+                    />
+                  ))
+                )}
+              </div>
+            </SortableContext>
+          </DndContext>
 
           <div className="flex-none flex items-center gap-2 px-2 py-3 border-t border-white/5">
             <button
