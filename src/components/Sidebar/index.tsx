@@ -7,19 +7,31 @@ import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 
-const NAV_ITEMS = [
-  { href: '/', label: 'Início', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-  { href: '/favorites', label: 'Favoritos', icon: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z' },
-  { href: '/artists', label: 'Artistas', icon: 'M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z' },
-  { href: '/history', label: 'Histórico', icon: 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z' },
+interface FollowedArtist {
+  artist_id: string
+  artist_data: { id: string; name: string; image: string } | null
+  followed_at: string
+}
+
+const NAV_SECTION1 = [
+  { href: '/', label: 'Início', outline: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', fill: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+  { href: '/buscar', label: 'Explorar', outline: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z', fill: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' },
+  { href: '/favorites', label: 'Biblioteca', outline: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', fill: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
 ]
 
-export function Sidebar() {
+const LIBRARY_ITEMS = [
+  { href: '/history', label: 'Histórico', outline: 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z', fill: 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z' },
+  { href: '/favorites', label: 'Curtidas', outline: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z', fill: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z' },
+]
+
+export default function Sidebar() {
   const pathname = usePathname()
   const [user, setUser] = useState<User | null>(null)
-  const supabase = createClient()
-
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [collapsed, setCollapsed] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [artists, setArtists] = useState<FollowedArtist[]>([])
+  const supabase = createClient()
   const { playlists, fetchPlaylists } = usePlaylistsStore()
 
   useEffect(() => {
@@ -33,103 +45,353 @@ export function Sidebar() {
           .eq('id', data.user.id)
           .single()
         if (profile?.avatar_url) setAvatarUrl(profile.avatar_url)
+
+        const { data: followed } = await supabase
+          .from('followed_artists')
+          .select('*')
+          .eq('user_id', data.user.id)
+          .order('followed_at', { ascending: false })
+        if (followed) setArtists(followed as unknown as FollowedArtist[])
       }
     })
   }, [])
 
-  return (
-    <aside className="w-60 bg-surface flex-shrink-0 flex flex-col hidden md:flex" style={{ backgroundColor: 'var(--bg-surface)' }}>
-      <div className="p-6">
-        <Link href="/">
-          <h1 className="text-2xl font-bold transition-all duration-300 hover:scale-[1.03] hover:opacity-90">
+  function isActive(href: string) {
+    if (href === '/') return pathname === '/'
+    return pathname.startsWith(href)
+  }
+
+  function NavIcon({ icon, active }: { icon: { outline: string; fill: string }; active: boolean }) {
+    return (
+      <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d={active ? icon.fill : icon.outline} />
+      </svg>
+    )
+  }
+
+  function NavLink({ href, label, icon }: { href: string; label: string; icon: { outline: string; fill: string } }) {
+    const active = isActive(href)
+    return (
+      <Link
+        href={href}
+        aria-current={active ? 'page' : undefined}
+        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
+          collapsed ? 'justify-center py-3 px-2' : ''
+        } ${
+          active
+            ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
+            : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
+        }`}
+        title={collapsed ? label : undefined}
+      >
+        <NavIcon icon={icon} active={active} />
+        {!collapsed && <span>{label}</span>}
+      </Link>
+    )
+  }
+
+  function LibraryLink({ href, label, icon }: { href: string; label: string; icon: { outline: string; fill: string } }) {
+    const active = isActive(href)
+    return (
+      <Link
+        href={href}
+        aria-current={active ? 'page' : undefined}
+        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
+          active
+            ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
+            : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
+        }`}
+      >
+        <NavIcon icon={icon} active={active} />
+        <span>{label}</span>
+      </Link>
+    )
+  }
+
+  const sidebarContent = (
+    <>
+      <div className="flex-none flex items-center h-14 px-4 gap-3">
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="p-1 rounded-lg hover:bg-white/[0.06] transition-colors duration-200"
+          aria-label={collapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
+        >
+          <svg className="w-5 h-5" style={{ color: 'var(--text-primary)' }} viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+          </svg>
+        </button>
+        {!collapsed && (
+          <Link href="/" className="text-lg font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             <span className="gradient-accent-text">Ember</span>
-            <span className="text-primary"> Music</span>
-          </h1>
-        </Link>
+            <span> Music</span>
+          </Link>
+        )}
       </div>
 
-      <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
-        {NAV_ITEMS.map((item) => {
-          const isActive = pathname === item.href
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all duration-200 relative group ${
-                isActive
-                  ? 'text-[var(--text-primary)]'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
-              }`}
-            >
-              {isActive && (
-                <span
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full transition-all duration-200"
-                  style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
-                />
-              )}
-              <svg className="w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
-              </svg>
-              {item.label}
-            </Link>
-          )
-        })}
+      <nav className="flex-none px-2 space-y-0.5">
+        {NAV_SECTION1.map(item => (
+          <NavLink key={item.href} href={item.href} label={item.label} icon={{ outline: item.outline, fill: item.fill }} />
+        ))}
+      </nav>
 
-        {playlists.length > 0 && (
-          <div className="pt-4 pb-1">
-            <p className="px-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-disabled)' }}>
-              Playlists
+      <hr className="mx-4 my-2 border-white/5" />
+
+      {!collapsed && (
+        <div className="flex-none px-2 space-y-0.5">
+          <p className="px-3 pt-1 pb-0.5 text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
+            Sua Biblioteca
+          </p>
+          {LIBRARY_ITEMS.map(item => (
+            <LibraryLink key={item.href} href={item.href} label={item.label} icon={{ outline: item.outline, fill: item.fill }} />
+          ))}
+          {playlists.length > 0 && (
+            <div className="pt-2 space-y-0.5">
+              {playlists.map(pl => {
+                const active = pathname === `/playlists/${pl.id}`
+                return (
+                  <Link
+                    key={pl.id}
+                    href={`/playlists/${pl.id}`}
+                    aria-current={active ? 'page' : undefined}
+                    className={`flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
+                      active
+                        ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
+                        : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                    </svg>
+                    <span className="truncate">{pl.name}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      <hr className={`mx-4 my-2 border-white/5 ${collapsed ? 'hidden' : ''}`} />
+
+      {!collapsed && (
+        <div className="flex-1 overflow-y-auto scrollbar-thin px-2 space-y-0.5">
+          {artists.length > 0 && (
+            <p className="px-3 pt-1 pb-0.5 text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
+              Artistas
             </p>
-          </div>
-        )}
+          )}
+          {artists.map(artist => {
+            const active = pathname === `/artists/${artist.artist_id}`
+            return (
+              <Link
+                key={artist.artist_id}
+                href={`/artists/${artist.artist_id}`}
+                aria-current={active ? 'page' : undefined}
+                className={`flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
+                  active
+                    ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
+                    : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                <div className="relative w-8 h-8 flex-shrink-0">
+                  {artist.artist_data?.image ? (
+                    <img src={artist.artist_data.image} alt="" className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-white/10 flex items-center justify-center text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                      {artist.artist_data?.name?.[0] ?? '?'}
+                    </div>
+                  )}
+                </div>
+                <span className="truncate">{artist.artist_data?.name ?? 'Artista'}</span>
+              </Link>
+            )
+          })}
+          {artists.length === 0 && (
+            <div className="px-3 py-8 text-center text-xs" style={{ color: 'var(--text-disabled)' }}>
+              Siga artistas para vê-los aqui
+            </div>
+          )}
+        </div>
+      )}
 
-        {playlists.map((pl) => {
-          const isActive = pathname === `/playlists/${pl.id}`
-          return (
+      {!collapsed && (
+        <div className="flex-none border-t border-white/5">
+          {user && (
             <Link
-              key={pl.id}
-              href={`/playlists/${pl.id}`}
-              className={`flex items-center gap-3 px-3 py-1.5 rounded-md text-sm transition-all duration-200 relative group ${
-                isActive
-                  ? 'text-[var(--text-primary)]'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
-              }`}
+              href="/profile"
+              className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-200 hover:bg-white/[0.06] rounded-lg mx-2 my-1"
+              style={{ color: 'var(--text-secondary)' }}
             >
-              {isActive && (
-                <span
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full transition-all duration-200"
-                  style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
-                />
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+              ) : (
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}>
+                  {user.email?.[0].toUpperCase()}
+                </div>
               )}
-              <svg className="w-4 h-4 flex-shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-              </svg>
-              <span className="truncate">{pl.name}</span>
+              <span className="truncate">{user.email?.split('@')[0]}</span>
             </Link>
+          )}
+        </div>
+      )}
+    </>
+  )
+
+  return (
+    <>
+      <aside
+        className={`hidden md:flex flex-col h-full bg-[var(--bg-surface)] border-r border-white/5 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] flex-shrink-0 ${
+          collapsed ? 'w-[72px]' : 'w-[240px]'
+        }`}
+      >
+        {sidebarContent}
+      </aside>
+
+      <nav className="fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around bg-[var(--bg-base)] border-t border-white/10 z-50 md:hidden safe-area-bottom">
+ {NAV_SECTION1.map(item => {
+          const active = isActive(item.href)
+          const isLibrary = item.href === '/favorites'
+          return (
+            <button
+              key={item.href}
+              onClick={() => {
+                if (isLibrary) { setDrawerOpen(true); return }
+                window.location.href = item.href
+              }}
+              className="flex flex-col items-center justify-center gap-0.5 w-full h-full pt-2"
+            >
+              <svg className={`w-5 h-5 ${active ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`} viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d={active ? item.fill : item.outline} />
+              </svg>
+              <span className={`text-[10px] ${active ? 'font-bold text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>{item.label}</span>
+            </button>
           )
         })}
       </nav>
 
-      {user && (
-        <div className="p-4 border-t border-white/5">
-          <Link
-            href="/profile"
-            className="flex items-center gap-3 text-sm text-secondary hover:text-primary transition-colors"
-          >
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
-            ) : (
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-                style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
-              >
-                {user.email?.[0].toUpperCase()}
+      {drawerOpen && (
+        <>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden" onClick={() => setDrawerOpen(false)} />
+          <aside className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-[300px] bg-[var(--bg-surface)] z-50 flex flex-col md:hidden shadow-2xl">
+            <div className="flex items-center justify-between h-14 px-4 flex-none">
+              <Link href="/" className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                <span className="gradient-accent-text">Ember</span>
+                <span> Music</span>
+              </Link>
+              <button onClick={() => setDrawerOpen(false)} className="p-1 rounded-lg hover:bg-white/[0.06] transition-colors duration-200">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--text-primary)' }}>
+                  <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <nav className="flex-none px-2 space-y-0.5">
+              {NAV_SECTION1.map(item => (
+                <div key={item.href} onClick={() => { setDrawerOpen(false); window.location.href = item.href }}>
+                  <NavLink href={item.href} label={item.label} icon={{ outline: item.outline, fill: item.fill }} />
+                </div>
+              ))}
+            </nav>
+
+            <hr className="mx-4 my-2 border-white/5 flex-none" />
+
+            <div className="flex-none px-2 space-y-0.5">
+              <p className="px-3 pt-1 pb-0.5 text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
+                Sua Biblioteca
+              </p>
+              {LIBRARY_ITEMS.map(item => (
+                <div key={item.href} onClick={() => { setDrawerOpen(false); window.location.href = item.href }}>
+                  <LibraryLink href={item.href} label={item.label} icon={{ outline: item.outline, fill: item.fill }} />
+                </div>
+              ))}
+              {playlists.length > 0 && (
+                <div className="pt-2 space-y-0.5">
+                  {playlists.map(pl => {
+                    const active = pathname === `/playlists/${pl.id}`
+                    return (
+                      <div key={pl.id} onClick={() => { setDrawerOpen(false); window.location.href = `/playlists/${pl.id}` }}>
+                        <Link
+                          href={`/playlists/${pl.id}`}
+                          aria-current={active ? 'page' : undefined}
+                          className={`flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
+                            active
+                              ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
+                              : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
+                          }`}
+                          onClick={() => setDrawerOpen(false)}
+                        >
+                          <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                          </svg>
+                          <span className="truncate">{pl.name}</span>
+                        </Link>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            <hr className="mx-4 my-2 border-white/5 flex-none" />
+
+            <div className="flex-1 overflow-y-auto scrollbar-thin px-2 space-y-0.5">
+              {artists.length > 0 && (
+                <p className="px-3 pt-1 pb-0.5 text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
+                  Artistas
+                </p>
+              )}
+              {artists.map(artist => {
+                const active = pathname === `/artists/${artist.artist_id}`
+                return (
+                  <div key={artist.artist_data?.id ?? artist.artist_id} onClick={() => { setDrawerOpen(false); window.location.href = `/artists/${artist.artist_id}` }}>
+                    <Link
+                      href={`/artists/${artist.artist_id}`}
+                      aria-current={active ? 'page' : undefined}
+                      className={`flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
+                        active
+                          ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
+                          : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
+                      }`}
+                      onClick={() => setDrawerOpen(false)}
+                    >
+                      <div className="relative w-8 h-8 flex-shrink-0">
+                        {artist.artist_data?.image ? (
+                          <img src={artist.artist_data.image} alt="" className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full rounded-full bg-white/10 flex items-center justify-center text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                            {artist.artist_data?.name?.[0] ?? '?'}
+                          </div>
+                        )}
+                      </div>
+                      <span className="truncate">{artist.artist_data?.name ?? 'Artista'}</span>
+                    </Link>
+                  </div>
+                )
+              })}
+            </div>
+
+            {user && (
+              <div className="flex-none border-t border-white/5 px-2 py-2">
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors duration-200 hover:bg-white/[0.06]"
+                  style={{ color: 'var(--text-secondary)' }}
+                  onClick={() => setDrawerOpen(false)}
+                >
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}>
+                      {user.email?.[0].toUpperCase()}
+                    </div>
+                  )}
+                  <span className="truncate">{user.email?.split('@')[0]}</span>
+                </Link>
               </div>
             )}
-            <span className="truncate">{user.email?.split('@')[0]}</span>
-          </Link>
-        </div>
+          </aside>
+        </>
       )}
-    </aside>
-  )
+    </>
+  ) 
 }
