@@ -262,7 +262,7 @@ export default function ConfiguracoesPage() {
       }
 
       const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath)
-      const publicUrl = urlData.publicUrl
+      const publicUrl = urlData.publicUrl + '?v=' + Date.now()
       const { error: updateError } = await supabase.from('profiles').upsert({ id: user.id, avatar_url: publicUrl })
       if (!updateError) {
         setAvatarUrl(publicUrl)
