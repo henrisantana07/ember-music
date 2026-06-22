@@ -233,6 +233,37 @@ export default function NowPlaying() {
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   )
 
+  const touchStartY = useRef(0)
+  const touchDelta = useRef(0)
+  const [swipeOffset, setSwipeOffset] = useState(0)
+
+  function handleTouchStart(e: React.TouchEvent) {
+    const target = e.target as HTMLElement
+    if (target.closest('.queue-scroll')) return
+    touchStartY.current = e.touches[0].clientY
+    touchDelta.current = 0
+  }
+
+  function handleTouchMove(e: React.TouchEvent) {
+    const target = e.target as HTMLElement
+    if (target.closest('.queue-scroll')) return
+    const dy = e.touches[0].clientY - touchStartY.current
+    if (dy <= 0) { setSwipeOffset(0); return }
+    touchDelta.current = dy
+    setSwipeOffset(dy)
+  }
+
+  function handleTouchEnd() {
+    if (touchDelta.current > 100) {
+      setSwipeOffset(window.innerHeight)
+      setTimeout(() => router.back(), 250)
+    } else {
+      setSwipeOffset(0)
+    }
+    touchStartY.current = 0
+    touchDelta.current = 0
+  }
+
   function handleDragEnd(event: { active: { id: string | number }; over: { id: string | number } | null }) {
     const { active, over } = event
     if (!over || active.id === over.id) return
@@ -251,7 +282,15 @@ export default function NowPlaying() {
   return (
     <div
       className="h-full flex flex-col animate-slide-up overflow-hidden"
-      style={{ background: bgGradient, transition: 'background 800ms ease' }}
+      style={{
+        background: bgGradient,
+        transition: `background 800ms ease${swipeOffset > 0 ? '' : ', transform 300ms cubic-bezier(0.32, 0.72, 0, 1)'}`,
+        transform: swipeOffset > 0 ? `translateY(${swipeOffset}px)` : undefined,
+        touchAction: 'pan-x',
+      }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       <header className="flex items-center justify-between px-4 md:px-6 h-14 flex-none">
         <button onClick={() => router.back()} className="p-2 rounded-full hover:bg-white/[0.06] transition-colors" style={{ color: 'var(--text-primary)' }} aria-label="Fechar">
@@ -422,7 +461,7 @@ export default function NowPlaying() {
 
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={queue.map((_, i) => `${i}-${queue[i].id}`)} strategy={verticalListSortingStrategy}>
-              <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin px-1 space-y-0.5">
+              <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin px-1 space-y-0.5 queue-scroll">
                 {queue.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center px-4">
                     <Music className="w-10 h-10 mb-3" style={{ color: 'var(--text-disabled)' }} />
