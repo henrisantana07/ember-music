@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { Sidebar } from '@/components/Sidebar'
+import Sidebar from '@/components/Sidebar'
 import { Player } from '@/components/Player'
 import { Topbar } from '@/components/Topbar'
 import { PageTransition } from '@/components/PageTransition'
