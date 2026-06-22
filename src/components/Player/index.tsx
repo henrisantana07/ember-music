@@ -8,7 +8,7 @@ import { formatDuration } from '@/lib/spotify'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { savePlaybackHistory } from '@/lib/playback-history'
-import { ChevronUp } from 'lucide-react'
+import { ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause } from 'lucide-react'
 
 export function Player() {
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -197,13 +197,9 @@ export function Player() {
             style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
           >
             {isPlaying ? (
-              <svg className="w-4 h-4" style={{ color: 'var(--bg-base)' }} fill="currentColor" viewBox="0 0 24 24">
-                <path d="M6 4h4v16H6zM14 4h4v16h-4z" />
-              </svg>
+              <Pause className="w-4 h-4" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
             ) : (
-              <svg className="w-4 h-4" style={{ color: 'var(--bg-base)' }} fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
+              <Play className="w-4 h-4" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
             )}
           </button>
           <button onClick={(e) => { e.stopPropagation(); toggleMiniPlayer() }} className="p-1" style={{ color: 'var(--text-disabled)' }}>
@@ -273,35 +269,25 @@ export function Player() {
               className="p-1.5 transition-colors"
               style={{ color: shuffle ? 'var(--accent-from)' : 'var(--text-secondary)' }}
               title={shuffle ? 'Desativar shuffle' : 'Ativar shuffle'}>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
+              <Shuffle className="w-4 h-4" />
             </button>
 
-            <button onClick={prev} className="text-secondary hover:text-primary transition-colors p-1">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
-              </svg>
+            <button onClick={prev} className="p-1.5 transition-colors" style={{ color: 'var(--text-secondary)' }} title="Anterior">
+              <SkipBack className="w-4 h-4" />
             </button>
 
             <button onClick={togglePlay}
               className="rounded-full p-2 flex items-center justify-center"
               style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}>
               {isPlaying ? (
-                <svg className="w-5 h-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M6 4h4v16H6zM14 4h4v16h-4z" />
-                </svg>
+                <Pause className="w-5 h-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
               ) : (
-                <svg className="w-5 h-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
+                <Play className="w-5 h-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
               )}
             </button>
 
-            <button onClick={next} className="text-secondary hover:text-primary transition-colors p-1">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
-              </svg>
+            <button onClick={next} className="p-1.5 transition-colors" style={{ color: 'var(--text-secondary)' }} title="Próxima">
+              <SkipForward className="w-4 h-4" />
             </button>
 
             <button onClick={() => {
@@ -312,11 +298,10 @@ export function Player() {
               className="p-1.5 transition-colors relative"
               style={{ color: repeat !== 'none' ? 'var(--accent-from)' : 'var(--text-secondary)' }}
               title={repeatLabel[repeat]}>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              {repeat === 'one' && (
-                <span className="absolute -top-0.5 -right-0.5 text-[8px] font-bold" style={{ color: 'var(--accent-from)' }}>1</span>
+              {repeat === 'one' ? (
+                <Repeat1 className="w-4 h-4" />
+              ) : (
+                <Repeat className="w-4 h-4" />
               )}
             </button>
           </div>
