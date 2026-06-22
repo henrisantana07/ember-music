@@ -30,9 +30,21 @@ export const viewport: Viewport = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const themeScript = `
+    (function() {
+      try {
+        var theme = localStorage.getItem('ember-theme');
+        if (theme === 'light') {
+          document.documentElement.classList.add('theme-light');
+        }
+      } catch(e) {}
+    })();
+  `
+
   return (
-    <html lang="pt-BR" className={inter.variable}>
+    <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
       <body className="flex flex-col h-screen overflow-hidden">
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <KeyboardShortcuts />
         <div className="flex flex-1 overflow-hidden">
           <Sidebar />

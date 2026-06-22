@@ -155,6 +155,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           created_at: string | null
           display_name: string | null
           id: string
@@ -162,6 +163,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string | null
           display_name?: string | null
           id: string
@@ -169,10 +171,59 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string | null
           display_name?: string | null
           id?: string
           preferred_genre?: string | null
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          id: string
+          theme: string | null
+          language: string | null
+          audio_quality: string | null
+          autoplay: boolean | null
+          crossfade: boolean | null
+          crossfade_duration: number | null
+          volume_normalization: boolean | null
+          notif_favorite: boolean | null
+          notif_download: boolean | null
+          notif_error: boolean | null
+          notif_news: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          id: string
+          theme?: string | null
+          language?: string | null
+          audio_quality?: string | null
+          autoplay?: boolean | null
+          crossfade?: boolean | null
+          crossfade_duration?: number | null
+          volume_normalization?: boolean | null
+          notif_favorite?: boolean | null
+          notif_download?: boolean | null
+          notif_error?: boolean | null
+          notif_news?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          theme?: string | null
+          language?: string | null
+          audio_quality?: string | null
+          autoplay?: boolean | null
+          crossfade?: boolean | null
+          crossfade_duration?: number | null
+          volume_normalization?: boolean | null
+          notif_favorite?: boolean | null
+          notif_download?: boolean | null
+          notif_error?: boolean | null
+          notif_news?: boolean | null
+          updated_at?: string | null
         }
         Relationships: []
       }

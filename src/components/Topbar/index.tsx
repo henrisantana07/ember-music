@@ -144,6 +144,13 @@ export function Topbar() {
               Perfil
             </button>
             <button
+              onClick={() => { router.push('/configuracoes'); setShowDropdown(false) }}
+              className="w-full text-left px-4 py-2 text-sm hover:bg-white/5 transition-colors"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              Configurações
+            </button>
+            <button
               onClick={handleLogout}
               className="w-full text-left px-4 py-2 text-sm hover:bg-white/5 transition-colors"
               style={{ color: 'var(--error)' }}
