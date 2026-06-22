@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 
@@ -32,6 +32,9 @@ export default function Sidebar() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [artists, setArtists] = useState<FollowedArtist[]>([])
   const supabase = createClient()
+  const router = useRouter()
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [showDropdown, setShowDropdown] = useState(false)
   const { playlists, fetchPlaylists } = usePlaylistsStore()
 
   useEffect(() => {
@@ -39,13 +42,7 @@ export default function Sidebar() {
       if (data.user) {
         setUser(data.user)
         fetchPlaylists()
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('avatar_url')
-          .eq('id', data.user.id)
-          .single()
-        if (profile?.avatar_url) setAvatarUrl(profile.avatar_url)
-
+        await fetchAvatar(data.user.id)
         const { data: followed } = await supabase
           .from('followed_artists')
           .select('*')
@@ -54,7 +51,40 @@ export default function Sidebar() {
         if (followed) setArtists(followed as unknown as FollowedArtist[])
       }
     })
+
+    function onAvatarUpdated() {
+      supabase.auth.getUser().then(({ data }) => {
+        if (data.user) fetchAvatar(data.user.id)
+      })
+    }
+    window.addEventListener('avatar-updated', onAvatarUpdated)
+    return () => window.removeEventListener('avatar-updated', onAvatarUpdated)
   }, [])
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  async function fetchAvatar(userId: string) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('avatar_url')
+      .eq('id', userId)
+      .single()
+    if (profile?.avatar_url) setAvatarUrl(profile.avatar_url)
+  }
+
+  async function handleLogout() {
+    await supabase.auth.signOut()
+    router.push('/login')
+    setShowDropdown(false)
+  }
 
   function isActive(href: string) {
     if (href === '/') return pathname === '/'
@@ -215,22 +245,55 @@ export default function Sidebar() {
       )}
 
       {!collapsed && (
-        <div className="flex-none border-t border-white/5">
+        <div className="flex-none border-t border-white/5 px-2 py-1">
           {user && (
-            <Link
-              href="/profile"
-              className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-200 hover:bg-white/[0.06] rounded-lg mx-2 my-1"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
-              ) : (
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}>
-                  {user.email?.[0].toUpperCase()}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="flex items-center gap-3 w-full px-2 py-2 rounded-lg text-sm transition-colors duration-200 hover:bg-white/[0.06]"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}>
+                    {user.email?.[0].toUpperCase()}
+                  </div>
+                )}
+                <span className="truncate text-left flex-1">{user.email?.split('@')[0]}</span>
+                <svg className="w-4 h-4 transition-transform duration-200" style={{ transform: showDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {showDropdown && (
+                <div
+                  className="absolute bottom-full left-0 right-0 mb-1 rounded-lg shadow-lg py-1 z-50 border border-white/5"
+                  style={{ backgroundColor: 'var(--bg-elevated)' }}
+                >
+                  <button
+                    onClick={() => { router.push('/configuracoes'); setShowDropdown(false) }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-white/5 transition-colors flex items-center gap-2"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Configurações
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-white/5 transition-colors flex items-center gap-2"
+                    style={{ color: 'var(--error)' }}
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Sair
+                  </button>
                 </div>
               )}
-              <span className="truncate">{user.email?.split('@')[0]}</span>
-            </Link>
+            </div>
           )}
         </div>
       )}
@@ -371,22 +434,23 @@ export default function Sidebar() {
             </div>
 
             {user && (
-              <div className="flex-none border-t border-white/5 px-2 py-2">
-                <Link
-                  href="/profile"
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors duration-200 hover:bg-white/[0.06]"
-                  style={{ color: 'var(--text-secondary)' }}
-                  onClick={() => setDrawerOpen(false)}
-                >
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}>
-                      {user.email?.[0].toUpperCase()}
-                    </div>
-                  )}
-                  <span className="truncate">{user.email?.split('@')[0]}</span>
-                </Link>
+              <div className="flex-none border-t border-white/5 px-2 py-1">
+                <div className="relative">
+                  <button
+                    onClick={() => { router.push('/configuracoes'); setDrawerOpen(false) }}
+                    className="flex items-center gap-3 w-full px-2 py-2 rounded-lg text-sm transition-colors duration-200 hover:bg-white/[0.06]"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}>
+                        {user.email?.[0].toUpperCase()}
+                      </div>
+                    )}
+                    <span className="truncate text-left flex-1">{user.email?.split('@')[0]}</span>
+                  </button>
+                </div>
               </div>
             )}
           </aside>
