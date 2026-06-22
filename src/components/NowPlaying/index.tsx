@@ -95,6 +95,8 @@ export default function NowPlaying() {
   const [showQueueOnMobile, setShowQueueOnMobile] = useState(false)
   const [isFav, setIsFav] = useState(false)
   const [user, setUser] = useState<User | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>(null)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Track[]>([])
@@ -251,6 +253,30 @@ export default function NowPlaying() {
     }
   }
 
+  async function handleDownload() {
+    if (!currentTrack?.audio) { showToast('Áudio não disponível para download'); return }
+    try {
+      const res = await fetch(currentTrack.audio)
+      if (!res.ok) throw new Error('download failed')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${currentTrack.name} - ${currentTrack.artist_name}.mp3`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      showToast('Download concluído!')
+    } catch { showToast('Erro ao baixar. Tente novamente.') }
+  }
+
+  function showToast(msg: string) {
+    setToast(msg)
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setToast(null), 3000)
+  }
+
   const RepeatIcon = repeat === 'one' ? Repeat1 : repeat === 'all' ? Repeat : null
   const repeatLabel: Record<RepeatMode, string> = { none: 'Sem repeat', one: 'Repeat 1', all: 'Repeat tudo' }
 
@@ -363,6 +389,11 @@ export default function NowPlaying() {
           </div>
 
           <div className="flex items-center gap-4" style={{ color: 'var(--text-secondary)' }}>
+            <button onClick={handleDownload} className="p-2 transition-colors hover:text-[var(--text-primary)]" aria-label="Download" title="Baixar música">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </button>
             {user && (
               <button onClick={handleFavorite} className="p-2 transition-colors" aria-label="Favoritar">
                 <svg
@@ -384,6 +415,12 @@ export default function NowPlaying() {
               </button>
             )}
           </div>
+
+          {toast && (
+            <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-sm shadow-lg animate-slide-up" style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
+              {toast}
+            </div>
+          )}
 
           <div className="w-full max-w-[400px] space-y-1">
             <div

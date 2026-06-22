@@ -85,6 +85,18 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ results: trackItems.map(mapTrack) })
       }
 
+      case 'genres': {
+        const data = await deezerFetch(`/genre`) as { data?: Record<string, unknown>[] }
+        const items = data.data ?? []
+        return NextResponse.json({ results: items.map(mapGenre) })
+      }
+
+      case 'charts/artists': {
+        const data = await deezerFetch(`/chart/0/artists?limit=${limit}`) as { data?: Record<string, unknown>[] }
+        const items = data.data ?? []
+        return NextResponse.json({ results: items.map(mapArtist) })
+      }
+
       default:
         return NextResponse.json({ error: 'Unknown endpoint' }, { status: 400 })
     }
@@ -146,5 +158,13 @@ function mapPlaylist(item: Record<string, unknown>) {
     owner: (creator?.name as string) ?? '',
     tracks_total: (item.nb_tracks as number) ?? 0,
     url: (item.link as string) ?? '',
+  }
+}
+
+function mapGenre(item: Record<string, unknown>) {
+  return {
+    id: String(item.id ?? ''),
+    name: (item.name as string) ?? '',
+    image: (item.picture_medium as string) ?? '',
   }
 }

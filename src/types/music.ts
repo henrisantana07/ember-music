@@ -31,6 +31,12 @@ export interface Artist {
   url: string
 }
 
+export interface Genre {
+  id: string
+  name: string
+  image: string
+}
+
 export interface Playlist {
   id: string
   name: string
