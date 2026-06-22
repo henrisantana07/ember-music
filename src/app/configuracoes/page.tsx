@@ -147,13 +147,15 @@ export default function ConfiguracoesPage() {
 
   // --- Auto-save helpers ---
   const saveProfileField = useCallback(
-    async (field: 'display_name' | 'bio', value: string) => {
+    async (field: 'display_name' | 'bio' | 'preferred_genre', value: string) => {
       if (!user) return
       setProfileSaving(true)
       setProfileSaved(false)
-      const { error } = field === 'display_name'
-        ? await supabase.from('profiles').upsert({ id: user.id, display_name: value })
-        : await supabase.from('profiles').upsert({ id: user.id, bio: value })
+      const payload: Record<string, string> = { id: user.id }
+      if (field === 'display_name') payload.display_name = value
+      else if (field === 'bio') payload.bio = value
+      else payload.preferred_genre = value
+      const { error } = await supabase.from('profiles').upsert(payload as any)
       setProfileSaving(false)
       if (!error) {
         setProfileSaved(true)
@@ -183,6 +185,7 @@ export default function ConfiguracoesPage() {
   // --- Text field debounce ---
   const nameTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const bioTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const genreTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function handleNameChange(v: string) {
     if (v.length > 50) return
@@ -196,6 +199,12 @@ export default function ConfiguracoesPage() {
     setBio(v)
     if (bioTimer.current) clearTimeout(bioTimer.current)
     bioTimer.current = setTimeout(() => saveProfileField('bio', v), 800)
+  }
+
+  function handleGenreChange(v: string) {
+    setPreferredGenre(v)
+    if (genreTimer.current) clearTimeout(genreTimer.current)
+    genreTimer.current = setTimeout(() => saveProfileField('preferred_genre', v), 800)
   }
 
   // --- Avatar crop ---
@@ -444,6 +453,25 @@ export default function ConfiguracoesPage() {
                   onBlur={(e) => e.target.style.borderColor = 'var(--bg-elevated)'}
                 />
                 <p className="text-xs mt-1 text-right" style={{ color: 'var(--text-secondary)' }}>{displayName.length}/50</p>
+              </div>
+
+              {/* Gênero favorito */}
+              <div className="mb-5">
+                <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-primary)' }}>Gênero musical favorito</label>
+                <input
+                  type="text"
+                  value={preferredGenre}
+                  onChange={(e) => handleGenreChange(e.target.value)}
+                  placeholder="Ex: rock, jazz, electronic…"
+                  className="w-full px-4 py-2.5 rounded-lg border text-sm transition-colors focus:outline-none"
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderColor: 'var(--bg-elevated)',
+                    color: 'var(--text-primary)',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = 'var(--accent-solid)'}
+                  onBlur={(e) => e.target.style.borderColor = 'var(--bg-elevated)'}
+                />
               </div>
 
               {/* Bio */}
