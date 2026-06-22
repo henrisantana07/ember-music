@@ -1,12 +1,14 @@
 'use client'
 
 import { useRef, useEffect, useState, useCallback } from 'react'
+import Link from 'next/link'
 import { usePlayerStore } from '@/lib/store'
 import type { RepeatMode } from '@/lib/store'
 import { formatDuration } from '@/lib/spotify'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { savePlaybackHistory } from '@/lib/playback-history'
+import { ChevronUp } from 'lucide-react'
 
 export function Player() {
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -157,11 +159,12 @@ export function Player() {
     return (
       <>
         <audio ref={audioRef} />
-        <footer className="h-14 md:hidden flex-shrink-0 flex items-center px-3 gap-3 border-t border-white/5 cursor-pointer"
+        <footer className="h-14 md:hidden flex-shrink-0 flex items-center px-3 gap-3 border-t border-white/5"
           style={{ backgroundColor: 'var(--bg-elevated)' }}
-          onClick={toggleMiniPlayer}
         >
-          <img src={currentTrack.image} alt="" className="w-9 h-9 rounded object-cover flex-shrink-0" />
+          <Link href="/reproducao" className="flex-shrink-0">
+            <img src={currentTrack.image} alt="" className="w-9 h-9 rounded object-cover flex-shrink-0" />
+          </Link>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold truncate">{currentTrack.name}</p>
             <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{currentTrack.artist_name}</p>
@@ -185,6 +188,9 @@ export function Player() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
             </svg>
           </button>
+          <Link href="/reproducao" onClick={(e) => e.stopPropagation()} className="p-1" style={{ color: 'var(--text-disabled)' }} title="Abrir player">
+            <ChevronUp className="w-5 h-5" />
+          </Link>
         </footer>
       </>
     )
@@ -221,7 +227,9 @@ export function Player() {
         style={{ backgroundColor: 'var(--bg-elevated)' }}
       >
         <div className="flex items-center gap-3 w-72">
-          <img src={currentTrack.image} alt={currentTrack.name} className="w-12 h-12 rounded object-cover flex-shrink-0" />
+          <Link href="/reproducao" className="flex-shrink-0">
+            <img src={currentTrack.image} alt={currentTrack.name} className="w-12 h-12 rounded object-cover flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer" />
+          </Link>
           <div className="min-w-0">
             <p className="text-sm font-semibold truncate">{currentTrack.name}</p>
             <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{currentTrack.artist_name}</p>
@@ -323,6 +331,10 @@ export function Player() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
+
+          <Link href="/reproducao" className="hidden md:flex p-1.5 transition-colors" style={{ color: 'var(--text-secondary)' }} title="Abrir player">
+            <ChevronUp className="w-5 h-5" />
+          </Link>
         </div>
       </footer>
     </>

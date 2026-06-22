@@ -34,6 +34,8 @@ interface PlayerState {
   setProgress: (progress: number) => void
   setDuration: (duration: number) => void
   addToQueue: (track: Track) => void
+  removeFromQueue: (index: number) => void
+  reorderQueue: (fromIndex: number, toIndex: number) => void
   clearQueue: () => void
   setCurrentPlaylist: (id: string | null, name: string | null) => void
   setRepeat: (mode: RepeatMode) => void
@@ -155,6 +157,22 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   setDuration: (duration) => set({ duration }),
 
   addToQueue: (track) => set((s) => ({ queue: [...s.queue, track], originalQueue: [...s.originalQueue, track] })),
+  removeFromQueue: (index) => set((s) => {
+    const newQueue = [...s.queue]
+    newQueue.splice(index, 1)
+    const newOriginal = [...s.originalQueue]
+    newOriginal.splice(index, 1)
+    return { queue: newQueue, originalQueue: newOriginal }
+  }),
+  reorderQueue: (fromIndex, toIndex) => set((s) => {
+    const newQueue = [...s.queue]
+    const [moved] = newQueue.splice(fromIndex, 1)
+    newQueue.splice(toIndex, 0, moved)
+    const newOriginal = [...s.originalQueue]
+    const [movedOrig] = newOriginal.splice(fromIndex, 1)
+    newOriginal.splice(toIndex, 0, movedOrig)
+    return { queue: newQueue, originalQueue: newOriginal }
+  }),
   clearQueue: () => set({ queue: [], originalQueue: [], shuffleOrder: [], currentShuffleIndex: 0, currentPlaylistId: null, currentPlaylistName: null }),
 
   setCurrentPlaylist: (id, name) => set({ currentPlaylistId: id, currentPlaylistName: name }),
