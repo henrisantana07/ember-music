@@ -38,7 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Sidebar />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Topbar />
-            <main className="flex-1 overflow-y-auto scrollbar-thin px-4 md:px-6 py-5 pb-24 md:pb-5">
+            <main className="flex-1 overflow-y-auto scrollbar-thin px-4 md:px-6 py-5 pb-24 md:pb-5 flex flex-col">
               <PageTransition>
                 {children}
               </PageTransition>
