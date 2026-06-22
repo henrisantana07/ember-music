@@ -266,6 +266,7 @@ export default function ConfiguracoesPage() {
       const { error: updateError } = await supabase.from('profiles').upsert({ id: user.id, avatar_url: publicUrl })
       if (!updateError) {
         setAvatarUrl(publicUrl)
+        window.dispatchEvent(new CustomEvent('avatar-updated', { detail: { url: publicUrl } }))
       }
       setAvatarUploading(false)
       setCropImage(null)

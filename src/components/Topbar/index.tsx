@@ -23,15 +23,27 @@ export function Topbar() {
     supabase.auth.getUser().then(async ({ data }) => {
       if (data.user) {
         setUser(data.user)
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('avatar_url')
-          .eq('id', data.user.id)
-          .single()
-        if (profile?.avatar_url) setAvatarUrl(profile.avatar_url)
+        await fetchAvatar(data.user.id)
       }
     })
+
+    function onAvatarUpdated() {
+      supabase.auth.getUser().then(({ data }) => {
+        if (data.user) fetchAvatar(data.user.id)
+      })
+    }
+    window.addEventListener('avatar-updated', onAvatarUpdated)
+    return () => window.removeEventListener('avatar-updated', onAvatarUpdated)
   }, [])
+
+  async function fetchAvatar(userId: string) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('avatar_url')
+      .eq('id', userId)
+      .single()
+    if (profile?.avatar_url) setAvatarUrl(profile.avatar_url)
+  }
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
