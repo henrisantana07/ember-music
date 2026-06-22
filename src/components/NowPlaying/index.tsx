@@ -7,9 +7,12 @@ import { usePlayerStore } from '@/lib/store'
 import type { RepeatMode } from '@/lib/store'
 import { formatDuration } from '@/lib/spotify'
 import { FastAverageColor } from 'fast-average-color'
+import { createClient } from '@/lib/supabase/client'
+import type { User } from '@supabase/supabase-js'
+import type { Json } from '@/types/database'
 import {
   ChevronDown, Play, Pause, SkipBack, SkipForward,
-  Shuffle, Repeat, Repeat1, Heart, Volume2, Volume1, VolumeX,
+  Shuffle, Repeat, Repeat1, Volume2, Volume1, VolumeX,
   Music, Trash2,
 } from 'lucide-react'
 
@@ -25,6 +28,9 @@ export default function NowPlaying() {
   const [dominantColor, setDominantColor] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [showQueueOnMobile, setShowQueueOnMobile] = useState(false)
+  const [isFav, setIsFav] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const supabase = createClient()
 
   const {
     currentTrack, isPlaying, volume, progress, duration, queue,
@@ -77,6 +83,21 @@ export default function NowPlaying() {
   }, [])
 
   useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+  }, [])
+
+  useEffect(() => {
+    if (!user || !currentTrack) return
+    supabase
+      .from('favorites')
+      .select('id')
+      .eq('track_id', currentTrack.id)
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => setIsFav(!!data))
+  }, [user, currentTrack?.id])
+
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') router.back()
     }
@@ -124,6 +145,21 @@ export default function NowPlaying() {
   const coverShadow = dominantColor
     ? `0 32px 64px ${dominantColor}4D`
     : '0 32px 64px rgba(0,0,0,0.5)'
+
+  async function handleFavorite() {
+    if (!user || !currentTrack) return
+    if (isFav) {
+      await supabase.from('favorites').delete().eq('track_id', currentTrack.id).eq('user_id', user.id)
+      setIsFav(false)
+    } else {
+      await supabase.from('favorites').insert({
+        user_id: user.id,
+        track_id: currentTrack.id,
+        track_data: currentTrack as unknown as Json,
+      })
+      setIsFav(true)
+    }
+  }
 
   const RepeatIcon = repeat === 'one' ? Repeat1 : repeat === 'all' ? Repeat : null
   const repeatLabel: Record<RepeatMode, string> = { none: 'Sem repeat', one: 'Repeat 1', all: 'Repeat tudo' }
@@ -186,9 +222,26 @@ export default function NowPlaying() {
           </div>
 
           <div className="flex items-center gap-4" style={{ color: 'var(--text-secondary)' }}>
-            <button className="p-2 hover:text-[var(--text-primary)] transition-colors" aria-label="Favoritar">
-              <Heart className="w-5 h-5" />
-            </button>
+            {user && (
+              <button onClick={handleFavorite} className="p-2 transition-colors" aria-label="Favoritar">
+                <svg
+                  className="w-6 h-6 transition-colors duration-150"
+                  fill={isFav ? 'url(#favGradientNow)' : 'none'}
+                  viewBox="0 0 24 24"
+                  stroke={isFav ? 'none' : 'currentColor'}
+                  strokeWidth={2}
+                  style={isFav ? {} : { color: 'var(--text-secondary)' }}
+                >
+                  <defs>
+                    <linearGradient id="favGradientNow" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="var(--accent-from)" />
+                      <stop offset="100%" stopColor="var(--accent-to)" />
+                    </linearGradient>
+                  </defs>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              </button>
+            )}
           </div>
 
           <div className="w-full max-w-[400px] space-y-1">
