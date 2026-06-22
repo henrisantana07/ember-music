@@ -41,7 +41,7 @@ export function Sidebar() {
     <aside className="w-60 bg-surface flex-shrink-0 flex flex-col hidden md:flex" style={{ backgroundColor: 'var(--bg-surface)' }}>
       <div className="p-6">
         <Link href="/">
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-2xl font-bold transition-all duration-300 hover:scale-[1.03] hover:opacity-90">
             <span className="gradient-accent-text">Ember</span>
             <span className="text-primary"> Music</span>
           </h1>
@@ -55,18 +55,19 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors duration-150 relative"
-              style={{
-                color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-              }}
+              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all duration-200 relative group ${
+                isActive
+                  ? 'text-[var(--text-primary)]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
+              }`}
             >
               {isActive && (
                 <span
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full transition-all duration-200"
                   style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
                 />
               )}
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <svg className="w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
               </svg>
               {item.label}
@@ -88,18 +89,19 @@ export function Sidebar() {
             <Link
               key={pl.id}
               href={`/playlists/${pl.id}`}
-              className="flex items-center gap-3 px-3 py-1.5 rounded-md text-sm transition-colors duration-150 relative"
-              style={{
-                color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-              }}
+              className={`flex items-center gap-3 px-3 py-1.5 rounded-md text-sm transition-all duration-200 relative group ${
+                isActive
+                  ? 'text-[var(--text-primary)]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
+              }`}
             >
               {isActive && (
                 <span
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full transition-all duration-200"
                   style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
                 />
               )}
-              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <svg className="w-4 h-4 flex-shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
               </svg>
               <span className="truncate">{pl.name}</span>
