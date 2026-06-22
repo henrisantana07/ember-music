@@ -52,6 +52,8 @@ export default function ConfiguracoesPage() {
   const [avatarUrl, setAvatarUrl] = useState('')
   const [email, setEmail] = useState('')
   const [memberSince, setMemberSince] = useState('')
+  const [favCount, setFavCount] = useState(0)
+  const [preferredGenre, setPreferredGenre] = useState('')
 
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
@@ -102,7 +104,15 @@ export default function ConfiguracoesPage() {
       setDisplayName(profile.display_name ?? user.user_metadata?.full_name ?? '')
       setBio(profile.bio ?? '')
       setAvatarUrl(profile.avatar_url ?? user.user_metadata?.avatar_url ?? '')
+      setPreferredGenre(profile.preferred_genre ?? '')
     }
+
+    const { count } = await supabase
+      .from('favorites')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+    setFavCount(count ?? 0)
+
     const created = user.created_at
     if (created) {
       const d = new Date(created)
@@ -353,9 +363,9 @@ export default function ConfiguracoesPage() {
             <section>
               <h2 className="text-2xl font-bold mb-6">Perfil</h2>
 
-              {/* Avatar */}
-              <div className="flex items-center gap-6 mb-8">
-                <div className="relative group">
+              {/* Avatar + Stats */}
+              <div className="flex items-start gap-6 mb-8">
+                <div className="relative group shrink-0">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="" className="w-20 h-20 rounded-full object-cover" />
                   ) : (
@@ -381,8 +391,19 @@ export default function ConfiguracoesPage() {
                     )}
                   </button>
                 </div>
-                <div>
-                  <SaveIndicator saving={profileSaving} saved={profileSaved} />
+
+                <div className="flex gap-3 flex-wrap">
+                  <div className="p-3 rounded-lg min-w-[100px] text-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                    <p className="text-xl font-bold gradient-accent-text">{favCount}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>Favoritas</p>
+                  </div>
+                  <div className="p-3 rounded-lg min-w-[100px] text-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                    <p className="text-xl font-bold gradient-accent-text">{preferredGenre || '—'}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>Gênero</p>
+                  </div>
+                  <div className="flex items-center">
+                    <SaveIndicator saving={profileSaving} saved={profileSaved} />
+                  </div>
                 </div>
               </div>
 

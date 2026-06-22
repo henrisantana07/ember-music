@@ -137,13 +137,6 @@ export function Topbar() {
               <p className="text-sm font-medium truncate">{user.email}</p>
             </div>
             <button
-              onClick={() => { router.push('/profile'); setShowDropdown(false) }}
-              className="w-full text-left px-4 py-2 text-sm hover:bg-white/5 transition-colors"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              Perfil
-            </button>
-            <button
               onClick={() => { router.push('/configuracoes'); setShowDropdown(false) }}
               className="w-full text-left px-4 py-2 text-sm hover:bg-white/5 transition-colors"
               style={{ color: 'var(--text-secondary)' }}
