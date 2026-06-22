@@ -65,8 +65,8 @@ export function Topbar() {
   }
 
   return (
-    <header className="h-16 flex items-center justify-between px-6 flex-shrink-0 relative" style={{ backgroundColor: 'var(--bg-base)' }}>
-      <form onSubmit={handleSearch} className="flex-1 max-w-md relative">
+    <header className="h-16 flex items-center justify-center px-6 flex-shrink-0 relative" style={{ backgroundColor: 'var(--bg-base)' }}>
+      <form onSubmit={handleSearch} className="w-full max-w-md relative">
         <div className="relative">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -102,17 +102,17 @@ export function Topbar() {
           />
       </form>
 
-      <div className="relative" ref={dropdownRef}>
+      <div className="absolute right-6 top-1/2 -translate-y-1/2" ref={dropdownRef}>
         {user ? (
           <button
             onClick={() => setShowDropdown(!showDropdown)}
             className="flex items-center gap-2 focus-ring rounded-full"
           >
             {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
+              <img src={avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover" />
             ) : (
               <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+                className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
                 style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
               >
                 {user.email?.[0].toUpperCase()}
