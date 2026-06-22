@@ -129,7 +129,7 @@ export default function NowPlaying() {
 
   return (
     <div
-      className="h-full flex flex-col animate-slide-up"
+      className="h-full flex flex-col animate-slide-up overflow-hidden"
       style={{ background: bgGradient, transition: 'background 800ms ease' }}
     >
       <header className="flex items-center justify-between px-4 md:px-6 h-14 flex-none">
@@ -147,9 +147,9 @@ export default function NowPlaying() {
         <div className="hidden md:block" />
       </header>
 
-      <div className="flex-1 flex flex-col md:flex-row gap-4 md:gap-0 overflow-hidden px-4 md:px-6 pb-4">
-        <div className={`flex-1 flex flex-col items-center justify-center gap-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
-          <div className="relative" style={{ width: 'min(380px, 60vw)', aspectRatio: '1' }}>
+      <div className="flex-1 flex flex-col md:flex-row gap-4 md:gap-0 min-h-0 px-4 md:px-6 pb-4">
+        <div className={`flex-1 flex flex-col items-center justify-center gap-4 min-h-0 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
+          <div className="relative flex-shrink-0" style={{ width: 'min(320px, 50vw, 45vh)', aspectRatio: '1' }}>
             {currentTrack.image ? (
               <img
                 src={currentTrack.image}
@@ -274,7 +274,7 @@ export default function NowPlaying() {
           </div>
         </div>
 
-        <div className={`w-full md:w-[320px] lg:w-[380px] flex flex-col flex-none ${showQueueOnMobile ? '' : 'hidden md:flex'}`}>
+        <div className={`w-full md:w-[320px] lg:w-[380px] flex flex-col flex-none min-h-0 ${showQueueOnMobile ? '' : 'hidden md:flex'}`}>
           <div className="flex-none px-2 py-2">
             <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>A seguir</h2>
             {usePlayerStore.getState().currentPlaylistName && (
@@ -282,7 +282,7 @@ export default function NowPlaying() {
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto scrollbar-thin px-1 space-y-0.5">
+          <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin px-1 space-y-0.5">
             {queue.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center px-4">
                 <Music className="w-10 h-10 mb-3" style={{ color: 'var(--text-disabled)' }} />
