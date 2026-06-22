@@ -95,6 +95,11 @@ export default function NowPlaying() {
   const [showQueueOnMobile, setShowQueueOnMobile] = useState(false)
   const [isFav, setIsFav] = useState(false)
   const [user, setUser] = useState<User | null>(null)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<Track[]>([])
+  const [searchLoading, setSearchLoading] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
   const {
@@ -103,7 +108,7 @@ export default function NowPlaying() {
     togglePlay, next, prev,
     setVolume, setProgress, setDuration,
     setRepeat, toggleShuffle,
-    removeFromQueue, reorderQueue, clearQueue,
+    removeFromQueue, reorderQueue, clearQueue, addToQueue,
   } = usePlayerStore()
 
   useEffect(() => {
@@ -161,6 +166,26 @@ export default function NowPlaying() {
       .maybeSingle()
       .then(({ data }) => setIsFav(!!data))
   }, [user, currentTrack?.id])
+
+  useEffect(() => {
+    if (!isSearchOpen || !searchQuery.trim()) { setSearchResults([]); return }
+    const controller = new AbortController()
+    const timer = setTimeout(async () => {
+      setSearchLoading(true)
+      try {
+        const res = await fetch(`/api/spotify?endpoint=search&q=${encodeURIComponent(searchQuery.trim())}&type=track&limit=12`, { signal: controller.signal })
+        if (!res.ok) throw new Error('search failed')
+        const data = await res.json()
+        if (!controller.signal.aborted) setSearchResults(data.tracks ?? [])
+      } catch { if (!controller.signal.aborted) setSearchResults([]) }
+      finally { if (!controller.signal.aborted) setSearchLoading(false) }
+    }, 350)
+    return () => { clearTimeout(timer); controller.abort() }
+  }, [isSearchOpen, searchQuery])
+
+  useEffect(() => {
+    if (isSearchOpen) searchInputRef.current?.focus()
+  }, [isSearchOpen])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -451,7 +476,7 @@ export default function NowPlaying() {
           </div>
         </div>
 
-        <div className={`w-full md:w-[320px] lg:w-[380px] flex flex-col flex-none min-h-0 ${showQueueOnMobile ? '' : 'hidden md:flex'}`}>
+        <div className={`w-full md:w-[320px] lg:w-[380px] flex flex-col flex-none min-h-0 relative ${showQueueOnMobile ? '' : 'hidden md:flex'}`}>
           <div className="flex-none px-2 py-2">
             <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>A seguir</h2>
             {usePlayerStore.getState().currentPlaylistName && (
@@ -486,6 +511,16 @@ export default function NowPlaying() {
 
           <div className="flex-none flex items-center gap-2 px-2 py-3 border-t border-white/5">
             <button
+              onClick={() => { setIsSearchOpen(!isSearchOpen); if (!isSearchOpen) setSearchQuery('') }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
+              style={{ color: isSearchOpen ? 'var(--accent-from)' : 'var(--text-secondary)', backgroundColor: 'var(--bg-surface)' }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              {isSearchOpen ? 'Fechar busca' : 'Adicionar à fila'}
+            </button>
+            <button
               onClick={() => clearQueue()}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
               style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg-surface)' }}
@@ -494,6 +529,62 @@ export default function NowPlaying() {
               Limpar fila
             </button>
           </div>
+
+          {isSearchOpen && (
+            <div className="absolute inset-0 z-10 flex flex-col" style={{ backgroundColor: 'var(--bg-base)' }}>
+              <div className="flex-none px-3 pt-3 pb-2">
+                <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+                  <svg className="w-4 h-4 flex-none" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Buscar faixas..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1 bg-transparent outline-none text-sm"
+                    style={{ color: 'var(--text-primary)' }}
+                  />
+                  {searchLoading && (
+                    <svg className="w-4 h-4 animate-spin flex-none" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto min-h-0 px-2 pb-2 space-y-0.5 queue-scroll">
+                {searchResults.length === 0 && searchQuery.trim() && !searchLoading && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Nenhum resultado</p>
+                  </div>
+                )}
+                {searchResults.map((track) => (
+                  <button
+                    key={track.id}
+                    onClick={() => { addToQueue(track); setSearchQuery(''); setSearchResults([]); searchInputRef.current?.focus() }}
+                    className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors text-left"
+                  >
+                    {track.image ? (
+                      <img src={track.image} alt="" className="w-10 h-10 rounded object-cover flex-none" />
+                    ) : (
+                      <div className="w-10 h-10 rounded flex items-center justify-center flex-none" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                        <Music className="w-4 h-4" style={{ color: 'var(--text-disabled)' }} />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>{track.name}</p>
+                      <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
+                    </div>
+                    <svg className="w-4 h-4 flex-none" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
