@@ -230,7 +230,7 @@ export default function ConfiguracoesPage() {
             viewMode: 1,
             minCropBoxWidth: 80,
             minCropBoxHeight: 80,
-            cropBoxResizable: false,
+            cropBoxResizable: true,
             dragMode: 'move',
           })
         }
@@ -242,7 +242,7 @@ export default function ConfiguracoesPage() {
 
   async function confirmCrop() {
     if (!cropperInstance.current || !user) return
-    const canvas = cropperInstance.current.getCroppedCanvas({ width: 256, height: 256 })
+    const canvas = cropperInstance.current.getCroppedCanvas({ width: 512, height: 512 })
     if (!canvas) return
 
     setAvatarUploading(true)
@@ -418,19 +418,27 @@ export default function ConfiguracoesPage() {
 
               <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileSelect} />
 
-              {/* Crop area */}
+              {/* Crop modal */}
               {cropImage && (
-                <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: 'var(--bg-surface)' }}>
-                  <div className="max-w-sm mx-auto">
-                    <img ref={cropperRef} src={cropImage} alt="Crop" className="max-w-full" />
-                  </div>
-                  <div className="flex gap-2 mt-3 justify-end">
-                    <button onClick={cancelCrop} className="px-4 py-2 text-sm rounded-lg" style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
-                      Cancelar
-                    </button>
-                    <button onClick={confirmCrop} disabled={avatarUploading} className="btn-primary text-sm">
-                      {avatarUploading ? 'Enviando…' : 'Aplicar'}
-                    </button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={cancelCrop}>
+                  <div
+                    className="p-6 rounded-xl max-w-lg w-full mx-4"
+                    style={{ backgroundColor: 'var(--bg-elevated)' }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <h3 className="text-lg font-bold mb-4">Ajustar foto</h3>
+                    <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Arraste para reposicionar e use as bordas para redimensionar.</p>
+                    <div className="w-full max-h-80 flex items-center justify-center overflow-hidden rounded-lg" style={{ backgroundColor: 'var(--bg-base)' }}>
+                      <img ref={cropperRef} src={cropImage} alt="Crop" className="max-w-full" style={{ maxHeight: '320px' }} />
+                    </div>
+                    <div className="flex gap-2 mt-4 justify-end">
+                      <button onClick={cancelCrop} className="px-4 py-2 text-sm rounded-lg" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}>
+                        Cancelar
+                      </button>
+                      <button onClick={confirmCrop} disabled={avatarUploading} className="btn-primary text-sm">
+                        {avatarUploading ? 'Enviando…' : 'Aplicar'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
