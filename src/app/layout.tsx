@@ -46,7 +46,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex flex-col h-screen overflow-hidden">
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <KeyboardShortcuts />
-        <div className="flex flex-1 overflow-hidden">
+        <div className="relative flex flex-1 overflow-hidden">
+          <img
+            src="/branding/icon.svg"
+            alt=""
+            className="hidden md:block absolute top-3 left-3 w-12 h-12 z-10 pointer-events-none transition-all duration-300"
+            style={{ filter: 'drop-shadow(0 0 8px rgba(255,106,0,0.4))' }}
+          />
           <Sidebar />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Topbar />
