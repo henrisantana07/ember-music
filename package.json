@@ -2,6 +2,10 @@
   "name": "ember-music",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "apps/mobile",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,11 +13,15 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "analyze": "ANALYZE=true next build"
+    "analyze": "ANALYZE=true next build",
+    "mobile": "npm run dev -w apps/mobile",
+    "build:mobile": "npm run build -w apps/mobile"
   },
   "dependencies": {
+    "@google/genai": "^2.9.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.2",
+    "ajv": "^8.17.1",
     "cropperjs": "^1.6.2",
     "fast-average-color": "^9.5.2",
     "lucide-react": "^1.21.0",
@@ -40,6 +48,7 @@
     "eslint-config-next": "16.2.9",
     "jsdom": "^29.1.1",
     "tailwindcss": "^4",
+    "turbo": "^2.0.0",
     "typescript": "^5",
     "vitest": "^4.1.9"
   }
