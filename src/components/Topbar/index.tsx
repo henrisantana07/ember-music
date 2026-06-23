@@ -79,7 +79,7 @@ export function Topbar() {
   return (
     <header className="h-16 flex items-center justify-center px-6 flex-shrink-0 relative" style={{ backgroundColor: 'var(--bg-base)' }}>
       <img
-        src="/branding/icon-cropped.svg"
+        src="/branding/icon.svg"
         alt=""
         className="absolute left-6 top-1/2 -translate-y-1/2 w-24 h-20 object-cover pointer-events-none hidden md:block"
         style={{ filter: 'drop-shadow(0 0 8px rgba(255,106,0,0.4))' }}
