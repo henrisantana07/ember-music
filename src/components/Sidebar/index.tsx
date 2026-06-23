@@ -140,16 +140,22 @@ export default function Sidebar() {
 
   const sidebarContent = (
     <>
-      <div className="flex-none flex items-start justify-end pt-4 pr-3 h-16">
+      <div className="flex-none flex items-center h-14 px-4 gap-3">
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors duration-200"
+          className="p-1 rounded-lg hover:bg-white/[0.06] transition-colors duration-200"
           aria-label={collapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
         >
           <svg className="w-5 h-5" style={{ color: 'var(--text-primary)' }} viewBox="0 0 24 24" fill="currentColor">
             <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
           </svg>
         </button>
+        {!collapsed && (
+          <Link href="/" className="text-lg font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+            <span className="gradient-accent-text">Ember</span>
+            <span> Music</span>
+          </Link>
+        )}
       </div>
 
       <nav className="flex-none px-2 space-y-0.5">
@@ -330,14 +336,11 @@ export default function Sidebar() {
         <>
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden" onClick={() => setDrawerOpen(false)} />
           <aside className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-[300px] bg-[var(--bg-surface)] z-50 flex flex-col md:hidden shadow-2xl">
-            <div className="flex items-center justify-between h-16 px-4 flex-none pt-2">
-              <div className="flex items-center gap-3">
-                <img src="/branding/icon.svg" alt="" className="w-10 h-10" />
-                <Link href="/" className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                  <span className="gradient-accent-text">Ember</span>
-                  <span> Music</span>
-                </Link>
-              </div>
+            <div className="flex items-center justify-between h-14 px-4 flex-none">
+              <Link href="/" className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                <span className="gradient-accent-text">Ember</span>
+                <span> Music</span>
+              </Link>
               <button onClick={() => setDrawerOpen(false)} className="p-1 rounded-lg hover:bg-white/[0.06] transition-colors duration-200">
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--text-primary)' }}>
                   <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
