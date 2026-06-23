@@ -78,6 +78,12 @@ export function Topbar() {
 
   return (
     <header className="h-16 flex items-center justify-center px-6 flex-shrink-0 relative" style={{ backgroundColor: 'var(--bg-base)' }}>
+      <img
+        src="/branding/icon.svg"
+        alt=""
+        className="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 pointer-events-none hidden md:block"
+        style={{ filter: 'drop-shadow(0 0 8px rgba(255,106,0,0.4))' }}
+      />
       <form onSubmit={handleSearch} className="w-full max-w-md relative">
         <div className="relative">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
