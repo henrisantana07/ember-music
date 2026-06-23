@@ -11,9 +11,6 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
-      },
-      "node": {
-        "installCommand": "npm install --legacy-peer-deps"
       }
     },
     "production": {
