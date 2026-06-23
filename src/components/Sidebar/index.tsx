@@ -150,13 +150,10 @@ export default function Sidebar() {
             <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
           </svg>
         </button>
-        {!collapsed ? (
-          <Link href="/" className="block h-8">
-            <img src="/branding/logo-sidebar.png" alt="Ember Music" className="h-full w-auto" />
-          </Link>
-        ) : (
-          <Link href="/" className="block h-8 w-8">
-            <img src="/branding/icon-small.png" alt="Ember Music" className="h-full w-full object-cover rounded-lg" />
+        {!collapsed && (
+          <Link href="/" className="text-lg font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+            <span className="gradient-accent-text">Ember</span>
+            <span> Music</span>
           </Link>
         )}
       </div>
@@ -340,8 +337,9 @@ export default function Sidebar() {
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden" onClick={() => setDrawerOpen(false)} />
           <aside className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-[300px] bg-[var(--bg-surface)] z-50 flex flex-col md:hidden shadow-2xl">
             <div className="flex items-center justify-between h-14 px-4 flex-none">
-              <Link href="/" className="block h-8">
-                <img src="/branding/logo-sidebar.png" alt="Ember Music" className="h-full w-auto" />
+              <Link href="/" className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                <span className="gradient-accent-text">Ember</span>
+                <span> Music</span>
               </Link>
               <button onClick={() => setDrawerOpen(false)} className="p-1 rounded-lg hover:bg-white/[0.06] transition-colors duration-200">
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--text-primary)' }}>
