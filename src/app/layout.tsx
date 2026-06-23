@@ -45,10 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
       <body className="flex flex-col h-screen overflow-hidden">
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-        <KeyboardShortcuts /> 
-        <img
-  src="/branding/icon.svg" alt="" className="fixed top-4 left-4 w-14 h-14 z-50 pointer-events-none" style={{ filter: 'drop-shadow(0 0 10px rgba(255,106,0,0.5))' }}
-/>
+        <KeyboardShortcuts />
         <div className="flex flex-1 overflow-hidden">
           <Sidebar />
           <div className="flex-1 flex flex-col overflow-hidden">
