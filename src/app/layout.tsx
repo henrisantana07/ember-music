@@ -20,7 +20,10 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   appleWebApp: { capable: true, title: 'Ember Music', statusBarStyle: 'black-translucent' },
   icons: {
-    icon: '/branding/icon.svg',
+    icon: [
+      { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
     apple: '/icons/icon-512.png',
   },
 }
