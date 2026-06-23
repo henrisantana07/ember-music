@@ -21,6 +21,7 @@ export default {
     plugins: [
       'expo-router',
       'expo-sqlite',
+      'expo-av',
       'expo-build-properties',
     ],
     scheme: 'embermusic',
