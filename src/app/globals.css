@@ -73,6 +73,21 @@ body {
   opacity: 0.9;
 }
 
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  font-weight: 600;
+  border: 1px solid var(--text-disabled);
+  border-radius: var(--radius-lg);
+  padding: 10px 24px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--text-primary);
+}
+
 .card-hover {
   transition: all 200ms ease;
   border-radius: var(--radius-md);

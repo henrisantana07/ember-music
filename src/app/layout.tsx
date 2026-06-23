@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: 'Ember Music', statusBarStyle: 'black-translucent' },
   icons: {
     icon: '/icons/icon-192.svg',
-    apple: '/icons/icon-512.svg',
+    apple: '/icons/icon-512.png',
   },
 }
 
