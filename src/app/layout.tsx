@@ -50,7 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <img
             src="/branding/icon.svg"
             alt=""
-            className="hidden md:block absolute top-3 left-3 w-12 h-12 z-10 pointer-events-none transition-all duration-300"
+            className="hidden md:block absolute top-3 left-5 w-12 h-12 z-10 pointer-events-none transition-all duration-300"
             style={{ filter: 'drop-shadow(0 0 8px rgba(255,106,0,0.4))' }}
           />
           <Sidebar />
