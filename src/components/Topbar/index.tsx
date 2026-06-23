@@ -81,7 +81,7 @@ export function Topbar() {
       <img
         src="/branding/icon.svg"
         alt=""
-        className="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 pointer-events-none hidden md:block"
+        className="absolute left-6 top-1/2 -translate-y-1/2 w-24 h-20 pointer-events-none hidden md:block"
         style={{ filter: 'drop-shadow(0 0 8px rgba(255,106,0,0.4))' }}
       />
       <form onSubmit={handleSearch} className="w-full max-w-md relative">
