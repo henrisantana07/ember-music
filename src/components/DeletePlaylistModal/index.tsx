@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 interface DeletePlaylistModalProps {
   open: boolean
   playlistName: string
@@ -9,13 +11,29 @@ interface DeletePlaylistModalProps {
 }
 
 export function DeletePlaylistModal({ open, playlistName, onClose, onConfirm, deleting }: DeletePlaylistModalProps) {
+  const [typed, setTyped] = useState('')
+  const [submitted, setSubmitted] = useState(false)
+
   if (!open) return null
+
+  function handleClose() {
+    setTyped('')
+    setSubmitted(false)
+    onClose()
+  }
+
+  function handleConfirm() {
+    setSubmitted(true)
+    onConfirm()
+  }
+
+  const canConfirm = typed.toLowerCase() === playlistName.toLowerCase()
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}
     >
       <div
         className="w-full max-w-sm rounded-xl p-6 shadow-xl"
@@ -28,21 +46,36 @@ export function DeletePlaylistModal({ open, playlistName, onClose, onConfirm, de
             </svg>
           </div>
           <div>
-            <h2 className="text-lg font-bold">Excluir playlist</h2>
+            <h2 className="text-lg font-bold">Excluir playlist?</h2>
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
               Esta ação não pode ser desfeita.
             </p>
           </div>
         </div>
 
-        <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
-          Tem certeza que deseja excluir <strong style={{ color: 'var(--text-primary)' }}>{playlistName}</strong>? Todas as faixas salvas nela serão perdidas.
+        <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+          <strong style={{ color: 'var(--text-primary)' }}>{playlistName}</strong> será excluída permanentemente. Digite o nome da playlist para confirmar.
         </p>
+
+        <input
+          type="text"
+          value={typed}
+          onChange={(e) => setTyped(e.target.value)}
+          placeholder="Digite o nome da playlist"
+          className="w-full px-3 py-2 rounded-lg text-sm outline-none border mb-6"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            color: 'var(--text-primary)',
+            borderColor: submitted && !canConfirm ? 'var(--error)' : 'rgba(255,255,255,0.1)',
+          }}
+          disabled={deleting}
+          autoFocus
+        />
 
         <div className="flex justify-end gap-3">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             disabled={deleting}
             className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
             style={{ color: 'var(--text-secondary)' }}
@@ -51,10 +84,10 @@ export function DeletePlaylistModal({ open, playlistName, onClose, onConfirm, de
           </button>
           <button
             type="button"
-            onClick={onConfirm}
-            disabled={deleting}
+            onClick={handleConfirm}
+            disabled={!canConfirm || deleting}
             className="px-5 py-2 rounded-lg text-sm font-bold transition-opacity disabled:opacity-50"
-            style={{ backgroundColor: 'var(--error)', color: 'white' }}
+            style={{ backgroundColor: 'var(--error)', color: 'white', opacity: canConfirm && !deleting ? 1 : 0.5 }}
           >
             {deleting ? 'Excluindo...' : 'Excluir'}
           </button>

@@ -1,14 +1,14 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, Suspense, useRef, useCallback } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { usePlayerStore } from '@/lib/store'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { EditPlaylistModal } from '@/components/EditPlaylistModal'
 import { DeletePlaylistModal } from '@/components/DeletePlaylistModal'
+import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
 import { formatDuration } from '@/lib/spotify'
-import { ShareButton } from '@/components/ShareButton'
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -30,7 +30,7 @@ function PlaylistContent() {
   const router = useRouter()
   const supabase = createClient()
   const { play } = usePlayerStore()
-  const { updatePlaylist, removePlaylist } = usePlaylistsStore()
+  const { updatePlaylist, removePlaylist, addPlaylist, playlists } = usePlaylistsStore()
 
   const [playlist, setPlaylist] = useState<Database['public']['Tables']['playlists']['Row'] | null>(null)
   const [tracks, setTracks] = useState<PlaylistTrack[]>([])
@@ -40,6 +40,16 @@ function PlaylistContent() {
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [duplicating, setDuplicating] = useState(false)
+  const [toast, setToast] = useState<{ message: string; action?: { label: string; onClick: () => void } } | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>(null)
+  const pendingRemove = useRef<{ trackId: string; trackRow: PlaylistTrack; timeout: ReturnType<typeof setTimeout> } | null>(null)
+
+  const showToast = useCallback((message: string, action?: { label: string; onClick: () => void }) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    setToast({ message, action })
+    toastTimer.current = setTimeout(() => setToast(null), 5000)
+  }, [])
 
   async function load() {
     setLoading(true)
@@ -81,44 +91,122 @@ function PlaylistContent() {
   async function handleDeleteConfirm() {
     setDeleting(true)
     await supabase.from('playlist_tracks').delete().eq('playlist_id', id)
+    if (playlist?.cover_url?.startsWith('http')) {
+      await supabase.storage.from('playlist-covers').remove([playlist.cover_url])
+    }
     await supabase.from('playlists').delete().eq('id', id)
     removePlaylist(id)
     setDeleteModalOpen(false)
-    router.push('/')
+    router.push('/biblioteca?tab=playlists')
+  }
+
+  async function handleDuplicate() {
+    if (!playlist) return
+    setDuplicating(true)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setDuplicating(false); return }
+
+    const { data: newPlaylist, error } = await supabase
+      .from('playlists')
+      .insert({
+        name: `${playlist.name} (cópia)`,
+        description: playlist.description,
+        is_public: false,
+        user_id: user.id,
+      })
+      .select()
+      .single()
+
+    if (!error && newPlaylist && tracks.length > 0) {
+      const newTracks = tracks.map((t, i) => ({
+        playlist_id: newPlaylist.id,
+        track_id: t.track_id,
+        track_data: t.track_data,
+        position: i,
+      }))
+      await supabase.from('playlist_tracks').insert(newTracks)
+    }
+
+    if (newPlaylist) {
+      addPlaylist({ ...newPlaylist, track_count: tracks.length })
+      showToast('Playlist duplicada', {
+        label: 'Ver cópia',
+        onClick: () => router.push(`/playlists/${newPlaylist.id}`),
+      })
+    }
+
+    setDuplicating(false)
   }
 
   async function handleRemoveTrack(trackId: string) {
-    await supabase
-      .from('playlist_tracks')
-      .delete()
-      .eq('playlist_id', id)
-      .eq('track_id', trackId)
+    const trackRow = tracks.find((t) => t.track_id === trackId)
+    if (!trackRow) return
+
     setTracks((prev) => prev.filter((t) => t.track_id !== trackId))
+
+    if (pendingRemove.current) {
+      clearTimeout(pendingRemove.current.timeout)
+    }
+
+    const timeout = setTimeout(async () => {
+      await supabase
+        .from('playlist_tracks')
+        .delete()
+        .eq('playlist_id', id)
+        .eq('track_id', trackId)
+      pendingRemove.current = null
+    }, 5000)
+
+    pendingRemove.current = { trackId, trackRow, timeout }
+
+    showToast('Removida', {
+      label: 'Desfazer',
+      onClick: () => {
+        if (pendingRemove.current && pendingRemove.current.trackId === trackId) {
+          clearTimeout(pendingRemove.current.timeout)
+          setTracks((prev) => {
+            const exists = prev.find((t) => t.track_id === trackId)
+            if (exists) return prev
+            const restored = [...prev, trackRow].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+            return restored
+          })
+          pendingRemove.current = null
+          setToast(null)
+          if (toastTimer.current) clearTimeout(toastTimer.current)
+        }
+      },
+    })
   }
 
   async function handleShare() {
     if (!playlist) return
+    if (!playlist.is_public) {
+      showToast('Compartilhe apenas playlists públicas')
+      return
+    }
     if (playlist.share_token) {
       const url = `${window.location.origin}/playlists/${id}?token=${playlist.share_token}`
-      if (navigator.share) {
-        await navigator.share({ title: playlist.name, text: `Ouça "${playlist.name}" no Ember Music`, url })
-      } else {
-        await navigator.clipboard.writeText(url)
-      }
+      await navigator.clipboard.writeText(url)
+      showToast('Link copiado!')
       return
     }
     const res = await fetch(`/api/playlists/${id}/share`, { method: 'POST' })
     const data = await res.json()
     if (data.share_token) {
-      setPlaylist((prev) => prev ? { ...prev, share_token: data.share_token, collaborative: true } : prev)
+      setPlaylist((prev) => prev ? { ...prev, share_token: data.share_token } : prev)
+      updatePlaylist(id, { share_token: data.share_token } as any)
       const url = `${window.location.origin}/playlists/${id}?token=${data.share_token}`
       await navigator.clipboard.writeText(url)
+      showToast('Link copiado!')
     }
   }
 
   async function handleRevokeShare() {
     await fetch(`/api/playlists/${id}/share`, { method: 'DELETE' })
-    setPlaylist((prev) => prev ? { ...prev, share_token: null, collaborative: false } : prev)
+    setPlaylist((prev) => prev ? { ...prev, share_token: null } : prev)
+    updatePlaylist(id, { share_token: null } as any)
+    showToast('Compartilhamento removido')
   }
 
   function handlePlayAll() {
@@ -147,6 +235,7 @@ function PlaylistContent() {
     const newIndex = tracks.findIndex((t) => t.id === over.id)
     if (oldIndex === -1 || newIndex === -1) return
 
+    const previous = [...tracks]
     const reordered = [...tracks]
     const [moved] = reordered.splice(oldIndex, 1)
     reordered.splice(newIndex, 0, moved)
@@ -160,8 +249,14 @@ function PlaylistContent() {
       track_data: t.track_data,
       position: i,
     }))
-    for (const u of updates) {
-      await supabase.from('playlist_tracks').update({ position: u.position }).eq('id', u.id)
+
+    const { error } = await supabase
+      .from('playlist_tracks')
+      .upsert(updates, { onConflict: 'id' })
+
+    if (error) {
+      setTracks(previous)
+      showToast('Erro ao reordenar')
     }
   }
 
@@ -177,7 +272,7 @@ function PlaylistContent() {
   const totalDuration = parsedTracks.reduce((acc, t) => acc + (t?.duration ?? 0), 0)
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto relative">
       <div className="flex flex-col md:flex-row gap-6 mb-8">
         <div
           className="w-48 h-48 rounded-xl flex-shrink-0 flex items-center justify-center shadow-lg"
@@ -195,9 +290,17 @@ function PlaylistContent() {
         </div>
 
         <div className="flex flex-col justify-end flex-1 min-w-0">
-          <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-secondary)' }}>
-            Playlist
-          </p>
+          <div className="flex items-center gap-2 mb-1">
+            <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+              Playlist
+            </p>
+            <span
+              className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+              style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-secondary)' }}
+            >
+              {playlist.is_public ? '🌐 Pública' : '🔒 Privada'}
+            </span>
+          </div>
           <h1 className="text-2xl md:text-3xl font-bold truncate">{playlist.name}</h1>
           {playlist.description && (
             <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
@@ -205,9 +308,15 @@ function PlaylistContent() {
             </p>
           )}
           <p className="text-sm mt-1" style={{ color: 'var(--text-disabled)' }}>
-            {tracks.length} {tracks.length === 1 ? 'faixa' : 'faixas'}
+            Criada por {isOwner ? 'você' : 'outro usuário'} · {tracks.length} {tracks.length === 1 ? 'faixa' : 'faixas'}
             {totalDuration > 0 && ` — ${formatDuration(Math.floor(totalDuration))}`}
           </p>
+
+          {!isOwner && !playlist.is_public && (
+            <div className="mt-4 p-3 rounded-lg text-sm" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-secondary)' }}>
+              Faça login para salvar esta playlist
+            </div>
+          )}
 
           <div className="flex items-center gap-3 mt-4">
             {tracks.length > 0 && (
@@ -223,23 +332,16 @@ function PlaylistContent() {
               </button>
             )}
 
-            <button onClick={handleShare} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Compartilhar">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
-              </svg>
-            </button>
-            {playlist.collaborative && playlist.share_token && (
-              <button onClick={handleRevokeShare} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Desativar compartilhamento">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                </svg>
+            {tracks.length > 0 && (
+              <button
+                onClick={handlePlayAll}
+                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                ⇄ Aleatório
               </button>
             )}
-            {playlist.collaborative && (
-              <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-from)' }}>
-                Colaborativa
-              </span>
-            )}
+
             {isOwner && (
               <button onClick={() => setEditModalOpen(true)} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Editar">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -247,6 +349,15 @@ function PlaylistContent() {
                 </svg>
               </button>
             )}
+
+            {isOwner && (
+              <button onClick={handleDuplicate} disabled={duplicating} className="p-2 rounded-full transition-colors hover:bg-white/5 disabled:opacity-50" style={{ color: 'var(--text-secondary)' }} title="Duplicar">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </button>
+            )}
+
             {isOwner && (
               <button onClick={() => setDeleteModalOpen(true)} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Excluir">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -254,9 +365,12 @@ function PlaylistContent() {
                 </svg>
               </button>
             )}
-            {!isOwner && playlist.collaborative && (
-              <ShareButton title={playlist.name} text={`Ouça "${playlist.name}" no Ember Music`} />
-            )}
+
+            <button onClick={handleShare} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: playlist.is_public ? 'var(--text-secondary)' : 'var(--text-disabled)' }} title={playlist.is_public ? 'Compartilhar' : 'Torne pública para compartilhar'}>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -264,10 +378,13 @@ function PlaylistContent() {
       <div className="space-y-1">
         {tracks.length === 0 && (
           <div className="text-center py-16">
+            <svg className="w-16 h-16 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1} style={{ color: 'var(--text-disabled)' }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z" />
+            </svg>
             <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>
-              Playlist vazia
+              Esta playlist ainda não tem músicas
             </p>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-disabled)' }}>
+            <p className="text-sm mt-1 mb-6" style={{ color: 'var(--text-disabled)' }}>
               Adicione faixas usando o menu em cada música
             </p>
           </div>
@@ -275,22 +392,23 @@ function PlaylistContent() {
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={tracks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-            {parsedTracks.map((track, index) => {
+            {tracks.map((pt, index) => {
+              const track = pt.track_data as unknown as Track | null
               if (!track) return null
-              const isActive = usePlayerStore.getState().currentTrack?.id === track.id
-              const isPlaying = usePlayerStore.getState().isPlaying
+              const state = usePlayerStore.getState()
+              const isActive = state.currentTrack?.id === track.id
 
               return (
                 <SortableTrackRow
-                  key={tracks[index].id}
-                  id={tracks[index].id}
+                  key={pt.id}
+                  id={pt.id}
                   track={track}
                   index={index}
                   isActive={isActive}
-                  isPlaying={isPlaying}
+                  isPlaying={state.isPlaying}
                   isOwner={isOwner}
-                  onClick={() => handlePlayTrack(track, parsedTracks.filter(Boolean) as Track[])}
-                  onRemove={() => handleRemoveTrack(tracks[index].track_id)}
+                  onClick={() => handlePlayTrack(track, tracks.map((t) => t.track_data as unknown as Track).filter(Boolean))}
+                  onRemove={() => handleRemoveTrack(pt.track_id)}
                 />
               )
             })}
@@ -310,6 +428,24 @@ function PlaylistContent() {
         onConfirm={handleDeleteConfirm}
         deleting={deleting}
       />
+
+      {toast && (
+        <div
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-4 py-3 rounded-xl shadow-lg text-sm"
+          style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}
+        >
+          <span>{toast.message}</span>
+          {toast.action && (
+            <button
+              onClick={toast.action.onClick}
+              className="font-bold whitespace-nowrap"
+              style={{ color: 'var(--accent-from)' }}
+            >
+              {toast.action.label}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

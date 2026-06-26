@@ -11,6 +11,7 @@ export interface PlaylistItem {
   user_id: string
   created_at: string | null
   track_count: number
+  is_public: boolean
   collaborative: boolean | null
   share_token: string | null
 }

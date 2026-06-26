@@ -18,6 +18,7 @@ interface EditPlaylistModalProps {
 export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModalProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [isPublic, setIsPublic] = useState(false)
   const [saving, setSaving] = useState(false)
   const [cropImage, setCropImage] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -32,6 +33,7 @@ export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModal
     if (playlist) {
       setName(playlist.name)
       setDescription(playlist.description ?? '')
+      setIsPublic(playlist.is_public)
       setCoverFile(null)
       setCropImage(null)
       cancelCrop()
@@ -111,6 +113,7 @@ export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModal
         name: name.trim(),
         description: description.trim() || null,
         cover_url: coverUrl,
+        is_public: isPublic,
       })
       .eq('id', playlist.id)
       .select()
@@ -139,7 +142,7 @@ export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModal
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
-        className="w-full max-w-md rounded-xl p-6 shadow-xl"
+        className="w-full max-w-md rounded-xl p-6 shadow-xl overflow-y-auto max-h-[90vh]"
         style={{ backgroundColor: 'var(--bg-elevated)' }}
       >
         <h2 className="text-lg font-bold mb-4">Editar playlist</h2>
@@ -221,7 +224,7 @@ export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModal
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Adicione uma descrição..."
-              rows={3}
+              rows={2}
               className="w-full px-3 py-2 rounded-lg text-sm outline-none border resize-none"
               style={{
                 backgroundColor: 'var(--bg-surface)',
@@ -230,6 +233,40 @@ export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModal
               }}
               maxLength={300}
             />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium mb-2 block" style={{ color: 'var(--text-secondary)' }}>
+              Visibilidade
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setIsPublic(false)}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl text-center transition-all"
+                style={{
+                  border: !isPublic ? '2px solid transparent' : '2px solid rgba(255,255,255,0.1)',
+                  background: !isPublic ? 'linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box, linear-gradient(135deg, var(--accent-from), var(--accent-to)) border-box' : 'var(--bg-surface)',
+                }}
+              >
+                <span className="text-lg">🔒</span>
+                <span className="text-sm font-medium">Privada</span>
+                <span className="text-xs" style={{ color: 'var(--text-disabled)' }}>Só você pode ver e ouvir</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsPublic(true)}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl text-center transition-all"
+                style={{
+                  border: isPublic ? '2px solid transparent' : '2px solid rgba(255,255,255,0.1)',
+                  background: isPublic ? 'linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box, linear-gradient(135deg, var(--accent-from), var(--accent-to)) border-box' : 'var(--bg-surface)',
+                }}
+              >
+                <span className="text-lg">🌐</span>
+                <span className="text-sm font-medium">Pública</span>
+                <span className="text-xs" style={{ color: 'var(--text-disabled)' }}>Qualquer pessoa pode encontrar e ouvir</span>
+              </button>
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">

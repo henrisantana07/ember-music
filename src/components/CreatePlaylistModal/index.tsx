@@ -17,13 +17,13 @@ interface CreatePlaylistModalProps {
 export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [isPublic, setIsPublic] = useState(false)
   const [saving, setSaving] = useState(false)
   const [defaultCover, setDefaultCover] = useState<string | null>(null)
   const [hasFavorites, setHasFavorites] = useState(false)
   const [cropImage, setCropImage] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [coverFile, setCoverFile] = useState<Blob | null>(null)
-  const [createdId, setCreatedId] = useState<string | null>(null)
   const { addPlaylist } = usePlaylistsStore()
   const supabase = createClient()
   const router = useRouter()
@@ -35,10 +35,10 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
     if (!open) return
     setName('')
     setDescription('')
+    setIsPublic(false)
     setDefaultCover(null)
     setCropImage(null)
     setCoverFile(null)
-    setCreatedId(null)
     setHasFavorites(false)
     cancelCrop()
 
@@ -140,6 +140,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
         name: name.trim(),
         description: description.trim() || null,
         cover_url: coverUrl || defaultCover || DEFAULT_COVER,
+        is_public: isPublic,
         user_id: user.id,
       })
       .select()
@@ -147,7 +148,8 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
 
     if (!error && data) {
       addPlaylist({ ...data, track_count: 0 })
-      setCreatedId(data.id)
+      onClose()
+      router.push(`/playlists/${data.id}`)
     }
     setSaving(false)
   }
@@ -162,39 +164,9 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
-        className="w-full max-w-md rounded-xl p-6 shadow-xl"
+        className="w-full max-w-md rounded-xl p-6 shadow-xl overflow-y-auto max-h-[90vh]"
         style={{ backgroundColor: 'var(--bg-elevated)' }}
       >
-        {createdId ? (
-          <div className="text-center py-4">
-            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}>
-              <svg className="w-7 h-7" fill="white" viewBox="0 0 24 24">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-              </svg>
-            </div>
-            <h2 className="text-lg font-bold mb-1">Playlist criada</h2>
-            <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
-              {name.trim()} foi adicionada à sua biblioteca
-            </p>
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={() => { onClose(); router.push(`/playlists/${createdId}`) }}
-                className="px-5 py-2 rounded-lg text-sm font-bold"
-                style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
-              >
-                Ir para playlist
-              </button>
-              <button
-                onClick={onClose}
-                className="px-5 py-2 rounded-lg text-sm font-medium transition-colors"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                Fechar
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
         <h2 className="text-lg font-bold mb-4">Nova playlist</h2>
 
         <div className="flex gap-4 mb-5">
@@ -280,7 +252,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Uma descrição opcional..."
-              rows={3}
+              rows={2}
               className="w-full px-3 py-2 rounded-lg text-sm outline-none border resize-none"
               style={{
                 backgroundColor: 'var(--bg-surface)',
@@ -289,6 +261,40 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
               }}
               maxLength={300}
             />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium mb-2 block" style={{ color: 'var(--text-secondary)' }}>
+              Visibilidade
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setIsPublic(false)}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl text-center transition-all"
+                style={{
+                  border: isPublic ? '2px solid rgba(255,255,255,0.1)' : '2px solid transparent',
+                  background: !isPublic ? 'linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box, linear-gradient(135deg, var(--accent-from), var(--accent-to)) border-box' : 'var(--bg-surface)',
+                }}
+              >
+                <span className="text-lg">🔒</span>
+                <span className="text-sm font-medium">Privada</span>
+                <span className="text-xs" style={{ color: 'var(--text-disabled)' }}>Só você pode ver e ouvir</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsPublic(true)}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl text-center transition-all"
+                style={{
+                  border: isPublic ? '2px solid transparent' : '2px solid rgba(255,255,255,0.1)',
+                  background: isPublic ? 'linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box, linear-gradient(135deg, var(--accent-from), var(--accent-to)) border-box' : 'var(--bg-surface)',
+                }}
+              >
+                <span className="text-lg">🌐</span>
+                <span className="text-sm font-medium">Pública</span>
+                <span className="text-xs" style={{ color: 'var(--text-disabled)' }}>Qualquer pessoa pode encontrar e ouvir</span>
+              </button>
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
@@ -313,8 +319,6 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
             </button>
           </div>
         </form>
-          </>
-        )}
       </div>
     </div>
   )
