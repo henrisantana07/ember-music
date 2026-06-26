@@ -1,60 +1,44 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import Cropper from 'cropperjs'
 import 'cropperjs/dist/cropper.css'
+import type { Database } from '@/types/database'
 
-interface CreatePlaylistModalProps {
+type PlaylistRow = Database['public']['Tables']['playlists']['Row']
+
+interface EditPlaylistModalProps {
   open: boolean
+  playlist: PlaylistRow | null
   onClose: () => void
 }
 
-export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps) {
+export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModalProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [saving, setSaving] = useState(false)
-  const [defaultCover, setDefaultCover] = useState<string | null>(null)
   const [cropImage, setCropImage] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [coverFile, setCoverFile] = useState<Blob | null>(null)
-  const { addPlaylist } = usePlaylistsStore()
+  const { updatePlaylist } = usePlaylistsStore()
   const supabase = createClient()
-  const router = useRouter()
   const cropperRef = useRef<HTMLImageElement>(null)
   const cropperInstance = useRef<Cropper | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (!open) return
-    setName('')
-    setDescription('')
-    setDefaultCover(null)
-    setCropImage(null)
-    setCoverFile(null)
-    cancelCrop()
+    if (playlist) {
+      setName(playlist.name)
+      setDescription(playlist.description ?? '')
+      setCoverFile(null)
+      setCropImage(null)
+      cancelCrop()
+    }
+  }, [playlist, open])
 
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
-      supabase
-        .from('favorites')
-        .select('track_data')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (data?.track_data) {
-            const track = data.track_data as { image?: string }
-            if (track.image) setDefaultCover(track.image)
-          }
-        })
-    })
-  }, [open])
-
-  if (!open) return null
+  if (!open || !playlist) return null
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -99,21 +83,14 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
     if (cropperInstance.current) { cropperInstance.current.destroy(); cropperInstance.current = null }
   }
 
-  function getCoverPreview(): string | null {
-    if (cropImage) return cropImage
-    if (coverFile) return URL.createObjectURL(coverFile)
-    if (defaultCover) return defaultCover
-    return null
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!name.trim()) return
+  async function handleSave() {
+    if (!name.trim() || !playlist) return
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaving(false); return }
 
-    let coverUrl: string | null = null
+    let coverUrl = playlist.cover_url
+
     if (coverFile) {
       setUploading(true)
       const ext = 'png'
@@ -128,28 +105,31 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
       setUploading(false)
     }
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('playlists')
-      .insert({
+      .update({
         name: name.trim(),
         description: description.trim() || null,
-        cover_url: coverUrl || defaultCover || null,
-        user_id: user.id,
+        cover_url: coverUrl,
       })
+      .eq('id', playlist.id)
       .select()
       .single()
 
-    if (!error && data) {
-      addPlaylist({ ...data, track_count: 0 })
-      setName('')
-      setDescription('')
-      onClose()
-      router.push(`/playlists/${data.id}`)
+    if (data) {
+      updatePlaylist(playlist.id, data)
     }
     setSaving(false)
+    onClose()
   }
 
-  const coverPreview = getCoverPreview()
+  function getPreview(): string | null {
+    if (cropImage) return cropImage
+    if (coverFile) return URL.createObjectURL(coverFile)
+    return playlist!.cover_url || null
+  }
+
+  const preview = getPreview()
   const charsLeft = 80 - name.length
 
   return (
@@ -162,7 +142,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
         className="w-full max-w-md rounded-xl p-6 shadow-xl"
         style={{ backgroundColor: 'var(--bg-elevated)' }}
       >
-        <h2 className="text-lg font-bold mb-4">Nova playlist</h2>
+        <h2 className="text-lg font-bold mb-4">Editar playlist</h2>
 
         <div className="flex gap-4 mb-5">
           <div className="flex-shrink-0">
@@ -175,7 +155,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="w-28 h-28 rounded-lg overflow-hidden relative group cursor-pointer"
-                style={{ background: coverPreview ? `url(${coverPreview}) center/cover` : 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
+                style={{ background: preview ? `url(${preview}) center/cover` : 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
               >
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2}>
@@ -189,18 +169,18 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
           </div>
 
           <div className="flex-1 min-w-0 self-center">
-            <p className="text-sm font-medium truncate">{name || 'Nova playlist'}</p>
+            <p className="text-sm font-medium truncate">{name || 'Sem nome'}</p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-              {coverFile ? 'Capa personalizada' : defaultCover ? 'Capa do último favorito' : 'Capa padrão'}
+              {coverFile ? 'Nova capa selecionada' : 'Clique na capa para alterar'}
             </p>
             {coverFile && (
               <button
                 type="button"
-                onClick={() => { setCoverFile(null); setDefaultCover(null) }}
+                onClick={() => setCoverFile(null)}
                 className="text-xs mt-1 underline"
                 style={{ color: 'var(--accent-from)' }}
               >
-                Remover capa
+                Remover
               </button>
             )}
             {cropImage && (
@@ -212,7 +192,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4">
           <div>
             <label className="text-xs font-medium mb-1 flex justify-between" style={{ color: 'var(--text-secondary)' }}>
               <span>Nome</span>
@@ -222,8 +202,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value.slice(0, 80))}
-              placeholder="Minha playlist"
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none border transition-colors"
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none border"
               style={{
                 backgroundColor: 'var(--bg-surface)',
                 color: 'var(--text-primary)',
@@ -241,7 +220,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Uma descrição opcional..."
+              placeholder="Adicione uma descrição..."
               rows={3}
               className="w-full px-3 py-2 rounded-lg text-sm outline-none border resize-none"
               style={{
@@ -263,7 +242,8 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
               Cancelar
             </button>
             <button
-              type="submit"
+              type="button"
+              onClick={handleSave}
               disabled={!name.trim() || saving || uploading}
               className="px-5 py-2 rounded-lg text-sm font-bold transition-opacity disabled:opacity-50"
               style={{
@@ -271,10 +251,10 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
                 color: 'var(--bg-base)',
               }}
             >
-              {uploading ? 'Enviando capa...' : saving ? 'Criando...' : 'Criar'}
+              {uploading ? 'Enviando capa...' : saving ? 'Salvando...' : 'Salvar'}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   )

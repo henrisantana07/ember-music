@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { TrackCard } from '@/components/TrackCard'
+import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
 import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { formatDuration } from '@/lib/spotify'
@@ -93,6 +94,7 @@ function BibliotecaContent() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [trackOffset, setTrackOffset] = useState(0)
+  const [createModalOpen, setCreateModalOpen] = useState(false)
 
   const { play } = usePlayerStore()
 
@@ -345,13 +347,7 @@ function BibliotecaContent() {
         <h1 className="text-3xl font-bold">Biblioteca</h1>
         {activeTab === 'playlists' && (
           <button
-            onClick={() => {
-              const name = prompt('Nome da playlist:')
-              if (!name?.trim()) return
-              supabase.from('playlists').insert({ name: name.trim(), user_id: user.id }).select().single().then(({ data }) => {
-                if (data) router.push(`/playlists/${data.id}`)
-              })
-            }}
+            onClick={() => setCreateModalOpen(true)}
             className="btn-primary text-sm flex items-center gap-1.5"
           >
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -498,13 +494,7 @@ function BibliotecaContent() {
                 </svg>
                 <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>Nenhuma playlist criada</p>
                 <button
-                  onClick={() => {
-                    const name = prompt('Nome da playlist:')
-                    if (!name?.trim()) return
-                    supabase.from('playlists').insert({ name: name.trim(), user_id: user.id }).select().single().then(({ data }) => {
-                      if (data) router.push(`/playlists/${data.id}`)
-                    })
-                  }}
+                  onClick={() => setCreateModalOpen(true)}
                   className="btn-primary text-sm"
                 >
                   Criar minha primeira playlist
@@ -598,6 +588,7 @@ function BibliotecaContent() {
           )}
         </>
       )}
+      <CreatePlaylistModal open={createModalOpen} onClose={() => setCreateModalOpen(false)} />
     </div>
   )
 }

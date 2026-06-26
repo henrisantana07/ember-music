@@ -5,6 +5,8 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { usePlayerStore } from '@/lib/store'
 import { usePlaylistsStore } from '@/lib/playlists-store'
+import { EditPlaylistModal } from '@/components/EditPlaylistModal'
+import { DeletePlaylistModal } from '@/components/DeletePlaylistModal'
 import { formatDuration } from '@/lib/spotify'
 import { ShareButton } from '@/components/ShareButton'
 import {
@@ -33,11 +35,11 @@ function PlaylistContent() {
   const [playlist, setPlaylist] = useState<Database['public']['Tables']['playlists']['Row'] | null>(null)
   const [tracks, setTracks] = useState<PlaylistTrack[]>([])
   const [loading, setLoading] = useState(true)
-  const [editing, setEditing] = useState(false)
-  const [editName, setEditName] = useState('')
-  const [editDesc, setEditDesc] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
   const [isOwner, setIsOwner] = useState(false)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   async function load() {
     setLoading(true)
@@ -63,8 +65,6 @@ function PlaylistContent() {
 
     setIsOwner(user?.id === pl.user_id)
     setPlaylist(pl)
-    setEditName(pl.name)
-    setEditDesc(pl.description ?? '')
 
     const { data: pts } = await supabase
       .from('playlist_tracks')
@@ -78,27 +78,12 @@ function PlaylistContent() {
 
   useEffect(() => { load() }, [id])
 
-  async function handleSave() {
-    if (!playlist || !editName.trim()) return
-    const { data } = await supabase
-      .from('playlists')
-      .update({ name: editName.trim(), description: editDesc.trim() || null })
-      .eq('id', id)
-      .select()
-      .single()
-
-    if (data) {
-      setPlaylist(data)
-      updatePlaylist(id, data)
-    }
-    setEditing(false)
-  }
-
-  async function handleDelete() {
-    if (!confirm('Tem certeza que deseja excluir esta playlist?')) return
+  async function handleDeleteConfirm() {
+    setDeleting(true)
     await supabase.from('playlist_tracks').delete().eq('playlist_id', id)
     await supabase.from('playlists').delete().eq('id', id)
     removePlaylist(id)
+    setDeleteModalOpen(false)
     router.push('/')
   }
 
@@ -210,57 +195,19 @@ function PlaylistContent() {
         </div>
 
         <div className="flex flex-col justify-end flex-1 min-w-0">
-          {editing ? (
-            <div className="space-y-3">
-              <input
-                type="text"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                className="text-2xl font-bold bg-transparent border-b outline-none pb-1"
-                style={{ borderColor: 'var(--accent-from)', color: 'var(--text-primary)' }}
-                autoFocus
-              />
-              <textarea
-                value={editDesc}
-                onChange={(e) => setEditDesc(e.target.value)}
-                className="w-full text-sm bg-transparent border-b outline-none pb-1 resize-none"
-                style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'var(--text-secondary)' }}
-                rows={2}
-              />
-              <div className="flex gap-2">
-                <button
-                  onClick={handleSave}
-                  className="px-4 py-1.5 rounded-lg text-sm font-bold"
-                  style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
-                >
-                  Salvar
-                </button>
-                <button
-                  onClick={() => setEditing(false)}
-                  className="px-4 py-1.5 rounded-lg text-sm"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-secondary)' }}>
-                Playlist
-              </p>
-              <h1 className="text-2xl md:text-3xl font-bold truncate">{playlist.name}</h1>
-              {playlist.description && (
-                <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-                  {playlist.description}
-                </p>
-              )}
-              <p className="text-sm mt-1" style={{ color: 'var(--text-disabled)' }}>
-                {tracks.length} {tracks.length === 1 ? 'faixa' : 'faixas'}
-                {totalDuration > 0 && ` — ${formatDuration(Math.floor(totalDuration))}`}
-              </p>
-            </>
+          <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-secondary)' }}>
+            Playlist
+          </p>
+          <h1 className="text-2xl md:text-3xl font-bold truncate">{playlist.name}</h1>
+          {playlist.description && (
+            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+              {playlist.description}
+            </p>
           )}
+          <p className="text-sm mt-1" style={{ color: 'var(--text-disabled)' }}>
+            {tracks.length} {tracks.length === 1 ? 'faixa' : 'faixas'}
+            {totalDuration > 0 && ` — ${formatDuration(Math.floor(totalDuration))}`}
+          </p>
 
           <div className="flex items-center gap-3 mt-4">
             {tracks.length > 0 && (
@@ -276,43 +223,39 @@ function PlaylistContent() {
               </button>
             )}
 
-            {!editing && (
-              <>
-                <button onClick={handleShare} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Compartilhar">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
-                  </svg>
-                </button>
-                {playlist.collaborative && playlist.share_token && (
-                  <button onClick={handleRevokeShare} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Desativar compartilhamento">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                    </svg>
-                  </button>
-                )}
-                {playlist.collaborative && (
-                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-from)' }}>
-                    Colaborativa
-                  </span>
-                )}
-                {isOwner && (
-                  <button onClick={() => setEditing(true)} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Editar">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                )}
-                {isOwner && (
-                  <button onClick={handleDelete} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Excluir">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                )}
-                {!isOwner && playlist.collaborative && (
-                  <ShareButton title={playlist.name} text={`Ouça "${playlist.name}" no Ember Music`} />
-                )}
-              </>
+            <button onClick={handleShare} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Compartilhar">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+              </svg>
+            </button>
+            {playlist.collaborative && playlist.share_token && (
+              <button onClick={handleRevokeShare} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Desativar compartilhamento">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+              </button>
+            )}
+            {playlist.collaborative && (
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-from)' }}>
+                Colaborativa
+              </span>
+            )}
+            {isOwner && (
+              <button onClick={() => setEditModalOpen(true)} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Editar">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+            )}
+            {isOwner && (
+              <button onClick={() => setDeleteModalOpen(true)} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Excluir">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
+            {!isOwner && playlist.collaborative && (
+              <ShareButton title={playlist.name} text={`Ouça "${playlist.name}" no Ember Music`} />
             )}
           </div>
         </div>
@@ -354,6 +297,19 @@ function PlaylistContent() {
           </SortableContext>
         </DndContext>
       </div>
+
+      <EditPlaylistModal
+        open={editModalOpen}
+        playlist={playlist}
+        onClose={() => setEditModalOpen(false)}
+      />
+      <DeletePlaylistModal
+        open={deleteModalOpen}
+        playlistName={playlist?.name ?? ''}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        deleting={deleting}
+      />
     </div>
   )
 }
