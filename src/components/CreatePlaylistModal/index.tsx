@@ -17,6 +17,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
   const [description, setDescription] = useState('')
   const [saving, setSaving] = useState(false)
   const [defaultCover, setDefaultCover] = useState<string | null>(null)
+  const [hasFavorites, setHasFavorites] = useState(false)
   const [cropImage, setCropImage] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [coverFile, setCoverFile] = useState<Blob | null>(null)
@@ -48,7 +49,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
         .then(({ data }) => {
           if (data?.track_data) {
             const track = data.track_data as { image?: string }
-            if (track.image) setDefaultCover(track.image)
+            if (track.image) { setDefaultCover(track.image); setHasFavorites(true) }
           }
         })
     })
@@ -177,6 +178,11 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
                 className="w-28 h-28 rounded-lg overflow-hidden relative group cursor-pointer"
                 style={{ background: coverPreview ? `url(${coverPreview}) center/cover` : 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
               >
+                {!coverPreview && (
+                  <svg className="w-10 h-10 absolute inset-0 m-auto opacity-60" fill="white" viewBox="0 0 24 24">
+                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                  </svg>
+                )}
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -196,7 +202,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
             {coverFile && (
               <button
                 type="button"
-                onClick={() => { setCoverFile(null); setDefaultCover(null) }}
+                onClick={() => setCoverFile(null)}
                 className="text-xs mt-1 underline"
                 style={{ color: 'var(--accent-from)' }}
               >
