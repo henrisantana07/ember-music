@@ -21,6 +21,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
   const [cropImage, setCropImage] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [coverFile, setCoverFile] = useState<Blob | null>(null)
+  const [createdId, setCreatedId] = useState<string | null>(null)
   const { addPlaylist } = usePlaylistsStore()
   const supabase = createClient()
   const router = useRouter()
@@ -35,6 +36,8 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
     setDefaultCover(null)
     setCropImage(null)
     setCoverFile(null)
+    setCreatedId(null)
+    setHasFavorites(false)
     cancelCrop()
 
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -142,10 +145,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
 
     if (!error && data) {
       addPlaylist({ ...data, track_count: 0 })
-      setName('')
-      setDescription('')
-      onClose()
-      router.push(`/playlists/${data.id}`)
+      setCreatedId(data.id)
     }
     setSaving(false)
   }
@@ -163,6 +163,36 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
         className="w-full max-w-md rounded-xl p-6 shadow-xl"
         style={{ backgroundColor: 'var(--bg-elevated)' }}
       >
+        {createdId ? (
+          <div className="text-center py-4">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}>
+              <svg className="w-7 h-7" fill="white" viewBox="0 0 24 24">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+              </svg>
+            </div>
+            <h2 className="text-lg font-bold mb-1">Playlist criada</h2>
+            <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
+              {name.trim()} foi adicionada à sua biblioteca
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => { onClose(); router.push(`/playlists/${createdId}`) }}
+                className="px-5 py-2 rounded-lg text-sm font-bold"
+                style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
+              >
+                Ir para playlist
+              </button>
+              <button
+                onClick={onClose}
+                className="px-5 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
         <h2 className="text-lg font-bold mb-4">Nova playlist</h2>
 
         <div className="flex gap-4 mb-5">
@@ -281,6 +311,8 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
             </button>
           </div>
         </form>
+          </>
+        )}
       </div>
     </div>
   )
