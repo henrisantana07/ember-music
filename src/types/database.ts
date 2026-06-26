@@ -248,6 +248,42 @@ export type Database = {
         }
         Relationships: []
       }
+      downloads: {
+        Row: {
+          id: string
+          user_id: string
+          track_id: string
+          track_name: string
+          artist_name: string
+          cover_url: string | null
+          file_size_bytes: number | null
+          track_data: Json | null
+          downloaded_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          track_id: string
+          track_name: string
+          artist_name: string
+          cover_url?: string | null
+          file_size_bytes?: number | null
+          track_data?: Json | null
+          downloaded_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          track_id?: string
+          track_name?: string
+          artist_name?: string
+          cover_url?: string | null
+          file_size_bytes?: number | null
+          track_data?: Json | null
+          downloaded_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
