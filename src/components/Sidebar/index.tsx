@@ -19,10 +19,7 @@ const NAV_SECTION1 = [
   { href: '/biblioteca', label: 'Biblioteca', outline: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', fill: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
 ]
 
-const LIBRARY_ITEMS = [
-  { href: '/history', label: 'Histórico', outline: 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z', fill: 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z' },
-  { href: '/biblioteca?tab=musicas', label: 'Curtidas', outline: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z', fill: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z' },
-]
+
 
 export default function Sidebar() {
   const pathname = usePathname()
@@ -120,24 +117,6 @@ export default function Sidebar() {
     )
   }
 
-  function LibraryLink({ href, label, icon }: { href: string; label: string; icon: { outline: string; fill: string } }) {
-    const active = isActive(href)
-    return (
-      <Link
-        href={href}
-        aria-current={active ? 'page' : undefined}
-        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
-          active
-            ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
-            : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
-        }`}
-      >
-        <NavIcon icon={icon} active={active} />
-        <span>{label}</span>
-      </Link>
-    )
-  }
-
   const sidebarContent = (
     <>
       <div className="flex-none flex items-center h-14 px-4 gap-3">
@@ -166,38 +145,33 @@ export default function Sidebar() {
 
       <hr className="mx-4 my-2 border-white/5" />
 
-      {!collapsed && (
+      {!collapsed && playlists.length > 0 && (
         <div className="flex-none px-2 space-y-0.5">
           <p className="px-3 pt-1 pb-0.5 text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
             Sua Biblioteca
           </p>
-          {LIBRARY_ITEMS.map(item => (
-            <LibraryLink key={item.href} href={item.href} label={item.label} icon={{ outline: item.outline, fill: item.fill }} />
-          ))}
-          {playlists.length > 0 && (
-            <div className="pt-2 space-y-0.5">
-              {playlists.map(pl => {
-                const active = pathname === `/playlists/${pl.id}`
-                return (
-                  <Link
-                    key={pl.id}
-                    href={`/playlists/${pl.id}`}
-                    aria-current={active ? 'page' : undefined}
-                    className={`flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
-                      active
-                        ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
-                        : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
-                    }`}
-                  >
-                    <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                    </svg>
-                    <span className="truncate">{pl.name}</span>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
+          <div className="space-y-0.5">
+            {playlists.map(pl => {
+              const active = pathname === `/playlists/${pl.id}`
+              return (
+                <Link
+                  key={pl.id}
+                  href={`/playlists/${pl.id}`}
+                  aria-current={active ? 'page' : undefined}
+                  className={`flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
+                    active
+                      ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
+                      : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                  </svg>
+                  <span className="truncate">{pl.name}</span>
+                </Link>
+              )
+            })}
+          </div>
         </div>
       )}
 
@@ -358,17 +332,12 @@ export default function Sidebar() {
 
             <hr className="mx-4 my-2 border-white/5 flex-none" />
 
+            {playlists.length > 0 && (
             <div className="flex-none px-2 space-y-0.5">
               <p className="px-3 pt-1 pb-0.5 text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
                 Sua Biblioteca
               </p>
-              {LIBRARY_ITEMS.map(item => (
-                <div key={item.href} onClick={() => { setDrawerOpen(false); window.location.href = item.href }}>
-                  <LibraryLink href={item.href} label={item.label} icon={{ outline: item.outline, fill: item.fill }} />
-                </div>
-              ))}
-              {playlists.length > 0 && (
-                <div className="pt-2 space-y-0.5">
+                <div className="space-y-0.5">
                   {playlists.map(pl => {
                     const active = pathname === `/playlists/${pl.id}`
                     return (
@@ -392,8 +361,8 @@ export default function Sidebar() {
                     )
                   })}
                 </div>
-              )}
             </div>
+            )}
 
             <hr className="mx-4 my-2 border-white/5 flex-none" />
 
