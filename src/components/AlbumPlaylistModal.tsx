@@ -110,42 +110,74 @@ export function AlbumPlaylistModal({ open, onClose, album }: AlbumPlaylistModalP
             </div>
           </div>
 
-          <div className="space-y-1 max-h-60 overflow-y-auto">
-            {playlists.length === 0 && (
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-secondary)' }}>
+            Faixas do álbum
+          </p>
+          <div className="max-h-44 overflow-y-auto space-y-1 mb-4 p-2 rounded-lg" style={{ backgroundColor: 'var(--bg-surface)' }}>
+            {loading ? (
+              <div className="flex items-center justify-center py-6">
+                <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--accent-solid)' }} />
+              </div>
+            ) : tracks.length === 0 ? (
+              <p className="text-xs py-4 text-center" style={{ color: 'var(--text-disabled)' }}>Nenhuma faixa encontrada</p>
+            ) : (
+              tracks.map((track, i) => (
+                <div key={track.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md">
+                  <span className="text-xs w-5 text-right flex-shrink-0" style={{ color: 'var(--text-disabled)' }}>{i + 1}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm truncate font-medium">{track.name}</p>
+                    <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
+                  </div>
+                  <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-disabled)' }}>
+                    {track.duration ? `${Math.floor(track.duration / 60)}:${String(track.duration % 60).padStart(2, '0')}` : ''}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+
+          <hr className="mb-3 border-0" style={{ height: 1, backgroundColor: 'var(--border-subtle)' }} />
+
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-secondary)' }}>
+            Minhas playlists
+          </p>
+          <div className="space-y-1 max-h-40 overflow-y-auto">
+            {playlists.length === 0 ? (
               <p className="text-sm py-4 text-center" style={{ color: 'var(--text-disabled)' }}>
                 Nenhuma playlist ainda
               </p>
-            )}
-            {playlists.map((pl) => {
-              const isSelected = selectedPlaylist === pl.id
-              return (
-                <button
-                  key={pl.id}
-                  onClick={() => setSelectedPlaylist(isSelected ? null : pl.id)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left"
-                  style={{
-                    backgroundColor: isSelected ? 'var(--accent-from)' : 'transparent',
-                    color: isSelected ? '#fff' : 'inherit',
-                  }}
-                  onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)' }}
-                  onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent' }}
-                >
-                  <span
-                    className="w-5 h-5 flex-shrink-0 rounded-full border-2 flex items-center justify-center transition-colors"
+            ) : (
+              playlists.map((pl) => {
+                const isSelected = selectedPlaylist === pl.id
+                return (
+                  <button
+                    key={pl.id}
+                    onClick={() => setSelectedPlaylist(isSelected ? null : pl.id)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left"
                     style={{
-                      borderColor: isSelected ? '#fff' : 'var(--accent-from)',
                       backgroundColor: isSelected ? 'var(--accent-from)' : 'transparent',
+                      color: isSelected ? '#fff' : 'inherit',
                     }}
+                    onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)' }}
+                    onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent' }}
                   >
-                    {isSelected && <span className="w-2 h-2 rounded-full bg-white" />}
-                  </span>
-                  <span className="flex-1 truncate">{pl.name}</span>
-                  <span className="text-xs" style={{ color: isSelected ? 'rgba(255,255,255,0.7)' : 'var(--text-disabled)' }}>
-                    {pl.track_count} faixas
-                  </span>
-                </button>
-              )
-            })}
+                    <span
+                      className="w-5 h-5 flex-shrink-0 rounded-full border-2 flex items-center justify-center transition-colors"
+                      style={{
+                        borderColor: isSelected ? '#fff' : 'var(--accent-from)',
+                        backgroundColor: isSelected ? 'var(--accent-from)' : 'transparent',
+                      }}
+                    >
+                      {isSelected && <span className="w-2 h-2 rounded-full bg-white" />}
+                    </span>
+                    <span className="flex-1 truncate">{pl.name}</span>
+                    <span className="text-xs" style={{ color: isSelected ? 'rgba(255,255,255,0.7)' : 'var(--text-disabled)' }}>
+                      {pl.track_count} faixas
+                    </span>
+                  </button>
+                )
+              })
+            )}
           </div>
 
           <div className="flex gap-2 mt-3">
