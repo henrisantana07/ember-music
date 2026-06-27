@@ -8,7 +8,7 @@ export async function removeCustomCover(
 ): Promise<void> {
   await supabase.storage
     .from('playlist-covers')
-    .remove([`${userId}/${playlistId}/cover`])
+    .remove([`${userId}/${playlistId}/cover.png`])
 
   const { count } = await supabase
     .from('playlist_tracks')
