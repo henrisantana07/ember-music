@@ -31,8 +31,6 @@ export function ExploreFilters({ tracks, albums, artists }: ExploreFiltersProps)
   const artistFilter = searchParams.get('artist') ?? ''
   const genreFilter = searchParams.get('genre') ?? ''
   const durationFilter = (searchParams.get('duration') ?? '') as DurationFilter
-  const yearFilter = searchParams.get('year') ?? ''
-
   const [genreOptions, setGenreOptions] = useState<string[]>([])
 
   useEffect(() => {
@@ -50,12 +48,6 @@ export function ExploreFilters({ tracks, albums, artists }: ExploreFiltersProps)
     ...tracks.map(t => t.artist_name),
   ])].filter(Boolean).sort()
 
-  const yearOptions = [...new Set(
-    albums
-      .map(a => a.release_date?.split('-')[0])
-      .filter((y): y is string => !!y && y.length === 4)
-  )].sort((a, b) => Number(b) - Number(a))
-
   function updateParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString())
     if (value) params.set(key, value)
@@ -65,7 +57,7 @@ export function ExploreFilters({ tracks, albums, artists }: ExploreFiltersProps)
 
   function clearFilters() {
     const params = new URLSearchParams(searchParams.toString())
-    ;['artist', 'genre', 'duration', 'year'].forEach((k) => params.delete(k))
+    ;['artist', 'genre', 'duration'].forEach((k) => params.delete(k))
     router.replace(`/buscar?${params.toString()}`)
   }
 
@@ -73,7 +65,6 @@ export function ExploreFilters({ tracks, albums, artists }: ExploreFiltersProps)
   if (genreFilter) activeFilters.push({ key: 'genre', label: `Género: ${genreFilter}` })
   if (artistFilter) activeFilters.push({ key: 'artist', label: `Artista: ${artistFilter}` })
   if (durationFilter) activeFilters.push({ key: 'duration', label: DURATION_OPTIONS.find(o => o.value === durationFilter)?.label ?? durationFilter })
-  if (yearFilter) activeFilters.push({ key: 'year', label: `Ano: ${yearFilter}` })
 
   const hasFilters = activeFilters.length > 0
 
@@ -123,22 +114,6 @@ export function ExploreFilters({ tracks, albums, artists }: ExploreFiltersProps)
         >
           {DURATION_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-        <select
-          value={yearFilter}
-          onChange={(e) => updateParam('year', e.target.value)}
-          className="rounded-full px-3 py-1.5 text-xs font-semibold border transition-all"
-          style={{
-            backgroundColor: yearFilter ? 'var(--accent-muted)' : 'var(--bg-surface)',
-            borderColor: yearFilter ? 'var(--accent-solid)' : 'var(--bg-elevated)',
-            color: yearFilter ? 'var(--text-primary)' : 'var(--text-secondary)',
-            maxWidth: 100,
-          }}
-        >
-          <option value="">Ano</option>
-          {yearOptions.map((year) => (
-            <option key={year} value={year}>{year}</option>
           ))}
         </select>
         {hasFilters && (
