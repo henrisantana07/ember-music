@@ -23,6 +23,8 @@ export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModal
   const [coverModalOpen, setCoverModalOpen] = useState(false)
   const { updatePlaylist } = usePlaylistsStore()
   const supabase = createClient()
+  const storePlaylist = usePlaylistsStore((s) => s.playlists.find((p) => p.id === playlist?.id))
+  const livePlaylist = storePlaylist ?? playlist
 
   useEffect(() => {
     if (playlist) {
@@ -56,8 +58,6 @@ export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModal
     onClose()
   }
 
-  const storePlaylist = usePlaylistsStore((s) => s.playlists.find((p) => p.id === playlist.id))
-  const livePlaylist = storePlaylist ?? playlist
   const resolved = resolveCover(livePlaylist as any)
   const charsLeft = 80 - name.length
 
@@ -216,7 +216,7 @@ export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModal
         onClose={() => setCoverModalOpen(false)}
         playlistId={playlist.id}
         currentCoverSource={resolved.source}
-        currentCoverUrl={livePlaylist.custom_cover_url}
+        currentCoverUrl={livePlaylist!.custom_cover_url}
       />
     </>
   )
