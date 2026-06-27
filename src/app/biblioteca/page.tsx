@@ -305,7 +305,7 @@ function BibliotecaContent() {
           <select
             value={trackSort}
             onChange={(e) => setTrackSort(e.target.value as typeof trackSort)}
-            className="text-sm rounded-lg px-3 py-1.5 outline-none cursor-pointer"
+            className="sort-select text-sm rounded-lg px-3 py-1.5 outline-none cursor-pointer"
             style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid rgba(255,255,255,0.1)' }}
           >
             <option value="recent">Adicionado recentemente</option>
@@ -321,7 +321,7 @@ function BibliotecaContent() {
           <select
             value={artistSort}
             onChange={(e) => setArtistSort(e.target.value as typeof artistSort)}
-            className="text-sm rounded-lg px-3 py-1.5 outline-none cursor-pointer"
+            className="sort-select text-sm rounded-lg px-3 py-1.5 outline-none cursor-pointer"
             style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid rgba(255,255,255,0.1)' }}
           >
             <option value="recent">Seguido recentemente</option>
@@ -334,7 +334,7 @@ function BibliotecaContent() {
           <select
             value={playlistSort}
             onChange={(e) => setPlaylistSort(e.target.value as typeof playlistSort)}
-            className="text-sm rounded-lg px-3 py-1.5 outline-none cursor-pointer"
+            className="sort-select text-sm rounded-lg px-3 py-1.5 outline-none cursor-pointer"
             style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid rgba(255,255,255,0.1)' }}
           >
             <option value="recent">Criada recentemente</option>
@@ -381,7 +381,7 @@ function BibliotecaContent() {
             <button
               key={tab.id}
               onClick={() => setTab(tab.id)}
-              className="text-sm font-medium px-4 py-1.5 rounded-full transition-all duration-150 whitespace-nowrap"
+              className="tab-pill text-sm font-medium px-4 py-1.5 rounded-full transition-all duration-150 whitespace-nowrap"
               style={{
                 background: isActive
                   ? 'linear-gradient(135deg, var(--accent-from), var(--accent-to))'

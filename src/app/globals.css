@@ -97,6 +97,27 @@ body {
   background-color: var(--bg-elevated);
 }
 
+.tab-pill {
+  transition: all 150ms ease;
+}
+
+.tab-pill:not([style*="linear-gradient"]):hover {
+  background-color: var(--bg-elevated) !important;
+}
+
+.tab-pill[style*="linear-gradient"]:hover {
+  opacity: 0.85;
+}
+
+.sort-select {
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.sort-select:hover {
+  border-color: var(--accent-from) !important;
+  background-color: var(--bg-elevated) !important;
+}
+
 .focus-ring:focus-visible {
   outline: 2px solid var(--accent-solid);
   outline-offset: 2px;
