@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { usePlaylistsStore } from '@/lib/playlists-store'
 import type { Album, Track } from '@/types/music'
 import type { User } from '@supabase/supabase-js'
 import type { Json } from '@/types/database'
@@ -13,11 +15,12 @@ interface AlbumResultGridProps {
 }
 
 export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridProps) {
+  const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [savingId, setSavingId] = useState<string | null>(null)
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
-  const savingRef = useRef<Map<string, AbortController>>(new Map())
   const supabase = createClient()
+  const { addPlaylist } = usePlaylistsStore()
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
@@ -28,33 +31,58 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
     if (!user || savingId) return
     if (savedIds.has(album.id)) return
 
-    const controller = new AbortController()
-    savingRef.current.set(album.id, controller)
     setSavingId(album.id)
 
     try {
-      const res = await fetch(`/api/spotify?endpoint=albums&id=${album.id}`, { signal: controller.signal })
+      const res = await fetch(`/api/spotify?endpoint=albums&id=${album.id}`)
       const data = await res.json()
       const tracks: Track[] = data.tracks ?? []
       if (tracks.length === 0) return
 
       const now = new Date().toISOString()
-      const inserts = tracks.map(track => ({
-        user_id: user.id,
+
+      const { data: newPlaylist, error: playlistError } = await supabase
+        .from('playlists')
+        .insert({
+          name: album.name,
+          description: `Álbum de ${album.artist_name}`,
+          cover_source: 'branded',
+          custom_cover_url: null,
+          last_track_cover_url: album.image || null,
+          user_id: user.id,
+          is_public: false,
+        })
+        .select()
+        .single()
+
+      if (playlistError || !newPlaylist) throw playlistError
+
+      const inserts = tracks.map((track, i) => ({
+        playlist_id: newPlaylist.id,
         track_id: track.id,
         track_data: track as unknown as Json,
-        created_at: now,
+        position: i,
+        added_at: now,
       }))
 
-      const { error } = await supabase.from('favorites').insert(inserts)
-      if (error) throw error
+      const { error: tracksError } = await supabase.from('playlist_tracks').insert(inserts)
+      if (tracksError) throw tracksError
+
+      addPlaylist({
+        ...newPlaylist,
+        track_count: tracks.length,
+        cover_source: 'branded',
+        is_public: false,
+        collaborative: null,
+        share_token: null,
+      } as any)
 
       setSavedIds(prev => new Set(prev).add(album.id))
+      router.push(`/playlists/${newPlaylist.id}`)
     } catch {
       // ignore
     } finally {
       setSavingId(null)
-      savingRef.current.delete(album.id)
     }
   }
 
@@ -104,7 +132,7 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
                         ? 'var(--accent-solid)'
                         : 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
                     }}
-                    title={isSaved ? 'Salvo' : 'Salvar álbum'}
+                    title={isSaved ? 'Salvo' : 'Salvar álbum como playlist'}
                   >
                     {isSaving ? (
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
