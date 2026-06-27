@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
@@ -52,7 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="flex flex-1 overflow-hidden">
           <Sidebar />
           <div className="flex-1 flex flex-col overflow-hidden">
-            <Topbar />
+            <Suspense fallback={<div className="h-16 flex-shrink-0" />}><Topbar /></Suspense>
             <main className="flex-1 overflow-y-auto scrollbar-thin px-4 md:px-6 py-5 pb-24 md:pb-5 flex flex-col">
               <PageTransition>
                 {children}
