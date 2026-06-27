@@ -56,7 +56,9 @@ export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModal
     onClose()
   }
 
-  const resolved = resolveCover(playlist as any)
+  const storePlaylist = usePlaylistsStore((s) => s.playlists.find((p) => p.id === playlist.id))
+  const livePlaylist = storePlaylist ?? playlist
+  const resolved = resolveCover(livePlaylist as any)
   const charsLeft = 80 - name.length
 
   return (
@@ -214,7 +216,7 @@ export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModal
         onClose={() => setCoverModalOpen(false)}
         playlistId={playlist.id}
         currentCoverSource={resolved.source}
-        currentCoverUrl={playlist.custom_cover_url}
+        currentCoverUrl={livePlaylist.custom_cover_url}
       />
     </>
   )

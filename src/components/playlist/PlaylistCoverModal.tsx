@@ -17,6 +17,7 @@ interface Props {
 
 export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSource, currentCoverUrl }: Props) {
   const [cropImage, setCropImage] = useState<string | null>(null)
+  const [coverFile, setCoverFile] = useState<Blob | null>(null)
   const [uploading, setUploading] = useState(false)
   const { updatePlaylistCover } = usePlaylistsStore()
   const supabase = createClient()
@@ -27,6 +28,7 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
   useEffect(() => {
     if (!open) {
       setCropImage(null)
+      setCoverFile(null)
       cancelCrop()
     }
   }, [open])
@@ -41,6 +43,7 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
     const reader = new FileReader()
     reader.onload = () => {
       setCropImage(reader.result as string)
+      setCoverFile(null)
       setTimeout(() => {
         if (cropperRef.current) {
           if (cropperInstance.current) cropperInstance.current.destroy()
@@ -59,55 +62,58 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
     e.target.value = ''
   }
 
-  async function confirmCrop() {
+  function confirmCrop() {
     if (!cropperInstance.current) return
     const canvas = cropperInstance.current.getCroppedCanvas({ width: 512, height: 512 })
     if (!canvas) return
-    if (cropperInstance.current) { cropperInstance.current.destroy(); cropperInstance.current = null }
-    setCropImage(null)
-
-    canvas.toBlob(async (blob) => {
-      if (!blob) return
-      setUploading(true)
-
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setUploading(false); return }
-
-      const filePath = `${user.id}/${playlistId}/cover.png`
-      const { error: uploadError } = await supabase.storage
-        .from('playlist-covers')
-        .upload(filePath, blob, { upsert: true, contentType: 'image/png' })
-
-      if (uploadError) {
-        setUploading(false)
-        alert('Erro ao enviar imagem')
-        return
-      }
-
-      const { data: urlData } = supabase.storage.from('playlist-covers').getPublicUrl(filePath)
-      const publicUrl = urlData.publicUrl + '?v=' + Date.now()
-
-      await supabase
-        .from('playlists')
-        .update({
-          cover_source: 'custom',
-          custom_cover_url: publicUrl,
-        })
-        .eq('id', playlistId)
-
-      updatePlaylistCover(playlistId, {
-        cover_source: 'custom',
-        custom_cover_url: publicUrl,
-      })
-
-      setUploading(false)
-      onClose()
+    canvas.toBlob((blob) => {
+      if (blob) setCoverFile(blob)
+      setCropImage(null)
+      if (cropperInstance.current) { cropperInstance.current.destroy(); cropperInstance.current = null }
     }, 'image/png')
   }
 
   function cancelCrop() {
     setCropImage(null)
     if (cropperInstance.current) { cropperInstance.current.destroy(); cropperInstance.current = null }
+  }
+
+  async function handleUpload() {
+    if (!coverFile) return
+    setUploading(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setUploading(false); return }
+
+    const filePath = `${user.id}/${playlistId}/cover.png`
+    const { error: uploadError } = await supabase.storage
+      .from('playlist-covers')
+      .upload(filePath, coverFile, { upsert: true, contentType: 'image/png' })
+
+    if (uploadError) {
+      setUploading(false)
+      alert('Erro ao enviar imagem')
+      return
+    }
+
+    const { data: urlData } = supabase.storage.from('playlist-covers').getPublicUrl(filePath)
+    const publicUrl = urlData.publicUrl + '?v=' + Date.now()
+
+    await supabase
+      .from('playlists')
+      .update({
+        cover_source: 'custom',
+        custom_cover_url: publicUrl,
+      })
+      .eq('id', playlistId)
+
+    updatePlaylistCover(playlistId, {
+      cover_source: 'custom',
+      custom_cover_url: publicUrl,
+    })
+
+    setCoverFile(null)
+    setUploading(false)
+    onClose()
   }
 
   async function handleRemove() {
@@ -172,9 +178,11 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
 
   const previewUrl = cropImage
     ? cropImage
-    : currentCoverSource === 'custom'
-      ? currentCoverUrl
-      : null
+    : coverFile
+      ? URL.createObjectURL(coverFile)
+      : currentCoverSource === 'custom'
+        ? currentCoverUrl
+        : null
 
   return (
     <div
@@ -196,15 +204,13 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
             <div className="flex gap-2 mt-3">
               <button
                 onClick={confirmCrop}
-                disabled={uploading}
-                className="flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-opacity disabled:opacity-50"
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-bold"
                 style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
               >
-                {uploading ? 'Enviando...' : 'Aplicar'}
+                Aplicar
               </button>
               <button
                 onClick={cancelCrop}
-                disabled={uploading}
                 className="px-4 py-2 rounded-lg text-sm"
                 style={{ color: 'var(--text-secondary)' }}
               >
@@ -262,7 +268,27 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
           </>
         )}
 
-        {!cropImage && (
+        {coverFile && !cropImage && (
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={handleUpload}
+              disabled={uploading}
+              className="flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-opacity disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
+            >
+              {uploading ? 'Enviando...' : 'Confirmar'}
+            </button>
+            <button
+              onClick={() => setCoverFile(null)}
+              className="px-4 py-2 rounded-lg text-sm"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              Cancelar
+            </button>
+          </div>
+        )}
+
+        {!cropImage && !coverFile && (
           <div className="flex justify-end mt-3">
             <button
               onClick={onClose}
