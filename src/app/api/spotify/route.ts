@@ -3,12 +3,18 @@ import { NextRequest, NextResponse } from 'next/server'
 const BASE_URL = 'https://api.deezer.com'
 
 async function deezerFetch(path: string): Promise<unknown> {
-  const res = await fetch(`${BASE_URL}${path}`)
-  if (!res.ok) {
-    const body = await res.text()
-    throw new Error(`Deezer API error ${res.status}: ${body}`)
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 10000)
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, { signal: controller.signal })
+    if (!res.ok) {
+      const body = await res.text()
+      throw new Error(`Deezer API error ${res.status}: ${body}`)
+    }
+    return res.json()
+  } finally {
+    clearTimeout(timeout)
   }
-  return res.json()
 }
 
 export async function GET(request: NextRequest) {
