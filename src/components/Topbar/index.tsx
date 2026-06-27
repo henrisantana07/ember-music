@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { saveSearchHistory } from '@/lib/search-history'
 import { SearchSuggestions } from '@/components/SearchSuggestions'
 import type { User } from '@supabase/supabase-js'
+
+type DurationFilter = '' | 'short' | 'medium' | 'long'
 
 export function Topbar() {
   const [user, setUser] = useState<User | null>(null)
@@ -13,11 +15,22 @@ export function Topbar() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const supabase = createClient()
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const artistDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+
+  const isSearchPage = pathname === '/buscar'
+  const [artistDraft, setArtistDraft] = useState(searchParams.get('artist') ?? '')
+  const durationValue = (searchParams.get('duration') ?? '') as DurationFilter
+
+  useEffect(() => {
+    setArtistDraft(searchParams.get('artist') ?? '')
+  }, [searchParams.get('artist')])
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -76,6 +89,26 @@ export function Topbar() {
     void submitSearch()
   }
 
+  function updateParam(key: string, value: string) {
+    const params = new URLSearchParams(searchParams.toString())
+    if (value) params.set(key, value)
+    else params.delete(key)
+    router.replace(`/buscar?${params.toString()}`)
+  }
+
+  function handleArtistChange(nextValue: string) {
+    setArtistDraft(nextValue)
+    if (artistDebounceRef.current) clearTimeout(artistDebounceRef.current)
+    artistDebounceRef.current = setTimeout(() => {
+      const cleaned = nextValue.trim().replace(/\s+/g, ' ')
+      updateParam('artist', cleaned)
+    }, 350)
+  }
+
+  function handleDurationChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    updateParam('duration', e.target.value)
+  }
+
   return (
     <header className="h-16 flex items-center justify-center px-6 flex-shrink-0 relative" style={{ backgroundColor: 'var(--bg-base)' }}>
       <img
@@ -119,6 +152,37 @@ export function Topbar() {
             inputRef={inputRef}
           />
       </form>
+
+      {isSearchPage && (
+        <div className="flex items-center gap-3 mx-4">
+          <input
+            value={artistDraft}
+            onChange={(e) => handleArtistChange(e.target.value)}
+            placeholder="Artista"
+            className="w-36 rounded-full px-3 py-2 text-sm border border-white/10 focus:outline-none focus:ring-2 transition-all"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              color: 'var(--text-primary)',
+              '--tw-ring-color': 'var(--accent-solid)',
+            } as React.CSSProperties}
+          />
+          <select
+            value={durationValue}
+            onChange={handleDurationChange}
+            className="rounded-full px-3 py-2 text-sm border border-white/10 focus:outline-none focus:ring-2 transition-all"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              color: 'var(--text-primary)',
+              '--tw-ring-color': 'var(--accent-solid)',
+            } as React.CSSProperties}
+          >
+            <option value="">Duração</option>
+            <option value="short">Curtas</option>
+            <option value="medium">Médias</option>
+            <option value="long">Longas</option>
+          </select>
+        </div>
+      )}
 
       <div className="absolute right-6 top-1/2 -translate-y-1/2" ref={dropdownRef}>
         {user ? (
