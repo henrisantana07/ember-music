@@ -18,12 +18,15 @@ export function AlbumPlaylistModal({ open, onClose, album }: AlbumPlaylistModalP
   const { playlists, fetchPlaylists, updatePlaylistCover } = usePlaylistsStore()
   const [tracks, setTracks] = useState<Track[]>([])
   const [loading, setLoading] = useState(false)
-  const [adding, setAdding] = useState<string | null>(null)
+  const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null)
+  const [adding, setAdding] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
     if (!open) return
+    setSelectedPlaylist(null)
+    setAdding(false)
     fetchPlaylists()
     setLoading(true)
     fetch(`/api/spotify?endpoint=albums&id=${album.id}`)
@@ -33,13 +36,14 @@ export function AlbumPlaylistModal({ open, onClose, album }: AlbumPlaylistModalP
       .finally(() => setLoading(false))
   }, [open, album?.id])
 
-  async function handleAddToPlaylist(playlistId: string) {
-    setAdding(playlistId)
+  async function handleConfirm() {
+    if (!selectedPlaylist) return
+    setAdding(true)
     try {
       const { data: maxPos } = await supabase
         .from('playlist_tracks')
         .select('position')
-        .eq('playlist_id', playlistId)
+        .eq('playlist_id', selectedPlaylist)
         .order('position', { ascending: false })
         .limit(1)
 
@@ -47,7 +51,7 @@ export function AlbumPlaylistModal({ open, onClose, album }: AlbumPlaylistModalP
       const now = new Date().toISOString()
 
       const inserts = tracks.map(track => ({
-        playlist_id: playlistId,
+        playlist_id: selectedPlaylist,
         track_id: track.id,
         track_data: track as unknown as Json,
         position: nextPosition++,
@@ -58,8 +62,8 @@ export function AlbumPlaylistModal({ open, onClose, album }: AlbumPlaylistModalP
       if (error) throw error
 
       if (tracks.length > 0) {
-        await updateTrackCoverIfNeeded(supabase as any, playlistId, tracks[0].image)
-        updatePlaylistCover(playlistId, {
+        await updateTrackCoverIfNeeded(supabase as any, selectedPlaylist, tracks[0].image)
+        updatePlaylistCover(selectedPlaylist, {
           cover_source: 'track',
           last_track_cover_url: tracks[0].image,
         })
@@ -69,7 +73,7 @@ export function AlbumPlaylistModal({ open, onClose, album }: AlbumPlaylistModalP
     } catch (err) {
       console.error('Erro ao adicionar álbum à playlist:', err)
     } finally {
-      setAdding(null)
+      setAdding(false)
     }
   }
 
@@ -112,34 +116,61 @@ export function AlbumPlaylistModal({ open, onClose, album }: AlbumPlaylistModalP
                 Nenhuma playlist ainda
               </p>
             )}
-            {playlists.map((pl) => (
-              <button
-                key={pl.id}
-                onClick={() => handleAddToPlaylist(pl.id)}
-                disabled={adding === pl.id}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors hover:bg-white/5 text-left disabled:opacity-50"
-              >
-                <svg className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--accent-from)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                <span className="flex-1 truncate">{pl.name}</span>
-                <span className="text-xs" style={{ color: 'var(--text-disabled)' }}>
-                  {adding === pl.id ? 'A adicionar...' : `${pl.track_count} faixas`}
-                </span>
-              </button>
-            ))}
+            {playlists.map((pl) => {
+              const isSelected = selectedPlaylist === pl.id
+              return (
+                <button
+                  key={pl.id}
+                  onClick={() => setSelectedPlaylist(isSelected ? null : pl.id)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left"
+                  style={{
+                    backgroundColor: isSelected ? 'var(--accent-from)' : 'transparent',
+                    color: isSelected ? '#fff' : 'inherit',
+                  }}
+                  onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)' }}
+                  onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent' }}
+                >
+                  <span
+                    className="w-5 h-5 flex-shrink-0 rounded-full border-2 flex items-center justify-center transition-colors"
+                    style={{
+                      borderColor: isSelected ? '#fff' : 'var(--accent-from)',
+                      backgroundColor: isSelected ? 'var(--accent-from)' : 'transparent',
+                    }}
+                  >
+                    {isSelected && <span className="w-2 h-2 rounded-full bg-white" />}
+                  </span>
+                  <span className="flex-1 truncate">{pl.name}</span>
+                  <span className="text-xs" style={{ color: isSelected ? 'rgba(255,255,255,0.7)' : 'var(--text-disabled)' }}>
+                    {pl.track_count} faixas
+                  </span>
+                </button>
+              )
+            })}
           </div>
 
-          <button
-            onClick={() => setShowCreate(true)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm mt-2 transition-colors hover:bg-white/5"
-            style={{ color: 'var(--accent-from)' }}
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            Criar playlist
-          </button>
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors hover:bg-white/5"
+              style={{ color: 'var(--accent-from)' }}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Criar playlist
+            </button>
+            <button
+              onClick={handleConfirm}
+              disabled={!selectedPlaylist || adding}
+              className="flex-1 px-3 py-2.5 rounded-lg text-sm font-semibold transition-opacity disabled:opacity-40"
+              style={{
+                background: !selectedPlaylist ? 'var(--bg-surface)' : 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
+                color: !selectedPlaylist ? 'var(--text-disabled)' : '#fff',
+              }}
+            >
+              {adding ? 'A adicionar...' : 'Confirmar'}
+            </button>
+          </div>
         </div>
       </div>
 
