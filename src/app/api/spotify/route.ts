@@ -91,6 +91,14 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ results: items.map(mapGenre) })
       }
 
+      case 'genre-tracks': {
+        const genreId = searchParams.get('id')
+        if (!genreId) return NextResponse.json({ error: 'Missing genre id' }, { status: 400 })
+        const data = await deezerFetch(`/genre/${genreId}/tracks?limit=${limit}`) as { data?: Record<string, unknown>[] }
+        const items = data.data ?? []
+        return NextResponse.json({ results: items.map(mapTrack) })
+      }
+
       case 'charts/artists': {
         const data = await deezerFetch(`/chart/0/artists?limit=${limit}`) as { data?: Record<string, unknown>[] }
         const items = data.data ?? []
