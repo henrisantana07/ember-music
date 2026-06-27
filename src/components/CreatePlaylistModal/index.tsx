@@ -180,30 +180,23 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
 
         <div className="flex gap-4 mb-5">
           <div className="flex-shrink-0">
-            {cropImage ? (
-              <div className="w-28 h-28 rounded-lg overflow-hidden">
-                <img ref={cropperRef} src={cropImage} alt="Cortar" className="max-w-full" style={{ maxHeight: '200px' }} />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-28 h-28 rounded-lg overflow-hidden relative group cursor-pointer"
+              style={{ background: coverPreview ? `url(${coverPreview}) center/cover` : 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
+            >
+              {!coverPreview && (
+                <svg className="w-10 h-10 absolute inset-0 m-auto opacity-60" fill="white" viewBox="0 0 24 24">
+                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                </svg>
+              )}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                </svg>
               </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-28 h-28 rounded-lg overflow-hidden relative group cursor-pointer"
-                style={{ background: coverPreview ? `url(${coverPreview}) center/cover` : 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
-              >
-                {!coverPreview && (
-                  <svg className="w-10 h-10 absolute inset-0 m-auto opacity-60" fill="white" viewBox="0 0 24 24">
-                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-                  </svg>
-                )}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-              </button>
-            )}
+            </button>
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileSelect} />
           </div>
 
@@ -222,14 +215,39 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
                 Remover capa
               </button>
             )}
-            {cropImage && (
-              <div className="flex gap-2 mt-2">
-                <button onClick={confirmCrop} className="text-xs px-3 py-1 rounded font-bold" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}>Aplicar</button>
-                <button onClick={cancelCrop} className="text-xs px-3 py-1 rounded" style={{ color: 'var(--text-secondary)' }}>Cancelar</button>
-              </div>
-            )}
           </div>
         </div>
+
+        {cropImage && (
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+            style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+            onClick={(e) => { if (e.target === e.currentTarget) cancelCrop() }}
+          >
+            <div className="w-full max-w-sm rounded-xl p-6 shadow-xl" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+              <h3 className="text-lg font-bold mb-4">Ajustar capa</h3>
+              <div className="w-full max-h-80 flex items-center justify-center overflow-hidden rounded-lg">
+                <img ref={cropperRef} src={cropImage} alt="Cortar" className="max-w-full" style={{ maxHeight: '320px' }} />
+              </div>
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={confirmCrop}
+                  className="flex-1 px-4 py-2 rounded-lg text-sm font-bold"
+                  style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
+                >
+                  Aplicar
+                </button>
+                <button
+                  onClick={cancelCrop}
+                  className="px-4 py-2 rounded-lg text-sm"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
