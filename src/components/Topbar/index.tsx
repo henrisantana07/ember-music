@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { saveSearchHistory } from '@/lib/search-history'
@@ -20,11 +20,17 @@ export function Topbar() {
   const supabase = createClient()
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const artistDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   const isSearchPage = pathname === '/buscar'
+  const [artistDraft, setArtistDraft] = useState(searchParams.get('artist') ?? '')
   const durationValue = (searchParams.get('duration') ?? '') as DurationFilter
+
+  useEffect(() => {
+    setArtistDraft(searchParams.get('artist') ?? '')
+  }, [searchParams.get('artist')])
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -83,11 +89,24 @@ export function Topbar() {
     void submitSearch()
   }
 
-  function handleDurationChange(e: React.ChangeEvent<HTMLSelectElement>) {
+  function updateParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString())
-    if (e.target.value) params.set('duration', e.target.value)
-    else params.delete('duration')
+    if (value) params.set(key, value)
+    else params.delete(key)
     router.replace(`/buscar?${params.toString()}`)
+  }
+
+  function handleArtistChange(nextValue: string) {
+    setArtistDraft(nextValue)
+    if (artistDebounceRef.current) clearTimeout(artistDebounceRef.current)
+    artistDebounceRef.current = setTimeout(() => {
+      const cleaned = nextValue.trim().replace(/\s+/g, ' ')
+      updateParam('artist', cleaned)
+    }, 350)
+  }
+
+  function handleDurationChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    updateParam('duration', e.target.value)
   }
 
   return (
@@ -136,6 +155,19 @@ export function Topbar() {
 
       {isSearchPage && (
         <div className="flex items-center gap-3 mx-4">
+          <input
+            list="artist-filter-options"
+            value={artistDraft}
+            onChange={(e) => handleArtistChange(e.target.value)}
+            placeholder="Artista"
+            className="w-44 rounded-full px-3 py-2 text-sm border border-white/10 focus:outline-none focus:ring-2 transition-all"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              color: 'var(--text-primary)',
+              '--tw-ring-color': 'var(--accent-solid)',
+            } as React.CSSProperties}
+          />
+          <datalist id="artist-filter-options" />
           <select
             value={durationValue}
             onChange={handleDurationChange}
