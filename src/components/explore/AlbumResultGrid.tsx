@@ -61,11 +61,13 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
           </div>
         ))}
       </div>
-      <AlbumPlaylistModal
-        open={pickerAlbum !== null}
-        onClose={() => setPickerAlbum(null)}
-        album={pickerAlbum!}
-      />
+      {pickerAlbum && (
+        <AlbumPlaylistModal
+          open
+          onClose={() => setPickerAlbum(null)}
+          album={pickerAlbum}
+        />
+      )}
     </>
   )
 }

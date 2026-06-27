@@ -31,7 +31,7 @@ export function AlbumPlaylistModal({ open, onClose, album }: AlbumPlaylistModalP
       .then(data => setTracks(data.tracks ?? []))
       .catch(() => setTracks([]))
       .finally(() => setLoading(false))
-  }, [open, album.id])
+  }, [open, album?.id])
 
   async function handleAddToPlaylist(playlistId: string) {
     setAdding(playlistId)
