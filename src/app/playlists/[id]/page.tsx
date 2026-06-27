@@ -301,9 +301,6 @@ function PlaylistContent() {
     )
   }
 
-  const storePlaylist = usePlaylistsStore((s) => s.playlists.find((p) => p.id === id))
-  const livePlaylist = storePlaylist ?? playlist
-
   const parsedTracks: (Track | null)[] = tracks.map((pt) => pt.track_data as unknown as Track | null)
   const totalDuration = parsedTracks.reduce((acc, t) => acc + (t?.duration ?? 0), 0)
 
@@ -311,7 +308,7 @@ function PlaylistContent() {
     <div className="max-w-4xl mx-auto relative">
       <div className="flex flex-col md:flex-row gap-6 mb-8">
         <PlaylistCover
-          playlist={livePlaylist as any}
+          playlist={playlist as any}
           size={192}
           onClick={isOwner ? () => setCoverModalOpen(true) : undefined}
         />
@@ -480,8 +477,8 @@ function PlaylistContent() {
         open={coverModalOpen}
         onClose={() => setCoverModalOpen(false)}
         playlistId={id}
-        currentCoverSource={(livePlaylist.cover_source ?? 'branded') as any}
-        currentCoverUrl={livePlaylist.custom_cover_url}
+        currentCoverSource={playlist.cover_source as any}
+        currentCoverUrl={playlist.custom_cover_url}
       />
       <DeletePlaylistModal
         open={deleteModalOpen}
