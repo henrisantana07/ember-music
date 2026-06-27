@@ -46,7 +46,7 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
         .insert({
           name: album.name,
           description: `Álbum de ${album.artist_name}`,
-          cover_source: 'branded',
+          cover_source: 'track',
           custom_cover_url: null,
           last_track_cover_url: album.image || null,
           user_id: user.id,
