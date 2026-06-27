@@ -17,8 +17,6 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
   const [description, setDescription] = useState('')
   const [isPublic, setIsPublic] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [defaultCover, setDefaultCover] = useState<string | null>(null)
-  const [hasFavorites, setHasFavorites] = useState(false)
   const [cropImage, setCropImage] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [coverFile, setCoverFile] = useState<Blob | null>(null)
@@ -34,28 +32,9 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
     setName('')
     setDescription('')
     setIsPublic(false)
-    setDefaultCover(null)
     setCropImage(null)
     setCoverFile(null)
-    setHasFavorites(false)
     cancelCrop()
-
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
-      supabase
-        .from('favorites')
-        .select('track_data')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (data?.track_data) {
-            const track = data.track_data as { image?: string }
-            if (track.image) { setDefaultCover(track.image); setHasFavorites(true) }
-          }
-        })
-    })
   }, [open])
 
   if (!open) return null
@@ -106,7 +85,6 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
   function getCoverPreview(): string | null {
     if (cropImage) return cropImage
     if (coverFile) return URL.createObjectURL(coverFile)
-    if (defaultCover) return defaultCover
     return null
   }
 
@@ -117,7 +95,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaving(false); return }
 
-    const coverSource = coverFile ? 'custom' : defaultCover ? 'track' : 'branded'
+    const coverSource = coverFile ? 'custom' : 'branded'
 
     const { data: newPlaylist, error } = await supabase
       .from('playlists')
@@ -126,7 +104,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
         description: description.trim() || null,
         cover_source: coverSource,
         custom_cover_url: null,
-        last_track_cover_url: !coverFile ? defaultCover : null,
+        last_track_cover_url: null,
         is_public: isPublic,
         user_id: user.id,
       })
@@ -203,7 +181,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
           <div className="flex-1 min-w-0 self-center">
             <p className="text-sm font-medium truncate">{name || 'Nova playlist'}</p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-              {coverFile ? 'Capa personalizada' : defaultCover ? 'Capa do último favorito' : 'Capa padrão'}
+              {coverFile ? 'Capa personalizada' : 'Capa padrão'}
             </p>
             {coverFile && (
               <button
