@@ -1,6 +1,8 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import type { Track, Album, Artist } from '@/types/music'
 
 type DurationFilter = '' | 'short' | 'medium' | 'long'
 
@@ -16,7 +18,13 @@ interface ActiveFilter {
   label: string
 }
 
-export function ExploreFilters() {
+interface ExploreFiltersProps {
+  tracks: Track[]
+  albums: Album[]
+  artists: Artist[]
+}
+
+export function ExploreFilters({ tracks, albums, artists }: ExploreFiltersProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -24,6 +32,29 @@ export function ExploreFilters() {
   const genreFilter = searchParams.get('genre') ?? ''
   const durationFilter = (searchParams.get('duration') ?? '') as DurationFilter
   const yearFilter = searchParams.get('year') ?? ''
+
+  const [genreOptions, setGenreOptions] = useState<string[]>([])
+
+  useEffect(() => {
+    fetch('/api/spotify?endpoint=genres')
+      .then(res => res.json())
+      .then(data => {
+        const names: string[] = (data.results ?? []).map((g: { name: string }) => g.name)
+        setGenreOptions(names)
+      })
+      .catch(() => setGenreOptions([]))
+  }, [])
+
+  const artistOptions = [...new Set([
+    ...artists.map(a => a.name),
+    ...tracks.map(t => t.artist_name),
+  ])].filter(Boolean).sort()
+
+  const yearOptions = [...new Set(
+    albums
+      .map(a => a.release_date?.split('-')[0])
+      .filter((y): y is string => !!y && y.length === 4)
+  )].sort((a, b) => Number(b) - Number(a))
 
   function updateParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString())
@@ -60,19 +91,26 @@ export function ExploreFilters() {
           }}
         >
           <option value="">Género</option>
+          {genreOptions.map((name) => (
+            <option key={name} value={name.toLowerCase()}>{name}</option>
+          ))}
         </select>
-        <input
+        <select
           value={artistFilter}
           onChange={(e) => updateParam('artist', e.target.value)}
-          placeholder="Artista"
-          className="rounded-full px-3 py-1.5 text-xs font-semibold border"
+          className="rounded-full px-3 py-1.5 text-xs font-semibold border transition-all"
           style={{
             backgroundColor: artistFilter ? 'var(--accent-muted)' : 'var(--bg-surface)',
             borderColor: artistFilter ? 'var(--accent-solid)' : 'var(--bg-elevated)',
-            color: 'var(--text-primary)',
-            maxWidth: 120,
+            color: artistFilter ? 'var(--text-primary)' : 'var(--text-secondary)',
+            maxWidth: 140,
           }}
-        />
+        >
+          <option value="">Artista</option>
+          {artistOptions.map((name) => (
+            <option key={name} value={name}>{name}</option>
+          ))}
+        </select>
         <select
           value={durationFilter}
           onChange={(e) => updateParam('duration', e.target.value)}
@@ -87,20 +125,24 @@ export function ExploreFilters() {
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
-        <input
+        <select
           value={yearFilter}
           onChange={(e) => updateParam('year', e.target.value)}
-          placeholder="Ano"
-          className="rounded-full px-3 py-1.5 text-xs font-semibold border"
+          className="rounded-full px-3 py-1.5 text-xs font-semibold border transition-all"
           style={{
             backgroundColor: yearFilter ? 'var(--accent-muted)' : 'var(--bg-surface)',
             borderColor: yearFilter ? 'var(--accent-solid)' : 'var(--bg-elevated)',
-            color: 'var(--text-primary)',
-            maxWidth: 80,
+            color: yearFilter ? 'var(--text-primary)' : 'var(--text-secondary)',
+            maxWidth: 100,
           }}
-        />
+        >
+          <option value="">Ano</option>
+          {yearOptions.map((year) => (
+            <option key={year} value={year}>{year}</option>
+          ))}
+        </select>
         {hasFilters && (
-          <button onClick={clearFilters} className="text-xs font-semibold px-3 py-1.5" style={{ color: 'var(--accent-solid)' }}>
+          <button onClick={clearFilters} className="text-xs font-semibold px-3 py-1.5 whitespace-nowrap" style={{ color: 'var(--accent-solid)' }}>
             ✕ Limpar filtros
           </button>
         )}

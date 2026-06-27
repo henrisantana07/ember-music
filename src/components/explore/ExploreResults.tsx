@@ -120,7 +120,7 @@ export function ExploreResults({ query, onTabChange, activeTab }: ExploreResults
       </div>
 
       <ExploreTabs activeTab={activeTab} onTabChange={onTabChange} counts={counts} />
-      <ExploreFilters />
+      <ExploreFilters tracks={tracks} albums={albums} artists={artists} />
 
       {activeTab === 'tudo' && (
         <div className="space-y-10">
