@@ -41,7 +41,7 @@ export function GenreGrid() {
           return (
             <button
               key={genre.id}
-              onClick={() => router.push(`/buscar?genero=${encodeURIComponent(genre.name.toLowerCase())}&genreId=${genre.id}`)}
+              onClick={() => router.push(`/buscar?genero=${encodeURIComponent(genre.name.toLowerCase())}`)}
               className="relative rounded-xl overflow-hidden border-0 text-left group"
               style={{ aspectRatio: '1.6 / 1', background: `linear-gradient(135deg, ${gradient.from}, ${gradient.to})` }}
             >

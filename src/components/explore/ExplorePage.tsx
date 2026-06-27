@@ -14,55 +14,32 @@ import { AlbumResultGrid } from './AlbumResultGrid'
 import { ExploreTrackSkeleton } from './skeletons/ExploreTrackSkeleton'
 import { ArtistCircleSkeleton } from './skeletons/ArtistCircleSkeleton'
 
-function GenrePage({ genero, genreId }: { genero: string; genreId: string }) {
+function GenrePage({ genero }: { genero: string }) {
   const [tracks, setTracks] = useState<Track[]>([])
+  const [albums, setAlbums] = useState<Album[]>([])
+  const [artists, setArtists] = useState<Artist[]>([])
   const [loading, setLoading] = useState(true)
   const gradient = getGenreGradient(genero)
 
   useEffect(() => {
-    fetch(`/api/spotify?endpoint=genre-tracks&id=${genreId}&limit=100`)
-      .then(res => res.json())
-      .then(data => setTracks(data.results ?? []))
-      .catch(() => setTracks([]))
+    const encoded = encodeURIComponent(genero)
+    Promise.all([
+      fetch(`/api/spotify?endpoint=search&q=${encoded}&type=track&limit=50`).then(r => r.json()),
+      fetch(`/api/spotify?endpoint=search&q=${encoded}&type=album&limit=20`).then(r => r.json()),
+      fetch(`/api/spotify?endpoint=search&q=${encoded}&type=artist&limit=12`).then(r => r.json()),
+    ])
+      .then(([trackData, albumData, artistData]) => {
+        setTracks(trackData.tracks ?? [])
+        setAlbums(albumData.albums ?? [])
+        setArtists(artistData.artists ?? [])
+      })
+      .catch(() => {
+        setTracks([])
+        setAlbums([])
+        setArtists([])
+      })
       .finally(() => setLoading(false))
-  }, [genreId])
-
-  const artists = useMemo(() => {
-    const map = new Map<string, Artist>()
-    tracks.forEach(t => {
-      if (!map.has(t.artist_id)) {
-        map.set(t.artist_id, {
-          id: t.artist_id,
-          name: t.artist_name,
-          image: t.image,
-          followers: 0,
-          genres: [],
-          url: '',
-        })
-      }
-    })
-    return Array.from(map.values())
-  }, [tracks])
-
-  const albums = useMemo(() => {
-    const map = new Map<string, Album>()
-    tracks.forEach(t => {
-      const key = `${t.artist_id}_${t.album_id}`
-      if (!map.has(key)) {
-        map.set(key, {
-          id: t.album_id,
-          name: t.album_name,
-          artist_id: t.artist_id,
-          artist_name: t.artist_name,
-          image: t.image,
-          release_date: '',
-          total_tracks: 0,
-          url: '',
-        })
-      }
-    })
-    return Array.from(map.values())
-  }, [tracks])
+  }, [genero])
 
   return (
     <div
@@ -137,7 +114,6 @@ export function ExplorePage() {
   const router = useRouter()
   const query = searchParams.get('q') ?? ''
   const genero = searchParams.get('genero') ?? ''
-  const genreId = searchParams.get('genreId') ?? ''
   const [user, setUser] = useState<User | null>(null)
   const [userTracks, setUserTracks] = useState<Track[]>([])
   const [userLabel, setUserLabel] = useState('Novidades do Jamendo')
@@ -174,8 +150,8 @@ export function ExplorePage() {
     setActiveTab(tab)
   }, [])
 
-  if (genero && genreId) {
-    return <GenrePage genero={genero} genreId={genreId} />
+  if (genero) {
+    return <GenrePage genero={genero} />
   }
 
   const isSearching = !!query
