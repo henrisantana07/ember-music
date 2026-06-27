@@ -1,6 +1,7 @@
 'use client'
 
-import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { SectionRow } from '@/components/SectionRow'
 import { TrackCard } from '@/components/TrackCard'
@@ -121,13 +122,24 @@ function SearchPageInner() {
         <h1 className="text-3xl font-bold">&ldquo;{query}&rdquo;</h1>
       </div>
 
-      {activeFilterCount > 0 && (
-        <div className="flex flex-wrap items-center gap-2 -mx-4 md:-mx-6 px-4 md:px-6 py-3 border-y border-white/5" style={{ backgroundColor: 'var(--bg-base)' }}>
-          {artistFilter && <FilterChip label={`Artista: ${artistFilter}`} onRemove={() => removeFilter('artist')} />}
-          {durationFilter && <FilterChip label={durationLabels[durationFilter as Exclude<DurationFilter, ''>]} onRemove={() => removeFilter('duration')} />}
-          <button onClick={clearFilters} className="text-xs font-semibold px-3 py-1.5 rounded-full" style={{ color: 'var(--accent-solid)' }}>Limpar filtros</button>
+      <div className="sticky top-0 z-20 -mx-4 md:-mx-6 px-4 md:px-6 py-3 border-y border-white/5" style={{ backgroundColor: 'var(--bg-base)' }}>
+        <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+          <ArtistFilter key={artistFilter} value={artistFilter} options={artistOptions} onChange={(value) => updateParam('artist', value)} />
+          <select value={durationFilter} onChange={(e) => updateParam('duration', e.target.value)} className="rounded-full px-3 py-2 text-sm border border-white/10" style={{ backgroundColor: 'var(--bg-surface)' }}>
+            <option value="">Duração</option>
+            <option value="short">Curtas (até 2min)</option>
+            <option value="medium">Médias (2-5min)</option>
+            <option value="long">Longas (5min+)</option>
+          </select>
         </div>
-      )}
+        {activeFilterCount > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            {artistFilter && <FilterChip label={`Artista: ${artistFilter}`} onRemove={() => removeFilter('artist')} />}
+            {durationFilter && <FilterChip label={durationLabels[durationFilter as Exclude<DurationFilter, ''>]} onRemove={() => removeFilter('duration')} />}
+            <button onClick={clearFilters} className="text-xs font-semibold px-3 py-1.5 rounded-full" style={{ color: 'var(--accent-solid)' }}>Limpar filtros</button>
+          </div>
+        )}
+      </div>
 
       {loading && <ResultsSkeleton />}
       {error && <ErrorState message={error} onRetry={() => setRetryNonce((value) => value + 1)} />}
@@ -145,6 +157,24 @@ function SearchPageInner() {
 
 function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return <button onClick={onRemove} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold" style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-solid)' }}>{label}<span aria-hidden>×</span></button>
+}
+
+function ArtistFilter({ value, options, onChange }: { value: string; options: string[]; onChange: (value: string) => void }) {
+  const [draft, setDraft] = useState(value)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function handleChange(nextValue: string) {
+    setDraft(nextValue)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => onChange(normalizeQuery(nextValue)), 350)
+  }
+
+  return (
+    <div className="relative">
+      <input list="artist-filter-options" value={draft} onChange={(e) => handleChange(e.target.value)} placeholder="Artista" className="w-44 rounded-full px-3 py-2 text-sm border border-white/10 focus:outline-none focus:ring-2" style={{ backgroundColor: 'var(--bg-surface)', '--tw-ring-color': 'var(--accent-solid)' } as CSSProperties} />
+      <datalist id="artist-filter-options">{options.map((name) => <option key={name} value={name} />)}</datalist>
+    </div>
+  )
 }
 
 function ResultsSkeleton() {
