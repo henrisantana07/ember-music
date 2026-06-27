@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { usePlayerStore } from '@/lib/store'
 import { usePlaylistsStore } from '@/lib/playlists-store'
+import { Camera } from 'lucide-react'
 import { PlaylistCover } from '@/components/playlist/PlaylistCover'
 import { PlaylistCoverModal } from '@/components/playlist/PlaylistCoverModal'
 import { EditPlaylistModal } from '@/components/EditPlaylistModal'
@@ -42,6 +43,8 @@ function PlaylistContent() {
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [coverModalOpen, setCoverModalOpen] = useState(false)
+  const [editMenuOpen, setEditMenuOpen] = useState(false)
+  const editMenuRef = useRef<HTMLDivElement>(null)
   const [deleting, setDeleting] = useState(false)
   const [duplicating, setDuplicating] = useState(false)
   const [toast, setToast] = useState<{ message: string; action?: { label: string; onClick: () => void } } | null>(null)
@@ -90,6 +93,16 @@ function PlaylistContent() {
   }
 
   useEffect(() => { load() }, [id])
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (editMenuRef.current && !editMenuRef.current.contains(e.target as Node)) {
+        setEditMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   async function handleDeleteConfirm() {
     setDeleting(true)
@@ -354,11 +367,39 @@ function PlaylistContent() {
             )}
 
             {isOwner && (
-              <button onClick={() => setEditModalOpen(true)} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Editar">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </button>
+              <div ref={editMenuRef} className="relative">
+                <button onClick={() => setEditMenuOpen((v) => !v)} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Editar">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                {editMenuOpen && (
+                  <div
+                    className="absolute right-0 top-full mt-1 z-50 min-w-[180px] rounded-xl overflow-hidden shadow-xl"
+                    style={{ backgroundColor: 'var(--bg-elevated)' }}
+                  >
+                    <button
+                      onClick={() => { setCoverModalOpen(true); setEditMenuOpen(false) }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-white/5 text-left"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      <Camera size={16} />
+                      Trocar capa
+                    </button>
+                    <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
+                    <button
+                      onClick={() => { setEditModalOpen(true); setEditMenuOpen(false) }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-white/5 text-left"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Editar informações
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
 
             {isOwner && (
