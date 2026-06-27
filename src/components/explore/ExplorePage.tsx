@@ -174,6 +174,9 @@ export function ExplorePage() {
   const query = searchParams.get('q') ?? ''
   const genero = searchParams.get('genero') ?? ''
   const genreId = searchParams.get('genreId') ?? ''
+  const artistFilter = searchParams.get('artist') ?? ''
+  const genreFilter = searchParams.get('genre') ?? ''
+  const durationFilter = (searchParams.get('duration') ?? '') as '' | 'short' | 'medium' | 'long'
   const [user, setUser] = useState<User | null>(null)
   const [userTracks, setUserTracks] = useState<Track[]>([])
   const [userLabel, setUserLabel] = useState('Novidades do Jamendo')
@@ -210,6 +213,12 @@ export function ExplorePage() {
     setActiveTab(tab)
   }, [])
 
+  const clearFilters = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    ;['artist', 'genre', 'duration'].forEach((k) => params.delete(k))
+    router.replace(`/buscar?${params.toString()}`)
+  }, [searchParams, router])
+
   if (genero) {
     return <GenrePage genero={genero} genreId={genreId} />
   }
@@ -219,7 +228,15 @@ export function ExplorePage() {
   return (
     <div className="transition-opacity duration-200" key={isSearching ? 'results' : 'empty'}>
       {isSearching ? (
-        <ExploreResults query={query} activeTab={activeTab} onTabChange={handleTabChange} />
+        <ExploreResults
+          query={query}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          artistFilter={artistFilter}
+          genreFilter={genreFilter}
+          durationFilter={durationFilter}
+          onClearFilters={clearFilters}
+        />
       ) : (
         <ExploreEmptyState user={user} onSearch={handleSearch} userTracks={userTracks} userLabel={userLabel} />
       )}

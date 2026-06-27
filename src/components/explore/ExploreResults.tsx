@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
 import type { Track, Album, Artist } from '@/types/music'
 import { ExploreTabs } from './ExploreTabs'
 import { ExploreFilters } from './ExploreFilters'
@@ -26,14 +25,13 @@ interface ExploreResultsProps {
   query: string
   onTabChange: (tab: string) => void
   activeTab: string
+  artistFilter: string
+  genreFilter: string
+  durationFilter: DurationFilter
+  onClearFilters: () => void
 }
 
-export function ExploreResults({ query, onTabChange, activeTab }: ExploreResultsProps) {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const artistFilter = searchParams.get('artist') ?? ''
-  const genreFilter = searchParams.get('genre') ?? ''
-  const durationFilter = (searchParams.get('duration') ?? '') as DurationFilter
+export function ExploreResults({ query, onTabChange, activeTab, artistFilter, genreFilter, durationFilter, onClearFilters }: ExploreResultsProps) {
 
   const [tracks, setTracks] = useState<Track[]>([])
   const [albums, setAlbums] = useState<Album[]>([])
@@ -102,16 +100,10 @@ export function ExploreResults({ query, onTabChange, activeTab }: ExploreResults
 
   const activeFilterCount = Number(!!artistFilter) + Number(!!genreFilter) + Number(!!durationFilter)
 
-  function clearFilters() {
-    const params = new URLSearchParams(searchParams.toString())
-    ;['artist', 'genre', 'duration'].forEach((k) => params.delete(k))
-    router.replace(`/buscar?${params.toString()}`)
-  }
-
   const hasResults = filteredTracks.length > 0 || filteredArtists.length > 0 || filteredAlbums.length > 0
 
   if (!hasResults && !loading) {
-    return <ExploreNoResults query={query} activeFilterCount={activeFilterCount} onClearFilters={clearFilters} />
+    return <ExploreNoResults query={query} activeFilterCount={activeFilterCount} onClearFilters={onClearFilters} />
   }
 
   return (
