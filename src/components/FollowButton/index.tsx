@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useArtistsStore } from '@/lib/artists-store'
 
 import type { Json } from '@/types/database'
 
@@ -14,6 +15,7 @@ export function FollowButton({ artistId, artistData }: FollowButtonProps) {
   const [following, setFollowing] = useState(false)
   const [loading, setLoading] = useState(false)
   const supabase = createClient()
+  const { addArtist, removeArtist } = useArtistsStore()
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -37,6 +39,7 @@ export function FollowButton({ artistId, artistData }: FollowButtonProps) {
     if (following) {
       await supabase.from('followed_artists').delete().eq('user_id', user.id).eq('artist_id', artistId)
       setFollowing(false)
+      removeArtist(artistId)
     } else {
       await supabase.from('followed_artists').insert({
         user_id: user.id,
@@ -44,6 +47,12 @@ export function FollowButton({ artistId, artistData }: FollowButtonProps) {
         artist_data: artistData ?? null,
       })
       setFollowing(true)
+      const parsed = artistData as { id: string; name: string; image: string } | null
+      addArtist({
+        artist_id: artistId,
+        artist_data: parsed,
+        followed_at: new Date().toISOString(),
+      })
     }
     setLoading(false)
   }

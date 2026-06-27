@@ -6,12 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState, useRef } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { usePlaylistsStore } from '@/lib/playlists-store'
-
-interface FollowedArtist {
-  artist_id: string
-  artist_data: { id: string; name: string; image: string } | null
-  followed_at: string
-}
+import { useArtistsStore } from '@/lib/artists-store'
 
 const NAV_SECTION1 = [
   { href: '/', label: 'Início', outline: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', fill: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -27,25 +22,20 @@ export default function Sidebar() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [artists, setArtists] = useState<FollowedArtist[]>([])
   const supabase = createClient()
   const router = useRouter()
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [showDropdown, setShowDropdown] = useState(false)
   const { playlists, fetchPlaylists } = usePlaylistsStore()
+  const { artists, fetchArtists } = useArtistsStore()
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       if (data.user) {
         setUser(data.user)
         fetchPlaylists()
+        fetchArtists()
         await fetchAvatar(data.user.id)
-        const { data: followed } = await supabase
-          .from('followed_artists')
-          .select('*')
-          .eq('user_id', data.user.id)
-          .order('followed_at', { ascending: false })
-        if (followed) setArtists(followed as unknown as FollowedArtist[])
       }
     })
 
