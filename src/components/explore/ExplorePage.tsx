@@ -14,7 +14,7 @@ import { AlbumResultGrid } from './AlbumResultGrid'
 import { ExploreTrackSkeleton } from './skeletons/ExploreTrackSkeleton'
 import { ArtistCircleSkeleton } from './skeletons/ArtistCircleSkeleton'
 
-function GenrePage({ genero }: { genero: string }) {
+function GenrePage({ genero, genreId }: { genero: string; genreId: string }) {
   const [tracks, setTracks] = useState<Track[]>([])
   const [albums, setAlbums] = useState<Album[]>([])
   const [artists, setArtists] = useState<Artist[]>([])
@@ -23,15 +23,74 @@ function GenrePage({ genero }: { genero: string }) {
 
   useEffect(() => {
     const encoded = encodeURIComponent(genero)
-    Promise.all([
-      fetch(`/api/spotify?endpoint=search&q=${encoded}&type=track&limit=50`).then(r => r.json()),
-      fetch(`/api/spotify?endpoint=search&q=${encoded}&type=album&limit=20`).then(r => r.json()),
-      fetch(`/api/spotify?endpoint=search&q=${encoded}&type=artist&limit=12`).then(r => r.json()),
-    ])
-      .then(([trackData, albumData, artistData]) => {
-        setTracks(trackData.tracks ?? [])
-        setAlbums(albumData.albums ?? [])
-        setArtists(artistData.artists ?? [])
+    const promises: Promise<Response>[] = [
+      fetch(`/api/spotify?endpoint=search&q=${encoded}&type=track&limit=50`),
+      fetch(`/api/spotify?endpoint=search&q=${encoded}&type=album&limit=20`),
+      fetch(`/api/spotify?endpoint=search&q=${encoded}&type=artist&limit=12`),
+    ]
+    if (genreId) {
+      promises.push(fetch(`/api/spotify?endpoint=genre-tracks&id=${genreId}&limit=50`))
+    }
+    Promise.all(promises.map(p => p.then(r => r.json())))
+      .then((results) => {
+        const trackData = results[0] as { tracks?: Track[] }
+        const albumData = results[1] as { albums?: Album[] }
+        const artistData = results[2] as { artists?: Artist[] }
+        const genreTrackData = results[3] as { results?: Track[] } | undefined
+
+        const mergedTracks = [...(trackData.tracks ?? [])]
+        if (genreTrackData?.results) {
+          const existingIds = new Set(mergedTracks.map(t => t.id))
+          genreTrackData.results.forEach(t => {
+            if (!existingIds.has(t.id)) {
+              mergedTracks.push(t)
+              existingIds.add(t.id)
+            }
+          })
+        }
+
+        const mergedAlbums = [...(albumData.albums ?? [])]
+        const mergedArtists = [...(artistData.artists ?? [])]
+
+        if (mergedTracks.length > 0) {
+          const albumMap = new Map<string, Album>()
+          mergedAlbums.forEach(a => albumMap.set(a.id, a))
+          const artistMap = new Map<string, Artist>()
+          mergedArtists.forEach(a => artistMap.set(a.id, a))
+
+          mergedTracks.forEach(t => {
+            if (!albumMap.has(t.album_id)) {
+              albumMap.set(t.album_id, {
+                id: t.album_id,
+                name: t.album_name,
+                artist_id: t.artist_id,
+                artist_name: t.artist_name,
+                image: t.image,
+                release_date: '',
+                total_tracks: 0,
+                url: '',
+              })
+            }
+            if (!artistMap.has(t.artist_id)) {
+              artistMap.set(t.artist_id, {
+                id: t.artist_id,
+                name: t.artist_name,
+                image: t.image,
+                followers: 0,
+                genres: [],
+                url: '',
+              })
+            }
+          })
+
+          setAlbums(Array.from(albumMap.values()))
+          setArtists(Array.from(artistMap.values()))
+        } else {
+          setAlbums(mergedAlbums)
+          setArtists(mergedArtists)
+        }
+
+        setTracks(mergedTracks)
       })
       .catch(() => {
         setTracks([])
@@ -39,7 +98,7 @@ function GenrePage({ genero }: { genero: string }) {
         setArtists([])
       })
       .finally(() => setLoading(false))
-  }, [genero])
+  }, [genero, genreId])
 
   return (
     <div
@@ -86,7 +145,7 @@ function GenrePage({ genero }: { genero: string }) {
           {artists.length > 0 && (
             <section>
               <h2 className="text-lg font-bold mb-4">Artistas</h2>
-              <ArtistResultCarousel artists={artists} />
+              <ArtistResultCarousel artists={artists} maxItems={12} />
             </section>
           )}
 
@@ -114,6 +173,7 @@ export function ExplorePage() {
   const router = useRouter()
   const query = searchParams.get('q') ?? ''
   const genero = searchParams.get('genero') ?? ''
+  const genreId = searchParams.get('genreId') ?? ''
   const [user, setUser] = useState<User | null>(null)
   const [userTracks, setUserTracks] = useState<Track[]>([])
   const [userLabel, setUserLabel] = useState('Novidades do Jamendo')
@@ -151,7 +211,7 @@ export function ExplorePage() {
   }, [])
 
   if (genero) {
-    return <GenrePage genero={genero} />
+    return <GenrePage genero={genero} genreId={genreId} />
   }
 
   const isSearching = !!query
