@@ -22,11 +22,6 @@ function matchesDuration(track: Track, duration: DurationFilter) {
   return track.duration > 300
 }
 
-function matchesYear(track: Track, year: string) {
-  if (!year) return true
-  return track.album_name?.includes(year) || false
-}
-
 interface ExploreResultsProps {
   query: string
   onTabChange: (tab: string) => void
@@ -37,8 +32,8 @@ export function ExploreResults({ query, onTabChange, activeTab }: ExploreResults
   const searchParams = useSearchParams()
   const router = useRouter()
   const artistFilter = searchParams.get('artist') ?? ''
+  const genreFilter = searchParams.get('genre') ?? ''
   const durationFilter = (searchParams.get('duration') ?? '') as DurationFilter
-  const yearFilter = searchParams.get('year') ?? ''
 
   const [tracks, setTracks] = useState<Track[]>([])
   const [albums, setAlbums] = useState<Album[]>([])
@@ -75,18 +70,28 @@ export function ExploreResults({ query, onTabChange, activeTab }: ExploreResults
     return () => controller.abort()
   }, [query])
 
+  const genreArtistNames = useMemo(() => {
+    if (!genreFilter) return null
+    return new Set(artists.filter(a => a.genres?.some(g => g.toLowerCase() === genreFilter)).map(a => a.name.toLowerCase()))
+  }, [artists, genreFilter])
+
   const filteredTracks = useMemo(() => tracks.filter(t => {
     const artistOk = !artistFilter || t.artist_name.toLowerCase().includes(artistFilter.toLowerCase())
-    return artistOk && matchesDuration(t, durationFilter) && matchesYear(t, yearFilter)
-  }), [tracks, artistFilter, durationFilter, yearFilter])
+    const genreOk = !genreArtistNames || genreArtistNames.has(t.artist_name.toLowerCase())
+    return artistOk && genreOk && matchesDuration(t, durationFilter)
+  }), [tracks, artistFilter, genreArtistNames, durationFilter])
 
   const filteredAlbums = useMemo(() => albums.filter(a => {
-    return !artistFilter || a.artist_name.toLowerCase().includes(artistFilter.toLowerCase())
-  }), [albums, artistFilter])
+    if (artistFilter && !a.artist_name.toLowerCase().includes(artistFilter.toLowerCase())) return false
+    if (genreArtistNames && !genreArtistNames.has(a.artist_name.toLowerCase())) return false
+    return true
+  }), [albums, artistFilter, genreArtistNames])
 
   const filteredArtists = useMemo(() => artists.filter(a => {
-    return !artistFilter || a.name.toLowerCase().includes(artistFilter.toLowerCase())
-  }), [artists, artistFilter])
+    if (artistFilter && !a.name.toLowerCase().includes(artistFilter.toLowerCase())) return false
+    if (genreFilter && !a.genres?.some(g => g.toLowerCase() === genreFilter)) return false
+    return true
+  }), [artists, artistFilter, genreFilter])
 
   const counts = {
     total: filteredTracks.length + filteredAlbums.length + filteredArtists.length,
@@ -95,11 +100,11 @@ export function ExploreResults({ query, onTabChange, activeTab }: ExploreResults
     albums: filteredAlbums.length,
   }
 
-  const activeFilterCount = Number(!!artistFilter) + Number(!!durationFilter) + Number(!!searchParams.get('genre')) + Number(!!yearFilter)
+  const activeFilterCount = Number(!!artistFilter) + Number(!!genreFilter) + Number(!!durationFilter)
 
   function clearFilters() {
     const params = new URLSearchParams(searchParams.toString())
-    ;['artist', 'genre', 'duration', 'year'].forEach((k) => params.delete(k))
+    ;['artist', 'genre', 'duration'].forEach((k) => params.delete(k))
     router.replace(`/buscar?${params.toString()}`)
   }
 
