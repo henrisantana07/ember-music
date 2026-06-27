@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { TrackCard } from '@/components/TrackCard'
+import { PlaylistCover } from '@/components/playlist/PlaylistCover'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
 import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
 import { usePlaylistsStore } from '@/lib/playlists-store'
@@ -35,6 +36,9 @@ interface PlaylistTabItem {
   name: string
   description: string | null
   cover_url: string | null
+  cover_source: string
+  custom_cover_url: string | null
+  last_track_cover_url: string | null
   created_at: string | null
   updated_at: string | null
   track_count: number
@@ -159,6 +163,9 @@ function BibliotecaContent() {
         name: p.name,
         description: p.description,
         cover_url: p.cover_url,
+        cover_source: p.cover_source ?? 'branded',
+        custom_cover_url: p.custom_cover_url,
+        last_track_cover_url: p.last_track_cover_url,
         created_at: p.created_at,
         updated_at: p.updated_at,
         track_count: p.playlist_tracks?.[0]?.count ?? 0,
@@ -512,18 +519,11 @@ function BibliotecaContent() {
                     onKeyDown={(e) => e.key === 'Enter' && router.push(`/playlists/${pl.id}`)}
                   >
                     <div className="relative mb-3">
-                      {pl.cover_url ? (
-                        <img src={pl.cover_url} alt={pl.name} className="w-full aspect-square rounded-md object-cover" loading="lazy" />
-                      ) : (
-                        <div
-                          className="w-full aspect-square rounded-md flex items-center justify-center"
-                          style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
-                        >
-                          <svg className="w-12 h-12 opacity-50" fill="white" viewBox="0 0 24 24">
-                            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-                          </svg>
-                        </div>
-                      )}
+                      <PlaylistCover
+                        playlist={pl as any}
+                        size={0}
+                        className="w-full aspect-square"
+                      />
                       <div
                         className="absolute inset-0 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
                         style={{ background: 'linear-gradient(135deg, #FF6A0044, #FFC40044)' }}

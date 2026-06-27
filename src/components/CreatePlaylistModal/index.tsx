@@ -134,12 +134,16 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
       setUploading(false)
     }
 
+    const coverSource = coverFile ? 'custom' as const : defaultCover ? 'track' as const : 'branded' as const
+
     const { data, error } = await supabase
       .from('playlists')
       .insert({
         name: name.trim(),
         description: description.trim() || null,
-        cover_url: coverUrl || defaultCover || DEFAULT_COVER,
+        cover_source: coverSource,
+        custom_cover_url: coverFile ? coverUrl : null,
+        last_track_cover_url: !coverFile ? defaultCover : null,
         is_public: isPublic,
         user_id: user.id,
       })
@@ -147,7 +151,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
       .single()
 
     if (!error && data) {
-      addPlaylist({ ...data, track_count: 0 })
+      addPlaylist({ ...data, track_count: 0, cover_source: (data.cover_source ?? 'branded') as any })
       onClose()
       router.push(`/playlists/${data.id}`)
     }

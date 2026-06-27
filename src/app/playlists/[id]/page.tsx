@@ -5,6 +5,8 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { usePlayerStore } from '@/lib/store'
 import { usePlaylistsStore } from '@/lib/playlists-store'
+import { PlaylistCover } from '@/components/playlist/PlaylistCover'
+import { PlaylistCoverModal } from '@/components/playlist/PlaylistCoverModal'
 import { EditPlaylistModal } from '@/components/EditPlaylistModal'
 import { DeletePlaylistModal } from '@/components/DeletePlaylistModal'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
@@ -39,6 +41,7 @@ function PlaylistContent() {
   const [isOwner, setIsOwner] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [coverModalOpen, setCoverModalOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [duplicating, setDuplicating] = useState(false)
   const [toast, setToast] = useState<{ message: string; action?: { label: string; onClick: () => void } } | null>(null)
@@ -91,8 +94,11 @@ function PlaylistContent() {
   async function handleDeleteConfirm() {
     setDeleting(true)
     await supabase.from('playlist_tracks').delete().eq('playlist_id', id)
-    if (playlist?.cover_url?.startsWith('http')) {
-      await supabase.storage.from('playlist-covers').remove([playlist.cover_url])
+    if (playlist?.custom_cover_url) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await supabase.storage.from('playlist-covers').remove([`${user.id}/${id}/cover`])
+      }
     }
     await supabase.from('playlists').delete().eq('id', id)
     removePlaylist(id)
@@ -124,12 +130,13 @@ function PlaylistContent() {
         track_id: t.track_id,
         track_data: t.track_data,
         position: i,
+        added_at: new Date().toISOString(),
       }))
       await supabase.from('playlist_tracks').insert(newTracks)
     }
 
     if (newPlaylist) {
-      addPlaylist({ ...newPlaylist, track_count: tracks.length })
+      addPlaylist({ ...newPlaylist, track_count: tracks.length, cover_source: (newPlaylist.cover_source ?? 'branded') as any })
       showToast('Playlist duplicada', {
         label: 'Ver cópia',
         onClick: () => router.push(`/playlists/${newPlaylist.id}`),
@@ -155,6 +162,19 @@ function PlaylistContent() {
         .delete()
         .eq('playlist_id', id)
         .eq('track_id', trackId)
+
+      const { count } = await supabase
+        .from('playlist_tracks')
+        .select('id', { count: 'exact', head: true })
+        .eq('playlist_id', id)
+
+      if (count === 0 && playlist?.cover_source !== 'custom') {
+        await supabase
+          .from('playlists')
+          .update({ cover_source: 'branded', last_track_cover_url: null })
+          .eq('id', id)
+      }
+
       pendingRemove.current = null
     }, 5000)
 
@@ -274,20 +294,11 @@ function PlaylistContent() {
   return (
     <div className="max-w-4xl mx-auto relative">
       <div className="flex flex-col md:flex-row gap-6 mb-8">
-        <div
-          className="w-48 h-48 rounded-xl flex-shrink-0 flex items-center justify-center shadow-lg"
-          style={{
-            background: playlist.cover_url
-              ? `url(${playlist.cover_url}) center/cover`
-              : 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
-          }}
-        >
-          {!playlist.cover_url && (
-            <svg className="w-16 h-16 opacity-50" fill="white" viewBox="0 0 24 24">
-              <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-            </svg>
-          )}
-        </div>
+        <PlaylistCover
+          playlist={playlist as any}
+          size={192}
+          onClick={isOwner ? () => setCoverModalOpen(true) : undefined}
+        />
 
         <div className="flex flex-col justify-end flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -420,6 +431,13 @@ function PlaylistContent() {
         open={editModalOpen}
         playlist={playlist}
         onClose={() => setEditModalOpen(false)}
+      />
+      <PlaylistCoverModal
+        open={coverModalOpen}
+        onClose={() => setCoverModalOpen(false)}
+        playlistId={id}
+        currentCoverSource={playlist.cover_source as any}
+        currentCoverUrl={playlist.custom_cover_url}
       />
       <DeletePlaylistModal
         open={deleteModalOpen}

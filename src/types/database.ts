@@ -122,33 +122,42 @@ export type Database = {
       playlists: {
         Row: {
           collaborative: boolean | null
+          cover_source: string
           cover_url: string | null
           created_at: string | null
+          custom_cover_url: string | null
           description: string | null
           id: string
           is_public: boolean
+          last_track_cover_url: string | null
           name: string
           share_token: string | null
           user_id: string
         }
         Insert: {
           collaborative?: boolean | null
+          cover_source?: string
           cover_url?: string | null
           created_at?: string | null
+          custom_cover_url?: string | null
           description?: string | null
           id?: string
           is_public?: boolean
+          last_track_cover_url?: string | null
           name: string
           share_token?: string | null
           user_id: string
         }
         Update: {
           collaborative?: boolean | null
+          cover_source?: string
           cover_url?: string | null
           created_at?: string | null
+          custom_cover_url?: string | null
           description?: string | null
           id?: string
           is_public?: boolean
+          last_track_cover_url?: string | null
           name?: string
           share_token?: string | null
           user_id?: string

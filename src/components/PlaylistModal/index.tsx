@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
+import { updateTrackCoverIfNeeded } from '@/lib/playlist/updateTrackCover'
 import type { Track } from '@/types/music'
 import type { Json } from '@/types/database'
 
@@ -14,7 +15,7 @@ interface PlaylistModalProps {
 }
 
 export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
-  const { playlists, fetchPlaylists } = usePlaylistsStore()
+  const { playlists, fetchPlaylists, updatePlaylistCover } = usePlaylistsStore()
   const [containingIds, setContainingIds] = useState<Set<string>>(new Set())
   const [showCreate, setShowCreate] = useState(false)
   const supabase = createClient()
@@ -48,6 +49,26 @@ export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
         .eq('playlist_id', playlistId)
         .eq('track_id', track.id)
 
+      const { count } = await supabase
+        .from('playlist_tracks')
+        .select('id', { count: 'exact', head: true })
+        .eq('playlist_id', playlistId)
+
+      if (count === 0) {
+        await supabase
+          .from('playlists')
+          .update({
+            cover_source: 'branded',
+            last_track_cover_url: null,
+          })
+          .eq('id', playlistId)
+
+        updatePlaylistCover(playlistId, {
+          cover_source: 'branded',
+          last_track_cover_url: null,
+        })
+      }
+
       setContainingIds((prev) => {
         const next = new Set(prev)
         next.delete(playlistId)
@@ -63,14 +84,24 @@ export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
 
       const nextPosition = (maxPos?.[0]?.position ?? -1) + 1
 
-      await supabase
+      const now = new Date().toISOString()
+      const { error: insertError } = await supabase
         .from('playlist_tracks')
         .insert({
           playlist_id: playlistId,
           track_id: track.id,
           track_data: track as unknown as Json,
           position: nextPosition,
+          added_at: now,
         })
+
+      if (!insertError) {
+        await updateTrackCoverIfNeeded(supabase as any, playlistId, track.image)
+        updatePlaylistCover(playlistId, {
+          cover_source: 'track',
+          last_track_cover_url: track.image,
+        })
+      }
 
       setContainingIds((prev) => {
         const next = new Set(prev)

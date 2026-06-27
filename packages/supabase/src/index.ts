@@ -56,9 +56,9 @@ export interface Database {
         Update: { id?: string; user_id?: string; track_id?: string; track_data?: Json; played_at?: string }
       }
       playlists: {
-        Row: { id: string; user_id: string; name: string; description: string | null; cover_url: string | null; collaborative: boolean | null; share_token: string | null; created_at: string }
-        Insert: { id?: string; user_id: string; name: string; description?: string | null; cover_url?: string | null; collaborative?: boolean | null; share_token?: string | null; created_at?: string }
-        Update: { id?: string; user_id?: string; name?: string; description?: string | null; cover_url?: string | null; collaborative?: boolean | null; share_token?: string | null; created_at?: string }
+        Row: { id: string; user_id: string; name: string; description: string | null; cover_url: string | null; cover_source: string; custom_cover_url: string | null; last_track_cover_url: string | null; collaborative: boolean | null; share_token: string | null; created_at: string }
+        Insert: { id?: string; user_id: string; name: string; description?: string | null; cover_url?: string | null; cover_source?: string; custom_cover_url?: string | null; last_track_cover_url?: string | null; collaborative?: boolean | null; share_token?: string | null; created_at?: string }
+        Update: { id?: string; user_id?: string; name?: string; description?: string | null; cover_url?: string | null; cover_source?: string; custom_cover_url?: string | null; last_track_cover_url?: string | null; collaborative?: boolean | null; share_token?: string | null; created_at?: string }
       }
       playlist_tracks: {
         Row: { id: string; playlist_id: string; track_id: string; track_data: Json; position: number; added_at: string }

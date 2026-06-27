@@ -91,7 +91,7 @@ export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModal
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaving(false); return }
 
-    let coverUrl = playlist.cover_url
+    let newCustomCoverUrl = playlist.custom_cover_url
 
     if (coverFile) {
       setUploading(true)
@@ -102,25 +102,30 @@ export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModal
         .upload(filePath, coverFile, { upsert: true, contentType: 'image/png' })
       if (!uploadError) {
         const { data: urlData } = supabase.storage.from('playlist-covers').getPublicUrl(filePath)
-        coverUrl = urlData.publicUrl + '?v=' + Date.now()
+        newCustomCoverUrl = urlData.publicUrl + '?v=' + Date.now()
       }
       setUploading(false)
     }
 
+    const baseUpdate = {
+      name: name.trim(),
+      description: description.trim() || null,
+      is_public: isPublic,
+    }
+
+    const updatePayload = coverFile
+      ? { ...baseUpdate, cover_source: 'custom' as const, custom_cover_url: newCustomCoverUrl }
+      : baseUpdate
+
     const { data } = await supabase
       .from('playlists')
-      .update({
-        name: name.trim(),
-        description: description.trim() || null,
-        cover_url: coverUrl,
-        is_public: isPublic,
-      })
+      .update(updatePayload)
       .eq('id', playlist.id)
       .select()
       .single()
 
     if (data) {
-      updatePlaylist(playlist.id, data)
+      updatePlaylist(playlist.id, data as any)
     }
     setSaving(false)
     onClose()
