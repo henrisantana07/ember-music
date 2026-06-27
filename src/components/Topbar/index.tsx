@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { saveSearchHistory } from '@/lib/search-history'
 import { SearchSuggestions } from '@/components/SearchSuggestions'
@@ -13,6 +13,7 @@ export function Topbar() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
   const supabase = createClient()
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -61,6 +62,14 @@ export function Topbar() {
     router.push('/login')
   }
 
+  function handleClear() {
+    setSearchQuery('')
+    inputRef.current?.focus()
+    if (pathname === '/buscar') {
+      router.push('/buscar')
+    }
+  }
+
   async function submitSearch(query = searchQuery) {
     const sanitized = query.trim().replace(/\s+/g, ' ')
     if (sanitized) {
@@ -97,13 +106,25 @@ export function Topbar() {
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
             placeholder="O que você quer ouvir?"
-            className="w-full pl-10 pr-4 py-2 rounded-full text-sm border-none focus:outline-none focus:ring-2 transition-all"
+            className="w-full pl-10 pr-10 py-2 rounded-full text-sm border-none focus:outline-none focus:ring-2 transition-all"
             style={{
               backgroundColor: 'var(--bg-surface)',
               color: 'var(--text-primary)',
               '--tw-ring-color': 'var(--accent-solid)',
             } as React.CSSProperties}
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
           <SearchSuggestions
             query={searchQuery}
