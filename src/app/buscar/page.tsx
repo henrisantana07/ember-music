@@ -6,6 +6,7 @@ import { SectionRow } from '@/components/SectionRow'
 import { TrackCard } from '@/components/TrackCard'
 import { TrackCardSkeleton } from '@/components/Skeleton'
 import { FollowButton } from '@/components/FollowButton'
+import { dispatchArtistOptions } from '@/lib/search-artists'
 import type { Album, Artist, Track } from '@/types/music'
 import type { Json } from '@/types/database'
 
@@ -96,6 +97,8 @@ function SearchPageInner() {
   }
 
   const artistOptions = useMemo(() => Array.from(new Set([...artists.map((artist) => artist.name), ...tracks.map((track) => track.artist_name)])).filter(Boolean).sort(), [artists, tracks])
+
+  useEffect(() => { dispatchArtistOptions(artistOptions) }, [artistOptions])
 
   const filteredTracks = useMemo(() => tracks.filter((track) => {
     const artistOk = !artistFilter || track.artist_name.toLowerCase().includes(artistFilter.toLowerCase())
