@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { usePlaylistsStore } from '@/lib/playlists-store'
+import { resolveCover } from '@/lib/playlist/resolveCover'
 import Cropper from 'cropperjs'
 import 'cropperjs/dist/cropper.css'
 import type { Database } from '@/types/database'
@@ -95,8 +96,7 @@ export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModal
 
     if (coverFile) {
       setUploading(true)
-      const ext = 'png'
-      const filePath = `${user.id}/${crypto.randomUUID()}.${ext}`
+      const filePath = `${user.id}/${playlist.id}/cover.png`
       const { error: uploadError } = await supabase.storage
         .from('playlist-covers')
         .upload(filePath, coverFile, { upsert: true, contentType: 'image/png' })
@@ -134,7 +134,8 @@ export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModal
   function getPreview(): string | null {
     if (cropImage) return cropImage
     if (coverFile) return URL.createObjectURL(coverFile)
-    return playlist!.cover_url || null
+    const resolved = resolveCover(playlist! as any)
+    return resolved.url
   }
 
   const preview = getPreview()

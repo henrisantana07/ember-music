@@ -7,8 +7,6 @@ import { usePlaylistsStore } from '@/lib/playlists-store'
 import Cropper from 'cropperjs'
 import 'cropperjs/dist/cropper.css'
 
-const DEFAULT_COVER = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF6A00"/><stop offset="100%" stop-color="#FFC400"/></linearGradient></defs><rect width="512" height="512" fill="url(#g)"/><path d="M256 64v225.2c-12.6-7.3-27.1-11.8-42.7-11.8-47.1 0-85.3 38.2-85.3 85.3s38.2 85.3 85.3 85.3 85.3-38.2 85.3-85.3V149.3h85.3V64H256z" fill="white" opacity="0.6"/></svg>')
-
 interface CreatePlaylistModalProps {
   open: boolean
   onClose: () => void
@@ -119,30 +117,15 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaving(false); return }
 
-    let coverUrl: string | null = null
-    if (coverFile) {
-      setUploading(true)
-      const ext = 'png'
-      const filePath = `${user.id}/${crypto.randomUUID()}.${ext}`
-      const { error: uploadError } = await supabase.storage
-        .from('playlist-covers')
-        .upload(filePath, coverFile, { upsert: true, contentType: 'image/png' })
-      if (!uploadError) {
-        const { data: urlData } = supabase.storage.from('playlist-covers').getPublicUrl(filePath)
-        coverUrl = urlData.publicUrl + '?v=' + Date.now()
-      }
-      setUploading(false)
-    }
+    const coverSource = coverFile ? 'custom' : defaultCover ? 'track' : 'branded'
 
-    const coverSource = coverFile ? 'custom' as const : defaultCover ? 'track' as const : 'branded' as const
-
-    const { data, error } = await supabase
+    const { data: newPlaylist, error } = await supabase
       .from('playlists')
       .insert({
         name: name.trim(),
         description: description.trim() || null,
         cover_source: coverSource,
-        custom_cover_url: coverFile ? coverUrl : null,
+        custom_cover_url: null,
         last_track_cover_url: !coverFile ? defaultCover : null,
         is_public: isPublic,
         user_id: user.id,
@@ -150,11 +133,33 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
       .select()
       .single()
 
-    if (!error && data) {
-      addPlaylist({ ...data, track_count: 0, cover_source: (data.cover_source ?? 'branded') as any })
-      onClose()
-      router.push(`/playlists/${data.id}`)
+    if (error || !newPlaylist) { setSaving(false); return }
+
+    if (coverFile) {
+      setUploading(true)
+      const filePath = `${user.id}/${newPlaylist.id}/cover.png`
+      const { error: uploadError } = await supabase.storage
+        .from('playlist-covers')
+        .upload(filePath, coverFile, { upsert: true, contentType: 'image/png' })
+
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage.from('playlist-covers').getPublicUrl(filePath)
+        const publicUrl = urlData.publicUrl + '?v=' + Date.now()
+
+        await supabase
+          .from('playlists')
+          .update({ cover_source: 'custom', custom_cover_url: publicUrl })
+          .eq('id', newPlaylist.id)
+
+        newPlaylist.cover_source = 'custom'
+        newPlaylist.custom_cover_url = publicUrl
+      }
+      setUploading(false)
     }
+
+    addPlaylist({ ...newPlaylist, track_count: 0, cover_source: newPlaylist.cover_source as any })
+    onClose()
+    router.push(`/playlists/${newPlaylist.id}`)
     setSaving(false)
   }
 

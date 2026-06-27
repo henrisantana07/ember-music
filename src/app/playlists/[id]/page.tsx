@@ -97,7 +97,7 @@ function PlaylistContent() {
     if (playlist?.custom_cover_url) {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        await supabase.storage.from('playlist-covers').remove([`${user.id}/${id}/cover`])
+        await supabase.storage.from('playlist-covers').remove([`${user.id}/${id}/cover.png`])
       }
     }
     await supabase.from('playlists').delete().eq('id', id)

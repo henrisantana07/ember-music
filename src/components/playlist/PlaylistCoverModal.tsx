@@ -122,7 +122,7 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
 
     await supabase.storage
       .from('playlist-covers')
-      .remove([`${user.id}/${playlistId}/cover`])
+      .remove([`${user.id}/${playlistId}/cover.png`])
 
     const { count } = await supabase
       .from('playlist_tracks')
