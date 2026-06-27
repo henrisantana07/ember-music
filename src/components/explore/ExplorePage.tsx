@@ -1,15 +1,18 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
-import type { Track } from '@/types/music'
+import type { Track, Album, Artist } from '@/types/music'
 import { getGenreGradient } from '@/constants/genreColors'
 import { ExploreEmptyState } from './ExploreEmptyState'
 import { ExploreResults } from './ExploreResults'
 import { TrackResultGrid } from './TrackResultGrid'
+import { ArtistResultCarousel } from './ArtistResultCarousel'
+import { AlbumResultGrid } from './AlbumResultGrid'
 import { ExploreTrackSkeleton } from './skeletons/ExploreTrackSkeleton'
+import { ArtistCircleSkeleton } from './skeletons/ArtistCircleSkeleton'
 
 function GenrePage({ genero, genreId }: { genero: string; genreId: string }) {
   const [tracks, setTracks] = useState<Track[]>([])
@@ -17,16 +20,53 @@ function GenrePage({ genero, genreId }: { genero: string; genreId: string }) {
   const gradient = getGenreGradient(genero)
 
   useEffect(() => {
-    fetch(`/api/spotify?endpoint=genre-tracks&id=${genreId}&limit=50`)
+    fetch(`/api/spotify?endpoint=genre-tracks&id=${genreId}&limit=100`)
       .then(res => res.json())
       .then(data => setTracks(data.results ?? []))
       .catch(() => setTracks([]))
       .finally(() => setLoading(false))
   }, [genreId])
 
+  const artists = useMemo(() => {
+    const map = new Map<string, Artist>()
+    tracks.forEach(t => {
+      if (!map.has(t.artist_id)) {
+        map.set(t.artist_id, {
+          id: t.artist_id,
+          name: t.artist_name,
+          image: t.image,
+          followers: 0,
+          genres: [],
+          url: '',
+        })
+      }
+    })
+    return Array.from(map.values())
+  }, [tracks])
+
+  const albums = useMemo(() => {
+    const map = new Map<string, Album>()
+    tracks.forEach(t => {
+      const key = `${t.artist_id}_${t.album_id}`
+      if (!map.has(key)) {
+        map.set(key, {
+          id: t.album_id,
+          name: t.album_name,
+          artist_id: t.artist_id,
+          artist_name: t.artist_name,
+          image: t.image,
+          release_date: '',
+          total_tracks: 0,
+          url: '',
+        })
+      }
+    })
+    return Array.from(map.values())
+  }, [tracks])
+
   return (
     <div
-      className="mx-auto space-y-6"
+      className="mx-auto space-y-8"
       style={{ maxWidth: 1100, paddingLeft: 32, paddingRight: 32 }}
     >
       <div
@@ -37,16 +77,56 @@ function GenrePage({ genero, genreId }: { genero: string; genreId: string }) {
           {genero}
         </h1>
         <p className="text-sm mt-1" style={{ color: 'rgba(245,241,237,0.7)' }}>
-          {tracks.length > 0 ? `${tracks.length} faixas disponíveis` : 'A carregar...'}
+          {loading ? 'A carregar...' : `${tracks.length} faixas · ${artists.length} artistas · ${albums.length} álbuns`}
         </p>
       </div>
 
       {loading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 8 }).map((_, i) => <ExploreTrackSkeleton key={i} compact />)}
+        <div className="space-y-10">
+          <div>
+            <div className="h-5 w-28 rounded mb-4 skeleton" />
+            <div className="flex gap-4">
+              {Array.from({ length: 6 }).map((_, i) => <ArtistCircleSkeleton key={i} />)}
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div className="h-5 w-28 rounded skeleton" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="aspect-square rounded-lg skeleton" />
+                  <div className="h-4 w-3/4 rounded skeleton" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => <ExploreTrackSkeleton key={i} compact />)}
+          </div>
         </div>
       ) : (
-        <TrackResultGrid tracks={tracks} />
+        <>
+          {artists.length > 0 && (
+            <section>
+              <h2 className="text-lg font-bold mb-4">Artistas</h2>
+              <ArtistResultCarousel artists={artists} />
+            </section>
+          )}
+
+          {albums.length > 0 && (
+            <section>
+              <h2 className="text-lg font-bold mb-4">Álbuns</h2>
+              <AlbumResultGrid albums={albums} />
+            </section>
+          )}
+
+          {tracks.length > 0 && (
+            <section>
+              <h2 className="text-lg font-bold mb-4">Faixas</h2>
+              <TrackResultGrid tracks={tracks} />
+            </section>
+          )}
+        </>
       )}
     </div>
   )
