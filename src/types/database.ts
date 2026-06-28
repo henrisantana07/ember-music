@@ -295,30 +295,6 @@ export type Database = {
         }
         Relationships: []
       }
-      saved_albums: {
-        Row: {
-          id: string
-          user_id: string
-          album_id: string
-          album_data: Json | null
-          saved_at: string | null
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          album_id: string
-          album_data?: Json | null
-          saved_at?: string | null
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          album_id?: string
-          album_data?: Json | null
-          saved_at?: string | null
-        }
-        Relationships: []
-      }
       downloads: {
         Row: {
           id: string
