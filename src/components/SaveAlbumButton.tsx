@@ -1,130 +1,101 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Album } from '@/types/music'
+import { usePlaylistsStore } from '@/lib/playlists-store'
+import type { Album, Track } from '@/types/music'
 import type { Json } from '@/types/database'
-
-const ALBUM_PLAYLIST_NAME = 'Álbuns Salvos'
 
 interface SaveAlbumButtonProps {
   album: Album
 }
 
-async function ensureAlbumPlaylist(supabase: ReturnType<typeof createClient>, userId: string): Promise<string> {
-  const { data: existing } = await supabase
-    .from('playlists')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('name', ALBUM_PLAYLIST_NAME)
-    .maybeSingle()
-
-  if (existing) return existing.id
-
-  const { data: created } = await supabase
-    .from('playlists')
-    .insert({
-      user_id: userId,
-      name: ALBUM_PLAYLIST_NAME,
-      description: 'Álbuns salvos automaticamente',
-      is_public: false,
-      cover_source: 'branded',
-    })
-    .select('id')
-    .single()
-
-  return created!.id
-}
-
 export function SaveAlbumButton({ album }: SaveAlbumButtonProps) {
-  const [saved, setSaved] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const router = useRouter()
+  const [saving, setSaving] = useState(false)
   const supabase = createClient()
-
-  useEffect(() => {
-    let cancelled = false
-    supabase.auth.getUser().then(async ({ data }) => {
-      if (!data.user || cancelled) return
-      const playlistId = await ensureAlbumPlaylist(supabase, data.user.id)
-      const { data: row } = await supabase
-        .from('playlist_albums')
-        .select('id')
-        .eq('playlist_id', playlistId)
-        .eq('album_id', album.id)
-        .maybeSingle()
-      if (!cancelled) setSaved(!!row)
-    })
-    return () => { cancelled = true }
-  }, [album.id])
+  const { addPlaylist } = usePlaylistsStore()
 
   async function handleClick(e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (saving) return
 
-    setLoading(true)
-    const playlistId = await ensureAlbumPlaylist(supabase, user.id)
+    setSaving(true)
 
-    if (saved) {
-      await supabase
-        .from('playlist_albums')
-        .delete()
-        .eq('playlist_id', playlistId)
-        .eq('album_id', album.id)
-      setSaved(false)
-    } else {
-      const { data: maxPos } = await supabase
-        .from('playlist_albums')
-        .select('position')
-        .eq('playlist_id', playlistId)
-        .order('position', { ascending: false })
-        .limit(1)
+    try {
+      const res = await fetch(`/api/spotify?endpoint=albums&id=${album.id}`)
+      const data = await res.json()
+      const tracks: Track[] = data.tracks ?? []
+      if (tracks.length === 0) return
 
-      const nextPosition = (maxPos?.[0]?.position ?? -1) + 1
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
 
-      await supabase
-        .from('playlist_albums')
+      const now = new Date().toISOString()
+
+      const { data: newPlaylist, error: playlistError } = await supabase
+        .from('playlists')
         .insert({
-          playlist_id: playlistId,
-          album_id: album.id,
-          album_data: album as unknown as Json,
-          position: nextPosition,
+          name: album.name,
+          description: `Álbum de ${album.artist_name}`,
+          cover_source: 'track',
+          custom_cover_url: null,
+          last_track_cover_url: album.image || null,
+          user_id: user.id,
+          is_public: false,
         })
+        .select()
+        .single()
 
-      if (album.image) {
-        await supabase
-          .from('playlists')
-          .update({ cover_source: 'track', last_track_cover_url: album.image })
-          .eq('id', playlistId)
-      }
+      if (playlistError || !newPlaylist) throw playlistError
 
-      setSaved(true)
+      const inserts = tracks.map((track, i) => ({
+        playlist_id: newPlaylist.id,
+        track_id: track.id,
+        track_data: track as unknown as Json,
+        position: i,
+        added_at: now,
+      }))
+
+      const { error: tracksError } = await supabase.from('playlist_tracks').insert(inserts)
+      if (tracksError) throw tracksError
+
+      addPlaylist({
+        ...newPlaylist,
+        track_count: tracks.length,
+        cover_source: 'branded',
+        is_public: false,
+        collaborative: null,
+        share_token: null,
+      } as any)
+
+      router.push(`/playlists/${newPlaylist.id}`)
+    } catch {
+      // ignore
+    } finally {
+      setSaving(false)
     }
-    setLoading(false)
   }
 
   return (
     <button
       onClick={handleClick}
-      disabled={loading}
-      className="p-1.5 backdrop-blur-md rounded-full text-white transition-all duration-200 disabled:opacity-50"
+      disabled={saving}
+      className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-transform duration-150 hover:scale-105 disabled:cursor-default disabled:opacity-50"
       style={{
-        background: saved
-          ? 'linear-gradient(135deg, var(--accent-from), var(--accent-to))'
-          : 'rgba(255,255,255,0.2)',
+        background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
       }}
-      title={saved ? 'Remover da playlist' : 'Salvar na playlist'}
+      title="Salvar álbum como playlist"
     >
-      <svg
-        className="w-4 h-4"
-        fill={saved ? 'white' : 'none'}
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2}
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-      </svg>
+      {saving ? (
+        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+      ) : (
+        <svg className="w-5 h-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 4v16m8-8H4" />
+        </svg>
+      )}
     </button>
   )
 }
