@@ -29,8 +29,17 @@ export function ArtistResultCarousel({ artists, loading, maxItems }: ArtistResul
           href={`/artists/${artist.id}`}
           className="flex flex-col items-center gap-2 w-24 flex-shrink-0 group"
         >
-          <div className="w-[96px] h-[96px] rounded-full overflow-hidden border-2 transition-colors duration-200 group-hover:border-transparent" style={{ borderColor: 'var(--bg-elevated)' }}>
-            <img src={artist.image || '/placeholder.svg'} alt={artist.name} className="w-full h-full object-cover" loading="lazy" />
+          <div className="relative w-[96px] h-[96px] rounded-full p-[2px]" style={{ background: 'var(--bg-elevated)' }}>
+            <div
+              className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
+            />
+            <img
+              src={artist.image || '/placeholder.svg'}
+              alt={artist.name}
+              className="relative w-full h-full rounded-full object-cover z-10"
+              loading="lazy"
+            />
           </div>
           <p className="text-sm font-semibold text-center truncate w-full">{artist.name}</p>
           <p className="text-xs text-center" style={{ color: 'var(--text-secondary)' }}>
