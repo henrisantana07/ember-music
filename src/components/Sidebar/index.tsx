@@ -154,7 +154,7 @@ export default function Sidebar() {
                       : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
                   }`}
                 >
-                  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.5}>
+                  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                   </svg>
                   <span className="truncate">{pl.name}</span>
@@ -287,8 +287,8 @@ export default function Sidebar() {
               }}
               className="flex flex-col items-center justify-center gap-0.5 w-full h-full pt-2"
             >
-              <svg className={`w-5 h-5 ${active ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`} viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d={active ? item.fill : item.outline} />
+              <svg className={`w-5 h-5 ${active ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d={item.outline} />
               </svg>
               <span className={`text-[10px] ${active ? 'font-bold text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>{item.label}</span>
             </button>
@@ -342,7 +342,7 @@ export default function Sidebar() {
                           }`}
                           onClick={() => setDrawerOpen(false)}
                         >
-                          <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.5}>
+                          <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                           </svg>
                           <span className="truncate">{pl.name}</span>
