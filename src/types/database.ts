@@ -119,6 +119,41 @@ export type Database = {
           },
         ]
       }
+      playlist_albums: {
+        Row: {
+          added_at: string | null
+          album_data: Json | null
+          album_id: string
+          id: string
+          playlist_id: string
+          position: number | null
+        }
+        Insert: {
+          added_at?: string | null
+          album_data?: Json | null
+          album_id: string
+          id?: string
+          playlist_id: string
+          position?: number | null
+        }
+        Update: {
+          added_at?: string | null
+          album_data?: Json | null
+          album_id?: string
+          id?: string
+          playlist_id?: string
+          position?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "playlist_albums_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       playlists: {
         Row: {
           collaborative: boolean | null

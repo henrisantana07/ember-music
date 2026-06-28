@@ -6,6 +6,7 @@ import { ArtistHeader } from '@/components/artist/ArtistHeader'
 import { ArtistHeaderSkeleton } from '@/components/artist/ArtistHeaderSkeleton'
 import { TrackCard } from '@/components/TrackCard'
 import { Carousel } from '@/components/Carousel'
+import { AlbumPlaylistModal } from '@/components/AlbumPlaylistModal'
 import { usePlayerStore } from '@/lib/store'
 import type { Artist, Track, Album } from '@/types/music'
 
@@ -18,6 +19,7 @@ export default function ArtistPage() {
   const [related, setRelated] = useState<Artist[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [albumPlaylistTarget, setAlbumPlaylistTarget] = useState<Album | null>(null)
   const play = usePlayerStore((s) => s.play)
 
   useEffect(() => {
@@ -109,7 +111,11 @@ export default function ArtistPage() {
                     <img src={album.image || '/placeholder.svg'} alt={album.name}
                       className="w-full aspect-square rounded-lg object-cover shadow-md" loading="lazy" />
                     <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center bg-black/40">
-                      <button className="p-1.5 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/30 transition-colors" title="Adicionar aos favoritos">
+                      <button
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setAlbumPlaylistTarget(album) }}
+                        className="p-1.5 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/30 transition-colors"
+                        title="Adicionar à playlist"
+                      >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
@@ -151,6 +157,14 @@ export default function ArtistPage() {
             ))}
           </Carousel>
         </section>
+      )}
+
+      {albumPlaylistTarget && (
+        <AlbumPlaylistModal
+          open
+          onClose={() => setAlbumPlaylistTarget(null)}
+          album={albumPlaylistTarget}
+        />
       )}
     </div>
   )
