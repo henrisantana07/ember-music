@@ -283,7 +283,7 @@ export default function Sidebar() {
               key={item.href}
               onClick={() => {
                 if (isLibrary) { setDrawerOpen(true); return }
-                window.location.href = item.href
+                router.push(item.href)
               }}
               className="flex flex-col items-center justify-center gap-0.5 w-full h-full pt-2"
             >
@@ -313,11 +313,24 @@ export default function Sidebar() {
             </div>
 
             <nav className="flex-none px-2 space-y-0.5">
-              {NAV_SECTION1.map(item => (
-                <div key={item.href} onClick={() => { setDrawerOpen(false); window.location.href = item.href }}>
-                  <NavLink href={item.href} label={item.label} icon={{ outline: item.outline, fill: item.fill }} />
-                </div>
-              ))}
+              {NAV_SECTION1.map(item => {
+                const active = isActive(item.href)
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setDrawerOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
+                      active
+                        ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
+                        : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    <NavIcon icon={{ outline: item.outline, fill: item.fill }} active={active} />
+                    <span>{item.label}</span>
+                  </Link>
+                )
+              })}
             </nav>
 
             <hr className="mx-4 my-2 border-white/5 flex-none" />
@@ -331,23 +344,22 @@ export default function Sidebar() {
                   {playlists.map(pl => {
                     const active = pathname === `/playlists/${pl.id}`
                     return (
-                      <div key={pl.id} onClick={() => { setDrawerOpen(false); window.location.href = `/playlists/${pl.id}` }}>
-                        <Link
-                          href={`/playlists/${pl.id}`}
-                          aria-current={active ? 'page' : undefined}
-                          className={`flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
-                            active
-                              ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
-                              : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
-                          }`}
-                          onClick={() => setDrawerOpen(false)}
-                        >
-                          <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                          </svg>
-                          <span className="truncate">{pl.name}</span>
-                        </Link>
-                      </div>
+                      <Link
+                        key={pl.id}
+                        href={`/playlists/${pl.id}`}
+                        onClick={() => setDrawerOpen(false)}
+                        aria-current={active ? 'page' : undefined}
+                        className={`flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
+                          active
+                            ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
+                            : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
+                        }`}
+                      >
+                        <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                        </svg>
+                        <span className="truncate">{pl.name}</span>
+                      </Link>
                     )
                   })}
                 </div>
@@ -365,29 +377,28 @@ export default function Sidebar() {
               {artists.map(artist => {
                 const active = pathname === `/artists/${artist.artist_id}`
                 return (
-                  <div key={artist.artist_data?.id ?? artist.artist_id} onClick={() => { setDrawerOpen(false); window.location.href = `/artists/${artist.artist_id}` }}>
-                    <Link
-                      href={`/artists/${artist.artist_id}`}
-                      aria-current={active ? 'page' : undefined}
-                      className={`flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
-                        active
-                          ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
-                          : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
-                      }`}
-                      onClick={() => setDrawerOpen(false)}
-                    >
-                      <div className="relative w-8 h-8 flex-shrink-0">
-                        {artist.artist_data?.image ? (
-                          <img src={artist.artist_data.image} alt="" className="w-full h-full rounded-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full rounded-full bg-white/10 flex items-center justify-center text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                            {artist.artist_data?.name?.[0] ?? '?'}
-                          </div>
-                        )}
-                      </div>
-                      <span className="truncate">{artist.artist_data?.name ?? 'Artista'}</span>
-                    </Link>
-                  </div>
+                  <Link
+                    key={artist.artist_data?.id ?? artist.artist_id}
+                    href={`/artists/${artist.artist_id}`}
+                    onClick={() => setDrawerOpen(false)}
+                    aria-current={active ? 'page' : undefined}
+                    className={`flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
+                      active
+                        ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
+                        : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    <div className="relative w-8 h-8 flex-shrink-0">
+                      {artist.artist_data?.image ? (
+                        <img src={artist.artist_data.image} alt="" className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full rounded-full bg-white/10 flex items-center justify-center text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                          {artist.artist_data?.name?.[0] ?? '?'}
+                        </div>
+                      )}
+                    </div>
+                    <span className="truncate">{artist.artist_data?.name ?? 'Artista'}</span>
+                  </Link>
                 )
               })}
             </div>

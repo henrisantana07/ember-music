@@ -252,16 +252,16 @@ function BibliotecaContent() {
     router.push(qs ? `/biblioteca?${qs}` : '/biblioteca')
   }
 
-  function getSortedTracks(): Track[] {
-    const list = [...tracks]
+  function getSortedTracks(list: Track[] = tracks): Track[] {
+    const sorted = [...list]
     switch (trackSort) {
-      case 'recent': return list
-      case 'oldest': return list.reverse()
-      case 'a-z': return list.sort((a, b) => a.name.localeCompare(b.name))
-      case 'z-a': return list.sort((a, b) => b.name.localeCompare(a.name))
-      case 'artist': return list.sort((a, b) => a.artist_name.localeCompare(b.artist_name))
-      case 'duration': return list.sort((a, b) => a.duration - b.duration)
-      default: return list
+      case 'recent': return sorted
+      case 'oldest': return sorted.reverse()
+      case 'a-z': return sorted.sort((a, b) => a.name.localeCompare(b.name))
+      case 'z-a': return sorted.sort((a, b) => b.name.localeCompare(a.name))
+      case 'artist': return sorted.sort((a, b) => a.artist_name.localeCompare(b.artist_name))
+      case 'duration': return sorted.sort((a, b) => a.duration - b.duration)
+      default: return sorted
     }
   }
 
@@ -569,22 +569,22 @@ function BibliotecaContent() {
           )}
 
           {/* Baixadas tab */}
-          {activeTab === 'baixadas' && (
-            downloads.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-4">
-                <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1} style={{ color: 'var(--text-disabled)' }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>Nenhuma música baixada ainda</p>
-                <p className="text-sm" style={{ color: 'var(--text-disabled)' }}>Baixe músicas para ouvir offline</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {getSortedTracks().map((track) => (
-                  <TrackCard key={track.id} track={track} tracks={downloads} />
-                ))}
-              </div>
-            )
+          {activeTab === 'baixadas' && downloads.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1} style={{ color: 'var(--text-disabled)' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>Nenhuma música baixada ainda</p>
+              <p className="text-sm" style={{ color: 'var(--text-disabled)' }}>Baixe músicas para ouvir offline</p>
+            </div>
+          )}
+
+          {activeTab === 'baixadas' && downloads.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {getSortedTracks(downloads).map((track) => (
+                <TrackCard key={track.id} track={track} tracks={downloads} />
+              ))}
+            </div>
           )}
         </>
       )}

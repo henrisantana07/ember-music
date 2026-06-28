@@ -182,7 +182,7 @@ export function ExplorePage() {
   const [user, setUser] = useState<User | null>(null)
   const [userTracks, setUserTracks] = useState<Track[]>([])
   const [userLabel, setUserLabel] = useState('Novidades do Jamendo')
-  const [activeTab, setActiveTab] = useState('tudo')
+  const activeTab = searchParams.get('tab') ?? 'tudo'
   const supabase = createClient()
 
   useEffect(() => {
@@ -207,13 +207,12 @@ export function ExplorePage() {
     }
   }
 
-  useEffect(() => {
-    setActiveTab('tudo')
-  }, [query])
-
   const handleTabChange = useCallback((tab: string) => {
-    setActiveTab(tab)
-  }, [])
+    const params = new URLSearchParams(searchParams.toString())
+    if (tab === 'tudo') params.delete('tab')
+    else params.set('tab', tab)
+    router.replace(`/buscar?${params.toString()}`)
+  }, [searchParams, router])
 
   const clearFilters = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString())

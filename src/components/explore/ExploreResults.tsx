@@ -70,7 +70,9 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
 
   const genreArtistNames = useMemo(() => {
     if (!genreFilter) return null
-    return new Set(artists.filter(a => a.genres?.some(g => g.toLowerCase() === genreFilter)).map(a => a.name.toLowerCase()))
+    const names = artists.filter(a => a.genres?.some(g => g.toLowerCase() === genreFilter)).map(a => a.name.toLowerCase())
+    if (names.length === 0) return null
+    return new Set(names)
   }, [artists, genreFilter])
 
   const filteredTracks = useMemo(() => tracks.filter(t => {
