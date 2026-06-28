@@ -60,26 +60,35 @@ export function Player() {
       next()
     }
 
+    const onError = () => {
+      next()
+    }
+
     const onTimeUpdate = () => {
       if (!isDragging) setProgress(audio.currentTime)
     }
 
     const onLoadedMetadata = () => setDuration(audio.duration)
 
+    if (!currentTrack.audio) {
+      next()
+      return
+    }
+
     audio.addEventListener('canplay', onCanPlay)
     audio.addEventListener('ended', onEnded)
+    audio.addEventListener('error', onError)
     audio.addEventListener('timeupdate', onTimeUpdate)
     audio.addEventListener('loadedmetadata', onLoadedMetadata)
 
     audio.volume = volume
-    if (currentTrack.audio) {
-      audio.src = currentTrack.audio
-      audio.load()
-    }
+    audio.src = currentTrack.audio
+    audio.load()
 
     return () => {
       audio.removeEventListener('canplay', onCanPlay)
       audio.removeEventListener('ended', onEnded)
+      audio.removeEventListener('error', onError)
       audio.removeEventListener('timeupdate', onTimeUpdate)
       audio.removeEventListener('loadedmetadata', onLoadedMetadata)
     }
@@ -87,7 +96,7 @@ export function Player() {
 
   useEffect(() => {
     const audio = audioRef.current
-    if (!audio || !currentTrack) return
+    if (!audio || !currentTrack || !currentTrack.audio) return
     if (isPlaying) {
       if (audio.readyState >= 2) {
         audio.play().catch(() => {})
