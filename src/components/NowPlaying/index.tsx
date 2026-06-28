@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { usePlayerStore } from '@/lib/store'
 import type { RepeatMode } from '@/lib/store'
 import { formatDuration } from '@/lib/spotify'
-import { FastAverageColor } from 'fast-average-color'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import type { Json } from '@/types/database'
@@ -19,8 +18,6 @@ import {
   Shuffle, Repeat, Repeat1, Volume2, Volume1, VolumeX,
   Music, Trash2, GripVertical,
 } from 'lucide-react'
-
-const fac = new FastAverageColor()
 
 function getAudioEl(): HTMLAudioElement | null {
   return document.querySelector('audio')
@@ -121,9 +118,11 @@ export default function NowPlaying() {
     img.crossOrigin = 'anonymous'
     img.src = currentTrack.image
     img.onload = () => {
-      fac.getColorAsync(img, { mode: 'precision', algorithm: 'dominant' })
-        .then((c) => setDominantColor(c.hex))
-        .catch(() => {})
+      import('fast-average-color').then(({ FastAverageColor }) => {
+        new FastAverageColor().getColorAsync(img, { mode: 'precision', algorithm: 'dominant' })
+          .then((c) => setDominantColor(c.hex))
+          .catch(() => {})
+      })
     }
     img.onerror = () => {}
   }, [currentTrack?.id, currentTrack?.image])

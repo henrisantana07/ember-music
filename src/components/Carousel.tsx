@@ -11,6 +11,7 @@ export function Carousel({ children, className = '' }: CarouselProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [showLeft, setShowLeft] = useState(false)
   const [showRight, setShowRight] = useState(false)
+  const rafRef = useRef<number | null>(null)
 
   function checkScroll() {
     const el = ref.current
@@ -19,16 +20,25 @@ export function Carousel({ children, className = '' }: CarouselProps) {
     setShowRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4)
   }
 
+  function throttledScroll() {
+    if (rafRef.current) return
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null
+      checkScroll()
+    })
+  }
+
   useEffect(() => {
     checkScroll()
     const el = ref.current
     if (!el) return
-    el.addEventListener('scroll', checkScroll, { passive: true })
+    el.addEventListener('scroll', throttledScroll, { passive: true })
     const ro = new ResizeObserver(checkScroll)
     ro.observe(el)
     return () => {
-      el.removeEventListener('scroll', checkScroll)
+      el.removeEventListener('scroll', throttledScroll)
       ro.disconnect()
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
   }, [children])
 

@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
 import Sidebar from '@/components/Sidebar'
 import { Player } from '@/components/Player'
@@ -48,7 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
       <body className="flex flex-col h-screen overflow-hidden">
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeScript }} />
         <KeyboardShortcuts />
         <div className="flex flex-1 overflow-hidden">
           <Sidebar />

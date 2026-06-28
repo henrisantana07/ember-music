@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://ember-music.vercel.app/</loc><priority>1.0</priority></url>
+  <url><loc>https://ember-music.vercel.app/buscar</loc><priority>0.8</priority></url>
+  <url><loc>https://ember-music.vercel.app/biblioteca</loc><priority>0.6</priority></url>
+  <url><loc>https://ember-music.vercel.app/login</loc><priority>0.5</priority></url>
+  <url><loc>https://ember-music.vercel.app/history</loc><priority>0.4</priority></url>
+  <url><loc>https://ember-music.vercel.app/configuracoes</loc><priority>0.4</priority></url>
+  <url><loc>https://ember-music.vercel.app/reproducao</loc><priority>0.3</priority></url>
+  <url><loc>https://ember-music.vercel.app/offline</loc><priority>0.3</priority></url>
+</urlset>

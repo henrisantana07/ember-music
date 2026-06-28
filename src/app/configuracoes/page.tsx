@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Toggle } from '@/components/Settings/Toggle'
 import { Slider } from '@/components/Settings/Slider'
-import Cropper from 'cropperjs'
-import 'cropperjs/dist/cropper.css'
 import type { User } from '@supabase/supabase-js'
 
 type Section = 'perfil' | 'aparencia' | 'reproducao' | 'notificacoes'
@@ -223,15 +221,19 @@ export default function ConfiguracoesPage() {
     reader.onload = () => {
       setCropImage(reader.result as string)
       setTimeout(() => {
-        if (cropperRef.current) {
+        const imgEl = cropperRef.current
+        if (imgEl) {
           if (cropperInstance.current) cropperInstance.current.destroy()
-          cropperInstance.current = new Cropper(cropperRef.current, {
-            aspectRatio: 1,
-            viewMode: 1,
-            minCropBoxWidth: 80,
-            minCropBoxHeight: 80,
-            cropBoxResizable: true,
-            dragMode: 'move',
+          import('cropperjs').then((mod) => {
+            import('cropperjs/dist/cropper.css')
+            cropperInstance.current = new mod.default(imgEl, {
+              aspectRatio: 1,
+              viewMode: 1,
+              minCropBoxWidth: 80,
+              minCropBoxHeight: 80,
+              cropBoxResizable: true,
+              dragMode: 'move',
+            })
           })
         }
       }, 100)

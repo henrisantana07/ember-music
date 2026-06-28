@@ -135,7 +135,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
       setUploading(false)
     }
 
-    addPlaylist({ ...newPlaylist, track_count: 0, cover_source: newPlaylist.cover_source as any })
+    addPlaylist({ ...newPlaylist, track_count: 0, cover_source: newPlaylist.cover_source as any, updated_at: null })
     onClose()
     router.push(`/playlists/${newPlaylist.id}`)
     setSaving(false)

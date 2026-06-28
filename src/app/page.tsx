@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState, useRef, Suspense, useCallback } from 'react'
+import { useEffect, useState, Suspense, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { SectionRow } from '@/components/SectionRow'
 import { TrackCardSkeleton } from '@/components/Skeleton'
 import { FollowButton } from '@/components/FollowButton'
 import { Carousel } from '@/components/Carousel'
+import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
 import type { Track, Artist, Genre } from '@/types/music'
 
 const GENRE_NAMES = ['pop', 'rock', 'electronic', 'jazz', 'hip hop', 'classical', 'reggae', 'blues', 'metal', 'folk', 'country', 'soul', 'punk', 'alternative', 'indie', 'r&b', 'latin', 'dance', 'ambient', 'funk']
@@ -73,8 +74,7 @@ function HomeContent() {
   const [artists, setArtists] = useState<Artist[]>([])
   const [moreTracks, setMoreTracks] = useState<Track[]>([])
   const [moreLoading, setMoreLoading] = useState(false)
-  const [page, setPage] = useState(0)
-  const sentinelRef = useRef<HTMLDivElement>(null)
+  const [loadedGenres, setLoadedGenres] = useState<Set<number>>(new Set())
   const [initialLoading, setInitialLoading] = useState(true)
 
   useEffect(() => {
@@ -106,35 +106,30 @@ function HomeContent() {
     fetchHome()
   }, [])
 
+  const hasMore = loadedGenres.size < GENRE_NAMES.length
+
   const loadMore = useCallback(async () => {
-    if (moreLoading) return
+    if (moreLoading || !hasMore) return
     setMoreLoading(true)
-    const nextPage = page + 1
-    const genre = GENRE_NAMES[nextPage % GENRE_NAMES.length]
+    const available = GENRE_NAMES.map((_, i) => i).filter((i) => !loadedGenres.has(i))
+    if (available.length === 0) { setMoreLoading(false); return }
+    const idx = available[Math.floor(Math.random() * available.length)]
+    const genre = GENRE_NAMES[idx]
     try {
       const res = await fetch(`/api/spotify?endpoint=search&q=${encodeURIComponent(genre)}&type=track&limit=12`)
       if (res.ok) {
         const data = await res.json()
         const tracks = data.tracks ?? []
         setMoreTracks((prev) => [...prev, ...tracks])
-        setPage(nextPage)
+        setLoadedGenres((prev) => new Set(prev).add(idx))
       }
     } catch {
     } finally {
       setMoreLoading(false)
     }
-  }, [page, moreLoading])
+  }, [moreLoading, hasMore, loadedGenres])
 
-  useEffect(() => {
-    const el = sentinelRef.current
-    if (!el) return
-    const observer = new IntersectionObserver(
-      (entries) => { if (entries[0].isIntersecting) loadMore() },
-      { rootMargin: '200px' }
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [loadMore])
+  const { sentinelRef } = useInfiniteScroll({ onLoadMore: loadMore, hasMore, loading: moreLoading })
 
   if (initialLoading) {
     return (
@@ -199,7 +194,7 @@ function HomeContent() {
       )}
 
       {moreTracks.length > 0 && (
-        <SectionRow title={`Descubra mais: ${GENRE_NAMES[page % GENRE_NAMES.length]}`} tracks={moreTracks} />
+        <SectionRow title="Descubra mais" tracks={moreTracks} />
       )}
 
       {moreLoading && (

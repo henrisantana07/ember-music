@@ -149,7 +149,7 @@ function PlaylistContent() {
     }
 
     if (newPlaylist) {
-      addPlaylist({ ...newPlaylist, track_count: tracks.length, cover_source: (newPlaylist.cover_source ?? 'branded') as any })
+      addPlaylist({ ...newPlaylist, track_count: tracks.length, cover_source: (newPlaylist.cover_source ?? 'branded') as any, updated_at: null })
       showToast('Playlist duplicada', {
         label: 'Ver cópia',
         onClick: () => router.push(`/playlists/${newPlaylist.id}`),

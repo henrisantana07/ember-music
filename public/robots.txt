@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://ember-music.vercel.app/sitemap.xml

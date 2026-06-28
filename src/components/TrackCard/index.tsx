@@ -4,7 +4,7 @@ import type { Track } from '@/types/music'
 import { formatDuration } from '@/lib/spotify'
 import { usePlayerStore } from '@/lib/store'
 import { createClient } from '@/lib/supabase/client'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import type { Json } from '@/types/database'
 import { PlaylistModal } from '@/components/PlaylistModal'
@@ -12,45 +12,33 @@ import { PlaylistModal } from '@/components/PlaylistModal'
 interface TrackCardProps {
   track: Track
   tracks?: Track[]
+  user?: User | null
+  isFav?: boolean
+  onToggleFavorite?: (track: Track) => void
 }
 
-export function TrackCard({ track, tracks }: TrackCardProps) {
+export function TrackCard({ track, tracks, user, isFav = false, onToggleFavorite }: TrackCardProps) {
   const { play, currentTrack, isPlaying, togglePlay } = usePlayerStore()
-  const [isFav, setIsFav] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
   const [playlistOpen, setPlaylistOpen] = useState(false)
   const supabase = createClient()
 
   const isActive = currentTrack?.id === track.id
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user))
-  }, [])
-
-  useEffect(() => {
-    if (!user) return
-    supabase
-      .from('favorites')
-      .select('id')
-      .eq('track_id', track.id)
-      .eq('user_id', user.id)
-      .maybeSingle()
-      .then(({ data }) => setIsFav(!!data))
-  }, [user, track.id])
-
   async function handleFavorite(e: React.MouseEvent) {
     e.stopPropagation()
     if (!user) return
-    if (isFav) {
-      await supabase.from('favorites').delete().eq('track_id', track.id).eq('user_id', user.id)
-      setIsFav(false)
+    if (onToggleFavorite) {
+      onToggleFavorite(track)
     } else {
-      await supabase.from('favorites').insert({
-        user_id: user.id,
-        track_id: track.id,
-        track_data: track as unknown as Json,
-      })
-      setIsFav(true)
+      if (isFav) {
+        await supabase.from('favorites').delete().eq('track_id', track.id).eq('user_id', user.id)
+      } else {
+        await supabase.from('favorites').insert({
+          user_id: user.id,
+          track_id: track.id,
+          track_data: track as unknown as Json,
+        })
+      }
     }
   }
 

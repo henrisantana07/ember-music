@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
-import type { User } from '@supabase/supabase-js'
 import type { Track, Album, Artist } from '@/types/music'
 import { getGenreGradient } from '@/constants/genreColors'
+import { useUser } from '@/hooks/use-user'
 import { ExploreEmptyState } from './ExploreEmptyState'
 import { ExploreResults } from './ExploreResults'
 import { TrackResultGrid } from './TrackResultGrid'
@@ -179,18 +178,13 @@ export function ExplorePage() {
   const artistFilter = searchParams.get('artist') ?? ''
   const genreFilter = searchParams.get('genre') ?? ''
   const durationFilter = (searchParams.get('duration') ?? '') as '' | 'short' | 'medium' | 'long'
-  const [user, setUser] = useState<User | null>(null)
+  const { user } = useUser()
   const [userTracks, setUserTracks] = useState<Track[]>([])
   const [userLabel, setUserLabel] = useState('Novidades do Jamendo')
   const activeTab = searchParams.get('tab') ?? 'tudo'
-  const supabase = createClient()
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user ?? null))
-  }, [])
-
-  useEffect(() => {
-    if (!user) return
+    if (!user || query) return
     fetch('/api/spotify?endpoint=featured&limit=5')
       .then(res => res.json())
       .then(data => {
@@ -198,7 +192,7 @@ export function ExplorePage() {
         setUserLabel('Baseado nas suas preferências')
       })
       .catch(() => {})
-  }, [user])
+  }, [user, query])
 
   function handleSearch(q: string) {
     const sanitized = q.trim().replace(/\s+/g, ' ')

@@ -34,14 +34,15 @@ export async function savePlaybackHistory(user: User | null, track: Track): Prom
   if (!user) return
   
   const supabase = createClient()
+  const now = new Date().toISOString()
   const { error } = await supabase
     .from('listening_history')
-    .insert({
+    .upsert({
       user_id: user.id,
       track_id: track.id,
       track_data: track as unknown as Json,
-      played_at: new Date().toISOString(),
-    })
+      played_at: now,
+    }, { onConflict: 'user_id,track_id', ignoreDuplicates: false })
   
   if (error) {
     console.error('Error saving playback history:', error)

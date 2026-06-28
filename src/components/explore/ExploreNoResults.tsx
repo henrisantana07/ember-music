@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import type { Track } from '@/types/music'
 import { TrackCard } from '@/components/TrackCard'
+import { useUser } from '@/hooks/use-user'
 
 interface ExploreNoResultsProps {
   query: string
@@ -11,6 +12,7 @@ interface ExploreNoResultsProps {
 }
 
 export function ExploreNoResults({ query, activeFilterCount, onClearFilters }: ExploreNoResultsProps) {
+  const { user } = useUser()
   const [trending, setTrending] = useState<Track[]>([])
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export function ExploreNoResults({ query, activeFilterCount, onClearFilters }: E
           <h2 className="text-lg font-bold mb-4">Tendências enquanto isso</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {trending.map((track) => (
-              <TrackCard key={track.id} track={track} tracks={trending} />
+              <TrackCard key={track.id} track={track} tracks={trending} user={user} />
             ))}
           </div>
         </section>

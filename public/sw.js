@@ -1,6 +1,6 @@
 const CACHE = 'ember-music-v1'
 
-const PRECACHE_URLS = ['/', '/buscar', '/favorites', '/login', '/offline']
+const PRECACHE_URLS = ['/', '/buscar', '/biblioteca', '/login', '/offline']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -10,6 +10,17 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.url.includes('/api/') || event.request.url.includes('supabase.co')) {
+    return
+  }
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).then((response) => {
+        const clone = response.clone()
+        caches.open(CACHE).then((cache) => cache.put(event.request, clone))
+        return response
+      }).catch(() => caches.match(event.request))
+    )
     return
   }
 

@@ -2,16 +2,64 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const BASE_URL = 'https://api.deezer.com'
 
-async function deezerFetch(path: string): Promise<unknown> {
-  const res = await fetch(`${BASE_URL}${path}`)
-  if (!res.ok) {
-    const body = await res.text()
-    throw new Error(`Deezer API error ${res.status}: ${body}`)
+const CACHE_TTL: Record<string, number> = {
+  genres: 300, featured: 300, 'charts/artists': 300,
+  search: 30, tracks: 60, albums: 60, artists: 60,
+  'genre-tracks': 120, 'albums/tracks': 120,
+}
+
+const RATE_LIMIT = 120
+const RATE_WINDOW_MS = 60_000
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const record = rateLimitMap.get(ip)
+  if (!record || now > record.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS })
+    return true
   }
-  return res.json()
+  if (record.count >= RATE_LIMIT) {
+    return false
+  }
+  record.count++
+  return true
+}
+
+function rateLimitResponse() {
+  return NextResponse.json({ error: 'Rate limit exceeded' }, {
+    status: 429,
+    headers: { 'Retry-After': String(Math.ceil(RATE_WINDOW_MS / 1000)) },
+  })
+}
+
+function cachedResponse(data: unknown, endpoint: string, status = 200) {
+  const ttl = CACHE_TTL[endpoint] ?? 30
+  return NextResponse.json(data, {
+    status,
+    headers: { 'Cache-Control': `public, s-maxage=${ttl}, stale-while-revalidate=${ttl * 2}` },
+  })
+}
+
+async function deezerFetch(path: string, timeoutMs = 8000): Promise<unknown> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, { signal: controller.signal })
+    if (!res.ok) {
+      const body = await res.text()
+      throw new Error(`Deezer API error ${res.status}: ${body}`)
+    }
+    return res.json()
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 export async function GET(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+  if (!checkRateLimit(ip)) return rateLimitResponse()
+
   const { searchParams } = new URL(request.url)
   const endpoint = searchParams.get('endpoint') ?? 'search'
   const q = searchParams.get('q')
@@ -32,13 +80,13 @@ export async function GET(request: NextRequest) {
         else if (type === 'album') result.albums = items.map(mapAlbum)
         else if (type === 'artist') result.artists = items.map(mapArtist)
         else if (type === 'playlist') result.playlists = items.map(mapPlaylist)
-        return NextResponse.json(result)
+        return cachedResponse(result, endpoint)
       }
 
       case 'tracks': {
         if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
         const data = await deezerFetch(`/track/${id}`)
-        return NextResponse.json({ results: [mapTrack(data as Record<string, unknown>)] })
+        return cachedResponse({ results: [mapTrack(data as Record<string, unknown>)] }, endpoint)
       }
 
       case 'albums': {
@@ -47,21 +95,18 @@ export async function GET(request: NextRequest) {
           const album = mapAlbum(data)
           const tracksData = data.tracks as { data?: Record<string, unknown>[] } | undefined
           const trackItems = tracksData?.data ?? []
-          return NextResponse.json({
-            album,
-            tracks: trackItems.map(mapTrack),
-          })
+          return cachedResponse({ album, tracks: trackItems.map(mapTrack) }, endpoint)
         }
         const data = await deezerFetch(`/chart/0/albums?limit=${limit}&index=${offset}`) as { data?: Record<string, unknown>[] }
         const items = data.data ?? []
-        return NextResponse.json({ results: items.map(mapAlbum) })
+        return cachedResponse({ results: items.map(mapAlbum) }, endpoint)
       }
 
       case 'albums/tracks': {
         if (!id) return NextResponse.json({ error: 'Missing album id' }, { status: 400 })
         const data = await deezerFetch(`/album/${id}/tracks?limit=${limit}&index=${offset}`) as { data?: Record<string, unknown>[] }
         const trackItems = data.data ?? []
-        return NextResponse.json({ results: trackItems.map(mapTrack) })
+        return cachedResponse({ results: trackItems.map(mapTrack) }, endpoint)
       }
 
       case 'artists': {
@@ -72,26 +117,26 @@ export async function GET(request: NextRequest) {
           deezerFetch(`/artist/${id}/albums?limit=10`) as Promise<{ data?: Record<string, unknown>[] }>,
           deezerFetch(`/artist/${id}/related?limit=10`) as Promise<{ data?: Record<string, unknown>[] }>,
         ])
-        return NextResponse.json({
+        return cachedResponse({
           artist: mapArtist(artistData),
           top_tracks: (topTracksData.data ?? []).map(mapTrack),
           albums: (albumsData.data ?? []).map(mapAlbum),
           related: (relatedData.data ?? []).map(mapArtist),
           results: [mapArtist(artistData)],
-        })
+        }, endpoint)
       }
 
       case 'featured': {
         const data = await deezerFetch(`/chart?limit=${limit}`) as Record<string, unknown>
         const tracksData = data.tracks as { data?: Record<string, unknown>[] } | undefined
         const trackItems = tracksData?.data ?? []
-        return NextResponse.json({ results: trackItems.map(mapTrack) })
+        return cachedResponse({ results: trackItems.map(mapTrack) }, endpoint)
       }
 
       case 'genres': {
         const data = await deezerFetch(`/genre`) as { data?: Record<string, unknown>[] }
         const items = data.data ?? []
-        return NextResponse.json({ results: items.map(mapGenre) })
+        return cachedResponse({ results: items.map(mapGenre) }, endpoint)
       }
 
       case 'genre-tracks': {
@@ -99,13 +144,13 @@ export async function GET(request: NextRequest) {
         if (!genreId) return NextResponse.json({ error: 'Missing genre id' }, { status: 400 })
         const data = await deezerFetch(`/genre/${genreId}/tracks?limit=${limit}`) as { data?: Record<string, unknown>[] }
         const items = data.data ?? []
-        return NextResponse.json({ results: items.map(mapTrack) })
+        return cachedResponse({ results: items.map(mapTrack) }, endpoint)
       }
 
       case 'charts/artists': {
         const data = await deezerFetch(`/chart/0/artists?limit=${limit}`) as { data?: Record<string, unknown>[] }
         const items = data.data ?? []
-        return NextResponse.json({ results: items.map(mapArtist) })
+        return cachedResponse({ results: items.map(mapArtist) }, endpoint)
       }
 
       default:

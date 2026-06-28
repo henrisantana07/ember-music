@@ -14,6 +14,7 @@ export interface PlaylistItem {
   last_track_cover_url: string | null
   user_id: string
   created_at: string | null
+  updated_at: string | null
   track_count: number
   is_public: boolean
   collaborative: boolean | null

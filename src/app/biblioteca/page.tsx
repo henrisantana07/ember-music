@@ -11,8 +11,8 @@ import { usePlaylistsStore } from '@/lib/playlists-store'
 import { formatDuration } from '@/lib/spotify'
 import { usePlayerStore } from '@/lib/store'
 import { FollowButton } from '@/components/FollowButton'
+import { useUser } from '@/hooks/use-user'
 import type { Track } from '@/types/music'
-import type { User } from '@supabase/supabase-js'
 import type { Json } from '@/types/database'
 import { Suspense } from 'react'
 
@@ -81,7 +81,7 @@ function BibliotecaContent() {
   const searchParams = useSearchParams()
   const supabase = createClient()
 
-  const [user, setUser] = useState<User | null>(null)
+  const { user, loading: userLoading } = useUser()
   const activeTab = (searchParams.get('tab') as TabId) || 'musicas'
 
   const [artistSort, setArtistSort] = useState<'recent' | 'a-z' | 'popular'>('recent')
@@ -103,11 +103,8 @@ function BibliotecaContent() {
   const { play } = usePlayerStore()
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user)
-      if (!data.user) router.push('/login')
-    })
-  }, [])
+    if (!userLoading && !user) router.push('/login')
+  }, [user, userLoading])
 
   const fetchTracks = useCallback(async (append = false) => {
     if (!user) return
@@ -148,33 +145,6 @@ function BibliotecaContent() {
     setLoading(false)
   }, [user])
 
-  const fetchPlaylistsData = useCallback(async () => {
-    if (!user) return
-    setLoading(true)
-    const { data } = await supabase
-      .from('playlists')
-      .select('*, playlist_tracks(count)')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-
-    if (data) {
-      const mapped: PlaylistTabItem[] = data.map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        description: p.description,
-        cover_url: p.cover_url,
-        cover_source: p.cover_source ?? 'branded',
-        custom_cover_url: p.custom_cover_url,
-        last_track_cover_url: p.last_track_cover_url,
-        created_at: p.created_at,
-        updated_at: p.updated_at,
-        track_count: p.playlist_tracks?.[0]?.count ?? 0,
-      }))
-      setPlaylists(mapped)
-    }
-    setLoading(false)
-  }, [user])
-
   const fetchHistory = useCallback(async () => {
     if (!user) return
     setLoading(true)
@@ -203,6 +173,25 @@ function BibliotecaContent() {
     setLoading(false)
   }, [user])
 
+  const storePlaylists = usePlaylistsStore((s) => s.playlists)
+
+  useEffect(() => {
+    if (storePlaylists.length > 0) {
+      setPlaylists(storePlaylists.map((p) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        cover_url: p.cover_url,
+        cover_source: p.cover_source as string,
+        custom_cover_url: p.custom_cover_url,
+        last_track_cover_url: p.last_track_cover_url,
+        created_at: p.created_at,
+        updated_at: p.updated_at,
+        track_count: p.track_count,
+      })))
+    }
+  }, [storePlaylists])
+
   useEffect(() => {
     if (!user) return
     setTrackOffset(0)
@@ -220,7 +209,7 @@ function BibliotecaContent() {
         fetchArtists()
         break
       case 'playlists':
-        fetchPlaylistsData()
+        usePlaylistsStore.getState().fetchPlaylists()
         break
       case 'recentes':
         fetchHistory()
@@ -426,7 +415,7 @@ function BibliotecaContent() {
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {getSortedTracks().map((track) => (
-                    <TrackCard key={track.id} track={track} tracks={tracks} />
+                    <TrackCard key={track.id} track={track} tracks={tracks} user={user} />
                   ))}
                 </div>
                 {hasMore && <div ref={sentinelRef} className="h-10" />}
@@ -562,6 +551,7 @@ function BibliotecaContent() {
                     key={`${item.track_data.id}-${item.played_at}`}
                     track={item.track_data}
                     tracks={history.map((h) => h.track_data)}
+                    user={user}
                   />
                 ))}
               </div>
@@ -582,7 +572,7 @@ function BibliotecaContent() {
           {activeTab === 'baixadas' && downloads.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {getSortedTracks(downloads).map((track) => (
-                <TrackCard key={track.id} track={track} tracks={downloads} />
+                <TrackCard key={track.id} track={track} tracks={downloads} user={user} />
               ))}
             </div>
           )}

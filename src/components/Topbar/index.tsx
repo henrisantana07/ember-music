@@ -5,10 +5,10 @@ import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { saveSearchHistory } from '@/lib/search-history'
 import { SearchSuggestions } from '@/components/SearchSuggestions'
-import type { User } from '@supabase/supabase-js'
+import { useUser } from '@/hooks/use-user'
+import { useAvatar } from '@/hooks/use-avatar'
 
 export function Topbar() {
-  const [user, setUser] = useState<User | null>(null)
   const [showDropdown, setShowDropdown] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
@@ -18,33 +18,8 @@ export function Topbar() {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-
-  useEffect(() => {
-    supabase.auth.getUser().then(async ({ data }) => {
-      if (data.user) {
-        setUser(data.user)
-        await fetchAvatar(data.user.id)
-      }
-    })
-
-    function onAvatarUpdated() {
-      supabase.auth.getUser().then(({ data }) => {
-        if (data.user) fetchAvatar(data.user.id)
-      })
-    }
-    window.addEventListener('avatar-updated', onAvatarUpdated)
-    return () => window.removeEventListener('avatar-updated', onAvatarUpdated)
-  }, [])
-
-  async function fetchAvatar(userId: string) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('avatar_url')
-      .eq('id', userId)
-      .single()
-    if (profile?.avatar_url) setAvatarUrl(profile.avatar_url)
-  }
+  const { user } = useUser()
+  const avatarUrl = useAvatar(user?.id)
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -58,7 +33,6 @@ export function Topbar() {
 
   async function handleLogout() {
     await supabase.auth.signOut()
-    setUser(null)
     router.push('/login')
   }
 

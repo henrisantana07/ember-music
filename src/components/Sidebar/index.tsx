@@ -7,6 +7,8 @@ import { useEffect, useState, useRef } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { useArtistsStore } from '@/lib/artists-store'
+import { useUser } from '@/hooks/use-user'
+import { useAvatar } from '@/hooks/use-avatar'
 
 const NAV_SECTION1 = [
   { href: '/', label: 'Início', outline: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', fill: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -18,8 +20,6 @@ const NAV_SECTION1 = [
 
 export default function Sidebar() {
   const pathname = usePathname()
-  const [user, setUser] = useState<User | null>(null)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const supabase = createClient()
@@ -28,25 +28,15 @@ export default function Sidebar() {
   const [showDropdown, setShowDropdown] = useState(false)
   const { playlists, fetchPlaylists } = usePlaylistsStore()
   const { artists, fetchArtists } = useArtistsStore()
+  const { user, loading: userLoading } = useUser()
+  const avatarUrl = useAvatar(user?.id)
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data }) => {
-      if (data.user) {
-        setUser(data.user)
-        fetchPlaylists()
-        fetchArtists()
-        await fetchAvatar(data.user.id)
-      }
-    })
-
-    function onAvatarUpdated() {
-      supabase.auth.getUser().then(({ data }) => {
-        if (data.user) fetchAvatar(data.user.id)
-      })
+    if (user) {
+      fetchPlaylists()
+      fetchArtists()
     }
-    window.addEventListener('avatar-updated', onAvatarUpdated)
-    return () => window.removeEventListener('avatar-updated', onAvatarUpdated)
-  }, [])
+  }, [user])
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -57,15 +47,6 @@ export default function Sidebar() {
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
-
-  async function fetchAvatar(userId: string) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('avatar_url')
-      .eq('id', userId)
-      .single()
-    if (profile?.avatar_url) setAvatarUrl(profile.avatar_url)
-  }
 
   async function handleLogout() {
     await supabase.auth.signOut()

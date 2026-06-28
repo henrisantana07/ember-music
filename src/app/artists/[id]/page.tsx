@@ -8,9 +8,11 @@ import { TrackCard } from '@/components/TrackCard'
 import { Carousel } from '@/components/Carousel'
 import { SaveAlbumButton } from '@/components/SaveAlbumButton'
 import { usePlayerStore } from '@/lib/store'
+import { useUser } from '@/hooks/use-user'
 import type { Artist, Track, Album } from '@/types/music'
 
 export default function ArtistPage() {
+  const { user } = useUser()
   const params = useParams()
   const artistId = params.id as string
   const [artist, setArtist] = useState<Artist | null>(null)
@@ -93,7 +95,7 @@ export default function ArtistPage() {
           <h2 className="text-xl font-bold mb-4">Top Músicas</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {tracks.map((track) => (
-              <TrackCard key={track.id} track={track} tracks={tracks} />
+              <TrackCard key={track.id} track={track} tracks={tracks} user={user} />
             ))}
           </div>
         </section>
