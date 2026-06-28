@@ -26,9 +26,11 @@ export interface Artist {
   id: string
   name: string
   image: string
+  image_xl: string
   followers: number
   genres: string[]
   url: string
+  website: string
 }
 
 export interface Genre {

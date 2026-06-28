@@ -2,122 +2,91 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { TrackCard } from '@/components/TrackCard'
-import { FollowButton } from '@/components/FollowButton'
-import { ShareButton } from '@/components/ShareButton'
+import { ArtistHeader } from '@/components/artist/ArtistHeader'
+import { ArtistHeaderSkeleton } from '@/components/artist/ArtistHeaderSkeleton'
 import { usePlayerStore } from '@/lib/store'
-import type { Track } from '@/types/music'
-import type { Json } from '@/types/database'
-
-interface ArtistData {
-  id: string
-  name: string
-  image: string
-  website?: string
-  tracks?: Track[]
-  albums?: { id: string; name: string; image: string }[]
-}
+import type { Artist, Track } from '@/types/music'
 
 export default function ArtistPage() {
   const params = useParams()
   const artistId = params.id as string
-  const [artist, setArtist] = useState<ArtistData | null>(null)
+  const [artist, setArtist] = useState<Artist | null>(null)
+  const [tracks, setTracks] = useState<Track[]>([])
+  const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const play = usePlayerStore((s) => s.play)
 
   useEffect(() => {
-    fetch(`/api/spotify?endpoint=artists&id=${artistId}&limit=50`).then((r) => r.json()).then((artistRes) => {
-      const a = artistRes?.artist ?? artistRes?.results?.[0]
-      if (!a) { setLoading(false); return }
-      setArtist({
-        id: a.id,
-        name: a.name,
-        image: a.image || (a.album_image ? a.album_image.replace('/albums/', '/artists/') : '/placeholder.svg'),
-        website: a.website,
-        tracks: artistRes?.top_tracks ?? [],
-        albums: artistRes?.albums?.map((al: Record<string, string>) => ({
-          id: al.id,
-          name: al.name,
-          image: al.image,
-        })) ?? [],
+    setLoading(true)
+    setError(null)
+    fetch(`/api/spotify?endpoint=artists&id=${artistId}&limit=50`)
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.error) {
+          setError(res.error)
+          setLoading(false)
+          return
+        }
+        const a = res.artist ?? res.results?.[0]
+        if (!a) {
+          setError('Artista não encontrado')
+          setLoading(false)
+          return
+        }
+        setArtist(a)
+        setTracks(res.top_tracks ?? [])
+        setLoading(false)
       })
-      setLoading(false)
-    })
+      .catch(() => {
+        setError('Erro ao carregar artista')
+        setLoading(false)
+      })
   }, [artistId])
+
+  function handlePlay() {
+    if (tracks.length > 0) {
+      play(tracks, 0)
+    }
+  }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-32">
-        <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--accent-from)', borderTopColor: 'transparent' }} />
+      <div className="max-w-4xl mx-auto">
+        <ArtistHeaderSkeleton />
       </div>
     )
   }
 
-  if (!artist) return <div className="py-20 text-center" style={{ color: 'var(--text-secondary)' }}>Artista não encontrado</div>
-
-  const dummyArtistData = { id: artist.id, name: artist.name, image: artist.image }
+  if (error || !artist) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 gap-4 max-w-4xl mx-auto">
+        <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
+          {error || 'Artista não encontrado'}
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-6 py-2 rounded-full text-sm font-bold"
+          style={{
+            background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
+            color: '#fff',
+          }}
+        >
+          Tentar novamente
+        </button>
+      </div>
+    )
+  }
 
   return (
-    <div>
-      <div className="flex items-end gap-6 mb-8 p-6 rounded-2xl" style={{ background: 'var(--bg-elevated)' }}>
-        <img src={artist.image || '/placeholder.svg'} alt={artist.name}
-          className="w-48 h-48 rounded-full object-cover shadow-lg" />
-        <div className="flex-1 min-w-0">
-          <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-secondary)' }}>Artista</p>
-          <h1 className="text-4xl font-bold mb-3 truncate">{artist.name}</h1>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => artist.tracks && artist.tracks.length > 0 && play(artist.tracks, 0)}
-              className="px-6 py-2 rounded-full text-sm font-bold transition-transform hover:scale-105"
-              style={{ background: 'linear-gradient(to right, var(--accent-from), var(--accent-to))', color: '#fff' }}
-            >
-              Tocar
-            </button>
-            <FollowButton artistId={artist.id} artistData={dummyArtistData} />
-            <ShareButton title={artist.name} text={`Ouça ${artist.name} no Ember Music`} variant="full" />
-          </div>
-        </div>
+    <div className="max-w-4xl mx-auto">
+      <ArtistHeader artist={artist} onPlay={handlePlay} />
+
+      <div
+        className="mt-8 rounded-2xl border-2 border-dashed p-12 text-center"
+        style={{ borderColor: 'var(--bg-surface)', color: 'var(--text-disabled)' }}
+      >
+        <p className="text-sm font-medium">Mais conteúdo em breve</p>
       </div>
-
-      {artist.albums && artist.albums.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-xl font-bold mb-4">Álbuns</h2>
-          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin">
-            {artist.albums.slice(0, 10).map((album) => (
-              <div key={album.id} className="flex-shrink-0 w-40 p-3 rounded-xl transition-colors hover:bg-white/5 group relative">
-                <a href={`/albums/${album.id}`} className="block">
-                  <div className="relative mb-2">
-                    <img src={album.image || '/placeholder.svg'} alt={album.name}
-                      className="w-full aspect-square rounded-lg object-cover shadow-md" />
-                    <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2 bg-black/40">
-                      <button className="p-1.5 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/30 transition-colors" title="Adicionar aos favoritos">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
-                      </button>
-                      <FollowButton artistId={artist.id} artistData={{ id: artist.id, name: artist.name, image: artist.image }} />
-                    </div>
-                  </div>
-                  <p className="text-sm font-medium truncate text-center">{album.name}</p>
-                </a>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section>
-        <h2 className="text-xl font-bold mb-4">Músicas</h2>
-        {artist.tracks && artist.tracks.length > 0 ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {artist.tracks.map((track) => (
-              <TrackCard key={track.id} track={track} tracks={artist.tracks!} />
-            ))}
-          </div>
-        ) : (
-          <p style={{ color: 'var(--text-secondary)' }}>Nenhuma música encontrada.</p>
-        )}
-      </section>
     </div>
   )
 }

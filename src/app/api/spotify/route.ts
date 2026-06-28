@@ -150,9 +150,11 @@ function mapArtist(item: Record<string, unknown>) {
     id: String(item.id ?? ''),
     name: (item.name as string) ?? '',
     image: (item.picture_medium as string) ?? '',
+    image_xl: (item.picture_xl as string) ?? '',
     followers: (item.nb_fan as number) ?? 0,
     genres: [] as string[],
     url: (item.link as string) ?? '',
+    website: (item.website as string) ?? '',
   }
 }
 

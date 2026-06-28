@@ -76,9 +76,11 @@ function GenrePage({ genero, genreId }: { genero: string; genreId: string }) {
                 id: t.artist_id,
                 name: t.artist_name,
                 image: t.image,
+                image_xl: '',
                 followers: 0,
                 genres: [],
                 url: '',
+                website: '',
               })
             }
           })
