@@ -7,7 +7,6 @@ import { ExploreFilters } from './ExploreFilters'
 import { TopResultCard } from './TopResultCard'
 import { TrackResultGrid } from './TrackResultGrid'
 import { ArtistResultCarousel } from './ArtistResultCarousel'
-import { ArtistGrid } from './ArtistGrid'
 import { AlbumResultGrid } from './AlbumResultGrid'
 import { ExploreNoResults } from './ExploreNoResults'
 import { ExploreTrackSkeleton } from './skeletons/ExploreTrackSkeleton'
@@ -221,7 +220,26 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
 
       {activeTab === 'artistas' && (
         <section>
-          <ArtistGrid artists={filteredArtists} />
+          <ArtistResultCarousel artists={filteredArtists} />
+          {filteredArtists.length > 8 && (
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-4 mt-4">
+              {filteredArtists.slice(8).map((artist) => (
+                <a
+                  key={artist.id}
+                  href={`/artists/${artist.id}`}
+                  className="flex flex-col items-center gap-2 p-3 rounded-xl transition-colors hover:bg-white/5 group"
+                >
+                  <div className="w-[120px] h-[120px] rounded-full overflow-hidden border-2 transition-colors group-hover:border-transparent" style={{ borderColor: 'var(--bg-elevated)' }}>
+                    <img src={artist.image || '/placeholder.svg'} alt={artist.name} className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                  <p className="text-sm font-semibold text-center truncate w-full">{artist.name}</p>
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    {artist.followers > 0 ? `${(artist.followers / 1000).toFixed(0)}K fãs` : ''}
+                  </p>
+                </a>
+              ))}
+            </div>
+          )}
         </section>
       )}
 
