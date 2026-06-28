@@ -66,14 +66,17 @@ export async function GET(request: NextRequest) {
 
       case 'artists': {
         if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
-        const [artistData, topTracksData] = await Promise.all([
+        const [artistData, topTracksData, albumsData, relatedData] = await Promise.all([
           deezerFetch(`/artist/${id}`) as Promise<Record<string, unknown>>,
           deezerFetch(`/artist/${id}/top?limit=${limit}`) as Promise<{ data?: Record<string, unknown>[] }>,
+          deezerFetch(`/artist/${id}/albums?limit=10`) as Promise<{ data?: Record<string, unknown>[] }>,
+          deezerFetch(`/artist/${id}/related?limit=10`) as Promise<{ data?: Record<string, unknown>[] }>,
         ])
         return NextResponse.json({
           artist: mapArtist(artistData),
           top_tracks: (topTracksData.data ?? []).map(mapTrack),
-          albums: [],
+          albums: (albumsData.data ?? []).map(mapAlbum),
+          related: (relatedData.data ?? []).map(mapArtist),
           results: [mapArtist(artistData)],
         })
       }
