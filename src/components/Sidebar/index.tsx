@@ -80,8 +80,8 @@ export default function Sidebar() {
 
   function NavIcon({ icon, active }: { icon: { outline: string; fill: string }; active: boolean }) {
     return (
-      <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d={active ? icon.fill : icon.outline} />
+      <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d={icon.outline} />
       </svg>
     )
   }
