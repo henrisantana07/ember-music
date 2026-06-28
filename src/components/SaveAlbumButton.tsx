@@ -92,7 +92,7 @@ export function SaveAlbumButton({ album }: SaveAlbumButtonProps) {
       {saving ? (
         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
       ) : (
-        <svg className="w-5 h-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5" fill="white" viewBox="0 0 24 24">
           <path d="M12 4v16m8-8H4" />
         </svg>
       )}
