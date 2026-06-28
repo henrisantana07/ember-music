@@ -4,6 +4,7 @@ import { useRef, useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { usePlayerStore } from '@/lib/store'
 import type { RepeatMode } from '@/lib/store'
+import type { Track } from '@/types/music'
 import { formatDuration } from '@/lib/spotify'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
@@ -19,6 +20,7 @@ export function Player() {
   const [sleepRemaining, setSleepRemaining] = useState<string | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sleepIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const retryingId = useRef<string | null>(null)
   const supabase = createClient()
 
   const {
@@ -44,6 +46,8 @@ export function Player() {
     const audio = audioRef.current
     if (!audio || !currentTrack) return
 
+    retryingId.current = null
+
     const onCanPlay = () => {
       if (usePlayerStore.getState().isPlaying) {
         audio.play().catch(() => {})
@@ -60,7 +64,26 @@ export function Player() {
       next()
     }
 
-    const onError = () => {
+    const onError = async () => {
+      const trackId = usePlayerStore.getState().currentTrack?.id
+      if (!trackId || retryingId.current === trackId) {
+        retryingId.current = null
+        next()
+        return
+      }
+      retryingId.current = trackId
+      try {
+        const res = await fetch(`/api/spotify?endpoint=tracks&id=${trackId}`)
+        if (!res.ok) throw new Error('fetch failed')
+        const data = await res.json()
+        const fresh = data.results?.[0] as Track | undefined
+        if (fresh?.audio && usePlayerStore.getState().currentTrack?.id === trackId) {
+          audio.src = fresh.audio
+          audio.load()
+          return
+        }
+      } catch {}
+      retryingId.current = null
       next()
     }
 
