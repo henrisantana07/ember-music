@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { SectionRow } from '@/components/SectionRow'
 import { TrackCardSkeleton } from '@/components/Skeleton'
 import { FollowButton } from '@/components/FollowButton'
+import { Carousel } from '@/components/Carousel'
 import type { Track, Artist, Genre } from '@/types/music'
 
 const GENRE_NAMES = ['pop', 'rock', 'electronic', 'jazz', 'hip hop', 'classical', 'reggae', 'blues', 'metal', 'folk', 'country', 'soul', 'punk', 'alternative', 'indie', 'r&b', 'latin', 'dance', 'ambient', 'funk']
@@ -164,7 +165,7 @@ function HomeContent() {
       {genres.length > 0 && (
         <section className="mb-12">
           <h2 className="text-xl font-bold mb-4">Gêneros musicais</h2>
-          <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
+          <Carousel>
             {genres.map((genre) => (
               <a
                 key={genre.id}
@@ -176,14 +177,14 @@ function HomeContent() {
                 <p className="text-xs font-semibold truncate">{genre.name}</p>
               </a>
             ))}
-          </div>
+          </Carousel>
         </section>
       )}
 
       {artists.length > 0 && (
         <section className="mb-12">
           <h2 className="text-xl font-bold mb-4">Artistas do momento</h2>
-          <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
+          <Carousel>
             {artists.map((artist) => (
               <div key={artist.id} className="w-36 flex-shrink-0 p-3 rounded-xl text-center transition-colors hover:bg-white/5 flex flex-col items-center">
                 <a href={`/artists/${artist.id}`} className="w-full flex flex-col items-center">
@@ -193,7 +194,7 @@ function HomeContent() {
                 <FollowButton artistId={artist.id} artistData={{ id: artist.id, name: artist.name, image: artist.image }} />
               </div>
             ))}
-          </div>
+          </Carousel>
         </section>
       )}
 

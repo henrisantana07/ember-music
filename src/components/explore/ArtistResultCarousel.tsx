@@ -2,6 +2,7 @@
 
 import type { Artist } from '@/types/music'
 import { ArtistCircleSkeleton } from './skeletons/ArtistCircleSkeleton'
+import { Carousel } from '@/components/Carousel'
 
 interface ArtistResultCarouselProps {
   artists: Artist[]
@@ -12,9 +13,9 @@ interface ArtistResultCarouselProps {
 export function ArtistResultCarousel({ artists, loading, maxItems }: ArtistResultCarouselProps) {
   if (loading) {
     return (
-      <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
+      <Carousel>
         {Array.from({ length: 6 }).map((_, i) => <ArtistCircleSkeleton key={i} />)}
-      </div>
+      </Carousel>
     )
   }
 
@@ -22,7 +23,7 @@ export function ArtistResultCarousel({ artists, loading, maxItems }: ArtistResul
   if (displayArtists.length === 0) return null
 
   return (
-    <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
+    <Carousel>
       {displayArtists.map((artist) => (
         <a
           key={artist.id}
@@ -38,6 +39,6 @@ export function ArtistResultCarousel({ artists, loading, maxItems }: ArtistResul
           </p>
         </a>
       ))}
-    </div>
+    </Carousel>
   )
 }

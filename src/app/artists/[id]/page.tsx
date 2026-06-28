@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { ArtistHeader } from '@/components/artist/ArtistHeader'
 import { ArtistHeaderSkeleton } from '@/components/artist/ArtistHeaderSkeleton'
 import { TrackCard } from '@/components/TrackCard'
+import { Carousel } from '@/components/Carousel'
 import { usePlayerStore } from '@/lib/store'
 import type { Artist, Track, Album } from '@/types/music'
 
@@ -100,7 +101,7 @@ export default function ArtistPage() {
       {albums.length > 0 && (
         <section className="mt-10">
           <h2 className="text-xl font-bold mb-4">Álbuns</h2>
-          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin">
+          <Carousel>
             {albums.slice(0, 10).map((album) => (
               <div key={album.id} className="flex-shrink-0 w-40 p-3 rounded-xl transition-colors hover:bg-white/5 group relative">
                 <a href={`/albums/${album.id}`} className="block">
@@ -122,14 +123,14 @@ export default function ArtistPage() {
                 </a>
               </div>
             ))}
-          </div>
+          </Carousel>
         </section>
       )}
 
       {related.length > 0 && (
         <section className="mt-10 mb-10">
           <h2 className="text-xl font-bold mb-4">Artistas Relacionados</h2>
-          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin">
+          <Carousel>
             {related.map((rel) => (
               <a
                 key={rel.id}
@@ -148,7 +149,7 @@ export default function ArtistPage() {
                 </p>
               </a>
             ))}
-          </div>
+          </Carousel>
         </section>
       )}
     </div>
