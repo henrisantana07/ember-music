@@ -189,7 +189,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
                         </span>
                       </td>
                       <td className="pr-3 py-2">
-                        <img src={track.image} alt="" className="w-12 h-12 rounded object-cover" loading="lazy" />
+                        <img src={track.image} alt="" className="w-12 h-12 rounded-md object-cover" loading="lazy" />
                       </td>
                       <td className="py-2 font-medium truncate max-w-[200px]">{track.name}</td>
                       <td className="py-2 truncate max-w-[150px] hidden sm:table-cell" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</td>

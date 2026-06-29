@@ -48,17 +48,17 @@ export default function ArtistsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
       <h1 className="text-2xl font-bold mb-6">Meus Artistas</h1>
       {artists.length === 0 ? (
         <div className="py-20 text-center" style={{ color: 'var(--text-secondary)' }}>
           Você ainda não segue nenhum artista.
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {artists.map((a) => (
             <div key={a.artist_id}
-              className="flex items-center gap-4 p-4 rounded-xl transition-colors hover:bg-white/5"
+              className="flex items-center gap-4 p-3 rounded-xl transition-colors hover:bg-white/5"
               style={{ background: 'var(--bg-elevated)' }}>
               <a href={`/artists/${a.artist_id}`} className="flex items-center gap-4 flex-1 min-w-0">
                 <img

@@ -338,7 +338,7 @@ function BibliotecaContent() {
   if (!user) return null
 
   return (
-    <div className="max-w-[1200px] mx-auto w-full">
+    <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Biblioteca</h1>
         {activeTab === 'playlists' && (
@@ -396,7 +396,7 @@ function BibliotecaContent() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : (
@@ -413,7 +413,7 @@ function BibliotecaContent() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {getSortedTracks().map((track) => (
                     <TrackCard key={track.id} track={track} tracks={tracks} user={user} />
                   ))}
@@ -439,7 +439,7 @@ function BibliotecaContent() {
                 <button onClick={() => router.push('/buscar?filtro=artistas')} className="btn-primary text-sm">Explorar artistas</button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {getSortedArtists().map((a) => (
                   <div
                     key={a.artist_id}
@@ -497,7 +497,7 @@ function BibliotecaContent() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {getSortedPlaylists().map((pl) => (
                   <div
                     key={pl.id}
@@ -545,7 +545,7 @@ function BibliotecaContent() {
                 <button onClick={() => router.push('/')} className="btn-primary text-sm">Comece a ouvir</button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {history.map((item) => (
                   <TrackCard
                     key={`${item.track_data.id}-${item.played_at}`}
@@ -570,7 +570,7 @@ function BibliotecaContent() {
           )}
 
           {activeTab === 'baixadas' && downloads.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {getSortedTracks(downloads).map((track) => (
                 <TrackCard key={track.id} track={track} tracks={downloads} user={user} />
               ))}

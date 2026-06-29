@@ -66,7 +66,7 @@ export function Slider({
         className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full shadow-md transition-transform group-hover:scale-110"
         style={{
           left: `calc(${pct}% - 8px)`,
-          backgroundColor: '#FFC400',
+          backgroundColor: 'var(--accent-to)',
           boxShadow: '0 0 4px rgba(0,0,0,0.3)',
         }}
       />

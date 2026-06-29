@@ -323,7 +323,7 @@ export default function ConfiguracoesPage() {
   if (!user || loading) return null
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
       {/* Mobile tabs */}
       <div className="flex md:hidden gap-1 mb-6 overflow-x-auto hide-scrollbar">
         {SECTIONS.map((s) => (

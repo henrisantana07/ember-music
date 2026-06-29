@@ -16,13 +16,13 @@ export function PlaylistDefaultCover({ size = 160, className }: Props) {
       style={{
         width: size,
         height: size,
-        background: 'linear-gradient(135deg, #FF6A00, #FFC400)',
+        background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
-      <Music size={iconSize} color="#0A0908" strokeWidth={1.5} />
+      <Music size={iconSize} color="var(--bg-base)" strokeWidth={1.5} />
     </div>
   )
 }

@@ -60,7 +60,7 @@ export default function ArtistPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
         <ArtistHeaderSkeleton />
       </div>
     )
@@ -68,7 +68,7 @@ export default function ArtistPage() {
 
   if (error || !artist) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 gap-4 max-w-4xl mx-auto">
+      <div className="flex flex-col items-center justify-center py-32 gap-4 mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
         <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
           {error || 'Artista não encontrado'}
         </p>
@@ -87,7 +87,7 @@ export default function ArtistPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
       <ArtistHeader artist={artist} onPlay={handlePlay} />
 
       {tracks.length > 0 && (

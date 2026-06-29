@@ -358,157 +358,161 @@ export default function NowPlaying() {
       </header>
 
       <div className="flex-1 flex flex-col md:flex-row gap-4 md:gap-0 min-h-0 px-4 md:px-6 pb-4">
-        <div className={`flex-1 flex flex-col items-center justify-start gap-3 min-h-0 overflow-hidden pt-2 md:pt-6 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
-          <div className="relative flex-shrink-0" style={{ width: 'min(320px, 50vw, 42vh)', aspectRatio: '1' }}>
-            {currentTrack.image ? (
-              <img
-                src={currentTrack.image}
-                alt={currentTrack.name}
-                className="w-full h-full rounded-2xl object-cover"
-                style={{ boxShadow: coverShadow }}
-              />
-            ) : (
-              <div className="w-full h-full rounded-2xl flex items-center justify-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
-                <Music className="w-16 h-16" style={{ color: 'var(--text-disabled)' }} />
-              </div>
-            )}
-          </div>
+        <div className={`flex-1 flex flex-col items-center gap-3 min-h-0 overflow-hidden pt-2 md:pt-6 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
+          <div className="flex flex-col items-center gap-3 w-full flex-1 min-h-0 justify-start overflow-y-auto pb-2">
+            <div className="relative flex-shrink-0" style={{ width: 'min(320px, 50vw, 42vh)', aspectRatio: '1' }}>
+              {currentTrack.image ? (
+                <img
+                  src={currentTrack.image}
+                  alt={currentTrack.name}
+                  className="w-full h-full rounded-2xl object-cover"
+                  style={{ boxShadow: coverShadow }}
+                />
+              ) : (
+                <div className="w-full h-full rounded-2xl flex items-center justify-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                  <Music className="w-16 h-16" style={{ color: 'var(--text-disabled)' }} />
+                </div>
+              )}
+            </div>
 
-          <div className="w-full max-w-[400px] text-center space-y-1">
-            <h1 className="text-2xl md:text-3xl font-bold truncate" style={{ color: 'var(--text-primary)' }} title={currentTrack.name}>
-              {currentTrack.name}
-            </h1>
-            <Link
-              href={`/artists/${currentTrack.artist_id}`}
-              className="text-base inline-block hover:underline"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              {currentTrack.artist_name}
-            </Link>
-          </div>
+            <div className="w-full max-w-[400px] text-center space-y-1">
+              <h1 className="text-2xl md:text-3xl font-bold truncate" style={{ color: 'var(--text-primary)' }} title={currentTrack.name}>
+                {currentTrack.name}
+              </h1>
+              <Link
+                href={`/artists/${currentTrack.artist_id}`}
+                className="text-base inline-block hover:underline"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                {currentTrack.artist_name}
+              </Link>
+            </div>
 
-          <div className="flex items-center gap-4" style={{ color: 'var(--text-secondary)' }}>
-            <button onClick={handleDownload} className="p-2 transition-colors hover:text-[var(--text-primary)]" aria-label="Download" title="Baixar música">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </button>
-            {user && (
-              <button onClick={handleFavorite} className="p-2 transition-colors" aria-label="Favoritar">
-                <svg
-                  className="w-6 h-6 transition-colors duration-150"
-                  fill={isFav ? 'url(#favGradientNow)' : 'none'}
-                  viewBox="0 0 24 24"
-                  stroke={isFav ? 'none' : 'currentColor'}
-                  strokeWidth={2}
-                  style={isFav ? {} : { color: 'var(--text-secondary)' }}
-                >
-                  <defs>
-                    <linearGradient id="favGradientNow" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="var(--accent-from)" />
-                      <stop offset="100%" stopColor="var(--accent-to)" />
-                    </linearGradient>
-                  </defs>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            <div className="flex items-center gap-4" style={{ color: 'var(--text-secondary)' }}>
+              <button onClick={handleDownload} className="p-2 transition-colors hover:text-[var(--text-primary)]" aria-label="Download" title="Baixar música">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </button>
+              {user && (
+                <button onClick={handleFavorite} className="p-2 transition-colors" aria-label="Favoritar">
+                  <svg
+                    className="w-6 h-6 transition-colors duration-150"
+                    fill={isFav ? 'url(#favGradientNow)' : 'none'}
+                    viewBox="0 0 24 24"
+                    stroke={isFav ? 'none' : 'currentColor'}
+                    strokeWidth={2}
+                    style={isFav ? {} : { color: 'var(--text-secondary)' }}
+                  >
+                    <defs>
+                      <linearGradient id="favGradientNow" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="var(--accent-from)" />
+                        <stop offset="100%" stopColor="var(--accent-to)" />
+                      </linearGradient>
+                    </defs>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {toast && (
+              <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-sm shadow-lg animate-slide-up" style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
+                {toast}
+              </div>
             )}
           </div>
 
-          {toast && (
-            <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-sm shadow-lg animate-slide-up" style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
-              {toast}
-            </div>
-          )}
-
-          <div className="w-full max-w-[400px] space-y-1">
-            <div
-              ref={progressRef}
-              className="w-full h-1 rounded-full cursor-pointer relative group hover:h-1.5 transition-all duration-200"
-              style={{ backgroundColor: 'var(--text-disabled)' }}
-              onClick={handleProgressClick}
-              onMouseDown={() => setIsDragging(true)}
-              onMouseMove={handleProgressDrag}
-              onMouseUp={() => setIsDragging(false)}
-              onMouseLeave={() => setIsDragging(false)}
-            >
+          <div className="mt-auto flex-none w-full flex flex-col items-center gap-3 pt-3">
+            <div className="w-full max-w-[400px] space-y-1">
               <div
-                className="h-full rounded-full relative"
-                style={{ width: `${progressPercent}%`, background: 'linear-gradient(90deg, var(--accent-from), var(--accent-to))' }}
+                ref={progressRef}
+                className="w-full h-1 rounded-full cursor-pointer relative group hover:h-1.5 transition-all duration-200"
+                style={{ backgroundColor: 'var(--text-disabled)' }}
+                onClick={handleProgressClick}
+                onMouseDown={() => setIsDragging(true)}
+                onMouseMove={handleProgressDrag}
+                onMouseUp={() => setIsDragging(false)}
+                onMouseLeave={() => setIsDragging(false)}
               >
                 <div
-                  className="absolute right-0 top-1/2 -translate-y-1/2 w-[14px] h-[14px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ backgroundColor: 'var(--accent-to)' }}
-                />
+                  className="h-full rounded-full relative"
+                  style={{ width: `${progressPercent}%`, background: 'linear-gradient(90deg, var(--accent-from), var(--accent-to))' }}
+                >
+                  <div
+                    className="absolute right-0 top-1/2 -translate-y-1/2 w-[14px] h-[14px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ backgroundColor: 'var(--accent-to)' }}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-between text-xs" style={{ color: 'var(--text-secondary)' }}>
+                <span>{formatDuration(Math.floor(progress))}</span>
+                <span>{formatDuration(Math.floor(duration))}</span>
               </div>
             </div>
-            <div className="flex justify-between text-xs" style={{ color: 'var(--text-secondary)' }}>
-              <span>{formatDuration(Math.floor(progress))}</span>
-              <span>{formatDuration(Math.floor(duration))}</span>
+
+            <div className="flex items-center justify-center gap-3 md:gap-4 w-full max-w-[400px]">
+              <button onClick={toggleShuffle} className="p-2 transition-colors" style={{ color: shuffle ? 'var(--accent-from)' : 'var(--text-secondary)' }} title={shuffle ? 'Desativar shuffle' : 'Ativar shuffle'}>
+                <Shuffle className="w-4 h-4 md:w-5 md:h-5" />
+              </button>
+
+              <button onClick={prev} className="p-2 transition-colors" style={{ color: 'var(--text-secondary)' }} title="Anterior">
+                <SkipBack className="w-5 h-5 md:w-6 md:h-6" />
+              </button>
+
+              <button
+                onClick={togglePlay}
+                className="rounded-full flex items-center justify-center transition-transform active:scale-95"
+                style={{ width: 48, height: 48, background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
+                title={isPlaying ? 'Pausar' : 'Tocar'}
+              >
+                {isPlaying ? (
+                  <Pause className="w-5 h-5 md:w-6 md:h-6" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+                ) : (
+                  <Play className="w-5 h-5 md:w-6 md:h-6" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+                )}
+              </button>
+
+              <button onClick={next} className="p-2 transition-colors" style={{ color: 'var(--text-secondary)' }} title="Próxima">
+                <SkipForward className="w-5 h-5 md:w-6 md:h-6" />
+              </button>
+
+              <button
+                onClick={() => {
+                  const modes: RepeatMode[] = ['none', 'all', 'one']
+                  const idx = modes.indexOf(repeat)
+                  setRepeat(modes[(idx + 1) % modes.length])
+                }}
+                className="p-2 transition-colors relative"
+                style={{ color: repeat !== 'none' ? 'var(--accent-from)' : 'var(--text-secondary)' }}
+                title={repeatLabel[repeat]}
+              >
+                {RepeatIcon ? (
+                  <RepeatIcon className="w-4 h-4 md:w-5 md:h-5" />
+                ) : (
+                  <Repeat className="w-4 h-4 md:w-5 md:h-5" />
+                )}
+              </button>
             </div>
-          </div>
 
-          <div className="flex items-center justify-center gap-3 md:gap-4 w-full max-w-[400px]">
-            <button onClick={toggleShuffle} className="p-2 transition-colors" style={{ color: shuffle ? 'var(--accent-from)' : 'var(--text-secondary)' }} title={shuffle ? 'Desativar shuffle' : 'Ativar shuffle'}>
-              <Shuffle className="w-4 h-4 md:w-5 md:h-5" />
-            </button>
-
-            <button onClick={prev} className="p-2 transition-colors" style={{ color: 'var(--text-secondary)' }} title="Anterior">
-              <SkipBack className="w-5 h-5 md:w-6 md:h-6" />
-            </button>
-
-            <button
-              onClick={togglePlay}
-              className="rounded-full flex items-center justify-center transition-transform active:scale-95"
-              style={{ width: 48, height: 48, background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
-              title={isPlaying ? 'Pausar' : 'Tocar'}
-            >
-              {isPlaying ? (
-                <Pause className="w-5 h-5 md:w-6 md:h-6" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+            <div className="flex items-center gap-2 w-full max-w-[200px]" style={{ color: 'var(--text-secondary)' }}>
+              {volume === 0 ? (
+                <VolumeX className="w-4 h-4" />
+              ) : volume < 0.5 ? (
+                <Volume1 className="w-4 h-4" />
               ) : (
-                <Play className="w-5 h-5 md:w-6 md:h-6" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+                <Volume2 className="w-4 h-4" />
               )}
-            </button>
-
-            <button onClick={next} className="p-2 transition-colors" style={{ color: 'var(--text-secondary)' }} title="Próxima">
-              <SkipForward className="w-5 h-5 md:w-6 md:h-6" />
-            </button>
-
-            <button
-              onClick={() => {
-                const modes: RepeatMode[] = ['none', 'all', 'one']
-                const idx = modes.indexOf(repeat)
-                setRepeat(modes[(idx + 1) % modes.length])
-              }}
-              className="p-2 transition-colors relative"
-              style={{ color: repeat !== 'none' ? 'var(--accent-from)' : 'var(--text-secondary)' }}
-              title={repeatLabel[repeat]}
-            >
-              {RepeatIcon ? (
-                <RepeatIcon className="w-4 h-4 md:w-5 md:h-5" />
-              ) : (
-                <Repeat className="w-4 h-4 md:w-5 md:h-5" />
-              )}
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 w-full max-w-[200px]" style={{ color: 'var(--text-secondary)' }}>
-            {volume === 0 ? (
-              <VolumeX className="w-4 h-4" />
-            ) : volume < 0.5 ? (
-              <Volume1 className="w-4 h-4" />
-            ) : (
-              <Volume2 className="w-4 h-4" />
-            )}
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={volume}
-              onChange={(e) => setVolume(parseFloat(e.target.value))}
-              className="w-full h-1 accent-[var(--accent-from)] cursor-pointer"
-            />
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={volume}
+                onChange={(e) => setVolume(parseFloat(e.target.value))}
+                className="w-full h-1 accent-[var(--accent-from)] cursor-pointer"
+              />
+            </div>
           </div>
         </div>
 

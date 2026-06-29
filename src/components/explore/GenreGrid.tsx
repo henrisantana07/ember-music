@@ -45,7 +45,7 @@ export function GenreGrid() {
               className="relative rounded-xl overflow-hidden border-0 text-left group"
               style={{ aspectRatio: '1.6 / 1', background: `linear-gradient(135deg, ${gradient.from}, ${gradient.to})` }}
             >
-              <div className="absolute inset-0 transition-all duration-180 group-hover:bg-black/20 group-hover:scale-105" />
+              <div className="absolute inset-0 transition-all duration-200 group-hover:bg-black/20 group-hover:scale-105" />
               <span
                 className="absolute bottom-3 left-3 text-lg font-bold"
                 style={{ color: '#F5F1ED', textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}

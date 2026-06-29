@@ -42,7 +42,7 @@ export default function HistoryPage() {
   const grouped = groupByDate(items)
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
       <h1 className="text-2xl font-bold mb-6">Histórico de Reprodução</h1>
 
       {items.length === 0 ? (

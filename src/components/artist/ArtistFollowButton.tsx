@@ -65,7 +65,7 @@ export function ArtistFollowButton({ artistId, artistData }: ArtistFollowButtonP
         background: following
           ? 'linear-gradient(135deg, var(--accent-from), var(--accent-to))'
           : 'transparent',
-        color: following ? '#fff' : 'var(--text-primary)',
+        color: following ? 'var(--bg-base)' : 'var(--text-primary)',
         border: following ? 'none' : '1px solid var(--text-disabled)',
       }}
     >

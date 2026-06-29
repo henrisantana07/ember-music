@@ -47,7 +47,7 @@ export default function AlbumPage() {
   const minutes = Math.floor(durationTotal / 60)
 
   return (
-    <div>
+    <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
       <div className="flex items-end gap-6 mb-8 p-6 rounded-2xl" style={{ background: 'var(--bg-elevated)' }}>
         <img src={album.image || '/placeholder.svg'} alt={album.name}
           className="w-48 h-48 rounded-xl object-cover shadow-lg" />
