@@ -512,7 +512,7 @@ export default function NowPlaying() {
           </div>
         </div>
 
-        <div className={`w-full md:w-[320px] lg:w-[380px] flex flex-col flex-none min-h-0 relative ${showQueueOnMobile ? '' : 'hidden md:flex'}`}>
+        <div className={`w-full md:w-[320px] lg:w-[380px] flex flex-col min-h-[300px] md:min-h-0 md:flex-1 relative ${showQueueOnMobile ? '' : 'hidden md:flex'}`}>
           <div className="flex-none px-2 py-2">
             <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>A seguir</h2>
             {usePlayerStore.getState().currentPlaylistName && (
