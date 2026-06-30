@@ -358,7 +358,7 @@ export default function NowPlaying() {
       </header>
 
       <div className="flex-1 flex flex-col md:flex-row gap-4 md:gap-0 min-h-0 px-4 md:px-6 pb-4">
-        <div className={`flex-1 flex flex-col items-center justify-center gap-2 md:gap-3 min-h-0 overflow-y-auto pt-2 md:pt-6 pb-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
+        <div className={`flex-1 flex flex-col items-center justify-start gap-3 md:gap-4 min-h-0 overflow-y-auto pt-1 md:pt-2 pb-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
           <div className="relative flex-shrink-0" style={{ width: 'min(280px, 45vw, 38vh)', aspectRatio: '1' }}>
             {currentTrack.image ? (
               <img
