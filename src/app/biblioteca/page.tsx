@@ -102,6 +102,20 @@ function BibliotecaContent() {
 
   const { play } = usePlayerStore()
 
+  async function handlePlayPlaylist(pl: PlaylistTabItem) {
+    const { data: pts } = await supabase
+      .from('playlist_tracks')
+      .select('track_data')
+      .eq('playlist_id', pl.id)
+      .order('position', { ascending: true })
+
+    const tracks = (pts ?? []).map((p) => p.track_data as unknown as Track).filter(Boolean)
+    if (tracks.length === 0) return
+
+    play(tracks[0], tracks, pl.id, pl.name)
+    router.push('/reproducao')
+  }
+
   useEffect(() => {
     if (!userLoading && !user) router.push('/login')
   }, [user, userLoading])
@@ -516,6 +530,7 @@ function BibliotecaContent() {
                       <div
                         className="absolute inset-0 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
                         style={{ background: 'var(--accent-overlay)' }}
+                        onClick={(e) => { e.stopPropagation(); handlePlayPlaylist(pl) }}
                       >
                         <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg transform transition-transform duration-150 group-hover:scale-105" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}>
                           <svg className="w-5 h-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" viewBox="0 0 24 24">
