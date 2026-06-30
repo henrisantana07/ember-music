@@ -2,9 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import type { Track } from '@/types/music'
+import type { Json } from '@/types/database'
+import type { User } from '@supabase/supabase-js'
 import { TrendingListSkeleton } from './skeletons/TrendingListSkeleton'
 import { usePlayerStore } from '@/lib/store'
 import { formatDuration } from '@/lib/spotify'
+import { createClient } from '@/lib/supabase/client'
+import { PlaylistModal } from '@/components/PlaylistModal'
 
 interface ExploreTrendingProps {
   userLabel: string
@@ -13,6 +17,7 @@ interface ExploreTrendingProps {
 
 function TrendingColumn({ tracks, label, subtitle }: { tracks: Track[]; label: string; subtitle: string }) {
   const { play, currentTrack, isPlaying, togglePlay } = usePlayerStore()
+  const [playlistTrack, setPlaylistTrack] = useState<Track | null>(null)
 
   return (
     <div className="flex-1 min-w-0">
@@ -57,10 +62,18 @@ function TrendingColumn({ tracks, label, subtitle }: { tracks: Track[]; label: s
               <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-disabled)' }}>
                 {formatDuration(track.duration)}
               </span>
+              <button onClick={(e) => { e.stopPropagation(); setPlaylistTrack(track) }} className="p-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" title="Adicionar à playlist">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--text-disabled)' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
             </div>
           )
         })}
       </div>
+      {playlistTrack && (
+        <PlaylistModal open={!!playlistTrack} onClose={() => setPlaylistTrack(null)} track={playlistTrack} />
+      )}
     </div>
   )
 }

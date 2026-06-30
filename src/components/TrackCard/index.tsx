@@ -4,7 +4,7 @@ import type { Track } from '@/types/music'
 import { formatDuration } from '@/lib/spotify'
 import { usePlayerStore } from '@/lib/store'
 import { createClient } from '@/lib/supabase/client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import type { Json } from '@/types/database'
 import { PlaylistModal } from '@/components/PlaylistModal'
@@ -13,32 +13,36 @@ interface TrackCardProps {
   track: Track
   tracks?: Track[]
   user?: User | null
-  isFav?: boolean
-  onToggleFavorite?: (track: Track) => void
 }
 
-export function TrackCard({ track, tracks, user, isFav = false, onToggleFavorite }: TrackCardProps) {
+export function TrackCard({ track, tracks, user }: TrackCardProps) {
   const { play, currentTrack, isPlaying, togglePlay } = usePlayerStore()
   const [playlistOpen, setPlaylistOpen] = useState(false)
+  const [isFav, setIsFav] = useState(false)
   const supabase = createClient()
+  const favId = `favTc${track.id.replace(/[^a-zA-Z0-9]/g, '')}`
 
   const isActive = currentTrack?.id === track.id
+
+  useEffect(() => {
+    if (!user) { setIsFav(false); return }
+    supabase.from('favorites').select('id').eq('track_id', track.id).eq('user_id', user.id).maybeSingle()
+      .then(({ data }) => setIsFav(!!data))
+  }, [user, track.id])
 
   async function handleFavorite(e: React.MouseEvent) {
     e.stopPropagation()
     if (!user) return
-    if (onToggleFavorite) {
-      onToggleFavorite(track)
+    if (isFav) {
+      await supabase.from('favorites').delete().eq('track_id', track.id).eq('user_id', user.id)
+      setIsFav(false)
     } else {
-      if (isFav) {
-        await supabase.from('favorites').delete().eq('track_id', track.id).eq('user_id', user.id)
-      } else {
-        await supabase.from('favorites').insert({
-          user_id: user.id,
-          track_id: track.id,
-          track_data: track as unknown as Json,
-        })
-      }
+      await supabase.from('favorites').insert({
+        user_id: user.id,
+        track_id: track.id,
+        track_data: track as unknown as Json,
+      })
+      setIsFav(true)
     }
   }
 
@@ -107,14 +111,14 @@ export function TrackCard({ track, tracks, user, isFav = false, onToggleFavorite
                 <button onClick={handleFavorite} className="p-1">
                   <svg
                     className="w-4 h-4 transition-colors duration-150"
-                    fill={isFav ? 'url(#favGradient)' : 'none'}
+                    fill={isFav ? `url(#${favId})` : 'none'}
                     viewBox="0 0 24 24"
                     stroke={isFav ? 'none' : 'currentColor'}
                     strokeWidth={2}
                     style={isFav ? {} : { color: 'var(--text-disabled)' }}
                   >
                     <defs>
-                      <linearGradient id="favGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <linearGradient id={favId} x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stopColor="var(--accent-from)" />
                         <stop offset="100%" stopColor="var(--accent-to)" />
                       </linearGradient>
