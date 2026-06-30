@@ -110,8 +110,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
 
   return (
     <div
-      className="mx-auto space-y-6"
-      style={{ maxWidth: 1100, paddingLeft: 32, paddingRight: 32 }}
+      className="mx-auto max-w-[1100px] px-8 space-y-6"
     >
       <div>
         <p className="text-sm mb-1" style={{ color: 'var(--text-disabled)' }}>Resultados para</p>

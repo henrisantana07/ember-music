@@ -68,7 +68,7 @@ export function TrackCard({ track, tracks, user, isFav = false, onToggleFavorite
         />
         <div
           className="absolute inset-0 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
-          style={{ background: 'linear-gradient(135deg, #FF6A0044, #FFC40044)' }}
+          style={{ background: 'var(--accent-overlay)' }}
         >
           <button
             className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg transform transition-transform duration-150 group-hover:scale-105"

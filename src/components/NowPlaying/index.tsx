@@ -230,8 +230,8 @@ export default function NowPlaying() {
   }
 
   const bgGradient = dominantColor
-    ? `radial-gradient(ellipse at 30% 20%, ${dominantColor}66 0%, #0A0908 60%)`
-    : 'linear-gradient(135deg, #FF6A0015, #0A0908)'
+    ? `radial-gradient(ellipse at 30% 20%, ${dominantColor}66 0%, var(--bg-base) 60%)`
+    : 'var(--bg-nowplaying-fallback)'
 
   const coverShadow = dominantColor
     ? `0 32px 64px ${dominantColor}4D`

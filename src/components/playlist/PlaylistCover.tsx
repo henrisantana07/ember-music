@@ -39,13 +39,13 @@ export function PlaylistCover({ playlist, size = 160, className, onClick }: Prop
             style={{
               width: '100%',
               height: '100%',
-              background: 'linear-gradient(135deg, #FF6A00, #FFC400)',
+              background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Music size={24} color="#0A0908" strokeWidth={1.5} />
+            <Music size={24} color="var(--bg-base)" strokeWidth={1.5} />
           </div>
         )
       ) : (
@@ -69,13 +69,13 @@ export function PlaylistCover({ playlist, size = 160, className, onClick }: Prop
             background: 'rgba(0,0,0,0.4)',
             opacity: 0,
             transition: 'opacity 200ms',
-            color: '#F5F1ED',
+            color: 'var(--text-primary)',
             fontSize: 12,
             fontWeight: 600,
           }}
           className="playlist-cover-hover-overlay"
         >
-          <Camera size={size ? size * 0.2 : 32} color="#F5F1ED" />
+          <Camera size={size ? size * 0.2 : 32} color="var(--text-primary)" />
           <span>Trocar capa</span>
         </div>
       )}

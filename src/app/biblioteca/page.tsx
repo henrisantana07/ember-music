@@ -462,7 +462,7 @@ function BibliotecaContent() {
                       )}
                       <div
                         className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
-                        style={{ background: 'linear-gradient(135deg, #FF6A0044, #FFC40044)' }}
+                        style={{ background: 'var(--accent-overlay)' }}
                       >
                         <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg transform transition-transform duration-150 group-hover:scale-105" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}>
                           <svg className="w-5 h-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" viewBox="0 0 24 24">
@@ -515,7 +515,7 @@ function BibliotecaContent() {
                       />
                       <div
                         className="absolute inset-0 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
-                        style={{ background: 'linear-gradient(135deg, #FF6A0044, #FFC40044)' }}
+                        style={{ background: 'var(--accent-overlay)' }}
                       >
                         <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg transform transition-transform duration-150 group-hover:scale-105" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}>
                           <svg className="w-5 h-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" viewBox="0 0 24 24">

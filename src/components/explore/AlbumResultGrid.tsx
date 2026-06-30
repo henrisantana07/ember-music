@@ -130,7 +130,7 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
                 />
                 <div
                   className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center z-10"
-                  style={{ background: 'linear-gradient(135deg, #FF6A0044, #FFC40044)' }}
+                  style={{ background: 'var(--accent-overlay)' }}
                 >
                   <button
                     onClick={(e) => handleSaveAlbum(e, album)}

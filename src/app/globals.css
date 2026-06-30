@@ -20,6 +20,9 @@
   --accent-to: #FFC400;
   --accent-solid: #FF8800;
   --accent-muted: #C9620022;
+  --accent-overlay: linear-gradient(135deg, color-mix(in srgb, var(--accent-from) 27%, transparent), color-mix(in srgb, var(--accent-to) 27%, transparent));
+  --bg-nowplaying-fallback: linear-gradient(135deg, color-mix(in srgb, var(--accent-from) 8%, transparent), var(--bg-base));
+  --text-on-accent: #F5F1ED;
 
   --text-primary: #F5F1ED;
   --text-secondary: #ff8700;
@@ -191,6 +194,8 @@ body {
   --text-primary: #1A1512;
   --text-secondary: #6B5F54;
   --text-disabled: #B0A89E;
+  --accent-overlay: linear-gradient(135deg, color-mix(in srgb, var(--accent-from) 15%, transparent), color-mix(in srgb, var(--accent-to) 15%, transparent));
+  --bg-nowplaying-fallback: linear-gradient(135deg, color-mix(in srgb, var(--accent-from) 8%, transparent), var(--bg-base));
 }
 
 .theme-light html {

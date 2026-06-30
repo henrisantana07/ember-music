@@ -112,7 +112,7 @@ export default function ArtistPage() {
                     <img src={album.image || '/placeholder.svg'} alt={album.name}
                       className="w-full aspect-square rounded-lg object-cover shadow-md" loading="lazy" />
                     <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
-                      style={{ background: 'linear-gradient(135deg, #FF6A0044, #FFC40044)' }}>
+                      style={{ background: 'var(--accent-overlay)' }}>
                       <SaveAlbumButton album={album} />
                     </div>
                   </div>
