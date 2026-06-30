@@ -522,7 +522,7 @@ export default function NowPlaying() {
 
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={queue.map((_, i) => `${i}-${queue[i].id}`)} strategy={verticalListSortingStrategy}>
-              <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin px-1 space-y-0.5 queue-scroll">
+              <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar px-1 space-y-0.5 queue-scroll">
                 {queue.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center px-4">
                     <Music className="w-10 h-10 mb-3" style={{ color: 'var(--text-disabled)' }} />
@@ -590,7 +590,7 @@ export default function NowPlaying() {
                   )}
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto min-h-0 px-2 pb-2 space-y-0.5 queue-scroll">
+              <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar px-2 pb-2 space-y-0.5 queue-scroll">
                 {searchResults.length === 0 && searchQuery.trim() && !searchLoading && (
                   <div className="flex flex-col items-center justify-center py-12 text-center px-4">
                     <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Nenhum resultado</p>
