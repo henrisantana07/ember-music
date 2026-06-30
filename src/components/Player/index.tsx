@@ -50,6 +50,14 @@ export function Player() {
 
     retryingId.current = null
 
+    function attachEvents() {
+      audio!.addEventListener('canplay', onCanPlay)
+      audio!.addEventListener('ended', onEnded)
+      audio!.addEventListener('error', onError)
+      audio!.addEventListener('timeupdate', onTimeUpdate)
+      audio!.addEventListener('loadedmetadata', onLoadedMetadata)
+    }
+
     const onCanPlay = () => {
       if (usePlayerStore.getState().isPlaying) {
         audio.play().catch(() => {})
@@ -96,19 +104,35 @@ export function Player() {
     const onLoadedMetadata = () => setDuration(audio.duration)
 
     if (!currentTrack.audio) {
+      const trackId = usePlayerStore.getState().currentTrack?.id
+      if (trackId) {
+        ;(async () => {
+          try {
+            const res = await fetch(`/api/spotify?endpoint=tracks&id=${trackId}`)
+            if (res.ok) {
+              const data = await res.json()
+              const fresh = data.results?.[0] as Track | undefined
+              if (fresh?.audio && usePlayerStore.getState().currentTrack?.id === trackId) {
+                audio.src = fresh.audio
+                audio.load()
+                attachEvents()
+                return
+              }
+            }
+          } catch {}
+          next()
+        })()
+        return
+      }
       next()
       return
     }
 
-    audio.addEventListener('canplay', onCanPlay)
-    audio.addEventListener('ended', onEnded)
-    audio.addEventListener('error', onError)
-    audio.addEventListener('timeupdate', onTimeUpdate)
-    audio.addEventListener('loadedmetadata', onLoadedMetadata)
-
     audio.volume = volume
     audio.src = currentTrack.audio
     audio.load()
+
+    attachEvents()
 
     return () => {
       audio.removeEventListener('canplay', onCanPlay)
