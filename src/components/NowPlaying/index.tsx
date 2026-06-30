@@ -122,7 +122,7 @@ export default function NowPlaying() {
         new FastAverageColor().getColorAsync(img, { mode: 'precision', algorithm: 'dominant' })
           .then((c) => setDominantColor(c.hex))
           .catch(() => {})
-      })
+      }).catch(() => {})
     }
     img.onerror = () => {}
   }, [currentTrack?.id, currentTrack?.image])
