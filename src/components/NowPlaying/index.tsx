@@ -522,49 +522,50 @@ export default function NowPlaying() {
 
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={queue.map((_, i) => `${i}-${queue[i].id}`)} strategy={verticalListSortingStrategy}>
-              <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar px-1 space-y-0.5 queue-scroll">
-                {queue.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-                    <Music className="w-10 h-10 mb-3" style={{ color: 'var(--text-disabled)' }} />
-                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Nenhuma faixa na fila</p>
-                  </div>
-                ) : (
-                  queue.map((track, index) => (
-                    <SortableQueueItem
-                      key={`${index}-${track.id}`}
-                      track={track}
-                      index={index}
-                      isCurrent={track.id === currentTrack.id}
-                      isPlaying={isPlaying}
-                      onPlay={() => playTrackAt(index)}
-                      onRemove={() => removeFromQueue(index)}
-                    />
-                  ))
-                )}
+              <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col">
+                <div className="px-1 space-y-0.5">
+                  {queue.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+                      <Music className="w-10 h-10 mb-3" style={{ color: 'var(--text-disabled)' }} />
+                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Nenhuma faixa na fila</p>
+                    </div>
+                  ) : (
+                    queue.map((track, index) => (
+                      <SortableQueueItem
+                        key={`${index}-${track.id}`}
+                        track={track}
+                        index={index}
+                        isCurrent={track.id === currentTrack.id}
+                        isPlaying={isPlaying}
+                        onPlay={() => playTrackAt(index)}
+                        onRemove={() => removeFromQueue(index)}
+                      />
+                    ))
+                  )}
+                </div>
+                <div className="sticky bottom-0 z-10 flex-none flex items-center gap-2 px-2 py-3 border-t border-white/5" style={{ backgroundColor: 'var(--bg-base)' }}>
+                  <button
+                    onClick={() => { setIsSearchOpen(!isSearchOpen); if (!isSearchOpen) setSearchQuery('') }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
+                    style={{ color: isSearchOpen ? 'var(--accent-from)' : 'var(--text-secondary)', backgroundColor: 'var(--bg-surface)' }}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    {isSearchOpen ? 'Fechar busca' : 'Adicionar à fila'}
+                  </button>
+                  <button
+                    onClick={() => clearQueue()}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
+                    style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg-surface)' }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Limpar fila
+                  </button>
+                </div>
               </div>
             </SortableContext>
           </DndContext>
-
-          <div className="flex-none flex items-center gap-2 px-2 py-3 border-t border-white/5">
-            <button
-              onClick={() => { setIsSearchOpen(!isSearchOpen); if (!isSearchOpen) setSearchQuery('') }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
-              style={{ color: isSearchOpen ? 'var(--accent-from)' : 'var(--text-secondary)', backgroundColor: 'var(--bg-surface)' }}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              {isSearchOpen ? 'Fechar busca' : 'Adicionar à fila'}
-            </button>
-            <button
-              onClick={() => clearQueue()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
-              style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg-surface)' }}
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              Limpar fila
-            </button>
-          </div>
 
           {isSearchOpen && (
             <div className="absolute inset-0 z-10 flex flex-col" style={{ backgroundColor: 'var(--bg-base)' }}>
