@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { usePlayerStore } from '@/lib/store'
 import type { RepeatMode } from '@/lib/store'
 import type { Track } from '@/types/music'
@@ -12,6 +13,7 @@ import { savePlaybackHistory } from '@/lib/playback-history'
 import { ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause } from 'lucide-react'
 
 export function Player() {
+  const pathname = usePathname()
   const audioRef = useRef<HTMLAudioElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -194,6 +196,10 @@ export function Player() {
       }
     }, fadeInterval)
   }, [crossfadeDuration, volume, next])
+
+  if (pathname === '/reproducao') {
+    return <audio ref={audioRef} />
+  }
 
   if (!currentTrack) return null
 
