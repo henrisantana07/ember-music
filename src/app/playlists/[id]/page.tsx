@@ -181,11 +181,30 @@ function PlaylistContent() {
         .select('id', { count: 'exact', head: true })
         .eq('playlist_id', id)
 
-      if (count === 0 && playlist?.cover_source !== 'custom') {
-        await supabase
-          .from('playlists')
-          .update({ cover_source: 'branded', last_track_cover_url: null })
-          .eq('id', id)
+      if (playlist?.cover_source !== 'custom') {
+        if (count && count > 0) {
+          const { data: lastTrack } = await supabase
+            .from('playlist_tracks')
+            .select('track_data')
+            .eq('playlist_id', id)
+            .order('added_at', { ascending: false })
+            .limit(1)
+            .single()
+
+          const lastCover = lastTrack?.track_data
+            ? (lastTrack.track_data as { image?: string })?.image ?? null
+            : null
+
+          await supabase
+            .from('playlists')
+            .update({ cover_source: 'track', last_track_cover_url: lastCover })
+            .eq('id', id)
+        } else {
+          await supabase
+            .from('playlists')
+            .update({ cover_source: 'branded', last_track_cover_url: null })
+            .eq('id', id)
+        }
       }
 
       pendingRemove.current = null

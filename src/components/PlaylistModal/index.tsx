@@ -54,7 +54,32 @@ export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
         .select('id', { count: 'exact', head: true })
         .eq('playlist_id', playlistId)
 
-      if (count === 0) {
+      if (count && count > 0) {
+        const { data: lastTrack } = await supabase
+          .from('playlist_tracks')
+          .select('track_data')
+          .eq('playlist_id', playlistId)
+          .order('added_at', { ascending: false })
+          .limit(1)
+          .single()
+
+        const lastCover = lastTrack?.track_data
+          ? (lastTrack.track_data as { image?: string })?.image ?? null
+          : null
+
+        await supabase
+          .from('playlists')
+          .update({
+            cover_source: 'track',
+            last_track_cover_url: lastCover,
+          })
+          .eq('id', playlistId)
+
+        updatePlaylistCover(playlistId, {
+          cover_source: 'track',
+          last_track_cover_url: lastCover,
+        })
+      } else {
         await supabase
           .from('playlists')
           .update({
