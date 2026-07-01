@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { saveSearchHistory } from '@/lib/search-history'
 import { SearchSuggestions } from '@/components/SearchSuggestions'
@@ -14,12 +14,18 @@ export function Topbar() {
   const [searchFocused, setSearchFocused] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const supabase = createClient()
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const { user } = useUser()
   const avatarUrl = useAvatar(user?.id)
+
+  useEffect(() => {
+    const q = searchParams.get('q')
+    if (q) setSearchQuery(q)
+  }, [searchParams])
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -80,7 +86,7 @@ export function Topbar() {
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
             placeholder="O que você quer ouvir?"
-            className="w-full pl-10 pr-10 py-2 rounded-full text-sm border-none focus:outline-none focus:ring-2 transition-all"
+            className="w-full pl-10 pr-10 py-2 rounded-full text-sm border-none focus:outline-none focus:ring-2 transition-all [&::-webkit-search-cancel-button]:hidden"
             style={{
               backgroundColor: 'var(--bg-surface)',
               color: 'var(--text-primary)',
