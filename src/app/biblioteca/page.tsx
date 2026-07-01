@@ -16,7 +16,7 @@ import type { Track } from '@/types/music'
 import type { Json } from '@/types/database'
 import { Suspense } from 'react'
 
-type TabId = 'musicas' | 'artistas' | 'playlists' | 'recentes' | 'baixadas'
+type TabId = 'favoritos' | 'artistas' | 'playlists' | 'recentes' | 'baixadas'
 
 interface FollowedArtist {
   artist_id: string
@@ -45,7 +45,7 @@ interface PlaylistTabItem {
 }
 
 const TABS: { id: TabId; label: string }[] = [
-  { id: 'musicas', label: 'Músicas' },
+  { id: 'favoritos', label: 'Favoritos' },
   { id: 'artistas', label: 'Artistas' },
   { id: 'playlists', label: 'Playlists' },
   { id: 'recentes', label: 'Recentes' },
@@ -82,7 +82,7 @@ function BibliotecaContent() {
   const supabase = createClient()
 
   const { user, loading: userLoading } = useUser()
-  const activeTab = (searchParams.get('tab') as TabId) || 'musicas'
+  const activeTab = (searchParams.get('tab') as TabId) || 'favoritos'
 
   const [artistSort, setArtistSort] = useState<'recent' | 'a-z' | 'popular'>('recent')
   const [playlistSort, setPlaylistSort] = useState<'recent' | 'updated' | 'a-z' | 'tracks'>('recent')
@@ -217,7 +217,7 @@ function BibliotecaContent() {
     setDownloads([])
 
     switch (activeTab) {
-      case 'musicas':
+      case 'favoritos':
         fetchTracks()
         break
       case 'artistas':
@@ -236,18 +236,18 @@ function BibliotecaContent() {
   }, [user, activeTab])
 
   const loadMoreTracks = useCallback(() => {
-    if (activeTab === 'musicas') fetchTracks(true)
+    if (activeTab === 'favoritos') fetchTracks(true)
   }, [activeTab, fetchTracks])
 
   const { sentinelRef } = useInfiniteScroll({
     onLoadMore: loadMoreTracks,
-    hasMore: activeTab === 'musicas' && hasMore,
+    hasMore: activeTab === 'favoritos' && hasMore,
     loading: loadingMore,
   })
 
   function setTab(tab: TabId) {
     const params = new URLSearchParams(searchParams.toString())
-    if (tab === 'musicas') {
+    if (tab === 'favoritos') {
       params.delete('tab')
     } else {
       params.set('tab', tab)
@@ -302,7 +302,7 @@ function BibliotecaContent() {
 
   function renderSortDropdown() {
     switch (activeTab) {
-      case 'musicas':
+      case 'favoritos':
       case 'recentes':
       case 'baixadas':
         return (
@@ -421,7 +421,7 @@ function BibliotecaContent() {
 
       <div className="flex items-center justify-between mb-4">
         <span className="text-sm" style={{ color: 'var(--text-disabled)' }}>
-          {activeTab === 'musicas' && `${tracks.length} ${tracks.length === 1 ? 'música' : 'músicas'}`}
+          {activeTab === 'favoritos' && `${tracks.length} ${tracks.length === 1 ? 'favorito' : 'favoritos'}`}
           {activeTab === 'artistas' && `${artists.length} ${artists.length === 1 ? 'artista' : 'artistas'}`}
           {activeTab === 'playlists' && `${playlists.length} ${playlists.length === 1 ? 'playlist' : 'playlists'}`}
           {activeTab === 'recentes' && `${history.length} ${history.length === 1 ? 'item' : 'itens'}`}
@@ -436,14 +436,13 @@ function BibliotecaContent() {
         </div>
       ) : (
         <>
-          {/* Músicas tab */}
-          {activeTab === 'musicas' && (
+          {activeTab === 'favoritos' && (
             tracks.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 gap-4">
                 <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1} style={{ color: 'var(--text-disabled)' }}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
-                <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>Nenhuma música favoritada ainda</p>
+                <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>Nenhum favorito ainda</p>
                 <button onClick={() => router.push('/buscar')} className="btn-primary text-sm">Descobrir músicas</button>
               </div>
             ) : (
