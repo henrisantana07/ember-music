@@ -149,7 +149,7 @@ export default function Sidebar() {
       <hr className={`mx-4 my-2 border-white/5 ${collapsed ? 'hidden' : ''}`} />
 
       {!collapsed && (
-        <div className="flex-1 overflow-y-auto scrollbar-thin px-2 space-y-0.5">
+        <div className="flex-1 overflow-y-auto scrollbar-thin px-2 space-y-0.5 min-h-[150px] max-h-[calc(100vh-8rem)]">
           {artists.length > 0 && (
             <p className="px-3 pt-1 pb-0.5 text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
               Artistas
@@ -349,7 +349,7 @@ export default function Sidebar() {
 
             <hr className="mx-4 my-2 border-white/5 flex-none" />
 
-            <div className="flex-1 overflow-y-auto scrollbar-thin px-2 space-y-0.5">
+            <div className="flex-1 overflow-y-auto scrollbar-thin px-2 space-y-0.5 min-h-[150px] max-h-[calc(100dvh-8rem)]">
               {artists.length > 0 && (
                 <p className="px-3 pt-1 pb-0.5 text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
                   Artistas
