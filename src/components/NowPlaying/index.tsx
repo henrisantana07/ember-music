@@ -554,7 +554,7 @@ export default function NowPlaying() {
                     ))
                   )}
                 </div>
-                <div className="sticky bottom-0 z-10 flex-none flex items-center gap-2 px-2 py-8 border-t border-white/5 pointer-events-none" style={{ backgroundColor: 'rgba(10, 9, 8, 0.6)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
+                <div className="sticky bottom-0 z-10 flex-none flex items-center gap-2 px-2 py-8 border-t border-white/5 pointer-events-none" style={{ backgroundColor: 'rgba(49, 45, 41, 0.13)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
                   <button
                     onClick={() => { setIsSearchOpen(!isSearchOpen); if (!isSearchOpen) setSearchQuery('') }}
                     className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
