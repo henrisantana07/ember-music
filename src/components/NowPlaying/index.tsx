@@ -554,7 +554,7 @@ export default function NowPlaying() {
                     ))
                   )}
                 </div>
-                <div className="sticky bottom-0 z-10 flex-none flex items-center gap-2 px-2 py-3 border-t border-white/5" style={{ backgroundColor: 'var(--bg-base)' }}>
+                <div className="sticky bottom-0 z-10 flex-none flex items-center gap-2 px-2 py-3 border-t border-white/5" style={{ backgroundColor: 'transparent' }}>
                   <button
                     onClick={() => { setIsSearchOpen(!isSearchOpen); if (!isSearchOpen) setSearchQuery('') }}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
