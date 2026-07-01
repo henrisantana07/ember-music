@@ -512,18 +512,18 @@ export default function NowPlaying() {
           </div>
         </div>
 
-        <div className={`w-full md:w-[320px] lg:w-[380px] flex flex-col min-h-[300px] md:min-h-0 md:flex-1 relative ${showQueueOnMobile ? '' : 'hidden md:flex'}`}>
-          <div className="flex-none px-2 py-2">
-            <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>A seguir</h2>
-            {usePlayerStore.getState().currentPlaylistName && (
-              <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{usePlayerStore.getState().currentPlaylistName}</p>
-            )}
-          </div>
+          <div className={`w-full md:w-[320px] lg:w-[380px] flex flex-col min-h-[300px] md:min-h-0 md:flex-1 relative max-h-[calc(100vh-12rem)] md:max-h-none ${showQueueOnMobile ? '' : 'hidden md:flex'}`}>
+            <div className="flex-none px-2 py-2">
+              <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>A seguir</h2>
+              {usePlayerStore.getState().currentPlaylistName && (
+                <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{usePlayerStore.getState().currentPlaylistName}</p>
+              )}
+            </div>
 
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={queue.map((_, i) => `${i}-${queue[i].id}`)} strategy={verticalListSortingStrategy}>
-              <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col">
-                <div className="px-1 space-y-0.5">
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={queue.map((_, i) => `${i}-${queue[i].id}`)} strategy={verticalListSortingStrategy}>
+                <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full">
+                  <div className="px-1 space-y-0.5">
                   {queue.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center px-4">
                       <Music className="w-10 h-10 mb-3" style={{ color: 'var(--text-disabled)' }} />
