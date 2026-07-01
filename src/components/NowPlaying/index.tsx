@@ -77,7 +77,7 @@ function SortableQueueItem({ track, index, isCurrent, isPlaying, onPlay, onRemov
         <p className="text-[10px]" style={{ color: 'var(--text-disabled)' }}>{formatDuration(Math.floor(track.duration))}</p>
       </div>
 
-      <button onClick={onRemove} className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-disabled)' }} title="Remover da fila">
+      <button onClick={onRemove} className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10 relative" style={{ color: 'var(--text-disabled)' }} title="Remover da fila">
         <Trash2 className="w-3.5 h-3.5" />
       </button>
     </div>
@@ -523,7 +523,7 @@ export default function NowPlaying() {
           </div>
         </div>
 
-          <div className={`w-full md:w-[320px] lg:w-[380px] flex flex-col min-h-[calc(100vh-12rem)] md:flex-1 relative max-h-[calc(100vh-12rem)] md:h-[calc(100vh-8rem)] ${showQueueOnMobile ? '' : 'hidden md:flex'}`}>
+          <div className={`w-full md:w-[280px] lg:w-[320px] flex flex-col min-h-[calc(100vh-12rem)] md:flex-1 relative max-h-[calc(100vh-12rem)] md:h-[calc(100vh-8rem)] ${showQueueOnMobile ? '' : 'hidden md:flex'}`}>
             <div className="flex-none px-2 py-2">
               <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>A seguir</h2>
               {usePlayerStore.getState().currentPlaylistName && (
