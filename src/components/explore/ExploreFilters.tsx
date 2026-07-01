@@ -34,7 +34,7 @@ export function ExploreFilters({ tracks, albums, artists }: ExploreFiltersProps)
   const [genreOptions, setGenreOptions] = useState<string[]>([])
 
   useEffect(() => {
-    fetch('/api/spotify?endpoint=genres')
+    fetch('/api/deezer?endpoint=genres')
       .then(res => res.json())
       .then(data => {
         const names: string[] = (data.results ?? []).map((g: { name: string }) => g.name)

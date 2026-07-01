@@ -20,6 +20,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
   const [cropImage, setCropImage] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [coverFile, setCoverFile] = useState<Blob | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const { addPlaylist } = usePlaylistsStore()
   const supabase = createClient()
   const router = useRouter()
@@ -42,8 +43,9 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 5 * 1024 * 1024) { alert('A imagem deve ter no máximo 5MB'); return }
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) { alert('Formato inválido. Use JPEG, PNG ou WebP.'); return }
+    if (file.size > 5 * 1024 * 1024) { setError('A imagem deve ter no máximo 5MB'); return }
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) { setError('Formato inválido. Use JPEG, PNG ou WebP.'); return }
+    setError(null)
     const reader = new FileReader()
     reader.onload = () => {
       setCropImage(reader.result as string)
@@ -177,6 +179,10 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
             </button>
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileSelect} />
           </div>
+
+          {error && (
+            <p className="text-xs mb-3" style={{ color: 'var(--error)' }}>{error}</p>
+          )}
 
           <div className="flex-1 min-w-0 self-center">
             <p className="text-sm font-medium truncate">{name || 'Nova playlist'}</p>

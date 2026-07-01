@@ -83,7 +83,7 @@ export function ExploreTrending({ userLabel, userTracks }: ExploreTrendingProps)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/spotify?endpoint=featured&limit=10')
+    fetch('/api/deezer?endpoint=featured&limit=10')
       .then(res => res.json())
       .then(data => setGlobalTracks(data.results ?? []))
       .catch(() => setGlobalTracks([]))

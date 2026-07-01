@@ -93,6 +93,7 @@ function BibliotecaContent() {
   const [playlists, setPlaylists] = useState<PlaylistTabItem[]>([])
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [downloads, setDownloads] = useState<Track[]>([])
+  const [confirmClear, setConfirmClear] = useState(false)
 
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -367,13 +368,33 @@ function BibliotecaContent() {
           </button>
         )}
         {activeTab === 'recentes' && history.length > 0 && (
-          <button
-            onClick={() => { if (confirm('Limpar histórico de reprodução?')) handleClearHistory() }}
-            className="text-sm px-3 py-1.5 rounded-lg transition-colors"
-            style={{ color: 'var(--text-secondary)', border: '1px solid rgba(255,255,255,0.1)' }}
-          >
-            Limpar histórico
-          </button>
+          confirmClear ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Limpar histórico?</span>
+              <button
+                onClick={() => { handleClearHistory(); setConfirmClear(false) }}
+                className="text-sm px-3 py-1.5 rounded-lg font-bold"
+                style={{ background: 'var(--error)', color: 'white' }}
+              >
+                Sim
+              </button>
+              <button
+                onClick={() => setConfirmClear(false)}
+                className="text-sm px-3 py-1.5 rounded-lg"
+                style={{ color: 'var(--text-secondary)', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                Não
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmClear(true)}
+              className="text-sm px-3 py-1.5 rounded-lg transition-colors"
+              style={{ color: 'var(--text-secondary)', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              Limpar histórico
+            </button>
+          )
         )}
       </div>
 

@@ -57,6 +57,8 @@ export default function ConfiguracoesPage() {
   const [profileSaved, setProfileSaved] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [cropImage, setCropImage] = useState<string | null>(null)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
+  const [confirmLang, setConfirmLang] = useState(false)
   const cropperRef = useRef<HTMLImageElement>(null)
   const cropperInstance = useRef<Cropper | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -209,12 +211,13 @@ export default function ConfiguracoesPage() {
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    setAvatarError(null)
     if (file.size > 5 * 1024 * 1024) {
-      alert('A foto deve ter no máximo 5MB')
+      setAvatarError('A foto deve ter no máximo 5MB')
       return
     }
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      alert('Formato inválido. Use JPEG, PNG ou WebP.')
+      setAvatarError('Formato inválido. Use JPEG, PNG ou WebP.')
       return
     }
     const reader = new FileReader()
@@ -258,7 +261,7 @@ export default function ConfiguracoesPage() {
         .upload(filePath, blob, { upsert: true, contentType: 'image/png' })
 
       if (uploadError) {
-        alert('Erro ao fazer upload. Tente novamente.')
+        setAvatarError('Erro ao fazer upload. Tente novamente.')
         setAvatarUploading(false)
         return
       }
@@ -297,11 +300,7 @@ export default function ConfiguracoesPage() {
   function handleLanguageChange(lang: string) {
     setSettings((s) => ({ ...s, language: lang }))
     saveSettingsField('language', lang)
-    setTimeout(() => {
-      if (confirm('A página será recarregada para aplicar o idioma.')) {
-        window.location.reload()
-      }
-    }, 500)
+    setConfirmLang(true)
   }
 
   // --- Delete account ---
@@ -420,6 +419,10 @@ export default function ConfiguracoesPage() {
               </div>
 
               <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileSelect} />
+
+              {avatarError && (
+                <p className="text-xs mt-2" style={{ color: 'var(--error)' }}>{avatarError}</p>
+              )}
 
               {/* Crop modal */}
               {cropImage && (
@@ -642,6 +645,25 @@ export default function ConfiguracoesPage() {
                   <option value="pt-BR">Português (BR)</option>
                   <option value="en">English</option>
                 </select>
+                {confirmLang && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>A página será recarregada para aplicar o idioma.</span>
+                    <button
+                      onClick={() => { setConfirmLang(false); window.location.reload() }}
+                      className="text-xs px-2 py-1 rounded font-bold"
+                      style={{ background: 'var(--accent-solid)', color: 'white' }}
+                    >
+                      Recarregar
+                    </button>
+                    <button
+                      onClick={() => setConfirmLang(false)}
+                      className="text-xs px-2 py-1 rounded"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      Agora não
+                    </button>
+                  </div>
+                )}
               </div>
             </section>
           )}

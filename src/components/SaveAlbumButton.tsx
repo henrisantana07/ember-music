@@ -25,7 +25,7 @@ export function SaveAlbumButton({ album }: SaveAlbumButtonProps) {
     setSaving(true)
 
     try {
-      const res = await fetch(`/api/spotify?endpoint=albums&id=${album.id}`)
+      const res = await fetch(`/api/deezer?endpoint=albums&id=${album.id}`)
       const data = await res.json()
       const tracks: Track[] = data.tracks ?? []
       if (tracks.length === 0) return
@@ -65,7 +65,6 @@ export function SaveAlbumButton({ album }: SaveAlbumButtonProps) {
       addPlaylist({
         ...newPlaylist,
         track_count: tracks.length,
-        cover_source: 'branded',
         is_public: false,
         collaborative: null,
         share_token: null,

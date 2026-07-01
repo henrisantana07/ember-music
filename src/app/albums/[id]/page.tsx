@@ -49,7 +49,7 @@ export default function AlbumPage() {
   }
 
   useEffect(() => {
-    fetch(`/api/spotify?endpoint=albums&id=${albumId}`).then((r) => r.json()).then((albumRes) => {
+    fetch(`/api/deezer?endpoint=albums&id=${albumId}`).then((r) => r.json()).then((albumRes) => {
       const a = albumRes?.album ?? albumRes?.results?.[0]
       if (!a) { setLoading(false); return }
       setAlbum({

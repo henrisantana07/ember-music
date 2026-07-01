@@ -77,9 +77,9 @@ export function SearchSuggestions({ query, onSelect, onClose, onSearch, inputRef
       try {
         const encoded = encodeURIComponent(cleanQuery)
         const [trackRes, albumRes, artistRes] = await Promise.all([
-          fetch(`/api/spotify?endpoint=search&q=${encoded}&type=track&limit=4`, { signal: controller.signal }),
-          fetch(`/api/spotify?endpoint=search&q=${encoded}&type=album&limit=3`, { signal: controller.signal }),
-          fetch(`/api/spotify?endpoint=search&q=${encoded}&type=artist&limit=3`, { signal: controller.signal }),
+          fetch(`/api/deezer?endpoint=search&q=${encoded}&type=track&limit=4`, { signal: controller.signal }),
+          fetch(`/api/deezer?endpoint=search&q=${encoded}&type=album&limit=3`, { signal: controller.signal }),
+          fetch(`/api/deezer?endpoint=search&q=${encoded}&type=artist&limit=3`, { signal: controller.signal }),
         ])
 
         const [trackData, albumData, artistData] = await Promise.all([

@@ -26,7 +26,7 @@ export default function ArtistPage() {
   useEffect(() => {
     setLoading(true)
     setError(null)
-    fetch(`/api/spotify?endpoint=artists&id=${artistId}&limit=50`)
+    fetch(`/api/deezer?endpoint=artists&id=${artistId}&limit=50`)
       .then((r) => r.json())
       .then((res) => {
         if (res.error) {

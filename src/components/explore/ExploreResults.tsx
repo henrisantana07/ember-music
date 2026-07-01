@@ -79,9 +79,9 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
       try {
         const encoded = encodeURIComponent(query)
         const [trackRes, albumRes, artistRes] = await Promise.all([
-          fetch(`/api/spotify?endpoint=search&q=${encoded}&type=track&limit=50`, { signal: controller.signal }),
-          fetch(`/api/spotify?endpoint=search&q=${encoded}&type=album&limit=20`, { signal: controller.signal }),
-          fetch(`/api/spotify?endpoint=search&q=${encoded}&type=artist&limit=12`, { signal: controller.signal }),
+          fetch(`/api/deezer?endpoint=search&q=${encoded}&type=track&limit=50`, { signal: controller.signal }),
+          fetch(`/api/deezer?endpoint=search&q=${encoded}&type=album&limit=20`, { signal: controller.signal }),
+          fetch(`/api/deezer?endpoint=search&q=${encoded}&type=artist&limit=12`, { signal: controller.signal }),
         ])
         const [trackData, albumData, artistData] = await Promise.all([
           trackRes.ok ? trackRes.json() : { tracks: [] },

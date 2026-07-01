@@ -19,6 +19,7 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
   const [cropImage, setCropImage] = useState<string | null>(null)
   const [coverFile, setCoverFile] = useState<Blob | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const { updatePlaylistCover } = usePlaylistsStore()
   const supabase = createClient()
   const cropperRef = useRef<HTMLImageElement>(null)
@@ -38,8 +39,9 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 5 * 1024 * 1024) { alert('A imagem deve ter no máximo 5MB'); return }
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) { alert('Formato inválido. Use JPEG, PNG ou WebP.'); return }
+    if (file.size > 5 * 1024 * 1024) { setError('A imagem deve ter no máximo 5MB'); return }
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) { setError('Formato inválido. Use JPEG, PNG ou WebP.'); return }
+    setError(null)
     const reader = new FileReader()
     reader.onload = () => {
       setCropImage(reader.result as string)
@@ -91,7 +93,7 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
 
     if (uploadError) {
       setUploading(false)
-      alert('Erro ao enviar imagem')
+      setError('Erro ao enviar imagem')
       return
     }
 
@@ -220,6 +222,9 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
           </div>
         ) : (
           <>
+            {error && (
+              <p className="text-xs mb-3 text-center" style={{ color: 'var(--error)' }}>{error}</p>
+            )}
             <div
               className="w-28 h-28 mx-auto rounded-lg overflow-hidden mb-4"
               style={{

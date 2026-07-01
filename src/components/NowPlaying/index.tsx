@@ -174,7 +174,7 @@ export default function NowPlaying() {
     const timer = setTimeout(async () => {
       setSearchLoading(true)
       try {
-        const res = await fetch(`/api/spotify?endpoint=search&q=${encodeURIComponent(searchQuery.trim())}&type=track&limit=12`, { signal: controller.signal })
+        const res = await fetch(`/api/deezer?endpoint=search&q=${encodeURIComponent(searchQuery.trim())}&type=track&limit=12`, { signal: controller.signal })
         if (!res.ok) throw new Error('search failed')
         const data = await res.json()
         if (!controller.signal.aborted) setSearchResults(data.tracks ?? [])
@@ -254,6 +254,7 @@ export default function NowPlaying() {
 
   async function handleDownload() {
     if (!currentTrack?.audio) { showToast('Áudio não disponível para download'); return }
+    if (!user) { showToast('Faça login para baixar músicas'); return }
     try {
       const res = await fetch(currentTrack.audio)
       if (!res.ok) throw new Error('download failed')
@@ -267,6 +268,16 @@ export default function NowPlaying() {
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
       showToast('Download concluído!')
+      const { error } = await supabase.from('downloads').insert({
+        user_id: user.id,
+        track_id: currentTrack.id,
+        track_name: currentTrack.name,
+        artist_name: currentTrack.artist_name ?? 'Desconhecido',
+        cover_url: currentTrack.image ?? null,
+        file_size_bytes: blob.size,
+        track_data: currentTrack as unknown as Json,
+      })
+      if (error) console.error('Erro ao salvar registro de download:', error)
     } catch { showToast('Erro ao baixar. Tente novamente.') }
   }
 

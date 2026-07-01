@@ -16,7 +16,7 @@ export function ExploreNoResults({ query, activeFilterCount, onClearFilters }: E
   const [trending, setTrending] = useState<Track[]>([])
 
   useEffect(() => {
-    fetch('/api/spotify?endpoint=featured&limit=4')
+    fetch('/api/deezer?endpoint=featured&limit=4')
       .then(res => res.json())
       .then(data => setTrending(data.results ?? []))
       .catch(() => setTrending([]))
