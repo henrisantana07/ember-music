@@ -554,10 +554,10 @@ export default function NowPlaying() {
                     ))
                   )}
                 </div>
-                <div className="sticky bottom-0 z-10 flex-none flex items-center gap-2 px-2 py-8 border-t border-white/5" style={{ backgroundColor: 'transparent' }}>
+                <div className="sticky bottom-0 z-10 flex-none flex items-center gap-2 px-2 py-8 border-t border-white/5 pointer-events-none" style={{ backgroundColor: 'rgba(10, 9, 8, 0.6)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
                   <button
                     onClick={() => { setIsSearchOpen(!isSearchOpen); if (!isSearchOpen) setSearchQuery('') }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
+                    className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
                     style={{ color: isSearchOpen ? 'var(--accent-from)' : 'var(--text-secondary)', backgroundColor: 'var(--bg-surface)' }}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -567,7 +567,7 @@ export default function NowPlaying() {
                   </button>
                   <button
                     onClick={() => clearQueue()}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
+                    className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
                     style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg-surface)' }}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
