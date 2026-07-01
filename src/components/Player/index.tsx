@@ -92,7 +92,9 @@ export function Player() {
           audio.load()
           return
         }
-      } catch {}
+      } catch (e) {
+        console.error('Erro ao atualizar URL do áudio:', e)
+      }
       retryingId.current = null
       next()
     }
@@ -119,7 +121,9 @@ export function Player() {
                 return
               }
             }
-          } catch {}
+          } catch (e) {
+            console.error('Erro ao buscar áudio:', e)
+          }
           next()
         })()
         return

@@ -72,8 +72,8 @@ export function SaveAlbumButton({ album }: SaveAlbumButtonProps) {
       } as any)
 
       router.push(`/playlists/${newPlaylist.id}`)
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error('Erro ao salvar álbum:', e)
     } finally {
       setSaving(false)
     }

@@ -36,7 +36,8 @@ function SearchResults({ query }: { query: string }) {
           const data = await res.json()
           setTracks(data.tracks ?? [])
         }
-      } catch {
+      } catch (e) {
+        console.error('Erro ao buscar resultados:', e)
       } finally {
         setLoading(false)
       }
@@ -98,7 +99,8 @@ function HomeContent() {
           const data = await artistsRes.json()
           setArtists(data.results ?? [])
         }
-      } catch {
+      } catch (e) {
+        console.error('Erro ao carregar página inicial:', e)
       } finally {
         setInitialLoading(false)
       }
@@ -123,7 +125,8 @@ function HomeContent() {
         setMoreTracks((prev) => [...prev, ...tracks])
         setLoadedGenres((prev) => new Set(prev).add(idx))
       }
-    } catch {
+    } catch (e) {
+      console.error('Erro ao carregar mais faixas:', e)
     } finally {
       setMoreLoading(false)
     }

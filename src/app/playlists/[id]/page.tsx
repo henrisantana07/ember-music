@@ -270,6 +270,17 @@ function PlaylistContent() {
     }
   }
 
+  function handlePlayShuffled() {
+    const tracksToPlay: Track[] = tracks
+      .map((pt) => pt.track_data as unknown as Track)
+      .filter(Boolean)
+    if (tracksToPlay.length > 0) {
+      const store = usePlayerStore.getState()
+      if (!store.shuffle) store.toggleShuffle()
+      play(tracksToPlay[0], tracksToPlay, id, playlist?.name)
+    }
+  }
+
   function handlePlayTrack(trackData: Track, allTracks: Track[]) {
     play(trackData, allTracks, id, playlist?.name)
   }
@@ -377,7 +388,7 @@ function PlaylistContent() {
 
             {tracks.length > 0 && (
               <button
-                onClick={handlePlayAll}
+                onClick={handlePlayShuffled}
                 className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors"
                 style={{ color: 'var(--text-secondary)' }}
               >

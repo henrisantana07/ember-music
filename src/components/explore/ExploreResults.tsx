@@ -43,6 +43,8 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
   const [user, setUser] = useState<{ id: string } | null>(null)
   const [favs, setFavs] = useState<Set<string>>(new Set())
   const [playlistTrack, setPlaylistTrack] = useState<Track | null>(null)
+  const [page, setPage] = useState(0)
+  const PAGE_SIZE = 20
   const supabase = createClient()
 
   useEffect(() => {
@@ -89,8 +91,8 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
         setTracks(trackData.tracks ?? [])
         setAlbums(albumData.albums ?? [])
         setArtists(artistData.artists ?? [])
-      } catch {
-        // ignore
+      } catch (e) {
+        console.error('Erro ao buscar resultados:', e)
       } finally {
         if (!controller.signal.aborted) setLoading(false)
       }
@@ -98,6 +100,8 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
     void fetchResults()
     return () => controller.abort()
   }, [query])
+
+  useEffect(() => { setPage(0) }, [query, artistFilter, genreFilter, durationFilter])
 
   const genreArtistNames = useMemo(() => {
     if (!genreFilter) return null
@@ -123,6 +127,9 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
     if (genreFilter && !a.genres?.some(g => g.toLowerCase() === genreFilter)) return false
     return true
   }), [artists, artistFilter, genreFilter])
+
+  const paginatedTracks = useMemo(() => filteredTracks.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [filteredTracks, page])
+  const totalPages = Math.max(1, Math.ceil(filteredTracks.length / PAGE_SIZE))
 
   const counts = {
     total: filteredTracks.length + filteredAlbums.length + filteredArtists.length,
@@ -205,15 +212,16 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
                 </tr>
               </thead>
               <tbody>
-                {filteredTracks.map((track, index) => {
+                {paginatedTracks.map((track, index) => {
                   const isActive = false
+                  const rowIndex = page * PAGE_SIZE + index + 1
                   return (
                     <tr
                       key={track.id}
                       className="group cursor-pointer transition-colors hover:bg-white/5"
                     >
                       <td className="text-right pr-3 py-2 text-sm" style={{ color: 'var(--text-disabled)' }}>
-                        <span className="group-hover:hidden">{index + 1}</span>
+                        <span className="group-hover:hidden">{rowIndex}</span>
                         <span className="hidden group-hover:inline" style={{ color: 'var(--accent-solid)' }}>
                           <svg className="w-4 h-4 inline" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                         </span>
@@ -264,10 +272,21 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
               </tbody>
             </table>
           </div>
-          {filteredTracks.length > 20 && (
+          {filteredTracks.length > PAGE_SIZE && (
             <div className="flex items-center justify-center gap-4 mt-6">
-              <button className="px-4 py-2 rounded-full text-sm font-semibold border" style={{ borderColor: 'var(--bg-elevated)', color: 'var(--text-secondary)' }} disabled>← Anterior</button>
-              <button className="px-4 py-2 rounded-full text-sm font-semibold border" style={{ borderColor: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}>Próxima →</button>
+              <button
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+                disabled={page === 0}
+                className="px-4 py-2 rounded-full text-sm font-semibold border transition-opacity disabled:opacity-40"
+                style={{ borderColor: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}
+              >← Anterior</button>
+              <span className="text-xs" style={{ color: 'var(--text-disabled)' }}>{page + 1} / {totalPages}</span>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                disabled={page >= totalPages - 1}
+                className="px-4 py-2 rounded-full text-sm font-semibold border transition-opacity disabled:opacity-40"
+                style={{ borderColor: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}
+              >Próxima →</button>
             </div>
           )}
         </section>
