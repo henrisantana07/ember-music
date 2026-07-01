@@ -168,7 +168,7 @@ export default function Sidebar() {
                     : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
                 }`}
               >
-                <div className="relative w-8 h-8 flex-shrink-0">
+                <div className="relative w-5 h-5 flex-shrink-0">
                   {artist.artist_data?.image ? (
                     <img src={artist.artist_data.image} alt="" className="w-full h-full rounded-full object-cover" />
                   ) : (
@@ -369,7 +369,7 @@ export default function Sidebar() {
                         : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
                     }`}
                   >
-                <div className="relative w-6 h-5 flex-shrink-0">
+                <div className="relative w-5 h-5 flex-shrink-0">
                   {artist.artist_data?.image ? (
                     <img src={artist.artist_data.image} alt="" className="w-full h-full rounded-full object-cover" />
                   ) : (
