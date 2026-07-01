@@ -1,6 +1,7 @@
 'use client'
 
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import type { Track } from '@/types/music'
 
 export type RepeatMode = 'none' | 'one' | 'all'
@@ -54,7 +55,9 @@ function generateShuffleOrder(length: number, currentIndex: number): number[] {
   return [currentIndex, ...indices]
 }
 
-export const usePlayerStore = create<PlayerState>((set, get) => ({
+export const usePlayerStore = create<PlayerState>()(
+  persist(
+    (set, get) => ({
   currentTrack: null,
   isPlaying: false,
   volume: 1,
@@ -197,4 +200,31 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   setSleepTimer: (minutes) => set({ sleepTimerMinutes: minutes }),
 
   toggleMiniPlayer: () => set((s) => ({ miniPlayer: !s.miniPlayer })),
-}))
+}),
+    {
+      name: 'player-storage',
+      partialize: (state) => ({
+        currentTrack: state.currentTrack,
+        queue: state.queue,
+        originalQueue: state.originalQueue,
+        shuffleOrder: state.shuffleOrder,
+        currentShuffleIndex: state.currentShuffleIndex,
+        currentPlaylistId: state.currentPlaylistId,
+        currentPlaylistName: state.currentPlaylistName,
+        repeat: state.repeat,
+        shuffle: state.shuffle,
+        volume: state.volume,
+        crossfadeDuration: state.crossfadeDuration,
+        sleepTimerMinutes: state.sleepTimerMinutes,
+        miniPlayer: state.miniPlayer,
+      }),
+      merge: (persisted, current) => ({
+        ...current,
+        ...(persisted as Partial<PlayerState>),
+        isPlaying: false,
+        progress: 0,
+        duration: 0,
+      }),
+    }
+  )
+)
