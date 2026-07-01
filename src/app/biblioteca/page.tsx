@@ -582,14 +582,17 @@ function BibliotecaContent() {
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {history.map((item) => (
-                  <TrackCard
-                    key={`${item.track_data.id}-${item.played_at}`}
-                    track={item.track_data}
-                    tracks={history.map((h) => h.track_data)}
-                    user={user}
-                  />
-                ))}
+                {(() => {
+                  const sortedTracks = getSortedTracks(history.map((h) => h.track_data))
+                  return sortedTracks.map((track) => (
+                    <TrackCard
+                      key={track.id}
+                      track={track}
+                      tracks={sortedTracks}
+                      user={user}
+                    />
+                  ))
+                })()}
               </div>
             )
           )}

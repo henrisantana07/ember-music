@@ -42,7 +42,7 @@ export function Player() {
     if (isPlaying && currentTrack && user) {
       void savePlaybackHistory(user, currentTrack)
     }
-  }, [currentTrack, isPlaying, user])
+  }, [currentTrack?.id, isPlaying, user])
 
   useEffect(() => {
     const audio = audioRef.current
