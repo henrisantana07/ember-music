@@ -155,7 +155,7 @@ export default function Sidebar() {
               Artistas
             </p>
           )}
-          {artists.slice(0, 5).map(artist => {
+          {artists.slice(0, 8).map(artist => {
             const active = pathname === `/artists/${artist.artist_id}`
             return (
               <Link
@@ -355,7 +355,7 @@ export default function Sidebar() {
                   Artistas
                 </p>
               )}
-              {artists.slice(0, 5).map(artist => {
+              {artists.slice(0, 8).map(artist => {
                 const active = pathname === `/artists/${artist.artist_id}`
                 return (
                   <Link
