@@ -54,44 +54,49 @@ export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
         .select('id', { count: 'exact', head: true })
         .eq('playlist_id', playlistId)
 
-      if (count && count > 0) {
-        const { data: lastTrack } = await supabase
-          .from('playlist_tracks')
-          .select('track_data')
-          .eq('playlist_id', playlistId)
-          .order('added_at', { ascending: false })
-          .limit(1)
-          .single()
+      const pl = playlists.find((p) => p.id === playlistId)
+      const isCustom = pl?.cover_source === 'custom'
 
-        const lastCover = lastTrack?.track_data
-          ? (lastTrack.track_data as { image?: string })?.image ?? null
-          : null
+      if (!isCustom) {
+        if (count && count > 0) {
+          const { data: lastTrack } = await supabase
+            .from('playlist_tracks')
+            .select('track_data')
+            .eq('playlist_id', playlistId)
+            .order('added_at', { ascending: false })
+            .limit(1)
+            .single()
 
-        await supabase
-          .from('playlists')
-          .update({
+          const lastCover = lastTrack?.track_data
+            ? (lastTrack.track_data as { image?: string })?.image ?? null
+            : null
+
+          await supabase
+            .from('playlists')
+            .update({
+              cover_source: 'track',
+              last_track_cover_url: lastCover,
+            })
+            .eq('id', playlistId)
+
+          updatePlaylistCover(playlistId, {
             cover_source: 'track',
             last_track_cover_url: lastCover,
           })
-          .eq('id', playlistId)
+        } else {
+          await supabase
+            .from('playlists')
+            .update({
+              cover_source: 'branded',
+              last_track_cover_url: null,
+            })
+            .eq('id', playlistId)
 
-        updatePlaylistCover(playlistId, {
-          cover_source: 'track',
-          last_track_cover_url: lastCover,
-        })
-      } else {
-        await supabase
-          .from('playlists')
-          .update({
+          updatePlaylistCover(playlistId, {
             cover_source: 'branded',
             last_track_cover_url: null,
           })
-          .eq('id', playlistId)
-
-        updatePlaylistCover(playlistId, {
-          cover_source: 'branded',
-          last_track_cover_url: null,
-        })
+        }
       }
 
       setContainingIds((prev) => {
