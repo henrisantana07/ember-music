@@ -168,11 +168,11 @@ export default function Sidebar() {
                     : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
                 }`}
               >
-                <div className="relative w-5 h-5 flex-shrink-0">
+                <div className="relative w-8 h-8 flex-shrink-0">
                   {artist.artist_data?.image ? (
                     <img src={artist.artist_data.image} alt="" className="w-full h-full rounded-full object-cover" />
                   ) : (
-                    <div className="w-full h-full rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold" style={{ color: 'var(--text-primary)' }}>
+                    <div className="w-full h-full rounded-full bg-white/10 flex items-center justify-center text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
                       {artist.artist_data?.name?.[0] ?? '?'}
                     </div>
                   )}
@@ -201,7 +201,7 @@ export default function Sidebar() {
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
                 ) : (
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}>
                     {user.email?.[0].toUpperCase()}
                   </div>
                 )}
@@ -369,24 +369,24 @@ export default function Sidebar() {
                         : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
                     }`}
                   >
-                <div className="relative w-5 h-5 flex-shrink-0">
-                  {artist.artist_data?.image ? (
-                    <img src={artist.artist_data.image} alt="" className="w-full h-full rounded-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold" style={{ color: 'var(--text-primary)' }}>
-                      {artist.artist_data?.name?.[0] ?? '?'}
+                    <div className="relative w-8 h-8 flex-shrink-0">
+                      {artist.artist_data?.image ? (
+                        <img src={artist.artist_data.image} alt="" className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full rounded-full bg-white/10 flex items-center justify-center text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                          {artist.artist_data?.name?.[0] ?? '?'}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <span className="truncate">{artist.artist_data?.name ?? 'Artista'}</span>
-              </Link>
-            )
-          })}
-        </div>
+                    <span className="truncate">{artist.artist_data?.name ?? 'Artista'}</span>
+                  </Link>
+                )
+              })}
+            </div>
 
-          {user && (
-            <div className="flex-none border-t border-white/5 px-2 py-1">
-              <div className="relative">
+            {user && (
+              <div className="flex-none border-t border-white/5 px-2 py-1">
+                <div className="relative">
                   <button
                     onClick={() => { router.push('/configuracoes'); setDrawerOpen(false) }}
                     className="flex items-center gap-3 w-full px-2 py-2 rounded-lg text-sm transition-colors duration-200 hover:bg-white/[0.06]"
@@ -395,7 +395,7 @@ export default function Sidebar() {
                     {avatarUrl ? (
                       <img src={avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
                     ) : (
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}>
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}>
                         {user.email?.[0].toUpperCase()}
                       </div>
                     )}
