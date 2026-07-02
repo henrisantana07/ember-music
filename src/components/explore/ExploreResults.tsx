@@ -14,6 +14,7 @@ import { ExploreNoResults } from './ExploreNoResults'
 import { ExploreTrackSkeleton } from './skeletons/ExploreTrackSkeleton'
 import { ArtistCircleSkeleton } from './skeletons/ArtistCircleSkeleton'
 import { PlaylistModal } from '@/components/PlaylistModal'
+import { usePlayerStore } from '@/lib/store'
 
 type DurationFilter = '' | 'short' | 'medium' | 'long'
 
@@ -46,6 +47,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
   const [page, setPage] = useState(0)
   const PAGE_SIZE = 20
   const supabase = createClient()
+  const { play, currentTrack, isPlaying, togglePlay } = usePlayerStore()
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
@@ -213,12 +215,13 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
               </thead>
               <tbody>
                 {paginatedTracks.map((track, index) => {
-                  const isActive = false
+                  const isActive = currentTrack?.id === track.id
                   const rowIndex = page * PAGE_SIZE + index + 1
                   return (
                     <tr
                       key={track.id}
                       className="group cursor-pointer transition-colors hover:bg-white/5"
+                      onClick={() => { if (isActive) togglePlay(); else play(track, paginatedTracks) }}
                     >
                       <td className="text-right pr-3 py-2 text-sm" style={{ color: 'var(--text-disabled)' }}>
                         <span className="group-hover:hidden">{rowIndex}</span>
