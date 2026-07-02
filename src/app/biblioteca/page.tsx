@@ -3,12 +3,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { TrackCard } from '@/components/TrackCard'
+import { TrackTable } from '@/components/TrackTable'
 import { PlaylistCover } from '@/components/playlist/PlaylistCover'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
 import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
 import { usePlaylistsStore } from '@/lib/playlists-store'
-import { formatDuration } from '@/lib/spotify'
 import { usePlayerStore } from '@/lib/store'
 import { FollowButton } from '@/components/FollowButton'
 import { useUser } from '@/hooks/use-user'
@@ -447,11 +446,7 @@ function BibliotecaContent() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {getSortedTracks().map((track) => (
-                    <TrackCard key={track.id} track={track} tracks={tracks} user={user} />
-                  ))}
-                </div>
+                <TrackTable tracks={getSortedTracks()} user={user} />
                 {hasMore && <div ref={sentinelRef} className="h-10" />}
                 {loadingMore && (
                   <div className="flex justify-center py-6">
@@ -580,19 +575,7 @@ function BibliotecaContent() {
                 <button onClick={() => router.push('/')} className="btn-primary text-sm">Comece a ouvir</button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {(() => {
-                  const sortedTracks = getSortedTracks(history.map((h) => h.track_data))
-                  return sortedTracks.map((track) => (
-                    <TrackCard
-                      key={track.id}
-                      track={track}
-                      tracks={sortedTracks}
-                      user={user}
-                    />
-                  ))
-                })()}
-              </div>
+              <TrackTable tracks={getSortedTracks(history.map((h) => h.track_data))} user={user} />
             )
           )}
 
@@ -608,11 +591,7 @@ function BibliotecaContent() {
           )}
 
           {activeTab === 'baixadas' && downloads.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {getSortedTracks(downloads).map((track) => (
-                <TrackCard key={track.id} track={track} tracks={downloads} user={user} />
-              ))}
-            </div>
+            <TrackTable tracks={getSortedTracks(downloads)} user={user} />
           )}
         </>
       )}
