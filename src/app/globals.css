@@ -228,3 +228,14 @@ body {
 .animate-waveform span:nth-child(3) {
   animation-delay: 0.2s;
 }
+
+button:not(:disabled),
+select,
+[role="button"]:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"]:disabled {
+  cursor: not-allowed;
+}
