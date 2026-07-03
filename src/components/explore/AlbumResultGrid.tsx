@@ -145,11 +145,11 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
                     {isSaving ? (
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     ) : isSaved ? (
-                      <svg className="w-5 h-5" style={{ color: 'var(--text-on-accent)' }} fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5} fill="none" strokeLinecap="round">
                         <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                       </svg>
                     ) : (
-                      <svg className="w-5 h-5" style={{ color: 'var(--text-on-accent)' }} fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5} fill="none" strokeLinecap="round">
                         <path d="M12 4v16m8-8H4" />
                       </svg>
                     )}
