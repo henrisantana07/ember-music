@@ -170,44 +170,56 @@ function PlaylistContent() {
     }
 
     const timeout = setTimeout(async () => {
-      await supabase
-        .from('playlist_tracks')
-        .delete()
-        .eq('playlist_id', id)
-        .eq('track_id', trackId)
+      try {
+        const { error: deleteError } = await supabase
+          .from('playlist_tracks')
+          .delete()
+          .eq('playlist_id', id)
+          .eq('track_id', trackId)
 
-      const { count } = await supabase
-        .from('playlist_tracks')
-        .select('id', { count: 'exact', head: true })
-        .eq('playlist_id', id)
+        if (deleteError) throw deleteError
 
-      if (playlist?.cover_source !== 'custom') {
-        if (count && count > 0) {
-          const { data: lastTrack } = await supabase
-            .from('playlist_tracks')
-            .select('track_data')
-            .eq('playlist_id', id)
-            .order('added_at', { ascending: false })
-            .limit(1)
-            .single()
+        const { count } = await supabase
+          .from('playlist_tracks')
+          .select('id', { count: 'exact', head: true })
+          .eq('playlist_id', id)
 
-          const lastCover = lastTrack?.track_data
-            ? (lastTrack.track_data as { image?: string })?.image ?? null
-            : null
+        if (playlist?.cover_source !== 'custom') {
+          if (count && count > 0) {
+            const { data: lastTrack } = await supabase
+              .from('playlist_tracks')
+              .select('track_data')
+              .eq('playlist_id', id)
+              .order('added_at', { ascending: false })
+              .limit(1)
+              .single()
 
-          await supabase
-            .from('playlists')
-            .update({ cover_source: 'track', last_track_cover_url: lastCover })
-            .eq('id', id)
-        } else {
-          await supabase
-            .from('playlists')
-            .update({ cover_source: 'branded', last_track_cover_url: null })
-            .eq('id', id)
+            const lastCover = lastTrack?.track_data
+              ? (lastTrack.track_data as { image?: string })?.image ?? null
+              : null
+
+            await supabase
+              .from('playlists')
+              .update({ cover_source: 'track', last_track_cover_url: lastCover })
+              .eq('id', id)
+          } else {
+            await supabase
+              .from('playlists')
+              .update({ cover_source: 'branded', last_track_cover_url: null })
+              .eq('id', id)
+          }
         }
-      }
 
-      pendingRemove.current = null
+        pendingRemove.current = null
+      } catch {
+        setTracks((prev) => {
+          const exists = prev.find((t) => t.track_id === trackId)
+          if (exists) return prev
+          return [...prev, trackRow].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+        })
+        showToast('Erro ao remover faixa')
+        pendingRemove.current = null
+      }
     }, 5000)
 
     pendingRemove.current = { trackId, trackRow, timeout }
@@ -290,7 +302,7 @@ function PlaylistContent() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
-  async function handleDragEnd(event: DragEndEvent) {
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event
     if (!over || active.id === over.id) return
 
@@ -321,7 +333,7 @@ function PlaylistContent() {
       setTracks(previous)
       showToast('Erro ao reordenar')
     }
-  }
+  }, [tracks, id, showToast])
 
   if (loading || !playlist) {
     return (

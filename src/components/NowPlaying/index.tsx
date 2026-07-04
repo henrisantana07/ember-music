@@ -23,11 +23,11 @@ function getAudioEl(): HTMLAudioElement | null {
   return document.querySelector('audio')
 }
 
-function SortableQueueItem({ track, index, isCurrent, isPlaying, onPlay, onRemove }: {
-  track: Track; index: number; isCurrent: boolean; isPlaying: boolean;
+function SortableQueueItem({ track, isCurrent, isPlaying, onPlay, onRemove }: {
+  track: Track; isCurrent: boolean; isPlaying: boolean;
   onPlay: () => void; onRemove: () => void
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `${index}-${track.id}` })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: track.id })
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -328,8 +328,9 @@ export default function NowPlaying() {
   function handleDragEnd(event: { active: { id: string | number }; over: { id: string | number } | null }) {
     const { active, over } = event
     if (!over || active.id === over.id) return
-    const fromIndex = parseInt(String(active.id).split('-')[0], 10)
-    const toIndex = parseInt(String(over.id).split('-')[0], 10)
+    const fromIndex = queue.findIndex(t => t.id === active.id)
+    const toIndex = queue.findIndex(t => t.id === over.id)
+    if (fromIndex === -1 || toIndex === -1) return
     reorderQueue(fromIndex, toIndex)
   }
 
@@ -532,7 +533,7 @@ export default function NowPlaying() {
             </div>
 
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={queue.map((_, i) => `${i}-${queue[i].id}`)} strategy={verticalListSortingStrategy}>
+              <SortableContext items={queue.map(t => t.id)} strategy={verticalListSortingStrategy}>
                 <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full">
                   <div className="px-1 space-y-0.5">
                   {queue.length === 0 ? (
@@ -545,7 +546,6 @@ export default function NowPlaying() {
                       <SortableQueueItem
                         key={`${index}-${track.id}`}
                         track={track}
-                        index={index}
                         isCurrent={track.id === currentTrack.id}
                         isPlaying={isPlaying}
                         onPlay={() => playTrackAt(index)}
