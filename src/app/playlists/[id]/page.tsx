@@ -165,81 +165,90 @@ function PlaylistContent() {
 
     setTracks((prev) => prev.filter((t) => t.track_id !== trackId))
 
-    if (pendingRemove.current) {
-      clearTimeout(pendingRemove.current.timeout)
+    const { error: deleteError } = await supabase
+      .from('playlist_tracks')
+      .delete()
+      .eq('playlist_id', id)
+      .eq('track_id', trackId)
+
+    if (deleteError) {
+      setTracks((prev) => {
+        const exists = prev.find((t) => t.track_id === trackId)
+        if (exists) return prev
+        return [...prev, trackRow].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+      })
+      showToast('Erro ao remover faixa')
+      return
     }
 
-    const timeout = setTimeout(async () => {
-      try {
-        const { error: deleteError } = await supabase
+    const { count } = await supabase
+      .from('playlist_tracks')
+      .select('id', { count: 'exact', head: true })
+      .eq('playlist_id', id)
+
+    if (playlist?.cover_source !== 'custom') {
+      if (count && count > 0) {
+        const { data: lastTrack } = await supabase
           .from('playlist_tracks')
-          .delete()
+          .select('track_data')
           .eq('playlist_id', id)
-          .eq('track_id', trackId)
+          .order('added_at', { ascending: false })
+          .limit(1)
+          .single()
 
-        if (deleteError) throw deleteError
+        const lastCover = lastTrack?.track_data
+          ? (lastTrack.track_data as { image?: string })?.image ?? null
+          : null
 
-        const { count } = await supabase
-          .from('playlist_tracks')
-          .select('id', { count: 'exact', head: true })
-          .eq('playlist_id', id)
-
-        if (playlist?.cover_source !== 'custom') {
-          if (count && count > 0) {
-            const { data: lastTrack } = await supabase
-              .from('playlist_tracks')
-              .select('track_data')
-              .eq('playlist_id', id)
-              .order('added_at', { ascending: false })
-              .limit(1)
-              .single()
-
-            const lastCover = lastTrack?.track_data
-              ? (lastTrack.track_data as { image?: string })?.image ?? null
-              : null
-
-            await supabase
-              .from('playlists')
-              .update({ cover_source: 'track', last_track_cover_url: lastCover })
-              .eq('id', id)
-          } else {
-            await supabase
-              .from('playlists')
-              .update({ cover_source: 'branded', last_track_cover_url: null })
-              .eq('id', id)
-          }
-        }
-
-        updatePlaylist(id, { track_count: tracks.length - 1 })
-        pendingRemove.current = null
-      } catch {
-        setTracks((prev) => {
-          const exists = prev.find((t) => t.track_id === trackId)
-          if (exists) return prev
-          return [...prev, trackRow].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-        })
-        showToast('Erro ao remover faixa')
-        pendingRemove.current = null
+        await supabase
+          .from('playlists')
+          .update({ cover_source: 'track', last_track_cover_url: lastCover })
+          .eq('id', id)
+      } else {
+        await supabase
+          .from('playlists')
+          .update({ cover_source: 'branded', last_track_cover_url: null })
+          .eq('id', id)
       }
+    }
+
+    updatePlaylist(id, { track_count: tracks.length - 1 })
+
+    const timeout = setTimeout(() => {
+      pendingRemove.current = null
     }, 5000)
 
     pendingRemove.current = { trackId, trackRow, timeout }
 
     showToast('Removida', {
       label: 'Desfazer',
-      onClick: () => {
-        if (pendingRemove.current && pendingRemove.current.trackId === trackId) {
-          clearTimeout(pendingRemove.current.timeout)
+      onClick: async () => {
+        if (!pendingRemove.current || pendingRemove.current.trackId !== trackId) return
+        clearTimeout(pendingRemove.current.timeout)
+
+        const now = new Date().toISOString()
+        const { error: insertError } = await supabase
+          .from('playlist_tracks')
+          .insert({
+            playlist_id: id,
+            track_id: trackRow.track_id,
+            track_data: trackRow.track_data,
+            position: trackRow.position,
+            added_at: trackRow.added_at ?? now,
+          })
+
+        if (!insertError) {
           setTracks((prev) => {
             const exists = prev.find((t) => t.track_id === trackId)
             if (exists) return prev
-            const restored = [...prev, trackRow].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-            return restored
+            return [...prev, trackRow].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
           })
-          pendingRemove.current = null
-          setToast(null)
-          if (toastTimer.current) clearTimeout(toastTimer.current)
+          updatePlaylist(id, { track_count: tracks.length })
         }
+
+        pendingRemove.current = null
+        setToast(null)
+        if (toastTimer.current) clearTimeout(toastTimer.current)
       },
     })
   }
