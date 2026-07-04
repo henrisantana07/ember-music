@@ -43,67 +43,73 @@ export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
 
   async function handleToggle(playlistId: string, isIn: boolean) {
     if (isIn) {
-      await supabase
+      const { error: deleteError } = await supabase
         .from('playlist_tracks')
         .delete()
         .eq('playlist_id', playlistId)
         .eq('track_id', track.id)
 
-      const { count } = await supabase
-        .from('playlist_tracks')
-        .select('id', { count: 'exact', head: true })
-        .eq('playlist_id', playlistId)
-
-      const pl = playlists.find((p) => p.id === playlistId)
-      const isCustom = pl?.cover_source === 'custom'
-
-      if (!isCustom) {
-        if (count && count > 0) {
-          const { data: lastTrack } = await supabase
-            .from('playlist_tracks')
-            .select('track_data')
-            .eq('playlist_id', playlistId)
-            .order('added_at', { ascending: false })
-            .limit(1)
-            .single()
-
-          const lastCover = lastTrack?.track_data
-            ? (lastTrack.track_data as { image?: string })?.image ?? null
-            : null
-
-          await supabase
-            .from('playlists')
-            .update({
-              cover_source: 'track',
-              last_track_cover_url: lastCover,
-            })
-            .eq('id', playlistId)
-
-          updatePlaylistCover(playlistId, {
-            cover_source: 'track',
-            last_track_cover_url: lastCover,
-          })
-        } else {
-          await supabase
-            .from('playlists')
-            .update({
-              cover_source: 'branded',
-              last_track_cover_url: null,
-            })
-            .eq('id', playlistId)
-
-          updatePlaylistCover(playlistId, {
-            cover_source: 'branded',
-            last_track_cover_url: null,
-          })
-        }
-      }
+      if (deleteError) return
 
       setContainingIds((prev) => {
         const next = new Set(prev)
         next.delete(playlistId)
         return next
       })
+
+      try {
+        const { count } = await supabase
+          .from('playlist_tracks')
+          .select('id', { count: 'exact', head: true })
+          .eq('playlist_id', playlistId)
+
+        const pl = playlists.find((p) => p.id === playlistId)
+        const isCustom = pl?.cover_source === 'custom'
+
+        if (!isCustom) {
+          if (count && count > 0) {
+            const { data: lastTrack } = await supabase
+              .from('playlist_tracks')
+              .select('track_data')
+              .eq('playlist_id', playlistId)
+              .order('added_at', { ascending: false })
+              .limit(1)
+              .single()
+
+            const lastCover = lastTrack?.track_data
+              ? (lastTrack.track_data as { image?: string })?.image ?? null
+              : null
+
+            await supabase
+              .from('playlists')
+              .update({
+                cover_source: 'track',
+                last_track_cover_url: lastCover,
+              })
+              .eq('id', playlistId)
+
+            updatePlaylistCover(playlistId, {
+              cover_source: 'track',
+              last_track_cover_url: lastCover,
+            })
+          } else {
+            await supabase
+              .from('playlists')
+              .update({
+                cover_source: 'branded',
+                last_track_cover_url: null,
+              })
+              .eq('id', playlistId)
+
+            updatePlaylistCover(playlistId, {
+              cover_source: 'branded',
+              last_track_cover_url: null,
+            })
+          }
+        }
+      } catch {
+        // Cover update falhou — faixa já foi removida da playlist, UI já consistente
+      }
     } else {
       const { data: maxPos } = await supabase
         .from('playlist_tracks')
@@ -125,18 +131,18 @@ export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
           added_at: now,
         })
 
-      if (!insertError) {
-        await updateTrackCoverIfNeeded(supabase as any, playlistId, track.image)
-        updatePlaylistCover(playlistId, {
-          cover_source: 'track',
-          last_track_cover_url: track.image,
-        })
-      }
+      if (insertError) return
 
       setContainingIds((prev) => {
         const next = new Set(prev)
         next.add(playlistId)
         return next
+      })
+
+      await updateTrackCoverIfNeeded(supabase as any, playlistId, track.image)
+      updatePlaylistCover(playlistId, {
+        cover_source: 'track',
+        last_track_cover_url: track.image,
       })
     }
   }

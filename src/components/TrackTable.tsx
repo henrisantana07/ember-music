@@ -31,11 +31,15 @@ export function TrackTable({ tracks, user }: TrackTableProps) {
     e.stopPropagation()
     if (!user) return
     if (favs.has(track.id)) {
-      await supabase.from('favorites').delete().eq('track_id', track.id).eq('user_id', user.id)
-      setFavs(prev => { const n = new Set(prev); n.delete(track.id); return n })
+      const { error } = await supabase.from('favorites').delete().eq('track_id', track.id).eq('user_id', user.id)
+      if (!error) {
+        setFavs(prev => { const n = new Set(prev); n.delete(track.id); return n })
+      }
     } else {
-      await supabase.from('favorites').insert({ user_id: user.id, track_id: track.id, track_data: track as unknown as Json })
-      setFavs(prev => { const n = new Set(prev); n.add(track.id); return n })
+      const { error } = await supabase.from('favorites').insert({ user_id: user.id, track_id: track.id, track_data: track as unknown as Json })
+      if (!error) {
+        setFavs(prev => { const n = new Set(prev); n.add(track.id); return n })
+      }
     }
   }
 
