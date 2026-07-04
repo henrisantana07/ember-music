@@ -15,7 +15,7 @@ interface PlaylistModalProps {
 }
 
 export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
-  const { playlists, fetchPlaylists, updatePlaylistCover } = usePlaylistsStore()
+  const { playlists, fetchPlaylists, updatePlaylist, updatePlaylistCover } = usePlaylistsStore()
   const [containingIds, setContainingIds] = useState<Set<string>>(new Set())
   const [showCreate, setShowCreate] = useState(false)
   const supabase = createClient()
@@ -57,13 +57,15 @@ export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
         return next
       })
 
+      const pl = playlists.find((p) => p.id === playlistId)
+      updatePlaylist(playlistId, { track_count: Math.max(0, (pl?.track_count ?? 1) - 1) })
+
       try {
         const { count } = await supabase
           .from('playlist_tracks')
           .select('id', { count: 'exact', head: true })
           .eq('playlist_id', playlistId)
 
-        const pl = playlists.find((p) => p.id === playlistId)
         const isCustom = pl?.cover_source === 'custom'
 
         if (!isCustom) {
@@ -138,6 +140,9 @@ export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
         next.add(playlistId)
         return next
       })
+
+      const pl = playlists.find((p) => p.id === playlistId)
+      updatePlaylist(playlistId, { track_count: (pl?.track_count ?? 0) + 1 })
 
       await updateTrackCoverIfNeeded(supabase as any, playlistId, track.image)
       updatePlaylistCover(playlistId, {

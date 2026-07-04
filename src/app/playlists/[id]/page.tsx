@@ -210,6 +210,7 @@ function PlaylistContent() {
           }
         }
 
+        updatePlaylist(id, { track_count: tracks.length - 1 })
         pendingRemove.current = null
       } catch {
         setTracks((prev) => {
