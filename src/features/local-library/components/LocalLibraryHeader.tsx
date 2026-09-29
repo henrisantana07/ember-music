@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef } from 'react'
 import { FolderPlus, RefreshCw, Search, LayoutList, LayoutGrid, Filter, X } from 'lucide-react'
 import { useLocalLibrary } from '@/features/local-library/hooks/use-local-library'
 import { pickDirectory } from '@/lib/filesystem'
@@ -19,27 +20,28 @@ export function LocalLibraryHeader() {
     folders,
   } = useLocalLibrary()
 
+  const legacyInputRef = useRef<HTMLInputElement>(null)
+
+  const handleLegacyFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
+
+    const firstFile = files[0]
+    const path = (firstFile as File & { webkitRelativePath?: string }).webkitRelativePath || firstFile.name
+    const folderName = path.split('/')[0]
+
+    const handle = await pickDirectory()
+    if (handle) {
+      const folderId = await addFolder({ handle: handle.handle, name: folderName, path: folderName })
+      await startScan(folderId)
+    }
+    // Reset input so same folder can be selected again
+    e.target.value = ''
+  }
+
   const handleAddFolder = async () => {
     if (!('showDirectoryPicker' in window)) {
-      const input = document.createElement('input')
-      input.type = 'file'
-      input.webkitdirectory = true
-      input.multiple = true
-      input.onchange = async () => {
-        const files = Array.from(input.files || [])
-        if (files.length === 0) return
-
-        const firstFile = files[0]
-        const path = (firstFile as File & { webkitRelativePath?: string }).webkitRelativePath || firstFile.name
-        const folderName = path.split('/')[0]
-
-        const handle = await pickDirectory()
-        if (handle) {
-          const folderId = await addFolder({ handle: handle.handle, name: folderName, path: folderName })
-          await startScan(folderId)
-        }
-      }
-      input.click()
+      legacyInputRef.current?.click()
       return
     }
 
@@ -168,6 +170,17 @@ export function LocalLibraryHeader() {
           </span>
         </div>
       )}
+
+      <input
+        ref={legacyInputRef}
+        type="file"
+        // @ts-expect-error webkitdirectory is non-standard but widely supported
+        webkitdirectory
+        multiple
+        onChange={handleLegacyFileSelect}
+        style={{ display: 'none' }}
+      />
+
     </div>
   )
 }
