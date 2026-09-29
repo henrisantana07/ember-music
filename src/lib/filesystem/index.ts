@@ -6,7 +6,7 @@ export interface DirectoryHandleResult {
 
 export async function pickDirectory(): Promise<DirectoryHandleResult | null> {
   if (!('showDirectoryPicker' in window)) {
-    return pickDirectoryLegacy()
+    throw new Error('File System Access API not supported')
   }
 
   try {
@@ -24,39 +24,6 @@ export async function pickDirectory(): Promise<DirectoryHandleResult | null> {
     }
     throw error
   }
-}
-
-async function pickDirectoryLegacy(): Promise<DirectoryHandleResult | null> {
-  return new Promise((resolve) => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.webkitdirectory = true
-    input.multiple = true
-    input.style.display = 'none'
-
-    input.onchange = async () => {
-      const files = Array.from(input.files || [])
-      if (files.length === 0) {
-        resolve(null)
-        return
-      }
-
-      const firstFile = files[0]
-      const path = (firstFile as File & { webkitRelativePath?: string }).webkitRelativePath || firstFile.name
-      const folderName = path.split('/')[0]
-
-      const handle = await createMockHandle(folderName, files)
-      resolve({
-        handle,
-        name: folderName,
-        path: folderName,
-      })
-    }
-
-    document.body.appendChild(input)
-    input.click()
-    document.body.removeChild(input)
-  })
 }
 
 export async function createMockHandle(name: string, files: File[]): Promise<FileSystemDirectoryHandle> {

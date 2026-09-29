@@ -34,6 +34,7 @@ export interface LocalFolder {
   trackCount: number
   albumCount: number
   artistCount: number
+  needsReconnect: boolean
 }
 
 export interface LocalLibraryState {
@@ -71,4 +72,15 @@ export interface FileMetadata {
   sampleRate?: number
   artwork?: Uint8Array | null
   inferred?: boolean
+}
+
+export interface DirectoryNode {
+  id: string
+  name: string
+  path: string
+  parentId: string | null
+  folderId: string
+  children: DirectoryNode[]
+  trackCount: number
+  hasChildren: boolean
 }

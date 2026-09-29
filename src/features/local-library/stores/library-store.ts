@@ -16,9 +16,10 @@ interface LibraryState {
   selectedTrackIds: Set<string>
   lastUpdated: number
 
-  addFolder: (folder: Omit<LocalFolder, 'id' | 'addedAt' | 'lastScan' | 'trackCount' | 'albumCount' | 'artistCount'>) => Promise<string>
+  addFolder: (folder: Omit<LocalFolder, 'id' | 'addedAt' | 'lastScan' | 'trackCount' | 'albumCount' | 'artistCount' | 'needsReconnect'>) => Promise<string>
   removeFolder: (folderId: string) => Promise<void>
   updateFolder: (folderId: string, data: Partial<LocalFolder>) => void
+  reconnectFolder: (folderId: string, handle: FileSystemDirectoryHandle) => Promise<void>
   setTracks: (tracks: LocalMusicFile[]) => void
   addTracks: (tracks: LocalMusicFile[]) => void
   updateTrack: (id: string, data: Partial<LocalMusicFile>) => void
@@ -57,6 +58,7 @@ export const useLibraryStore = create<LibraryState>()(
           trackCount: 0,
           albumCount: 0,
           artistCount: 0,
+          needsReconnect: false,
         }
         set((state) => ({ folders: [...state.folders, newFolder] }))
         return id
@@ -73,6 +75,14 @@ export const useLibraryStore = create<LibraryState>()(
         set((state) => ({
           folders: state.folders.map((f) => (f.id === folderId ? { ...f, ...data } : f)),
         })),
+
+      reconnectFolder: async (folderId: string, handle: FileSystemDirectoryHandle): Promise<void> => {
+        set((state) => ({
+          folders: state.folders.map((f) =>
+            f.id === folderId ? { ...f, handle, needsReconnect: false } : f
+          ),
+        }))
+      },
 
       setTracks: (tracks) => set({ tracks, lastUpdated: Date.now() }),
 

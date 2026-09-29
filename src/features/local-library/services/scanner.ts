@@ -2,9 +2,9 @@
 
 import { iterateFiles, verifyPermission } from '@/lib/filesystem'
 import { extractMetadata, createArtworkDataUrl } from '@/lib/metadata'
-import { saveMusicFiles, saveFolder, getAllMusicFiles, getMusicFilesByFolder, deleteMusicFilesByFolder } from '@/lib/database'
+import { saveMusicFiles, saveFolder, getAllMusicFiles, getMusicFilesByFolder, deleteMusicFilesByFolder, saveDirectoryTree, deleteDirectoryTreeByFolder } from '@/lib/database'
 import { useLibraryStore } from '@/features/local-library/stores/library-store'
-import type { LocalMusicFile, LocalFolder, ScanProgress } from '@/features/local-library/types'
+import type { LocalMusicFile, LocalFolder, ScanProgress, DirectoryNode } from '@/features/local-library/types'
 import { generateId } from '@/lib/database'
 
 const BATCH_SIZE = 50
@@ -33,6 +33,97 @@ function parseFileName(fileName: string): { title?: string; artist?: string; alb
     return { artist: parts[0], title: parts[1] }
   }
   return { title: nameWithoutExt }
+}
+
+async function buildDirectoryTree(
+  folder: LocalFolder,
+  handle: FileSystemDirectoryHandle,
+  tracks: LocalMusicFile[]
+): Promise<DirectoryNode[]> {
+  const pathToNode = new Map<string, DirectoryNode>()
+  const rootId = generateId()
+  
+  // Create root node
+  const rootNode: DirectoryNode = {
+    id: rootId,
+    name: folder.name,
+    path: '',
+    parentId: null,
+    folderId: folder.id,
+    children: [],
+    trackCount: 0,
+    hasChildren: false,
+  }
+  pathToNode.set('', rootNode)
+
+  // Group tracks by directory path
+  const dirTrackCount = new Map<string, number>()
+  for (const track of tracks) {
+    const dirPath = track.path.substring(0, track.path.lastIndexOf('/'))
+    const currentCount = dirTrackCount.get(dirPath) || 0
+    dirTrackCount.set(dirPath, currentCount + 1)
+  }
+
+  // Create nodes for all directory paths
+  const allDirPaths = new Set<string>()
+  for (const track of tracks) {
+    const dirPath = track.path.substring(0, track.path.lastIndexOf('/'))
+    if (dirPath) {
+      let currentPath = ''
+      const parts = dirPath.split('/')
+      for (const part of parts) {
+        currentPath = currentPath ? `${currentPath}/${part}` : part
+        allDirPaths.add(currentPath)
+      }
+    }
+  }
+
+  // Create nodes in order (parents first)
+  const sortedPaths = Array.from(allDirPaths).sort((a, b) => a.split('/').length - b.split('/').length)
+  
+  for (const dirPath of sortedPaths) {
+    const parts = dirPath.split('/')
+    const name = parts[parts.length - 1]
+    const parentPath = parts.slice(0, -1).join('/')
+    const parentId = pathToNode.get(parentPath)?.id || rootId
+    
+    const node: DirectoryNode = {
+      id: generateId(),
+      name,
+      path: dirPath,
+      parentId,
+      folderId: folder.id,
+      children: [],
+      trackCount: dirTrackCount.get(dirPath) || 0,
+      hasChildren: false,
+    }
+    pathToNode.set(dirPath, node)
+  }
+
+  // Build children arrays and update hasChildren
+  for (const [path, node] of pathToNode) {
+    if (node.parentId) {
+      const parent = pathToNode.get(node.parentId === rootId ? '' : path.substring(0, path.lastIndexOf('/')))
+      if (parent) {
+        parent.children.push(node)
+        parent.hasChildren = true
+      }
+    }
+  }
+
+  // Update track counts for parent directories (aggregate)
+  const updateTrackCounts = (node: DirectoryNode): number => {
+    let total = node.trackCount
+    for (const child of node.children) {
+      total += updateTrackCounts(child)
+    }
+    node.trackCount = total
+    return total
+  }
+  updateTrackCounts(rootNode)
+
+  // Convert to array for storage
+  return Array.from(pathToNode.values())
 }
 
 async function scanFolder(
@@ -123,6 +214,11 @@ async function scanFolder(
     }
   }
 
+  // Build and save directory tree
+  const allTracks = [...existingFiles.filter(e => currentPaths.has(e.path)), ...newTracks]
+  const treeNodes = await buildDirectoryTree(folder, handle, allTracks)
+  await saveDirectoryTree(treeNodes)
+
   return newTracks
 }
 
@@ -135,8 +231,14 @@ export async function scanLibrary(
   const folder = store.folders.find((f) => f.id === folderId)
   if (!folder) return
 
+  if (!folder.handle) {
+    store.updateFolder(folderId, { needsReconnect: true })
+    throw new Error('Folder needs reconnection. Please reconnect the folder first.')
+  }
+
   const hasPermission = await verifyPermission(handle)
   if (!hasPermission) {
+    store.updateFolder(folderId, { needsReconnect: true })
     throw new Error('Permission denied for folder access')
   }
 
@@ -173,7 +275,7 @@ export async function scanLibrary(
 export async function scanAllFolders(): Promise<void> {
   const store = useLibraryStore.getState()
   for (const folder of store.folders) {
-    if (folder.handle) {
+    if (folder.handle && !folder.needsReconnect) {
       await scanLibrary(folder.id, folder.handle)
     }
   }

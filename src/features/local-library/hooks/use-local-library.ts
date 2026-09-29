@@ -20,6 +20,7 @@ export function useLocalLibrary() {
     addFolder: storeAddFolder,
     removeFolder: storeRemoveFolder,
     updateFolder,
+    reconnectFolder: storeReconnectFolder,
     setScanning,
     setScanProgress,
     setViewMode,
@@ -41,7 +42,13 @@ export function useLocalLibrary() {
           getAllFolders(),
           getAllMusicFiles(),
         ])
-        useLibraryStore.setState({ folders: storedFolders, tracks: storedTracks })
+        // Mark folders without handles as needing reconnection
+        const foldersWithReconnect = storedFolders.map((f) => ({
+          ...f,
+          needsReconnect: !f.handle,
+          handle: null, // Handles can't be persisted
+        }))
+        useLibraryStore.setState({ folders: foldersWithReconnect, tracks: storedTracks })
         setInitialized(true)
       } catch (error) {
         console.error('Failed to initialize library:', error)
@@ -60,6 +67,24 @@ export function useLocalLibrary() {
   const removeFolder = useCallback(async (folderId: string) => {
     await storeRemoveFolder(folderId)
   }, [storeRemoveFolder])
+
+  const reconnectFolder = useCallback(async (folderId: string) => {
+    if (!('showDirectoryPicker' in window)) {
+      throw new Error('File System Access API not supported')
+    }
+    try {
+      const handle = await (window as Window & { showDirectoryPicker: (options?: { mode?: 'read' | 'readwrite' }) => Promise<FileSystemDirectoryHandle> }).showDirectoryPicker({
+        mode: 'read',
+      })
+      await storeReconnectFolder(folderId, handle)
+      return handle
+    } catch (error) {
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.error('Failed to reconnect folder:', error)
+      }
+      throw error
+    }
+  }, [storeReconnectFolder])
 
   const startScan = useCallback(async (folderId?: string) => {
     if (folderId) {
@@ -170,6 +195,7 @@ export function useLocalLibrary() {
     addFolder,
     removeFolder,
     updateFolder,
+    reconnectFolder,
     startScan,
     setViewMode,
     setFilter,

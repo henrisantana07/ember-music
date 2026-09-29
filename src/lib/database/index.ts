@@ -1,5 +1,5 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb'
-import type { LocalMusicFile, LocalFolder } from '@/features/local-library/types'
+import type { LocalMusicFile, LocalFolder, DirectoryNode } from '@/features/local-library/types'
 
 interface LocalLibraryDB extends DBSchema {
   musicFiles: {
@@ -11,6 +11,11 @@ interface LocalLibraryDB extends DBSchema {
     key: string
     value: LocalFolder
   }
+  directoryTree: {
+    key: string
+    value: DirectoryNode
+    indexes: { 'by-folder': string; 'by-parent': string }
+  }
   metadata: {
     key: string
     value: { key: string; value: unknown }
@@ -18,7 +23,7 @@ interface LocalLibraryDB extends DBSchema {
 }
 
 const DB_NAME = 'ember-local-library'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 let dbInstance: IDBPDatabase<LocalLibraryDB> | null = null
 
@@ -26,7 +31,7 @@ export async function getDB(): Promise<IDBPDatabase<LocalLibraryDB>> {
   if (dbInstance) return dbInstance
 
   dbInstance = await openDB<LocalLibraryDB>(DB_NAME, DB_VERSION, {
-    upgrade(db) {
+    upgrade(db, oldVersion) {
       if (!db.objectStoreNames.contains('musicFiles')) {
         const musicStore = db.createObjectStore('musicFiles', { keyPath: 'id' })
         musicStore.createIndex('by-folder', 'folderId')
@@ -36,6 +41,11 @@ export async function getDB(): Promise<IDBPDatabase<LocalLibraryDB>> {
       }
       if (!db.objectStoreNames.contains('folders')) {
         db.createObjectStore('folders', { keyPath: 'id' })
+      }
+      if (!db.objectStoreNames.contains('directoryTree')) {
+        const treeStore = db.createObjectStore('directoryTree', { keyPath: 'id' })
+        treeStore.createIndex('by-folder', 'folderId')
+        treeStore.createIndex('by-parent', 'parentId')
       }
       if (!db.objectStoreNames.contains('metadata')) {
         db.createObjectStore('metadata', { keyPath: 'key' })
@@ -126,12 +136,44 @@ export async function getMetadata(key: string): Promise<unknown> {
 
 export async function clearDatabase(): Promise<void> {
   const db = await getDB()
-  const tx = db.transaction(['musicFiles', 'folders', 'metadata'], 'readwrite')
+  const tx = db.transaction(['musicFiles', 'folders', 'directoryTree', 'metadata'], 'readwrite')
   await Promise.all([
     tx.objectStore('musicFiles').clear(),
     tx.objectStore('folders').clear(),
+    tx.objectStore('directoryTree').clear(),
     tx.objectStore('metadata').clear(),
   ])
+  await tx.done
+}
+
+export async function saveDirectoryTree(nodes: DirectoryNode[]): Promise<void> {
+  const db = await getDB()
+  const tx = db.transaction('directoryTree', 'readwrite')
+  await Promise.all(nodes.map((node) => tx.store.put(node)))
+  await tx.done
+}
+
+export async function getDirectoryTreeByFolder(folderId: string): Promise<DirectoryNode[]> {
+  const db = await getDB()
+  return db.getAllFromIndex('directoryTree', 'by-folder', folderId)
+}
+
+export async function getDirectoryTreeByParent(folderId: string, parentId: string | null): Promise<DirectoryNode[]> {
+  const db = await getDB()
+  const allNodes = await db.getAllFromIndex('directoryTree', 'by-folder', folderId)
+  return allNodes.filter((node) => node.parentId === parentId)
+}
+
+export async function getDirectoryNode(id: string): Promise<DirectoryNode | undefined> {
+  const db = await getDB()
+  return db.get('directoryTree', id)
+}
+
+export async function deleteDirectoryTreeByFolder(folderId: string): Promise<void> {
+  const db = await getDB()
+  const nodes = await db.getAllFromIndex('directoryTree', 'by-folder', folderId)
+  const tx = db.transaction('directoryTree', 'readwrite')
+  await Promise.all(nodes.map((node) => tx.store.delete(node.id)))
   await tx.done
 }
 
