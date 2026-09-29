@@ -50,7 +50,6 @@ export interface LocalLibraryState {
 }
 
 export type ViewMode = 'list' | 'grid'
-export type FilterType = 'all' | 'tracks' | 'albums' | 'artists' | 'folders'
 
 export interface ScanProgress {
   current: number

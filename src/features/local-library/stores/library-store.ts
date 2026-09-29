@@ -2,7 +2,7 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { LocalMusicFile, LocalFolder, ViewMode, FilterType, ScanProgress } from '@/features/local-library/types'
+import type { LocalMusicFile, LocalFolder, ViewMode, ScanProgress } from '@/features/local-library/types'
 import { generateId } from '@/lib/database'
 
 interface LibraryState {
@@ -11,7 +11,6 @@ interface LibraryState {
   scanning: boolean
   scanProgress: ScanProgress
   viewMode: ViewMode
-  filter: FilterType
   searchQuery: string
   selectedTrackIds: Set<string>
   lastUpdated: number
@@ -28,7 +27,6 @@ interface LibraryState {
   setScanning: (scanning: boolean) => void
   setScanProgress: (progress: ScanProgress) => void
   setViewMode: (mode: ViewMode) => void
-  setFilter: (filter: FilterType) => void
   setSearchQuery: (query: string) => void
   toggleTrackSelection: (id: string) => void
   clearSelection: () => void
@@ -43,7 +41,6 @@ export const useLibraryStore = create<LibraryState>()(
       scanning: false,
       scanProgress: { current: 0, total: 0, currentFile: '' },
       viewMode: 'list',
-      filter: 'all',
       searchQuery: '',
       selectedTrackIds: new Set(),
       lastUpdated: 0,
@@ -117,8 +114,6 @@ export const useLibraryStore = create<LibraryState>()(
 
       setViewMode: (mode) => set({ viewMode: mode }),
 
-      setFilter: (filter) => set({ filter }),
-
       setSearchQuery: (query) => set({ searchQuery: query }),
 
       toggleTrackSelection: (id) =>
@@ -141,7 +136,6 @@ export const useLibraryStore = create<LibraryState>()(
       partialize: (state) => ({
         folders: state.folders,
         viewMode: state.viewMode,
-        filter: state.filter,
         lastUpdated: state.lastUpdated,
       }),
     }

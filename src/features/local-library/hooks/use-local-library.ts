@@ -13,7 +13,6 @@ export function useLocalLibrary() {
     scanning,
     scanProgress,
     viewMode,
-    filter,
     searchQuery,
     selectedTrackIds,
     setTracks,
@@ -24,7 +23,6 @@ export function useLocalLibrary() {
     setScanning,
     setScanProgress,
     setViewMode,
-    setFilter,
     setSearchQuery,
     toggleTrackSelection,
     clearSelection,
@@ -117,21 +115,8 @@ export function useLocalLibrary() {
       )
     }
 
-    switch (filter) {
-      case 'tracks':
-        break
-      case 'albums':
-        break
-      case 'artists':
-        break
-      case 'folders':
-        break
-      default:
-        break
-    }
-
     return result
-  }, [tracks, searchQuery, filter])
+  }, [tracks, searchQuery])
 
   const getArtists = useCallback(() => {
     const artistMap = new Map<string, { name: string; trackCount: number; albums: Set<string> }>()
@@ -190,7 +175,6 @@ export function useLocalLibrary() {
     scanning,
     scanProgress,
     viewMode,
-    filter,
     searchQuery,
     selectedTrackIds,
     initialized,
@@ -201,7 +185,6 @@ export function useLocalLibrary() {
     reconnectFolder,
     startScan,
     setViewMode,
-    setFilter,
     setSearchQuery,
     toggleTrackSelection,
     clearSelection,
