@@ -134,7 +134,7 @@ export const useLibraryStore = create<LibraryState>()(
     {
       name: 'local-library-store',
       partialize: (state) => ({
-        folders: state.folders,
+        folders: state.folders.map(({ handle, ...rest }) => rest),
         viewMode: state.viewMode,
         lastUpdated: state.lastUpdated,
       }),
