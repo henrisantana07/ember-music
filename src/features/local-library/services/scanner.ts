@@ -252,6 +252,9 @@ export async function scanLibrary(
     const uniqueArtists = new Set(tracks.map((t) => t.artist).filter(Boolean))
     const uniqueAlbums = new Set(tracks.map((t) => t.album).filter(Boolean))
 
+    // Update Zustand store immediately so UI reflects new tracks
+    store.addTracks(tracks)
+
     await saveFolder({
       ...folder,
       lastScan: Date.now(),
