@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
-import { FolderPlus, RefreshCw, Search, LayoutList, LayoutGrid, Filter, X } from 'lucide-react'
+import { FolderPlus, RefreshCw, Search, X } from 'lucide-react'
 import { useLocalLibrary } from '@/features/local-library/hooks/use-local-library'
 import { pickDirectory } from '@/lib/filesystem'
 
@@ -9,11 +9,7 @@ export function LocalLibraryHeader() {
   const {
     scanning,
     scanProgress,
-    viewMode,
-    filter,
     searchQuery,
-    setViewMode,
-    setFilter,
     setSearchQuery,
     startScan,
     addFolder,
@@ -30,14 +26,12 @@ export function LocalLibraryHeader() {
     const path = (firstFile as File & { webkitRelativePath?: string }).webkitRelativePath || firstFile.name
     const folderName = path.split('/')[0]
 
-    // Create mock handle directly from selected files (don't call pickDirectory again)
     const { createMockHandle } = await import('@/lib/filesystem')
     const handle = await createMockHandle(folderName, files)
     
     const folderId = await addFolder({ handle, name: folderName, path: folderName })
     await startScan(folderId, handle)
     
-    // Reset input so same folder can be selected again
     e.target.value = ''
   }
 
@@ -82,16 +76,6 @@ export function LocalLibraryHeader() {
           Adicionar pasta
         </button>
 
-        <button
-          onClick={() => startScan()}
-          disabled={scanning || folders.length === 0}
-          className="btn-secondary text-sm flex items-center gap-2"
-          style={{ minWidth: '130px', justifyContent: 'center' }}
-        >
-          <RefreshCw className={`w-4 h-4 ${scanning ? 'animate-spin' : ''}`} />
-          Atualizar
-        </button>
-
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-disabled)' }} />
           <input
@@ -116,43 +100,6 @@ export function LocalLibraryHeader() {
             </button>
           )}
         </div>
-
-        <div className="flex items-center gap-1" style={{ backgroundColor: 'var(--bg-surface)', borderRadius: 'var(--radius-md)', padding: '4px' }}>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`p-2 rounded transition-colors ${viewMode === 'list' ? 'bg-white/10' : ''}`}
-            style={{ color: viewMode === 'list' ? 'var(--accent-from)' : 'var(--text-secondary)' }}
-            title="Lista"
-          >
-            <LayoutList className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`p-2 rounded transition-colors ${viewMode === 'grid' ? 'bg-white/10' : ''}`}
-            style={{ color: viewMode === 'grid' ? 'var(--accent-from)' : 'var(--text-secondary)' }}
-            title="Grade"
-          >
-            <LayoutGrid className="w-4 h-4" />
-          </button>
-        </div>
-
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value as typeof filter)}
-          className="px-3 py-2 rounded-lg text-sm border-none focus:outline-none focus:ring-2 cursor-pointer"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            color: 'var(--text-primary)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            minWidth: '140px',
-          }}
-        >
-          <option value="all">Todas</option>
-          <option value="tracks">Músicas</option>
-          <option value="albums">Álbuns</option>
-          <option value="artists">Artistas</option>
-          <option value="folders">Pastas</option>
-        </select>
       </div>
 
       {scanning && (
@@ -182,7 +129,6 @@ export function LocalLibraryHeader() {
         onChange={handleLegacyFileSelect}
         style={{ display: 'none' }}
       />
-
     </div>
   )
 }
