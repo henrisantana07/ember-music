@@ -231,7 +231,7 @@ function HomeContent() {
     <>
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-1">Bem-vindo ao Ember Music</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>Descubra música com Deezer</p>
+        <p style={{ color: 'var(--text-secondary)' }}>Descubra música com Ember Music!</p>
       </div>
 
       {trending.length > 0 && (
