@@ -5,6 +5,7 @@ import { usePlayerStore } from '@/lib/store'
 import type { LocalMusicFile } from '@/features/local-library/types'
 import { formatDuration } from '@/lib/spotify'
 import { Play, Pause, MoreVertical, Heart, Plus } from 'lucide-react'
+import { TrackActionsMenu } from '@/features/local-library/components/TrackActionsMenu'
 
 interface LocalTrackGridProps {
   tracks: LocalMusicFile[]
@@ -47,7 +48,7 @@ export function LocalTrackGrid({ tracks }: LocalTrackGridProps) {
               ) : (
                 <div className="w-full h-full rounded-md flex items-center justify-center" style={{ backgroundColor: 'var(--bg-elevated)' }}>
                   <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ color: 'var(--text-disabled)' }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 002-2v8a2 2 0 002 2z" />
                   </svg>
                 </div>
               )}
@@ -92,12 +93,7 @@ export function LocalTrackGrid({ tracks }: LocalTrackGridProps) {
                 {track.duration > 0 ? formatDuration(Math.floor(track.duration)) : '--:--'}
               </span>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button className="p-1" title="Adicionar à playlist">
-                  <Plus className="w-4 h-4" style={{ color: 'var(--text-disabled)' }} />
-                </button>
-                <button className="p-1" title="Mais opções">
-                  <MoreVertical className="w-4 h-4" style={{ color: 'var(--text-disabled)' }} />
-                </button>
+                <TrackActionsMenu track={track} allTracks={tracks} />
               </div>
             </div>
           </div>

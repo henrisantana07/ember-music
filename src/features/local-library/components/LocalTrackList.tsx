@@ -5,6 +5,7 @@ import { useLocalPlayer } from '@/features/local-library/hooks/use-local-player'
 import type { LocalMusicFile } from '@/features/local-library/types'
 import { formatDuration } from '@/lib/spotify'
 import { Play, Pause, MoreVertical, Heart, Plus } from 'lucide-react'
+import { TrackActionsMenu } from '@/features/local-library/components/TrackActionsMenu'
 
 interface LocalTrackListProps {
   tracks: LocalMusicFile[]
@@ -76,14 +77,7 @@ export function LocalTrackList({ tracks }: LocalTrackListProps) {
                   {track.duration > 0 ? formatDuration(Math.floor(track.duration)) : '--:--'}
                 </td>
                 <td className="py-2 text-center">
-                  <button className="p-1 opacity-0 group-hover:opacity-100 transition-opacity" title="Adicionar à playlist">
-                    <Plus className="w-4 h-4" style={{ color: 'var(--text-disabled)' }} />
-                  </button>
-                </td>
-                <td className="py-2 text-center">
-                  <button className="p-1 opacity-0 group-hover:opacity-100 transition-opacity" title="Mais opções">
-                    <MoreVertical className="w-4 h-4" style={{ color: 'var(--text-disabled)' }} />
-                  </button>
+                  <TrackActionsMenu track={track} allTracks={tracks} />
                 </td>
               </tr>
             )
