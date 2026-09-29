@@ -35,7 +35,7 @@ export function LocalLibraryHeader() {
     const handle = await createMockHandle(folderName, files)
     
     const folderId = await addFolder({ handle, name: folderName, path: folderName })
-    await startScan(folderId)
+    await startScan(folderId, handle)
     
     // Reset input so same folder can be selected again
     e.target.value = ''
@@ -51,7 +51,7 @@ export function LocalLibraryHeader() {
       const result = await pickDirectory()
       if (result) {
         const folderId = await addFolder({ handle: result.handle, name: result.name, path: result.path })
-        await startScan(folderId)
+        await startScan(folderId, result.handle)
       }
     } catch (error) {
       if (error instanceof Error && error.name !== 'AbortError') {

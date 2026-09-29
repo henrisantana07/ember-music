@@ -86,8 +86,11 @@ export function useLocalLibrary() {
     }
   }, [storeReconnectFolder])
 
-  const startScan = useCallback(async (folderId?: string) => {
-    if (folderId) {
+  const startScan = useCallback(async (folderId?: string, handle?: FileSystemDirectoryHandle) => {
+    if (folderId && handle) {
+      const { scanLibrary } = await import('@/features/local-library/services/scanner')
+      await scanLibrary(folderId, handle)
+    } else if (folderId) {
       const folder = folders.find((f) => f.id === folderId)
       if (folder?.handle) {
         const { scanLibrary } = await import('@/features/local-library/services/scanner')
