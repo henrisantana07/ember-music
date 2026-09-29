@@ -1,6 +1,18 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb'
 import type { LocalMusicFile, LocalFolder, DirectoryNode } from '@/features/local-library/types'
 
+interface StoredFolder {
+  id: string
+  name: string
+  path: string
+  addedAt: number
+  lastScan: number
+  trackCount: number
+  albumCount: number
+  artistCount: number
+  needsReconnect: boolean
+}
+
 interface LocalLibraryDB extends DBSchema {
   musicFiles: {
     key: string
@@ -9,7 +21,7 @@ interface LocalLibraryDB extends DBSchema {
   }
   folders: {
     key: string
-    value: LocalFolder
+    value: StoredFolder
   }
   directoryTree: {
     key: string
@@ -98,24 +110,31 @@ export async function deleteMusicFilesByFolder(folderId: string): Promise<void> 
 
 export async function saveFolder(folder: LocalFolder): Promise<void> {
   const db = await getDB()
-  await db.put('folders', folder)
+  const { handle, ...folderData } = folder
+  await db.put('folders', folderData)
 }
 
 export async function saveFolders(folders: LocalFolder[]): Promise<void> {
   const db = await getDB()
   const tx = db.transaction('folders', 'readwrite')
-  await Promise.all(folders.map((folder) => tx.store.put(folder)))
+  await Promise.all(folders.map((folder) => {
+    const { handle, ...folderData } = folder
+    tx.store.put(folderData)
+  }))
   await tx.done
 }
 
 export async function getFolder(id: string): Promise<LocalFolder | undefined> {
   const db = await getDB()
-  return db.get('folders', id)
+  const stored = await db.get('folders', id)
+  if (!stored) return undefined
+  return { ...stored, handle: null }
 }
 
 export async function getAllFolders(): Promise<LocalFolder[]> {
   const db = await getDB()
-  return db.getAll('folders')
+  const stored = await db.getAll('folders')
+  return stored.map((f) => ({ ...f, handle: null }))
 }
 
 export async function deleteFolder(id: string): Promise<void> {
