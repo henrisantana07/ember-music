@@ -59,7 +59,7 @@ async function pickDirectoryLegacy(): Promise<DirectoryHandleResult | null> {
   })
 }
 
-async function createMockHandle(name: string, files: File[]): Promise<FileSystemDirectoryHandle> {
+export async function createMockHandle(name: string, files: File[]): Promise<FileSystemDirectoryHandle> {
   const fileMap = new Map<string, File>()
   files.forEach((file) => {
     const relativePath = (file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name

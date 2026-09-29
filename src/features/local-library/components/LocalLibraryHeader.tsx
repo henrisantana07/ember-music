@@ -30,11 +30,13 @@ export function LocalLibraryHeader() {
     const path = (firstFile as File & { webkitRelativePath?: string }).webkitRelativePath || firstFile.name
     const folderName = path.split('/')[0]
 
-    const handle = await pickDirectory()
-    if (handle) {
-      const folderId = await addFolder({ handle: handle.handle, name: folderName, path: folderName })
-      await startScan(folderId)
-    }
+    // Create mock handle directly from selected files (don't call pickDirectory again)
+    const { createMockHandle } = await import('@/lib/filesystem')
+    const handle = await createMockHandle(folderName, files)
+    
+    const folderId = await addFolder({ handle, name: folderName, path: folderName })
+    await startScan(folderId)
+    
     // Reset input so same folder can be selected again
     e.target.value = ''
   }
