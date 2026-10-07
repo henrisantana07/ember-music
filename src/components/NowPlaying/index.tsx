@@ -84,7 +84,7 @@ function SortableQueueItem({ track, isCurrent, isPlaying, onPlay, onRemove }: {
   )
 }
 
-export default function NowPlaying() {
+export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const router = useRouter()
   const progressRef = useRef<HTMLDivElement>(null)
   const [dominantColor, setDominantColor] = useState<string | null>(null)
@@ -99,19 +99,22 @@ export default function NowPlaying() {
   const [searchResults, setSearchResults] = useState<Track[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
-  const [showClearModal, setShowClearModal] = useState(false)
-  const [clearing, setClearing] = useState(false)
+  const [suggestions, setSuggestions] = useState<Track[]>([])
   const supabase = createClient()
 
   const {
     currentTrack, isPlaying, volume, progress, duration, queue,
-    repeat, shuffle,
-    togglePlay, next, prev,
+    repeat, shuffle, isExpandedOpen,
+    play, togglePlay, next, prev,
     setVolume, setProgress, setDuration,
     setRepeat, toggleShuffle,
     removeFromQueue, reorderQueue, clearQueue, addToQueue,
-    currentPlaylistId, currentPlaylistName,
   } = usePlayerStore()
+
+  function requestClose() {
+    if (onClose) onClose()
+    else router.back()
+  }
 
   useEffect(() => {
     if (!currentTrack?.image) {
@@ -192,12 +195,28 @@ export default function NowPlaying() {
   }, [isSearchOpen])
 
   useEffect(() => {
+    if (queue.length > 0 || !currentTrack?.artist_id) return
+    const controller = new AbortController()
+    fetch(`/api/deezer?endpoint=related&id=${currentTrack.artist_id}&exclude=${currentTrack.id}`, { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error('related failed'))))
+      .then((data) => {
+        if (!controller.signal.aborted) setSuggestions(((data.results ?? []) as Track[]).slice(0, 6))
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setSuggestions([])
+      })
+    return () => controller.abort()
+  }, [queue.length, currentTrack?.artist_id, currentTrack?.id])
+
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') router.back()
+      if (e.key !== 'Escape') return
+      if (onClose) onClose()
+      else if (!isExpandedOpen) router.back()
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [router])
+  }, [router, onClose, isExpandedOpen])
 
   if (!currentTrack) {
     return (
@@ -235,6 +254,8 @@ export default function NowPlaying() {
   const bgGradient = dominantColor
     ? `radial-gradient(ellipse at 30% 20%, ${dominantColor}66 0%, var(--bg-base) 60%)`
     : 'var(--bg-nowplaying-fallback)'
+
+  const glowTint = dominantColor ? `${dominantColor}1A` : 'transparent'
 
   const coverShadow = dominantColor
     ? `0 32px 64px ${dominantColor}4D`
@@ -319,8 +340,12 @@ export default function NowPlaying() {
 
   function handleTouchEnd() {
     if (touchDelta.current > 100) {
-      setSwipeOffset(window.innerHeight)
-      setTimeout(() => router.back(), 250)
+      if (onClose) {
+        onClose()
+      } else {
+        setSwipeOffset(window.innerHeight)
+        setTimeout(() => router.back(), 250)
+      }
     } else {
       setSwipeOffset(0)
     }
@@ -346,7 +371,7 @@ export default function NowPlaying() {
 
   return (
     <div
-      className="h-full flex flex-col animate-slide-up overflow-hidden"
+      className={`h-full relative flex flex-col overflow-hidden ${onClose ? '' : 'animate-slide-up'}`}
       style={{
         background: bgGradient,
         transition: `background 800ms ease${swipeOffset > 0 ? '' : ', transform 300ms cubic-bezier(0.32, 0.72, 0, 1)'}`,
@@ -357,8 +382,18 @@ export default function NowPlaying() {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <header className="flex items-center justify-between px-4 md:px-6 h-14 flex-none">
-        <button onClick={() => router.back()} className="p-2 rounded-full hover:bg-white/[0.06] transition-colors" style={{ color: 'var(--text-primary)' }} aria-label="Fechar">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: glowTint,
+          backdropFilter: 'blur(80px)',
+          WebkitBackdropFilter: 'blur(80px)',
+        }}
+      />
+
+      <header className="relative flex items-center justify-between px-4 md:px-6 h-14 flex-none">
+        <button onClick={requestClose} className="p-2 rounded-full hover:bg-white/[0.06] transition-colors" style={{ color: 'var(--text-primary)' }} aria-label="Fechar">
           <ChevronDown className="w-6 h-6" />
         </button>
         <button
@@ -372,30 +407,31 @@ export default function NowPlaying() {
         <div className="hidden md:block" />
       </header>
 
-      <div className="flex-1 flex flex-col md:flex-row gap-4 md:gap-0 min-h-0 px-4 md:px-6 pb-4">
-        <div className={`flex-1 flex flex-col items-center justify-center gap-3 md:gap-4 min-h-0 overflow-hidden pt-1 md:pt-2 pb-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
-          <div className="relative flex-shrink-0" style={{ width: 'min(440px, 40vw, 32vh)', aspectRatio: '1' }}>
+      <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-0 min-h-0 px-4 md:px-6 pb-4">
+        <div className={`flex-1 md:flex-[3] flex flex-col items-center justify-center gap-3 md:gap-4 min-h-0 overflow-hidden pt-1 md:pt-2 pb-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
+          <div className="now-cover relative flex-shrink-0" style={{ aspectRatio: '1' }}>
             {currentTrack.image ? (
               <img
+                key={currentTrack.id}
                 src={currentTrack.image}
                 alt={currentTrack.name}
-                className="w-full h-full rounded-2xl object-cover"
+                className="w-full h-full rounded-2xl object-cover animate-cover-in"
                 style={{ boxShadow: coverShadow }}
               />
             ) : (
-              <div className="w-full h-full rounded-2xl flex items-center justify-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
+              <div key={currentTrack.id} className="w-full h-full rounded-2xl flex items-center justify-center animate-cover-in" style={{ backgroundColor: 'var(--bg-surface)' }}>
                 <Music className="w-16 h-16" style={{ color: 'var(--text-disabled)' }} />
               </div>
             )}
           </div>
 
-          <div className="w-full max-w-[400px] text-center space-y-0.5">
-            <h1 className="text-xl md:text-2xl font-bold truncate" style={{ color: 'var(--text-primary)' }} title={currentTrack.name}>
+          <div className="w-full max-w-[480px] text-center space-y-0.5">
+            <h1 className="text-[28px] md:text-[32px] leading-tight font-bold truncate" style={{ color: 'var(--text-primary)' }} title={currentTrack.name}>
               {currentTrack.name}
             </h1>
             <Link
               href={`/artists/${currentTrack.artist_id}`}
-              className="text-sm inline-block hover:underline"
+              className="text-base inline-block hover:underline"
               style={{ color: 'var(--text-secondary)' }}
             >
               {currentTrack.artist_name}
@@ -436,7 +472,7 @@ export default function NowPlaying() {
             </div>
           )}
 
-          <div className="w-full max-w-[400px] space-y-1">
+          <div className="w-full space-y-1">
             <div
               ref={progressRef}
               className="w-full h-1 rounded-full cursor-pointer relative group hover:h-1.5 transition-all duration-200"
@@ -463,71 +499,82 @@ export default function NowPlaying() {
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-2 md:gap-3 w-full max-w-[400px]">
-            <button onClick={toggleShuffle} className="p-1.5 transition-colors" style={{ color: shuffle ? 'var(--accent-from)' : 'var(--text-secondary)' }} title={shuffle ? 'Desativar shuffle' : 'Ativar shuffle'}>
-              <Shuffle className="w-4 h-4 md:w-5 md:h-5" />
-            </button>
+          <div className="w-full flex flex-col md:flex-row items-center justify-center gap-3 md:gap-6">
+            <div className="flex items-center justify-center gap-2 md:gap-3">
+              <button onClick={prev} className="p-1.5 transition-colors" style={{ color: 'var(--text-secondary)' }} title="Anterior">
+                <SkipBack className="w-5 h-5 md:w-6 md:h-6" />
+              </button>
 
-            <button onClick={prev} className="p-1.5 transition-colors" style={{ color: 'var(--text-secondary)' }} title="Anterior">
-              <SkipBack className="w-5 h-5 md:w-6 md:h-6" />
-            </button>
+              <button onClick={toggleShuffle} className="p-1.5 transition-colors" style={{ color: shuffle ? 'var(--accent-from)' : 'var(--text-secondary)' }} title={shuffle ? 'Desativar shuffle' : 'Ativar shuffle'}>
+                <Shuffle className="w-4 h-4 md:w-5 md:h-5" />
+              </button>
 
-            <button
-              onClick={togglePlay}
-              className="rounded-full flex items-center justify-center transition-transform active:scale-95"
-              style={{ width: 48, height: 48, background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
-              title={isPlaying ? 'Pausar' : 'Tocar'}
-            >
-              {isPlaying ? (
-                <Pause className="w-5 h-5 md:w-6 md:h-6" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+              <button
+                onClick={togglePlay}
+                className="rounded-full flex items-center justify-center transition-transform active:scale-95"
+                style={{ width: 48, height: 48, background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
+                title={isPlaying ? 'Pausar' : 'Tocar'}
+              >
+                {isPlaying ? (
+                  <Pause className="w-5 h-5 md:w-6 md:h-6" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+                ) : (
+                  <Play className="w-5 h-5 md:w-6 md:h-6" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+                )}
+              </button>
+
+              <button
+                onClick={() => {
+                  const modes: RepeatMode[] = ['none', 'all', 'one']
+                  const idx = modes.indexOf(repeat)
+                  setRepeat(modes[(idx + 1) % modes.length])
+                }}
+                className="p-1.5 transition-colors relative"
+                style={{ color: repeat !== 'none' ? 'var(--accent-from)' : 'var(--text-secondary)' }}
+                title={repeatLabel[repeat]}
+              >
+                {RepeatIcon ? (
+                  <RepeatIcon className="w-4 h-4 md:w-5 md:h-5" />
+                ) : (
+                  <Repeat className="w-4 h-4 md:w-5 md:h-5" />
+                )}
+              </button>
+
+              <button onClick={next} className="p-1.5 transition-colors" style={{ color: 'var(--text-secondary)' }} title="Próxima">
+                <SkipForward className="w-5 h-5 md:w-6 md:h-6" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 w-[180px]" style={{ color: 'var(--text-secondary)' }}>
+              {volume === 0 ? (
+                <VolumeX className="w-4 h-4 flex-none" />
+              ) : volume < 0.5 ? (
+                <Volume1 className="w-4 h-4 flex-none" />
               ) : (
-                <Play className="w-5 h-5 md:w-6 md:h-6" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+                <Volume2 className="w-4 h-4 flex-none" />
               )}
-            </button>
-
-            <button onClick={next} className="p-1.5 transition-colors" style={{ color: 'var(--text-secondary)' }} title="Próxima">
-              <SkipForward className="w-5 h-5 md:w-6 md:h-6" />
-            </button>
-
-            <button
-              onClick={() => {
-                const modes: RepeatMode[] = ['none', 'all', 'one']
-                const idx = modes.indexOf(repeat)
-                setRepeat(modes[(idx + 1) % modes.length])
-              }}
-              className="p-1.5 transition-colors relative"
-              style={{ color: repeat !== 'none' ? 'var(--accent-from)' : 'var(--text-secondary)' }}
-              title={repeatLabel[repeat]}
-            >
-              {RepeatIcon ? (
-                <RepeatIcon className="w-4 h-4 md:w-5 md:h-5" />
-              ) : (
-                <Repeat className="w-4 h-4 md:w-5 md:h-5" />
-              )}
-            </button>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={volume}
+                onChange={(e) => setVolume(parseFloat(e.target.value))}
+                className="w-full h-1 accent-[var(--accent-from)] cursor-pointer"
+              />
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 w-full max-w-[200px]" style={{ color: 'var(--text-secondary)' }}>
-            {volume === 0 ? (
-              <VolumeX className="w-4 h-4" />
-            ) : volume < 0.5 ? (
-              <Volume1 className="w-4 h-4" />
-            ) : (
-              <Volume2 className="w-4 h-4" />
-            )}
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={volume}
-              onChange={(e) => setVolume(parseFloat(e.target.value))}
-              className="w-full h-1 accent-[var(--accent-from)] cursor-pointer"
-            />
-          </div>
+          <button
+            onClick={() => setShowQueueOnMobile(true)}
+            className="md:hidden flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-colors"
+            style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}
+          >
+            <Music className="w-4 h-4" />
+            A seguir
+          </button>
         </div>
 
-          <div className={`w-full md:w-[280px] lg:w-[320px] flex flex-col min-h-[calc(100vh-12rem)] md:flex-1 relative max-h-[calc(100vh-12rem)] md:h-[calc(100vh-8rem)] ${showQueueOnMobile ? '' : 'hidden md:flex'}`}>
+          <div className={`w-full md:w-auto md:flex-[2] flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none ${showQueueOnMobile ? '' : 'hidden md:flex'}`}>
             <div className="flex-none px-2 py-2">
               <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>A seguir</h2>
               {usePlayerStore.getState().currentPlaylistName && (
@@ -540,9 +587,36 @@ export default function NowPlaying() {
                 <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full">
                   <div className="px-1 space-y-0.5">
                   {queue.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+                    <div className="flex flex-col items-center justify-center py-8 text-center px-4">
                       <Music className="w-10 h-10 mb-3" style={{ color: 'var(--text-disabled)' }} />
                       <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Nenhuma faixa na fila</p>
+                      {suggestions.length > 0 && (
+                        <div className="w-full mt-4 text-left">
+                          <p className="text-[11px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: 'var(--text-disabled)' }}>
+                            Faixas relacionadas
+                          </p>
+                          {suggestions.map((track) => (
+                            <button
+                              key={track.id}
+                              onClick={() => play(track, suggestions)}
+                              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors text-left"
+                            >
+                              {track.image ? (
+                                <img src={track.image} alt="" className="w-10 h-10 rounded object-cover flex-none" />
+                              ) : (
+                                <div className="w-10 h-10 rounded flex items-center justify-center flex-none" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                                  <Music className="w-4 h-4" style={{ color: 'var(--text-disabled)' }} />
+                                </div>
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>{track.name}</p>
+                                <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
+                              </div>
+                              <Play className="w-4 h-4 flex-none" style={{ color: 'var(--text-disabled)' }} />
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     queue.map((track, index) => (
@@ -569,7 +643,7 @@ export default function NowPlaying() {
                     {isSearchOpen ? 'Fechar busca' : 'Adicionar à fila'}
                   </button>
                   <button
-                    onClick={() => { if (currentPlaylistId) { setShowClearModal(true) } else { clearQueue() } }}
+                    onClick={() => { clearQueue(); showToast('Fila limpa') }}
                     className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
                     style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg-surface)' }}
                   >
@@ -633,64 +707,6 @@ export default function NowPlaying() {
                     </svg>
                   </button>
                 ))}
-              </div>
-            </div>
-          )}
-
-          {showClearModal && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-              style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
-              onClick={(e) => { if (e.target === e.currentTarget && !clearing) setShowClearModal(false) }}
-            >
-              <div
-                className="w-full max-w-sm rounded-xl p-6 shadow-xl"
-                style={{ backgroundColor: 'var(--bg-elevated)' }}
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(229,72,77,0.15)' }}>
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="var(--error)" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-bold">Limpar fila?</h2>
-                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                      Remover todas as faixas da playlist também?
-                    </p>
-                  </div>
-                </div>
-
-                <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
-                  <strong style={{ color: 'var(--text-primary)' }}>{currentPlaylistName}</strong> perderá todas as faixas da fila atual.
-                </p>
-
-                <div className="flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowClearModal(false)}
-                    disabled={clearing}
-                    className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setClearing(true)
-                      await supabase.from('playlist_tracks').delete().eq('playlist_id', currentPlaylistId!)
-                      clearQueue()
-                      setClearing(false)
-                      setShowClearModal(false)
-                    }}
-                    disabled={clearing}
-                    className="px-5 py-2 rounded-lg text-sm font-bold transition-opacity disabled:opacity-50"
-                    style={{ backgroundColor: 'var(--error)', color: 'white', opacity: clearing ? 0.5 : 1 }}
-                  >
-                    {clearing ? 'Removendo...' : 'Remover'}
-                  </button>
-                </div>
               </div>
             </div>
           )}

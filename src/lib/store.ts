@@ -23,6 +23,7 @@ interface PlayerState {
   crossfadeDuration: number
   sleepTimerMinutes: number | null
   miniPlayer: boolean
+  isExpandedOpen: boolean
 
   play: ((track: Track, queue?: Track[], playlistId?: string, playlistName?: string) => void)
     & ((tracks: Track[], index?: number, playlistId?: string, playlistName?: string) => void)
@@ -44,6 +45,8 @@ interface PlayerState {
   setCrossfadeDuration: (seconds: number) => void
   setSleepTimer: (minutes: number | null) => void
   toggleMiniPlayer: () => void
+  openExpanded: () => void
+  closeExpanded: () => void
 }
 
 function generateShuffleOrder(length: number, currentIndex: number): number[] {
@@ -74,6 +77,7 @@ export const usePlayerStore = create<PlayerState>()(
   crossfadeDuration: 0,
   sleepTimerMinutes: null,
   miniPlayer: false,
+  isExpandedOpen: false,
 
   play: ((arg: Track | Track[], opt1?: unknown, opt2?: unknown, opt3?: unknown) => {
     const tracks = Array.isArray(arg) ? arg : (opt1 as Track[] | undefined) ?? []
@@ -200,6 +204,9 @@ export const usePlayerStore = create<PlayerState>()(
   setSleepTimer: (minutes) => set({ sleepTimerMinutes: minutes }),
 
   toggleMiniPlayer: () => set((s) => ({ miniPlayer: !s.miniPlayer })),
+
+  openExpanded: () => set({ isExpandedOpen: true }),
+  closeExpanded: () => set({ isExpandedOpen: false }),
 }),
     {
       name: 'player-storage',

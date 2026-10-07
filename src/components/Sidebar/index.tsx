@@ -26,11 +26,28 @@ export default function Sidebar() {
   const supabase = createClient()
   const router = useRouter()
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const desktopAsideRef = useRef<HTMLElement>(null)
   const [showDropdown, setShowDropdown] = useState(false)
   const { playlists, fetchPlaylists } = usePlaylistsStore()
   const { artists, fetchArtists } = useArtistsStore()
   const { user, loading: userLoading } = useUser()
   const avatarUrl = useAvatar(user?.id)
+
+  useEffect(() => {
+    const el = desktopAsideRef.current
+    if (!el) return
+    const update = () => {
+      document.documentElement.style.setProperty('--sidebar-w', `${el.offsetWidth}px`)
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    window.addEventListener('resize', update)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('resize', update)
+    }
+  }, [collapsed])
 
   useEffect(() => {
     if (user) {
@@ -249,6 +266,7 @@ export default function Sidebar() {
   return (
     <>
       <aside
+        ref={desktopAsideRef}
         className={`hidden md:flex flex-col h-full bg-[var(--bg-surface)] border-r border-white/5 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] flex-shrink-0 ${
           collapsed ? 'w-[72px]' : 'w-[240px]'
         }`}

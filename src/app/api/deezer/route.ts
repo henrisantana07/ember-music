@@ -5,7 +5,7 @@ const BASE_URL = 'https://api.deezer.com'
 const CACHE_TTL: Record<string, number> = {
   genres: 300, featured: 300, 'charts/artists': 300,
   search: 30, tracks: 60, albums: 60, artists: 60,
-  'genre-tracks': 120, 'albums/tracks': 120,
+  'genre-tracks': 120, 'albums/tracks': 120, related: 300,
 }
 
 const RATE_LIMIT = 120
@@ -151,6 +151,28 @@ export async function GET(request: NextRequest) {
         const data = await deezerFetch(`/chart/0/artists?limit=${limit}`) as { data?: Record<string, unknown>[] }
         const items = data.data ?? []
         return cachedResponse({ results: items.map(mapArtist) }, endpoint)
+      }
+
+      case 'related': {
+        if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+        const exclude = searchParams.get('exclude')
+        const relatedData = await deezerFetch(`/artist/${id}/related?limit=5`) as { data?: Record<string, unknown>[] }
+        const relatedArtists = (relatedData.data ?? []).slice(0, 4)
+        const topLists = await Promise.all(
+          relatedArtists.map((artist) =>
+            deezerFetch(`/artist/${artist.id}/top?limit=6`) as Promise<{ data?: Record<string, unknown>[] }>
+          )
+        )
+        const seen = new Set<string>(exclude ? [exclude] : [])
+        const tracks: Record<string, unknown>[] = []
+        for (const item of topLists.flatMap((list) => list.data ?? [])) {
+          const trackId = String(item.id ?? '')
+          if (!trackId || seen.has(trackId)) continue
+          seen.add(trackId)
+          tracks.push(mapTrack(item))
+          if (tracks.length >= 8) break
+        }
+        return cachedResponse({ results: tracks }, endpoint)
       }
 
       default:

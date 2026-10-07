@@ -40,6 +40,8 @@
   --space-md: 16px;
   --space-lg: 24px;
   --space-xl: 48px;
+
+  --sidebar-w: 0px;
 }
 
 * {
@@ -186,6 +188,43 @@ body {
 
 .animate-slide-up {
   animation: slide-up 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes modal-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes modal-slide-down {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+.modal-slide-up {
+  animation: modal-slide-up 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.modal-slide-down {
+  animation: modal-slide-down 320ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+@keyframes cover-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-cover-in {
+  animation: cover-in 300ms ease-out;
+}
+
+.now-cover {
+  width: min(380px, 100%, 40vh);
+}
+
+@media (max-width: 767px) {
+  .now-cover {
+    width: min(200px, 60vw);
+  }
 }
 
 .theme-light {
