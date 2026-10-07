@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { getAllFolders, getAllMusicFiles, clearDatabase } from '@/lib/database'
+import { getAllFolders, getAllMusicFiles, clearDatabase, getDirectoryTreeByFolder, getMusicFilesByFolder } from '@/lib/database'
 import { scanAllFolders } from '@/features/local-library/services/scanner'
 import { useLibraryStore } from '@/features/local-library/stores/library-store'
-import type { LocalFolder, LocalMusicFile } from '@/features/local-library/types'
+import type { LocalFolder, LocalMusicFile, DirectoryNode } from '@/features/local-library/types'
 
 export function useLocalLibrary() {
   const {
@@ -161,6 +161,32 @@ export function useLocalLibrary() {
     return tracks.filter((t) => t.folderId === folderId)
   }, [tracks])
 
+  const getDirectoryTree = useCallback(async (folderId: string): Promise<DirectoryNode[]> => {
+    return getDirectoryTreeByFolder(folderId)
+  }, [])
+
+  const getTracksByDirectoryNode = useCallback(async (folderId: string, nodeId: string): Promise<LocalMusicFile[]> => {
+    const allTracks = await getMusicFilesByFolder(folderId)
+    const treeNodes = await getDirectoryTreeByFolder(folderId)
+    const node = treeNodes.find(n => n.id === nodeId)
+    if (!node) return []
+
+    // Get all descendant node IDs
+    const descendantIds = new Set<string>()
+    const collectDescendants = (n: DirectoryNode) => {
+      descendantIds.add(n.id)
+      n.children.forEach(collectDescendants)
+    }
+    collectDescendants(node)
+
+    // Filter tracks whose path is under this node's path
+    const nodePath = node.path
+    return allTracks.filter(t => {
+      const trackDir = t.path.substring(0, t.path.lastIndexOf('/'))
+      return trackDir === nodePath || trackDir.startsWith(nodePath + '/')
+    })
+  }, [])
+
   const getTracksByArtist = useCallback((artist: string) => {
     return tracks.filter((t) => t.artist === artist)
   }, [tracks])
@@ -194,6 +220,8 @@ export function useLocalLibrary() {
     getAlbums,
     getGenres,
     getTracksByFolder,
+    getDirectoryTree,
+    getTracksByDirectoryNode,
     getTracksByArtist,
     getTracksByAlbum,
   }
