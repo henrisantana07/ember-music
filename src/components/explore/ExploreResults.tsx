@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import type { Track, Album, Artist } from '@/types/music'
 import type { Json } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
@@ -12,7 +12,6 @@ import { ArtistResultCarousel } from './ArtistResultCarousel'
 import { AlbumResultGrid } from './AlbumResultGrid'
 import { ExploreNoResults } from './ExploreNoResults'
 import { ExploreTrackSkeleton } from './skeletons/ExploreTrackSkeleton'
-import { ArtistCircleSkeleton } from './skeletons/ArtistCircleSkeleton'
 import { PlaylistModal } from '@/components/PlaylistModal'
 import { usePlayerStore } from '@/lib/store'
 
@@ -23,6 +22,10 @@ function matchesDuration(track: Track, duration: DurationFilter) {
   if (duration === 'short') return track.duration <= 120
   if (duration === 'medium') return track.duration > 120 && track.duration <= 300
   return track.duration > 300
+}
+
+function normalizeQuery(query: string): string {
+  return query.trim().replace(/\s+/g, ' ').toLowerCase()
 }
 
 interface ExploreResultsProps {
@@ -40,6 +43,8 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
   const [tracks, setTracks] = useState<Track[]>([])
   const [albums, setAlbums] = useState<Album[]>([])
   const [artists, setArtists] = useState<Artist[]>([])
+  const [youtubeTracks, setYoutubeTracks] = useState<Track[]>([])
+  const [youtubeLoading, setYoutubeLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<{ id: string } | null>(null)
   const [favs, setFavs] = useState<Set<string>>(new Set())
@@ -49,61 +54,13 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
   const supabase = createClient()
   const { play, currentTrack, isPlaying, togglePlay } = usePlayerStore()
 
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
+  const loadingRef = useRef(true)
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
   }, [])
-
-  useEffect(() => {
-    if (!user) { setFavs(new Set()); return }
-    const ids = filteredTracks.map(t => t.id)
-    if (ids.length === 0) return
-    supabase.from('favorites').select('track_id').eq('user_id', user.id).in('track_id', ids)
-      .then(({ data }) => setFavs(new Set(data?.map(d => d.track_id) ?? [])))
-  }, [user, tracks])
-
-  async function handleFavorite(e: React.MouseEvent, track: Track) {
-    e.stopPropagation()
-    if (!user) return
-    if (favs.has(track.id)) {
-      await supabase.from('favorites').delete().eq('track_id', track.id).eq('user_id', user.id)
-      setFavs(prev => { const n = new Set(prev); n.delete(track.id); return n })
-    } else {
-      await supabase.from('favorites').insert({ user_id: user.id, track_id: track.id, track_data: track as unknown as Json })
-      setFavs(prev => { const n = new Set(prev); n.add(track.id); return n })
-    }
-  }
-
-  useEffect(() => {
-    if (!query) return
-    const controller = new AbortController()
-    setLoading(true)
-    async function fetchResults() {
-      try {
-        const encoded = encodeURIComponent(query)
-        const [trackRes, albumRes, artistRes] = await Promise.all([
-          fetch(`/api/deezer?endpoint=search&q=${encoded}&type=track&limit=50`, { signal: controller.signal }),
-          fetch(`/api/deezer?endpoint=search&q=${encoded}&type=album&limit=20`, { signal: controller.signal }),
-          fetch(`/api/deezer?endpoint=search&q=${encoded}&type=artist&limit=12`, { signal: controller.signal }),
-        ])
-        const [trackData, albumData, artistData] = await Promise.all([
-          trackRes.ok ? trackRes.json() : { tracks: [] },
-          albumRes.ok ? albumRes.json() : { albums: [] },
-          artistRes.ok ? artistRes.json() : { artists: [] },
-        ])
-        setTracks(trackData.tracks ?? [])
-        setAlbums(albumData.albums ?? [])
-        setArtists(artistData.artists ?? [])
-      } catch (e) {
-        console.error('Erro ao buscar resultados:', e)
-      } finally {
-        if (!controller.signal.aborted) setLoading(false)
-      }
-    }
-    void fetchResults()
-    return () => controller.abort()
-  }, [query])
-
-  useEffect(() => { setPage(0) }, [query, artistFilter, genreFilter, durationFilter])
 
   const genreArtistNames = useMemo(() => {
     if (!genreFilter) return null
@@ -130,21 +87,136 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
     return true
   }), [artists, artistFilter, genreFilter])
 
-  const paginatedTracks = useMemo(() => filteredTracks.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [filteredTracks, page])
-  const totalPages = Math.max(1, Math.ceil(filteredTracks.length / PAGE_SIZE))
+  const allTracks = useMemo(() => [...filteredTracks, ...youtubeTracks], [filteredTracks, youtubeTracks])
 
-  const counts = {
-    total: filteredTracks.length + filteredAlbums.length + filteredArtists.length,
-    tracks: filteredTracks.length,
-    artists: filteredArtists.length,
-    albums: filteredAlbums.length,
+  useEffect(() => {
+    if (!user) { setFavs(prev => new Set()); return }
+    const ids = allTracks.map(t => t.id)
+    if (ids.length === 0) { setFavs(prev => new Set()); return }
+    supabase.from('favorites').select('track_id').eq('user_id', user.id).in('track_id', ids)
+      .then(({ data }) => setFavs(prev => new Set(data?.map(d => d.track_id) ?? [])))
+  }, [user, allTracks])
+
+  async function handleFavorite(e: React.MouseEvent, track: Track) {
+    e.stopPropagation()
+    if (!user) return
+    if (favs.has(track.id)) {
+      await supabase.from('favorites').delete().eq('track_id', track.id).eq('user_id', user.id)
+      setFavs(prev => { const n = new Set(prev); n.delete(track.id); return n })
+    } else {
+      await supabase.from('favorites').insert({ user_id: user.id, track_id: track.id, track_data: track as unknown as Json })
+      setFavs(prev => { const n = new Set(prev); n.add(track.id); return n })
+    }
   }
+
+  useEffect(() => {
+    if (!query) {
+      setTracks([])
+      setAlbums([])
+      setArtists([])
+      loadingRef.current = false
+      setLoading(false)
+      return
+    }
+    const controller = new AbortController()
+    loadingRef.current = true
+    setLoading(true)
+    async function fetchResults() {
+      try {
+        const encoded = encodeURIComponent(query)
+        const [trackRes, albumRes, artistRes] = await Promise.all([
+          fetch(`/api/deezer?endpoint=search&q=${encoded}&type=track&limit=50`, { signal: controller.signal }),
+          fetch(`/api/deezer?endpoint=search&q=${encoded}&type=album&limit=20`, { signal: controller.signal }),
+          fetch(`/api/deezer?endpoint=search&q=${encoded}&type=artist&limit=12`, { signal: controller.signal }),
+        ])
+        const [trackData, albumData, artistData] = await Promise.all([
+          trackRes.ok ? trackRes.json() : { tracks: [] },
+          albumRes.ok ? albumRes.json() : { albums: [] },
+          artistRes.ok ? artistRes.json() : { artists: [] },
+        ])
+        if (!controller.signal.aborted) {
+          setTracks(trackData.tracks ?? [])
+          setAlbums(albumData.albums ?? [])
+          setArtists(artistData.artists ?? [])
+          loadingRef.current = false
+          setLoading(false)
+        }
+      } catch (e) {
+        console.error('Erro ao buscar resultados:', e)
+        if (!controller.signal.aborted) {
+          loadingRef.current = false
+          setLoading(false)
+        }
+      }
+    }
+    void fetchResults()
+    return () => controller.abort()
+  }, [query])
+
+  const fetchYouTube = useCallback(async (searchQuery: string) => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    setYoutubeLoading(true)
+    try {
+      const res = await fetch(`/api/youtube/search?q=${encodeURIComponent(searchQuery)}&limit=10`, {
+        signal: controller.signal,
+      })
+      if (!res.ok) {
+        if (res.status === 429) {
+          console.warn('YouTube rate limited')
+        }
+        throw new Error(`YouTube search failed: ${res.status}`)
+      }
+      const data = await res.json()
+      if (!controller.signal.aborted) {
+        setYoutubeTracks(data.tracks ?? [])
+      }
+    } catch (e) {
+      if ((e as Error).name !== 'AbortError') {
+        console.error('YouTube search error:', e)
+        if (!controller.signal.aborted) setYoutubeTracks([])
+      }
+    } finally {
+      if (!controller.signal.aborted) setYoutubeLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!query) {
+      setYoutubeTracks([])
+      return
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      fetchYouTube(normalizeQuery(query))
+    }, 600)
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      abortRef.current?.abort()
+    }
+  }, [query, fetchYouTube])
+
+  useEffect(() => { setPage(p => 0) }, [query, artistFilter, genreFilter, durationFilter])
 
   const activeFilterCount = Number(!!artistFilter) + Number(!!genreFilter) + Number(!!durationFilter)
 
-  const hasResults = filteredTracks.length > 0 || filteredArtists.length > 0 || filteredAlbums.length > 0
+  const counts = {
+    total: filteredTracks.length + filteredAlbums.length + filteredArtists.length + youtubeTracks.length,
+    tracks: filteredTracks.length,
+    artists: filteredArtists.length,
+    albums: filteredAlbums.length,
+    youtube: youtubeTracks.length,
+  }
 
-  if (!hasResults && !loading) {
+  const paginatedTracks = useMemo(() => allTracks.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [allTracks, page])
+  const totalPages = Math.max(1, Math.ceil(allTracks.length / PAGE_SIZE))
+
+  const hasResults = filteredTracks.length > 0 || filteredArtists.length > 0 || filteredAlbums.length > 0 || youtubeTracks.length > 0
+
+  if (!hasResults && !loading && !youtubeLoading) {
     return <ExploreNoResults query={query} activeFilterCount={activeFilterCount} onClearFilters={onClearFilters} />
   }
 
@@ -176,6 +248,18 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
               <TrackResultGrid tracks={filteredTracks.slice(1, 7)} />
             </section>
           )}
+          {youtubeTracks.length > 0 && (
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold flex items-center gap-2">
+                  YouTube
+                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-solid)' }}>YT</span>
+                </h2>
+                <button onClick={() => onTabChange('youtube')} className="text-xs font-semibold" style={{ color: 'var(--accent-solid)' }}>Ver tudo →</button>
+              </div>
+              <TrackResultGrid tracks={youtubeTracks.slice(0, 6)} loading={youtubeLoading} />
+            </section>
+          )}
           {filteredArtists.length > 0 && (
             <section>
               <div className="flex items-center justify-between mb-4">
@@ -195,6 +279,26 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
             </section>
           )}
         </div>
+      )}
+
+      {activeTab === 'youtube' && (
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              YouTube
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-solid)' }}>YT</span>
+            </h2>
+          </div>
+          {youtubeLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => <ExploreTrackSkeleton key={i} />)}
+            </div>
+          ) : youtubeTracks.length > 0 ? (
+            <TrackResultGrid tracks={youtubeTracks} />
+          ) : (
+            <p className="text-center py-8" style={{ color: 'var(--text-disabled)' }}>Nenhum resultado no YouTube</p>
+          )}
+        </section>
       )}
 
       {activeTab === 'faixas' && (
@@ -275,7 +379,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
               </tbody>
             </table>
           </div>
-          {filteredTracks.length > PAGE_SIZE && (
+          {allTracks.length > PAGE_SIZE && (
             <div className="flex items-center justify-center gap-4 mt-6">
               <button
                 onClick={() => setPage(p => Math.max(0, p - 1))}

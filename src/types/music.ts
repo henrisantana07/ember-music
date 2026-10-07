@@ -1,3 +1,5 @@
+export type TrackSource = 'deezer' | 'youtube'
+
 export interface Track {
   id: string
   name: string
@@ -9,6 +11,10 @@ export interface Track {
   image: string
   audio: string | null
   url: string
+  source?: TrackSource
+  youtubeVideoId?: string
+  youtubeChannelId?: string
+  youtubeUrl?: string
 }
 
 export interface Album {

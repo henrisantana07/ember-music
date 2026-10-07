@@ -331,12 +331,49 @@ export type Database = {
         }
         Relationships: []
       }
+      youtube_search_cache: {
+        Row: {
+          id: string
+          query_key: string
+          query: string
+          results: Json
+          next_page_token: string | null
+          created_at: string
+          expires_at: string
+        }
+        Insert: {
+          id?: string
+          query_key: string
+          query: string
+          results: Json
+          next_page_token?: string | null
+          created_at?: string
+          expires_at: string
+        }
+        Update: {
+          id?: string
+          query_key?: string
+          query?: string
+          results?: Json
+          next_page_token?: string | null
+          created_at?: string
+          expires_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      youtube_cache_get: {
+        Args: { p_key: string }
+        Returns: Json | null
+      }
+      youtube_cache_set: {
+        Args: { p_key: string; p_query: string; p_results: Json; p_next_page_token: string | null; p_ttl_seconds: number }
+        Returns: void
+      }
     }
     Enums: {
       [_ in never]: never

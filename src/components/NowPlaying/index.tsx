@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { usePlayerStore } from '@/lib/store'
@@ -18,6 +18,7 @@ import {
   Shuffle, Repeat, Repeat1, Volume2, Volume1, VolumeX,
   Music, Trash2, GripVertical,
 } from 'lucide-react'
+import { useYouTubePlayer, YouTubePlayer } from '@/components/YouTubePlayer'
 
 function getAudioEl(): HTMLAudioElement | null {
   return document.querySelector('audio')
@@ -111,10 +112,35 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     removeFromQueue, reorderQueue, clearQueue, addToQueue,
   } = usePlayerStore()
 
+  const isYouTubeTrack = currentTrack?.source === 'youtube' && !!currentTrack.youtubeVideoId
+  const ytVideoId = isYouTubeTrack ? (currentTrack.youtubeVideoId ?? '') : null
+
+  const yt = useYouTubePlayer(ytVideoId)
+
   function requestClose() {
     if (onClose) onClose()
     else router.back()
   }
+
+  const handleSeek = useCallback((seconds: number) => {
+    if (isYouTubeTrack) {
+      yt.seek(seconds)
+      setProgress(seconds)
+    } else {
+      const audio = getAudioEl()
+      if (audio) {
+        audio.currentTime = seconds
+        setProgress(seconds)
+      }
+    }
+  }, [isYouTubeTrack, yt])
+
+  useEffect(() => {
+    if (isYouTubeTrack) {
+      if (isPlaying) yt.play()
+      else yt.pause()
+    }
+  }, [isPlaying, isYouTubeTrack, yt])
 
   useEffect(() => {
     if (!currentTrack?.image) {
@@ -134,6 +160,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   }, [currentTrack?.id, currentTrack?.image])
 
   useEffect(() => {
+    if (isYouTubeTrack) return
     const audio = getAudioEl()
     if (!audio) return
 
@@ -149,7 +176,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       audio.removeEventListener('timeupdate', onTimeUpdate)
       audio.removeEventListener('loadedmetadata', onLoadedMetadata)
     }
-  }, [isDragging, setProgress, setDuration])
+  }, [isDragging, setProgress, setDuration, isYouTubeTrack])
 
   useEffect(() => {
     const main = document.querySelector('main')
@@ -226,29 +253,25 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     )
   }
 
-  const progressPercent = duration > 0 ? (progress / duration) * 100 : 0
+  const currentDuration = isYouTubeTrack ? yt.duration : duration
+  const currentProgress = isYouTubeTrack ? yt.currentTime : progress
+  const progressPercent = currentDuration > 0 ? (currentProgress / currentDuration) * 100 : 0
 
   function handleProgressClick(e: React.MouseEvent) {
     const rect = progressRef.current?.getBoundingClientRect()
     if (!rect) return
-    const audio = getAudioEl()
-    if (!audio) return
     const x = (e.clientX - rect.left) / rect.width
-    const newTime = x * duration
-    audio.currentTime = newTime
-    setProgress(newTime)
+    const newTime = x * currentDuration
+    handleSeek(newTime)
   }
 
   function handleProgressDrag(e: React.MouseEvent) {
     if (!isDragging) return
     const rect = progressRef.current?.getBoundingClientRect()
     if (!rect) return
-    const audio = getAudioEl()
-    if (!audio) return
     const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
-    const newTime = x * duration
-    audio.currentTime = newTime
-    setProgress(newTime)
+    const newTime = x * currentDuration
+    handleSeek(newTime)
   }
 
   const bgGradient = dominantColor
@@ -277,6 +300,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   }
 
   async function handleDownload() {
+    if (isYouTubeTrack) { showToast('Download não disponível para faixas do YouTube'); return }
     if (!currentTrack?.audio) { showToast('Áudio não disponível para download'); return }
     if (!user) { showToast('Faça login para baixar músicas'); return }
     try {
@@ -410,7 +434,9 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-0 min-h-0 px-4 md:px-6 pb-4">
         <div className={`flex-1 md:flex-[3] flex flex-col items-center justify-center gap-3 md:gap-4 min-h-0 overflow-hidden pt-1 md:pt-2 pb-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
           <div className="now-cover relative flex-shrink-0" style={{ aspectRatio: '1' }}>
-            {currentTrack.image ? (
+            {isYouTubeTrack ? (
+              <YouTubePlayer videoId={ytVideoId} className="w-full h-full rounded-2xl" style={{ boxShadow: coverShadow }} />
+            ) : currentTrack.image ? (
               <img
                 key={currentTrack.id}
                 src={currentTrack.image}
@@ -494,8 +520,8 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
               </div>
             </div>
             <div className="flex justify-between text-xs" style={{ color: 'var(--text-secondary)' }}>
-              <span>{formatDuration(Math.floor(progress))}</span>
-              <span>{formatDuration(Math.floor(duration))}</span>
+              <span>{formatDuration(Math.floor(currentProgress))}</span>
+              <span>{formatDuration(Math.floor(currentDuration))}</span>
             </div>
           </div>
 

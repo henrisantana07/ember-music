@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useState, useCallback } from 'react'
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import { usePlayerStore } from '@/lib/store'
 import type { RepeatMode } from '@/lib/store'
@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { savePlaybackHistory } from '@/lib/playback-history'
 import { ExpandedPlayerModal } from '@/components/ExpandedPlayerModal'
+import { YouTubePlayer, useYouTubePlayer } from '@/components/YouTubePlayer'
 import { ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause } from 'lucide-react'
 
 export function Player() {
@@ -35,6 +36,11 @@ export function Player() {
     openExpanded,
   } = usePlayerStore()
 
+  const isYouTubeTrack = currentTrack?.source === 'youtube' && !!currentTrack.youtubeVideoId
+  const ytVideoId = isYouTubeTrack ? (currentTrack.youtubeVideoId ?? '') : null
+
+  const yt = useYouTubePlayer(ytVideoId)
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
   }, [])
@@ -46,128 +52,237 @@ export function Player() {
   }, [currentTrack?.id, isPlaying, user])
 
   useEffect(() => {
-    const audio = audioRef.current
-    if (!audio || !currentTrack) return
-
-    retryingId.current = null
-
-    function attachEvents() {
-      audio!.addEventListener('canplay', onCanPlay)
-      audio!.addEventListener('ended', onEnded)
-      audio!.addEventListener('error', onError)
-      audio!.addEventListener('timeupdate', onTimeUpdate)
-      audio!.addEventListener('loadedmetadata', onLoadedMetadata)
+    if (isYouTubeTrack) {
+      if (isPlaying) yt.play()
+      else yt.pause()
     }
+  }, [isPlaying, isYouTubeTrack, yt])
 
-    const onCanPlay = () => {
-      if (usePlayerStore.getState().isPlaying) {
-        audio.play().catch(() => {})
+  useEffect(() => {
+    if (!isYouTubeTrack) {
+      const audio = audioRef.current
+      if (!audio || !currentTrack) return
+
+      retryingId.current = null
+
+      function attachEvents() {
+        audio!.addEventListener('canplay', onCanPlay)
+        audio!.addEventListener('ended', onEnded)
+        audio!.addEventListener('error', onError)
+        audio!.addEventListener('timeupdate', onTimeUpdate)
+        audio!.addEventListener('loadedmetadata', onLoadedMetadata)
       }
-    }
 
-    const onEnded = () => {
-      const { repeat: currentRepeat } = usePlayerStore.getState()
-      if (currentRepeat === 'one') {
-        audio.currentTime = 0
-        audio.play().catch(() => {})
-        return
+      const onCanPlay = () => {
+        if (usePlayerStore.getState().isPlaying) {
+          audio.play().catch(() => {})
+        }
       }
-      next()
-    }
 
-    const onError = async () => {
-      const trackId = usePlayerStore.getState().currentTrack?.id
-      if (!trackId || retryingId.current === trackId) {
+      const onEnded = () => {
+        const { repeat: currentRepeat } = usePlayerStore.getState()
+        if (currentRepeat === 'one') {
+          audio.currentTime = 0
+          audio.play().catch(() => {})
+          return
+        }
+        next()
+      }
+
+      const onError = async () => {
+        const trackId = usePlayerStore.getState().currentTrack?.id
+        if (!trackId || retryingId.current === trackId) {
+          retryingId.current = null
+          next()
+          return
+        }
+        retryingId.current = trackId
+        try {
+          const res = await fetch(`/api/deezer?endpoint=tracks&id=${trackId}`)
+          if (!res.ok) throw new Error('fetch failed')
+          const data = await res.json()
+          const fresh = data.results?.[0] as Track | undefined
+          if (fresh?.audio && usePlayerStore.getState().currentTrack?.id === trackId) {
+            audio.src = fresh.audio
+            audio.load()
+            return
+          }
+        } catch (e) {
+          console.error('Erro ao atualizar URL do áudio:', e)
+        }
         retryingId.current = null
+        next()
+      }
+
+      const onTimeUpdate = () => {
+        if (!isDragging) setProgress(audio.currentTime)
+      }
+
+      const onLoadedMetadata = () => setDuration(audio.duration)
+
+      if (!currentTrack.audio) {
+        const trackId = usePlayerStore.getState().currentTrack?.id
+        if (trackId) {
+          ;(async () => {
+            try {
+              const res = await fetch(`/api/deezer?endpoint=tracks&id=${trackId}`)
+              if (res.ok) {
+                const data = await res.json()
+                const fresh = data.results?.[0] as Track | undefined
+                if (fresh?.audio && usePlayerStore.getState().currentTrack?.id === trackId) {
+                  audio.src = fresh.audio
+                  audio.load()
+                  attachEvents()
+                  return
+                }
+              }
+            } catch (e) {
+              console.error('Erro ao buscar áudio:', e)
+            }
+            next()
+          })()
+          return
+        }
         next()
         return
       }
-      retryingId.current = trackId
-      try {
-        const res = await fetch(`/api/deezer?endpoint=tracks&id=${trackId}`)
-        if (!res.ok) throw new Error('fetch failed')
-        const data = await res.json()
-        const fresh = data.results?.[0] as Track | undefined
-        if (fresh?.audio && usePlayerStore.getState().currentTrack?.id === trackId) {
-          audio.src = fresh.audio
-          audio.load()
-          return
+
+      audio.volume = volume
+      audio.src = currentTrack.audio
+      audio.load()
+
+      attachEvents()
+
+      return () => {
+        audio.removeEventListener('canplay', onCanPlay)
+        audio.removeEventListener('ended', onEnded)
+        audio.removeEventListener('error', onError)
+        audio.removeEventListener('timeupdate', onTimeUpdate)
+        audio.removeEventListener('loadedmetadata', onLoadedMetadata)
+      }
+    }
+  }, [currentTrack?.id, isYouTubeTrack])
+
+  useEffect(() => {
+    if (!isYouTubeTrack) {
+      const audio = audioRef.current
+      if (!audio || !currentTrack || !currentTrack.audio) return
+      if (isPlaying) {
+        if (audio.readyState >= 2) {
+          audio.play().catch(() => {})
         }
-      } catch (e) {
-        console.error('Erro ao atualizar URL do áudio:', e)
+      } else {
+        audio.pause()
       }
-      retryingId.current = null
-      next()
     }
-
-    const onTimeUpdate = () => {
-      if (!isDragging) setProgress(audio.currentTime)
-    }
-
-    const onLoadedMetadata = () => setDuration(audio.duration)
-
-    if (!currentTrack.audio) {
-      const trackId = usePlayerStore.getState().currentTrack?.id
-      if (trackId) {
-        ;(async () => {
-          try {
-            const res = await fetch(`/api/deezer?endpoint=tracks&id=${trackId}`)
-            if (res.ok) {
-              const data = await res.json()
-              const fresh = data.results?.[0] as Track | undefined
-              if (fresh?.audio && usePlayerStore.getState().currentTrack?.id === trackId) {
-                audio.src = fresh.audio
-                audio.load()
-                attachEvents()
-                return
-              }
-            }
-          } catch (e) {
-            console.error('Erro ao buscar áudio:', e)
-          }
-          next()
-        })()
-        return
-      }
-      next()
-      return
-    }
-
-    audio.volume = volume
-    audio.src = currentTrack.audio
-    audio.load()
-
-    attachEvents()
-
-    return () => {
-      audio.removeEventListener('canplay', onCanPlay)
-      audio.removeEventListener('ended', onEnded)
-      audio.removeEventListener('error', onError)
-      audio.removeEventListener('timeupdate', onTimeUpdate)
-      audio.removeEventListener('loadedmetadata', onLoadedMetadata)
-    }
-  }, [currentTrack?.id])
+  }, [isPlaying, isYouTubeTrack])
 
   useEffect(() => {
-    const audio = audioRef.current
-    if (!audio || !currentTrack || !currentTrack.audio) return
-    if (isPlaying) {
-      if (audio.readyState >= 2) {
-        audio.play().catch(() => {})
-      }
+    if (!isYouTubeTrack && audioRef.current) audioRef.current.volume = volume
+    else if (isYouTubeTrack) yt.setVolume(volume)
+  }, [volume, isYouTubeTrack, yt])
+
+  const handleSeek = useCallback((seconds: number) => {
+    if (isYouTubeTrack) {
+      yt.seek(seconds)
+      setProgress(seconds)
     } else {
-      audio.pause()
+      const audio = audioRef.current
+      if (audio) {
+        audio.currentTime = seconds
+        setProgress(seconds)
+      }
     }
-  }, [isPlaying])
-
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = volume
-  }, [volume])
+  }, [isYouTubeTrack, yt])
 
   const showToast = useCallback((msg: string) => {
     setToast(msg)
     setTimeout(() => setToast(null), 2000)
   }, [])
+
+  useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    if (sleepIntervalRef.current) clearInterval(sleepIntervalRef.current)
+    setSleepRemaining(null)
+
+    if (sleepTimerMinutes && sleepTimerMinutes > 0) {
+      const endTime = Date.now() + sleepTimerMinutes * 60 * 1000
+
+      timerRef.current = setTimeout(() => {
+        if (isYouTubeTrack) yt.pause()
+        else pause()
+        setSleepTimer(null)
+        setSleepRemaining(null)
+        showToast(`Sleep timer: música pausada`)
+      }, sleepTimerMinutes * 60 * 1000)
+
+      sleepIntervalRef.current = setInterval(() => {
+        const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000))
+        if (remaining <= 0) {
+          setSleepRemaining(null)
+          return
+        }
+        const m = Math.floor(remaining / 60)
+        const s = remaining % 60
+        setSleepRemaining(`${m}:${s.toString().padStart(2, '0')}`)
+      }, 1000)
+    }
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+      if (sleepIntervalRef.current) clearInterval(sleepIntervalRef.current)
+    }
+  }, [sleepTimerMinutes, isYouTubeTrack, yt, pause, showToast])
+
+  const handleCrossfade = useCallback(() => {
+    if (isYouTubeTrack) {
+      yt.pause()
+      next()
+    } else {
+      const audio = audioRef.current
+      if (!audio || crossfadeDuration <= 0) return next()
+
+      const fadeInterval = 30
+      const steps = Math.floor((crossfadeDuration * 1000) / fadeInterval)
+      const stepVolume = volume / steps
+      let currentStep = 0
+
+      const fadeOut = setInterval(() => {
+        currentStep++
+        if (audioRef.current) {
+          audioRef.current.volume = Math.max(0, (audioRef.current.volume || volume) - stepVolume)
+        }
+        if (currentStep >= steps) {
+          clearInterval(fadeOut)
+          next()
+          setTimeout(() => {
+            if (audioRef.current) audioRef.current.volume = volume
+          }, 50)
+        }
+      }, fadeInterval)
+    }
+  }, [crossfadeDuration, volume, next, isYouTubeTrack, yt])
+
+  if (pathname === '/reproducao') {
+    if (isYouTubeTrack) return <YouTubePlayer videoId={ytVideoId} style={{ width: '1px', height: '1px', position: 'absolute', opacity: 0 }} />
+    return <audio ref={audioRef} />
+  }
+
+  if (!currentTrack) return null
+
+  const currentDuration = isYouTubeTrack ? yt.duration : duration
+  const currentProgress = isYouTubeTrack ? yt.currentTime : progress
+  const progressPercent = currentDuration > 0 ? (currentProgress / currentDuration) * 100 : 0
+
+  const repeatLabel: Record<RepeatMode, string> = { none: 'Sem repeat', one: 'Repeat 1', all: 'Repeat tudo' }
+
+  function handleProgressClick(e: React.MouseEvent) {
+    const rect = progressRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const x = (e.clientX - rect.left) / rect.width
+    const newTime = x * currentDuration
+    handleSeek(newTime)
+  }
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
@@ -202,58 +317,19 @@ export function Player() {
     }
   }, [sleepTimerMinutes])
 
-  const handleCrossfade = useCallback(() => {
-    const audio = audioRef.current
-    if (!audio || crossfadeDuration <= 0) return next()
-
-    const fadeInterval = 30
-    const steps = Math.floor((crossfadeDuration * 1000) / fadeInterval)
-    const stepVolume = volume / steps
-    let currentStep = 0
-
-    const fadeOut = setInterval(() => {
-      currentStep++
-      if (audioRef.current) {
-        audioRef.current.volume = Math.max(0, (audioRef.current.volume || volume) - stepVolume)
-      }
-      if (currentStep >= steps) {
-        clearInterval(fadeOut)
-        next()
-        setTimeout(() => {
-          if (audioRef.current) audioRef.current.volume = volume
-        }, 50)
-      }
-    }, fadeInterval)
-  }, [crossfadeDuration, volume, next])
-
-  if (pathname === '/reproducao') {
-    return <audio ref={audioRef} />
-  }
-
-  if (!currentTrack) return null
-
-  function handleProgressClick(e: React.MouseEvent) {
-    const rect = progressRef.current?.getBoundingClientRect()
-    if (!rect || !audioRef.current) return
-    const x = (e.clientX - rect.left) / rect.width
-    const newTime = x * duration
-    audioRef.current.currentTime = newTime
-    setProgress(newTime)
-  }
-
-  const progressPercent = duration > 0 ? (progress / duration) * 100 : 0
-
-  const repeatLabel: Record<RepeatMode, string> = { none: 'Sem repeat', one: 'Repeat 1', all: 'Repeat tudo' }
-
   if (miniPlayer) {
     return (
       <>
-        <audio ref={audioRef} />
+        {isYouTubeTrack ? <YouTubePlayer videoId={ytVideoId} style={{ width: '1px', height: '1px', position: 'absolute', opacity: 0 }} /> : <audio ref={audioRef} />}
         <footer className={`h-14 md:hidden flex-shrink-0 items-center px-3 gap-3 border-t border-white/5 ${isExpandedOpen ? 'hidden' : 'flex'}`}
           style={{ backgroundColor: 'var(--bg-elevated)' }}
         >
           <button onClick={openExpanded} className="flex-shrink-0" aria-label="Abrir player expandido">
-            <img src={currentTrack.image} alt="" className="w-9 h-9 rounded object-cover flex-shrink-0" />
+            {isYouTubeTrack ? (
+              <YouTubePlayer videoId={ytVideoId} className="w-9 h-9 rounded" />
+            ) : (
+              <img src={currentTrack.image} alt="" className="w-9 h-9 rounded object-cover flex-shrink-0" />
+            )}
           </button>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold truncate">{currentTrack.name}</p>
@@ -285,7 +361,7 @@ export function Player() {
 
   return (
     <>
-      <audio ref={audioRef} />
+      {isYouTubeTrack ? <YouTubePlayer videoId={ytVideoId} style={{ width: '1px', height: '1px', position: 'absolute', opacity: 0 }} /> : <audio ref={audioRef} />}
 
       {toast && (
         <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-sm shadow-lg animate-fade-in"
@@ -315,7 +391,11 @@ export function Player() {
       >
         <div className="flex items-center gap-3 w-72">
           <button onClick={openExpanded} className="flex-shrink-0" aria-label="Abrir player expandido">
-            <img src={currentTrack.image} alt={currentTrack.name} className="w-12 h-12 rounded object-cover flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer" />
+            {isYouTubeTrack ? (
+              <YouTubePlayer videoId={ytVideoId} className="w-12 h-12 rounded" />
+            ) : (
+              <img src={currentTrack.image} alt={currentTrack.name} className="w-12 h-12 rounded object-cover flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer" />
+            )}
           </button>
           <div className="min-w-0">
             <p className="text-sm font-semibold truncate">{currentTrack.name}</p>
@@ -375,7 +455,7 @@ export function Player() {
           </div>
 
           <div className="w-full max-w-lg flex items-center gap-2 text-xs" style={{ color: 'var(--text-disabled)' }}>
-            <span className="w-8 text-right">{formatDuration(Math.floor(progress))}</span>
+            <span className="w-8 text-right">{formatDuration(Math.floor(currentProgress))}</span>
             <div ref={progressRef}
               className="flex-1 h-1 rounded-full cursor-pointer relative"
               style={{ backgroundColor: 'var(--text-disabled)' }}
@@ -386,7 +466,7 @@ export function Player() {
                   style={{ backgroundColor: 'var(--accent-from)' }} />
               </div>
             </div>
-            <span className="w-8 text-left">{formatDuration(Math.floor(duration))}</span>
+            <span className="w-8 text-left">{formatDuration(Math.floor(currentDuration))}</span>
           </div>
         </div>
 
