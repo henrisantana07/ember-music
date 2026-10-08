@@ -20,6 +20,8 @@ import { useLocalLibrary } from '@/features/local-library/hooks/use-local-librar
 import { usePlayerStore } from '@/lib/store'
 import { localTrackToPlayerTrack } from '@/features/local-library/lib/local-audio'
 import { formatDuration } from '@/lib/spotify'
+import { PlaylistModal } from '@/components/PlaylistModal'
+import type { Track } from '@/types/music'
 import type { LocalMusicFile } from '@/features/local-library/types'
 
 interface TrackActionsMenuProps {
@@ -34,6 +36,7 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
   const { folders } = useLocalLibrary()
   const { currentTrack, isPlaying, queue, addToQueue: storeAddToQueue, togglePlay } = usePlayerStore()
   const [copied, setCopied] = useState(false)
+  const [playlistTrack, setPlaylistTrack] = useState<Track | null>(null)
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -79,8 +82,10 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
     setIsOpen(false)
   }
 
-  const handleAddToPlaylist = () => {
+  const handleAddToPlaylist = async () => {
     setIsOpen(false)
+    const playerTrack = await localTrackToPlayerTrack(track, folders)
+    setPlaylistTrack(playerTrack as Track)
   }
 
   const handleShowInfo = () => {
@@ -191,6 +196,14 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
             })}
           </div>
         </div>
+      )}
+
+      {playlistTrack && (
+        <PlaylistModal
+          open
+          onClose={() => setPlaylistTrack(null)}
+          track={playlistTrack}
+        />
       )}
     </div>
   )

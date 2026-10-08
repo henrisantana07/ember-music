@@ -105,14 +105,15 @@ export function MenuItem({ selected, danger, className = '', children, ...rest }
 
 interface MenuPanelPropsArgs extends ComponentPropsWithRef<'div'> {
   align?: 'left' | 'right'
+  placement?: 'top' | 'bottom'
 }
 
 /** Surface that hosts MenuItem rows (elevation + shape tokens). */
-export function MenuPanel({ align = 'right', className = '', children, ...rest }: MenuPanelPropsArgs) {
+export function MenuPanel({ align = 'right', placement = 'bottom', className = '', children, ...rest }: MenuPanelPropsArgs) {
   return (
     <div
       role="menu"
-      className={`absolute top-full mt-1 min-w-[200px] py-1 rounded-[var(--shape-large)] bg-[var(--bg-elevated)] border border-outline-variant shadow-elevation-2 z-50 overflow-hidden ${align === 'right' ? 'right-0' : 'left-0'} ${className}`}
+      className={`absolute ${placement === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'} min-w-[200px] py-1 rounded-[var(--shape-large)] bg-[var(--bg-elevated)] border border-outline-variant shadow-elevation-2 z-50 overflow-hidden ${align === 'right' ? 'right-0' : 'left-0'} ${className}`}
       {...rest}
     >
       {children}

@@ -63,12 +63,12 @@ function FavoriteButton({ track, user }: { track: Track; user?: { id: string } |
   )
 }
 
-function RowMenu({ track }: { track: Track }) {
+function RowMenu({ track, placement = 'bottom' }: { track: Track; placement?: 'top' | 'bottom' }) {
   const menu = useMenu()
   const [playlistOpen, setPlaylistOpen] = useState(false)
 
   return (
-    <>
+    <div className="relative">
       <IconButton
         size="lg"
         label={`Mais opções para ${track.name}`}
@@ -80,12 +80,12 @@ function RowMenu({ track }: { track: Track }) {
         </svg>
       </IconButton>
       {menu.open && (
-        <MenuPanel {...menu.panelProps} onClick={(e) => e.stopPropagation()}>
+        <MenuPanel {...menu.panelProps} placement={placement} onClick={(e) => e.stopPropagation()}>
           <MenuItem onClick={() => { setPlaylistOpen(true); menu.close() }}>Adicionar à playlist</MenuItem>
         </MenuPanel>
       )}
       <PlaylistModal open={playlistOpen} onClose={() => setPlaylistOpen(false)} track={track} />
-    </>
+    </div>
   )
 }
 
@@ -267,7 +267,7 @@ export function TrackTable({
                 <td className="py-3">
                   <div className="flex items-center gap-1">
                     <FavoriteButton track={track} user={user} />
-                    <RowMenu track={track} />
+                    <RowMenu track={track} placement={index === tracks.length - 1 ? 'top' : 'bottom'} />
                   </div>
                 </td>
 
