@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { savePlaybackHistory } from '@/lib/playback-history'
 import { ExpandedPlayerModal } from '@/components/ExpandedPlayerModal'
-import { YouTubePlayer, useYouTubePlayer } from '@/components/YouTubePlayer'
+import { useYouTube } from '@/components/YouTubePlayer/context'
 import { ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause } from 'lucide-react'
 
 export function Player() {
@@ -37,9 +37,9 @@ export function Player() {
   } = usePlayerStore()
 
   const isYouTubeTrack = currentTrack?.source === 'youtube' && !!currentTrack.youtubeVideoId
-  const ytVideoId = isYouTubeTrack ? (currentTrack.youtubeVideoId ?? '') : null
 
-  const yt = useYouTubePlayer(ytVideoId)
+  const yt = useYouTube()
+  const { seek: ytSeek, currentTime: ytCurrentTime, duration: ytDuration } = yt
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
@@ -52,11 +52,13 @@ export function Player() {
   }, [currentTrack?.id, isPlaying, user])
 
   useEffect(() => {
-    if (isYouTubeTrack) {
-      if (isPlaying) yt.play()
-      else yt.pause()
-    }
-  }, [isPlaying, isYouTubeTrack, yt])
+    if (!isYouTubeTrack) return
+    const audio = audioRef.current
+    if (!audio) return
+    audio.pause()
+    audio.removeAttribute('src')
+    audio.load()
+  }, [isYouTubeTrack])
 
   useEffect(() => {
     if (!isYouTubeTrack) {
@@ -178,14 +180,12 @@ export function Player() {
   }, [isPlaying, isYouTubeTrack])
 
   useEffect(() => {
-    if (!isYouTubeTrack && audioRef.current) audioRef.current.volume = volume
-    else if (isYouTubeTrack) yt.setVolume(volume)
-  }, [volume, isYouTubeTrack, yt])
+    if (audioRef.current) audioRef.current.volume = volume
+  }, [volume])
 
   const handleSeek = useCallback((seconds: number) => {
     if (isYouTubeTrack) {
-      yt.seek(seconds)
-      setProgress(seconds)
+      ytSeek(seconds)
     } else {
       const audio = audioRef.current
       if (audio) {
@@ -193,75 +193,21 @@ export function Player() {
         setProgress(seconds)
       }
     }
-  }, [isYouTubeTrack, yt])
+  }, [isYouTubeTrack, ytSeek])
+
+  const handlePrev = useCallback(() => {
+    const currentTime = isYouTubeTrack ? ytCurrentTime : (audioRef.current?.currentTime ?? 0)
+    if (currentTime > 3) {
+      handleSeek(0)
+    } else {
+      prev()
+    }
+  }, [isYouTubeTrack, ytCurrentTime, handleSeek, prev])
 
   const showToast = useCallback((msg: string) => {
     setToast(msg)
     setTimeout(() => setToast(null), 2000)
   }, [])
-
-  useEffect(() => {
-    if (timerRef.current) clearTimeout(timerRef.current)
-    if (sleepIntervalRef.current) clearInterval(sleepIntervalRef.current)
-    setSleepRemaining(null)
-
-    if (sleepTimerMinutes && sleepTimerMinutes > 0) {
-      const endTime = Date.now() + sleepTimerMinutes * 60 * 1000
-
-      timerRef.current = setTimeout(() => {
-        if (isYouTubeTrack) yt.pause()
-        else pause()
-        setSleepTimer(null)
-        setSleepRemaining(null)
-        showToast(`Sleep timer: música pausada`)
-      }, sleepTimerMinutes * 60 * 1000)
-
-      sleepIntervalRef.current = setInterval(() => {
-        const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000))
-        if (remaining <= 0) {
-          setSleepRemaining(null)
-          return
-        }
-        const m = Math.floor(remaining / 60)
-        const s = remaining % 60
-        setSleepRemaining(`${m}:${s.toString().padStart(2, '0')}`)
-      }, 1000)
-    }
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current)
-      if (sleepIntervalRef.current) clearInterval(sleepIntervalRef.current)
-    }
-  }, [sleepTimerMinutes, isYouTubeTrack, yt, pause, showToast])
-
-  const handleCrossfade = useCallback(() => {
-    if (isYouTubeTrack) {
-      yt.pause()
-      next()
-    } else {
-      const audio = audioRef.current
-      if (!audio || crossfadeDuration <= 0) return next()
-
-      const fadeInterval = 30
-      const steps = Math.floor((crossfadeDuration * 1000) / fadeInterval)
-      const stepVolume = volume / steps
-      let currentStep = 0
-
-      const fadeOut = setInterval(() => {
-        currentStep++
-        if (audioRef.current) {
-          audioRef.current.volume = Math.max(0, (audioRef.current.volume || volume) - stepVolume)
-        }
-        if (currentStep >= steps) {
-          clearInterval(fadeOut)
-          next()
-          setTimeout(() => {
-            if (audioRef.current) audioRef.current.volume = volume
-          }, 50)
-        }
-      }, fadeInterval)
-    }
-  }, [crossfadeDuration, volume, next, isYouTubeTrack, yt])
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
@@ -294,17 +240,45 @@ export function Player() {
       if (timerRef.current) clearTimeout(timerRef.current)
       if (sleepIntervalRef.current) clearInterval(sleepIntervalRef.current)
     }
-  }, [sleepTimerMinutes])
+  }, [sleepTimerMinutes, pause, setSleepTimer, showToast])
+
+  const handleCrossfade = useCallback(() => {
+    if (isYouTubeTrack) {
+      pause()
+      next()
+    } else {
+      const audio = audioRef.current
+      if (!audio || crossfadeDuration <= 0) return next()
+
+      const fadeInterval = 30
+      const steps = Math.floor((crossfadeDuration * 1000) / fadeInterval)
+      const stepVolume = volume / steps
+      let currentStep = 0
+
+      const fadeOut = setInterval(() => {
+        currentStep++
+        if (audioRef.current) {
+          audioRef.current.volume = Math.max(0, (audioRef.current.volume || volume) - stepVolume)
+        }
+        if (currentStep >= steps) {
+          clearInterval(fadeOut)
+          next()
+          setTimeout(() => {
+            if (audioRef.current) audioRef.current.volume = volume
+          }, 50)
+        }
+      }, fadeInterval)
+    }
+  }, [crossfadeDuration, volume, next, isYouTubeTrack, pause])
 
   if (pathname === '/reproducao') {
-    if (isYouTubeTrack) return <YouTubePlayer videoId={ytVideoId} style={{ width: '1px', height: '1px', position: 'absolute', opacity: 0 }} />
     return <audio ref={audioRef} />
   }
 
   if (!currentTrack) return null
 
-  const currentDuration = isYouTubeTrack ? yt.duration : duration
-  const currentProgress = isYouTubeTrack ? yt.currentTime : progress
+  const currentDuration = isYouTubeTrack ? ytDuration : duration
+  const currentProgress = isYouTubeTrack ? ytCurrentTime : progress
   const progressPercent = currentDuration > 0 ? (currentProgress / currentDuration) * 100 : 0
 
   const repeatLabel: Record<RepeatMode, string> = { none: 'Sem repeat', one: 'Repeat 1', all: 'Repeat tudo' }
@@ -320,19 +294,18 @@ export function Player() {
   if (miniPlayer) {
     return (
       <>
-        {isYouTubeTrack ? <YouTubePlayer videoId={ytVideoId} style={{ width: '1px', height: '1px', position: 'absolute', opacity: 0 }} /> : <audio ref={audioRef} />}
+        <audio ref={audioRef} />
         <footer className={`h-14 md:hidden flex-shrink-0 items-center px-3 gap-3 border-t border-white/5 ${isExpandedOpen ? 'hidden' : 'flex'}`}
           style={{ backgroundColor: 'var(--bg-elevated)' }}
         >
           <button onClick={openExpanded} className="flex-shrink-0" aria-label="Abrir player expandido">
-            {isYouTubeTrack ? (
-              <YouTubePlayer videoId={ytVideoId} className="w-9 h-9 rounded" />
-            ) : (
-              <img src={currentTrack.image} alt="" className="w-9 h-9 rounded object-cover flex-shrink-0" />
-            )}
+            <img src={currentTrack.image} alt="" className="w-9 h-9 rounded object-cover flex-shrink-0" />
           </button>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold truncate">{currentTrack.name}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-sm font-semibold truncate">{currentTrack.name}</p>
+              {isYouTubeTrack && <YouTubeBadge />}
+            </div>
             <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{currentTrack.artist_name}</p>
           </div>
           <button onClick={(e) => { e.stopPropagation(); togglePlay() }}
@@ -361,7 +334,7 @@ export function Player() {
 
   return (
     <>
-      {isYouTubeTrack ? <YouTubePlayer videoId={ytVideoId} style={{ width: '1px', height: '1px', position: 'absolute', opacity: 0 }} /> : <audio ref={audioRef} />}
+      <audio ref={audioRef} />
 
       {toast && (
         <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-sm shadow-lg animate-fade-in"
@@ -391,14 +364,13 @@ export function Player() {
       >
         <div className="flex items-center gap-3 w-72">
           <button onClick={openExpanded} className="flex-shrink-0" aria-label="Abrir player expandido">
-            {isYouTubeTrack ? (
-              <YouTubePlayer videoId={ytVideoId} className="w-12 h-12 rounded" />
-            ) : (
-              <img src={currentTrack.image} alt={currentTrack.name} className="w-12 h-12 rounded object-cover flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer" />
-            )}
+            <img src={currentTrack.image} alt={currentTrack.name} className="w-12 h-12 rounded object-cover flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer" />
           </button>
           <div className="min-w-0">
-            <p className="text-sm font-semibold truncate">{currentTrack.name}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-sm font-semibold truncate">{currentTrack.name}</p>
+              {isYouTubeTrack && <YouTubeBadge />}
+            </div>
             <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{currentTrack.artist_name}</p>
             {currentPlaylistId && (
               <a href={`/playlists/${currentPlaylistId}`}
@@ -420,7 +392,7 @@ export function Player() {
               <Shuffle className="w-4 h-4" />
             </button>
 
-            <button onClick={prev} className="p-1.5 transition-colors" style={{ color: 'var(--text-secondary)' }} title="Anterior">
+            <button onClick={handlePrev} className="p-1.5 transition-colors" style={{ color: 'var(--text-secondary)' }} title="Anterior">
               <SkipBack className="w-4 h-4" />
             </button>
 
@@ -496,6 +468,17 @@ export function Player() {
 
       <ExpandedPlayerModal />
     </>
+  )
+}
+
+function YouTubeBadge() {
+  return (
+    <span
+      className="flex-shrink-0 text-[9px] font-semibold px-1 py-0.5 rounded"
+      style={{ backgroundColor: 'rgba(255,0,0,0.15)', color: '#FF4444' }}
+    >
+      YT
+    </span>
   )
 }
 

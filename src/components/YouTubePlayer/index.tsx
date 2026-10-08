@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { usePlayerStore } from '@/lib/store'
 
 interface YouTubePlayerState {
   player: YTPlayer | null
@@ -69,6 +70,8 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
     error: null,
   })
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const seekUntilRef = useRef(0)
+  const createTokenRef = useRef(0)
 
   const loadAPI = useCallback(() => {
     if (window.YT && window.YT.Player) return Promise.resolve()
@@ -95,6 +98,7 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
   const startPolling = useCallback(() => {
     if (pollRef.current) return
     pollRef.current = setInterval(() => {
+      if (Date.now() < seekUntilRef.current) return
       const player = playerRef.current
       if (player) {
         setState(s => ({
@@ -114,12 +118,39 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
   }, [startPolling])
 
   const onPlayerStateChange = useCallback((event: YTPlayerEvent) => {
-    if (event.data === window.YT.PlayerState.PLAYING) {
-      setState(s => ({ ...s, isPlaying: true }))
-    } else if (event.data === window.YT.PlayerState.PAUSED || event.data === window.YT.PlayerState.ENDED) {
-      setState(s => ({ ...s, isPlaying: false }))
+    const PlayerState = window.YT?.PlayerState
+    if (!PlayerState) return
+
+    if (event.data === PlayerState.PLAYING) {
+      setState(s => (s.isPlaying ? s : { ...s, isPlaying: true }))
+      if (!usePlayerStore.getState().isPlaying) usePlayerStore.getState().resume()
+      return
     }
-  }, [])
+
+    if (event.data === PlayerState.PAUSED) {
+      setState(s => (s.isPlaying ? { ...s, isPlaying: false } : s))
+      if (usePlayerStore.getState().isPlaying) usePlayerStore.getState().pause()
+      return
+    }
+
+    if (event.data === PlayerState.ENDED) {
+      setState(s => (s.isPlaying ? { ...s, isPlaying: false } : s))
+      const store = usePlayerStore.getState()
+      if (store.repeat === 'one') {
+        event.target.seekTo(0, true)
+        event.target.playVideo()
+        return
+      }
+      const activeId = store.currentTrack?.youtubeVideoId
+      if (!activeId || activeId !== videoId) return
+      store.next()
+      const after = usePlayerStore.getState()
+      if (after.isPlaying && after.currentTrack?.youtubeVideoId === videoId) {
+        event.target.seekTo(0, true)
+        event.target.playVideo()
+      }
+    }
+  }, [videoId])
 
   const onPlayerError = useCallback((event: YTPlayerEvent) => {
     console.error('YouTube player error:', event.data)
@@ -128,8 +159,9 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
 
   const createPlayer = useCallback(async () => {
     if (!videoId || !containerRef.current) return
+    const token = ++createTokenRef.current
     await loadAPI()
-    if (!containerRef.current) return
+    if (token !== createTokenRef.current || !containerRef.current) return
 
     playerRef.current = new window.YT.Player(containerRef.current, {
       videoId,
@@ -168,7 +200,9 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
   }, [])
 
   const seek = useCallback((seconds: number) => {
-    playerRef.current?.seekTo(seconds, true)
+    if (!playerRef.current) return
+    seekUntilRef.current = Date.now() + 600
+    playerRef.current.seekTo(seconds, true)
     setState(s => ({ ...s, currentTime: seconds }))
   }, [])
 
@@ -179,7 +213,9 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
   }, [])
 
   const destroy = useCallback(() => {
+    createTokenRef.current++
     stopPolling()
+    seekUntilRef.current = 0
     playerRef.current?.destroy()
     playerRef.current = null
     setState({

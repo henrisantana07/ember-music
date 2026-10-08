@@ -18,7 +18,7 @@ import {
   Shuffle, Repeat, Repeat1, Volume2, Volume1, VolumeX,
   Music, Trash2, GripVertical,
 } from 'lucide-react'
-import { useYouTubePlayer, YouTubePlayer } from '@/components/YouTubePlayer'
+import { useYouTube } from '@/components/YouTubePlayer/context'
 
 function getAudioEl(): HTMLAudioElement | null {
   return document.querySelector('audio')
@@ -113,9 +113,22 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   } = usePlayerStore()
 
   const isYouTubeTrack = currentTrack?.source === 'youtube' && !!currentTrack.youtubeVideoId
-  const ytVideoId = isYouTubeTrack ? (currentTrack.youtubeVideoId ?? '') : null
 
-  const yt = useYouTubePlayer(ytVideoId)
+  const yt = useYouTube()
+  const {
+    seek: ytSeek, currentTime: ytCurrentTime, duration: ytDuration,
+    setOverlayTarget,
+  } = yt
+  const coverRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!isYouTubeTrack || !coverRef.current) {
+      setOverlayTarget(null)
+      return
+    }
+    setOverlayTarget(coverRef.current)
+    return () => setOverlayTarget(null)
+  }, [isYouTubeTrack, setOverlayTarget])
 
   function requestClose() {
     if (onClose) onClose()
@@ -124,8 +137,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
   const handleSeek = useCallback((seconds: number) => {
     if (isYouTubeTrack) {
-      yt.seek(seconds)
-      setProgress(seconds)
+      ytSeek(seconds)
     } else {
       const audio = getAudioEl()
       if (audio) {
@@ -133,14 +145,16 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
         setProgress(seconds)
       }
     }
-  }, [isYouTubeTrack, yt])
+  }, [isYouTubeTrack, ytSeek])
 
-  useEffect(() => {
-    if (isYouTubeTrack) {
-      if (isPlaying) yt.play()
-      else yt.pause()
+  const handlePrev = useCallback(() => {
+    const currentTime = isYouTubeTrack ? ytCurrentTime : (getAudioEl()?.currentTime ?? 0)
+    if (currentTime > 3) {
+      handleSeek(0)
+    } else {
+      prev()
     }
-  }, [isPlaying, isYouTubeTrack, yt])
+  }, [isYouTubeTrack, ytCurrentTime, handleSeek, prev])
 
   useEffect(() => {
     if (!currentTrack?.image) {
@@ -261,8 +275,8 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     )
   }
 
-  const currentDuration = isYouTubeTrack ? yt.duration : duration
-  const currentProgress = isYouTubeTrack ? yt.currentTime : progress
+  const currentDuration = isYouTubeTrack ? ytDuration : duration
+  const currentProgress = isYouTubeTrack ? ytCurrentTime : progress
   const progressPercent = currentDuration > 0 ? (currentProgress / currentDuration) * 100 : 0
 
   function handleProgressClick(e: React.MouseEvent) {
@@ -433,10 +447,8 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
       <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-0 min-h-0 px-4 md:px-6 pb-4">
         <div className={`flex-1 md:flex-[3] flex flex-col items-center justify-center gap-3 md:gap-4 min-h-0 overflow-hidden pt-1 md:pt-2 pb-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
-          <div className="now-cover relative flex-shrink-0" style={{ aspectRatio: '1' }}>
-            {isYouTubeTrack ? (
-              <YouTubePlayer videoId={ytVideoId} className="w-full h-full rounded-2xl" style={{ boxShadow: coverShadow }} />
-            ) : currentTrack.image ? (
+          <div ref={coverRef} className="now-cover relative flex-shrink-0" style={{ aspectRatio: '1' }}>
+            {currentTrack.image ? (
               <img
                 key={currentTrack.id}
                 src={currentTrack.image}
@@ -527,7 +539,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
           <div className="w-full flex flex-col md:flex-row items-center justify-center gap-3 md:gap-6">
             <div className="flex items-center justify-center gap-2 md:gap-3">
-              <button onClick={prev} className="p-1.5 transition-colors" style={{ color: 'var(--text-secondary)' }} title="Anterior">
+              <button onClick={handlePrev} className="p-1.5 transition-colors" style={{ color: 'var(--text-secondary)' }} title="Anterior">
                 <SkipBack className="w-5 h-5 md:w-6 md:h-6" />
               </button>
 
