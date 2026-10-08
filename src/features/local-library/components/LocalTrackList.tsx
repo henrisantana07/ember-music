@@ -4,7 +4,6 @@ import { usePlayerStore } from '@/lib/store'
 import { useLocalPlayer } from '@/features/local-library/hooks/use-local-player'
 import type { LocalMusicFile } from '@/features/local-library/types'
 import { formatDuration } from '@/lib/spotify'
-import { Play, Pause, MoreVertical, Heart, Plus } from 'lucide-react'
 import { TrackActionsMenu } from '@/features/local-library/components/TrackActionsMenu'
 
 interface LocalTrackListProps {
@@ -12,7 +11,7 @@ interface LocalTrackListProps {
 }
 
 export function LocalTrackList({ tracks }: LocalTrackListProps) {
-  const { currentTrack, isPlaying, play, togglePlay } = usePlayerStore()
+  const { currentTrack, togglePlay } = usePlayerStore()
   const { playTrack } = useLocalPlayer()
 
   const handlePlay = (track: LocalMusicFile, allTracks: LocalMusicFile[]) => {
@@ -40,7 +39,6 @@ export function LocalTrackList({ tracks }: LocalTrackListProps) {
         </thead>
         <tbody>
           {tracks.map((track, index) => {
-            const isActive = currentTrack?.id === track.id
             return (
               <tr
                 key={track.id}

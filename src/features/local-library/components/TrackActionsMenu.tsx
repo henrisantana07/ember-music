@@ -12,15 +12,19 @@ import {
   Trash2,
   ExternalLink,
   Music,
-  FileText,
-  FolderOpen,
 } from 'lucide-react'
 import { useLocalPlayer } from '@/features/local-library/hooks/use-local-player'
 import { useLocalLibrary } from '@/features/local-library/hooks/use-local-library'
+import { useLibraryStore } from '@/features/local-library/stores/library-store'
 import { usePlayerStore } from '@/lib/store'
 import { localTrackToPlayerTrack } from '@/features/local-library/lib/local-audio'
+import { deleteMusicFile } from '@/lib/database'
 import { formatDuration } from '@/lib/spotify'
+import { useUser } from '@/hooks/use-user'
+import { useFavoritesSync, useFavoritesStore, useEnsureFavorites, useIsFavorite } from '@/lib/favorites-store'
 import { PlaylistModal } from '@/components/PlaylistModal'
+import { Modal } from '@/components/ui/Modal'
+import { Snackbar } from '@/components/ui/Snackbar'
 import type { Track } from '@/types/music'
 import type { LocalMusicFile } from '@/features/local-library/types'
 
@@ -32,11 +36,21 @@ interface TrackActionsMenuProps {
 export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
   const [isOpen, setIsOpen] = useState(false)
-  const { playTrack, next: playNextTrack } = useLocalPlayer()
+  const { playTrack } = useLocalPlayer()
   const { folders } = useLocalLibrary()
   const { currentTrack, isPlaying, queue, addToQueue: storeAddToQueue, togglePlay } = usePlayerStore()
   const [copied, setCopied] = useState(false)
   const [playlistTrack, setPlaylistTrack] = useState<Track | null>(null)
+  const [infoOpen, setInfoOpen] = useState(false)
+  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false)
+  const [removing, setRemoving] = useState(false)
+  const [snack, setSnack] = useState<string | null>(null)
+
+  const { user } = useUser()
+  useFavoritesSync(user?.id)
+  useEnsureFavorites([track.id])
+  const isFavorite = useIsFavorite(track.id)
+  const toggleFavorite = useFavoritesStore((s) => s.toggle)
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -59,7 +73,6 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
   }
 
   const handlePlayNext = async () => {
-    // Add to queue right after current track
     const playerTrack = await localTrackToPlayerTrack(track, folders)
     const currentIndex = queue.findIndex((t) => t.id === currentTrack?.id)
     if (currentIndex >= 0) {
@@ -78,8 +91,15 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
     setIsOpen(false)
   }
 
-  const handleToggleFavorite = () => {
+  const handleToggleFavorite = async () => {
     setIsOpen(false)
+    if (!user) {
+      setSnack('Faça login para favoritar faixas')
+      return
+    }
+    const playerTrack = await localTrackToPlayerTrack(track, folders)
+    const added = await toggleFavorite(playerTrack as Track)
+    setSnack(added ? `"${track.title}" adicionada aos favoritos` : `"${track.title}" removida dos favoritos`)
   }
 
   const handleAddToPlaylist = async () => {
@@ -90,6 +110,7 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
 
   const handleShowInfo = () => {
     setIsOpen(false)
+    setInfoOpen(true)
   }
 
   const handleShowLocation = () => {
@@ -101,6 +122,21 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
 
   const handleRemoveFromLibrary = () => {
     setIsOpen(false)
+    setConfirmRemoveOpen(true)
+  }
+
+  const confirmRemove = async () => {
+    setRemoving(true)
+    try {
+      await deleteMusicFile(track.id)
+      useLibraryStore.getState().removeTrack(track.id)
+      setSnack(`"${track.title}" removida da biblioteca`)
+    } catch {
+      setSnack('Não foi possível remover a faixa. Tente novamente.')
+    } finally {
+      setRemoving(false)
+      setConfirmRemoveOpen(false)
+    }
   }
 
   const menuItems = [
@@ -122,8 +158,8 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
     },
     { divider: true },
     {
-      label: 'Adicionar aos favoritos',
-      icon: <Heart className="w-4 h-4" />,
+      label: isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos',
+      icon: <Heart className="w-4 h-4" fill={isFavorite ? 'currentColor' : 'none'} style={isFavorite ? { color: 'var(--accent-solid)' } : undefined} />,
       action: handleToggleFavorite,
     },
     {
@@ -149,6 +185,22 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
       action: handleRemoveFromLibrary,
       danger: true,
     },
+  ]
+
+  const infoRows: Array<{ label: string; value: string }> = [
+    { label: 'Título', value: track.title },
+    { label: 'Artista', value: track.artist || '—' },
+    { label: 'Álbum', value: track.album || '—' },
+    { label: 'Artista do álbum', value: track.albumArtist || '—' },
+    { label: 'Gênero', value: track.genre || '—' },
+    { label: 'Ano', value: track.year ? String(track.year) : '—' },
+    { label: 'Duração', value: track.duration > 0 ? formatDuration(Math.floor(track.duration)) : '—' },
+    { label: 'Bitrate', value: track.bitrate ? `${Math.round(track.bitrate / 1000)} kbps` : '—' },
+    { label: 'Taxa de amostragem', value: track.sampleRate ? `${Math.round(track.sampleRate / 1000)} kHz` : '—' },
+    { label: 'Tamanho', value: track.size ? `${(track.size / (1024 * 1024)).toFixed(1)} MB` : '—' },
+    { label: 'Formato', value: track.extension?.toUpperCase() || '—' },
+    { label: 'Pasta', value: folders.find((f) => f.id === track.folderId)?.name || '—' },
+    { label: 'Arquivo', value: track.path },
   ]
 
   return (
@@ -205,6 +257,62 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
           track={playlistTrack}
         />
       )}
+
+      {infoOpen && (
+        <Modal open={infoOpen} onClose={() => setInfoOpen(false)} title="Informações da faixa">
+          <dl className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+            {infoRows.map((row) => (
+              <div key={row.label} className="flex items-baseline justify-between gap-4">
+                <dt className="text-body-medium shrink-0" style={{ color: 'var(--text-secondary)' }}>{row.label}</dt>
+                <dd className="text-body-medium text-right break-all" style={{ color: 'var(--text-primary)' }}>{row.value}</dd>
+              </div>
+            ))}
+            {track.inferred && (
+              <p className="text-body-medium pt-1" style={{ color: 'var(--text-disabled)' }}>
+                Metadados inferidos do nome do arquivo.
+              </p>
+            )}
+            {track.missing && (
+              <p className="text-body-medium pt-1" style={{ color: 'var(--error)' }}>
+                Arquivo não encontrado — reconecte a pasta.
+              </p>
+            )}
+          </dl>
+        </Modal>
+      )}
+
+      {confirmRemoveOpen && (
+        <Modal open={confirmRemoveOpen} onClose={() => setConfirmRemoveOpen(false)} title="Remover da biblioteca">
+          <p className="text-body-medium mb-4" style={{ color: 'var(--text-secondary)' }}>
+            Remover <strong style={{ color: 'var(--text-primary)' }}>{track.title}</strong> da biblioteca local? O arquivo no seu disco não será apagado.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmRemoveOpen(false)}
+              className="min-h-[48px] px-5 text-label-large rounded-lg"
+              style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={confirmRemove}
+              disabled={removing}
+              className="min-h-[48px] px-5 text-label-large rounded-lg disabled:opacity-50"
+              style={{ backgroundColor: 'var(--error)', color: 'white' }}
+            >
+              {removing ? 'Removendo…' : 'Remover'}
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      <Snackbar
+        open={snack !== null}
+        message={snack ?? ''}
+        onDismiss={() => setSnack(null)}
+      />
     </div>
   )
 }

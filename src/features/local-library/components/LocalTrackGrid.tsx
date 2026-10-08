@@ -4,7 +4,6 @@ import { useLocalPlayer } from '@/features/local-library/hooks/use-local-player'
 import { usePlayerStore } from '@/lib/store'
 import type { LocalMusicFile } from '@/features/local-library/types'
 import { formatDuration } from '@/lib/spotify'
-import { Play, Pause, MoreVertical, Heart, Plus } from 'lucide-react'
 import { TrackActionsMenu } from '@/features/local-library/components/TrackActionsMenu'
 
 interface LocalTrackGridProps {
