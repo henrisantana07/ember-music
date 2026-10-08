@@ -263,27 +263,6 @@ export function Player() {
     }
   }, [crossfadeDuration, volume, next, isYouTubeTrack, yt])
 
-  if (pathname === '/reproducao') {
-    if (isYouTubeTrack) return <YouTubePlayer videoId={ytVideoId} style={{ width: '1px', height: '1px', position: 'absolute', opacity: 0 }} />
-    return <audio ref={audioRef} />
-  }
-
-  if (!currentTrack) return null
-
-  const currentDuration = isYouTubeTrack ? yt.duration : duration
-  const currentProgress = isYouTubeTrack ? yt.currentTime : progress
-  const progressPercent = currentDuration > 0 ? (currentProgress / currentDuration) * 100 : 0
-
-  const repeatLabel: Record<RepeatMode, string> = { none: 'Sem repeat', one: 'Repeat 1', all: 'Repeat tudo' }
-
-  function handleProgressClick(e: React.MouseEvent) {
-    const rect = progressRef.current?.getBoundingClientRect()
-    if (!rect) return
-    const x = (e.clientX - rect.left) / rect.width
-    const newTime = x * currentDuration
-    handleSeek(newTime)
-  }
-
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
     if (sleepIntervalRef.current) clearInterval(sleepIntervalRef.current)
@@ -316,6 +295,27 @@ export function Player() {
       if (sleepIntervalRef.current) clearInterval(sleepIntervalRef.current)
     }
   }, [sleepTimerMinutes])
+
+  if (pathname === '/reproducao') {
+    if (isYouTubeTrack) return <YouTubePlayer videoId={ytVideoId} style={{ width: '1px', height: '1px', position: 'absolute', opacity: 0 }} />
+    return <audio ref={audioRef} />
+  }
+
+  if (!currentTrack) return null
+
+  const currentDuration = isYouTubeTrack ? yt.duration : duration
+  const currentProgress = isYouTubeTrack ? yt.currentTime : progress
+  const progressPercent = currentDuration > 0 ? (currentProgress / currentDuration) * 100 : 0
+
+  const repeatLabel: Record<RepeatMode, string> = { none: 'Sem repeat', one: 'Repeat 1', all: 'Repeat tudo' }
+
+  function handleProgressClick(e: React.MouseEvent) {
+    const rect = progressRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const x = (e.clientX - rect.left) / rect.width
+    const newTime = x * currentDuration
+    handleSeek(newTime)
+  }
 
   if (miniPlayer) {
     return (

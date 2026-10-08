@@ -245,6 +245,14 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [router, onClose, isExpandedOpen])
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  )
+
+  const touchStartY = useRef(0)
+  const touchDelta = useRef(0)
+  const [swipeOffset, setSwipeOffset] = useState(0)
+
   if (!currentTrack) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -337,14 +345,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
   const RepeatIcon = repeat === 'one' ? Repeat1 : repeat === 'all' ? Repeat : null
   const repeatLabel: Record<RepeatMode, string> = { none: 'Sem repeat', one: 'Repeat 1', all: 'Repeat tudo' }
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
-  )
-
-  const touchStartY = useRef(0)
-  const touchDelta = useRef(0)
-  const [swipeOffset, setSwipeOffset] = useState(0)
 
   function handleTouchStart(e: React.TouchEvent) {
     const target = e.target as HTMLElement
