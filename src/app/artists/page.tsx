@@ -58,7 +58,7 @@ export default function ArtistsPage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {artists.map((a) => (
             <div key={a.artist_id}
-              className="flex items-center gap-4 p-3 rounded-xl transition-colors hover:bg-white/5"
+              className="flex items-center gap-4 p-3 rounded-xl transition-colors hover:bg-state-hover"
               style={{ background: 'var(--bg-elevated)' }}>
               <a href={`/artists/${a.artist_id}`} className="flex items-center gap-4 flex-1 min-w-0">
                 <img

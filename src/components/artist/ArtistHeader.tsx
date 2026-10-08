@@ -39,7 +39,7 @@ export function ArtistHeader({ artist, onPlay }: ArtistHeaderProps) {
             className="px-8 py-2.5 rounded-full text-sm font-bold transition-transform hover:scale-105 active:scale-95"
             style={{
               background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
-              color: '#fff',
+              color: 'var(--text-on-accent)',
             }}
           >
             Tocar

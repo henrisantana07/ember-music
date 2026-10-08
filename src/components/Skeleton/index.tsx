@@ -18,7 +18,7 @@ export function Skeleton({
     height: typeof height === 'number' ? `${height}px` : height,
     borderRadius: variant === 'circular' ? '50%' : borderRadius,
     animation: 'shimmer 1.5s infinite',
-    background: 'linear-gradient(90deg, var(--bg-elevated) 25%, rgba(255,255,255,0.05) 50%, var(--bg-elevated) 75%)',
+    background: 'linear-gradient(90deg, var(--bg-elevated) 25%, color-mix(in srgb, var(--text-primary) 5%, transparent) 50%, var(--bg-elevated) 75%)',
     backgroundSize: '200% 100%',
   }
 

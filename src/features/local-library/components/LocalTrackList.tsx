@@ -45,7 +45,7 @@ export function LocalTrackList({ tracks }: LocalTrackListProps) {
             return (
               <tr
                 key={track.id}
-                className={`group cursor-pointer transition-colors hover:bg-white/5 ${track.missing ? 'opacity-50' : ''}`}
+                className={`group cursor-pointer transition-colors hover:bg-state-hover ${track.missing ? 'opacity-50' : ''}`}
                 onClick={() => handlePlay(track, tracks)}
               >
                 <td className="text-right pr-3 py-2 text-sm" style={{ color: track.missing ? 'var(--error)' : 'var(--text-disabled)' }}>

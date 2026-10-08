@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import type { Json } from '@/types/database'
 import type { Track } from '@/types/music'
+import { useEnsureFavorites, useFavoritesStore, useFavoritesSync, useIsFavorite } from '@/lib/favorites-store'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -78,7 +79,12 @@ function SortableQueueItem({ track, isCurrent, isPlaying, onPlay, onRemove }: {
         <p className="text-[10px]" style={{ color: 'var(--text-disabled)' }}>{formatDuration(Math.floor(track.duration))}</p>
       </div>
 
-      <button onClick={onRemove} className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10 relative" style={{ color: 'var(--text-disabled)' }} title="Remover da fila">
+      <button
+        onClick={onRemove}
+        className="p-1.5 rounded-full z-10 relative transition-colors state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+        title="Remover da fila"
+        aria-label={`Remover ${track.name} da fila`}
+      >
         <Trash2 className="w-3.5 h-3.5" />
       </button>
     </div>
@@ -91,7 +97,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const [dominantColor, setDominantColor] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [showQueueOnMobile, setShowQueueOnMobile] = useState(false)
-  const [isFav, setIsFav] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(null)
@@ -111,6 +116,11 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     setRepeat, toggleShuffle,
     removeFromQueue, reorderQueue, clearQueue, addToQueue,
   } = usePlayerStore()
+
+  const isFav = useIsFavorite(currentTrack?.id ?? '')
+  const toggleFavorite = useFavoritesStore((s) => s.toggle)
+  useFavoritesSync(user?.id)
+  useEnsureFavorites(currentTrack ? [currentTrack.id] : [])
 
   const isYouTubeTrack = currentTrack?.source === 'youtube' && !!currentTrack.youtubeVideoId
 
@@ -205,17 +215,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   }, [])
 
   useEffect(() => {
-    if (!user || !currentTrack) return
-    supabase
-      .from('favorites')
-      .select('id')
-      .eq('track_id', currentTrack.id)
-      .eq('user_id', user.id)
-      .maybeSingle()
-      .then(({ data }) => setIsFav(!!data))
-  }, [user, currentTrack?.id])
-
-  useEffect(() => {
     if (!isSearchOpen || !searchQuery.trim()) { setSearchResults([]); return }
     const controller = new AbortController()
     const timer = setTimeout(async () => {
@@ -308,17 +307,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
   async function handleFavorite() {
     if (!user || !currentTrack) return
-    if (isFav) {
-      await supabase.from('favorites').delete().eq('track_id', currentTrack.id).eq('user_id', user.id)
-      setIsFav(false)
-    } else {
-      await supabase.from('favorites').insert({
-        user_id: user.id,
-        track_id: currentTrack.id,
-        track_data: currentTrack as unknown as Json,
-      })
-      setIsFav(true)
-    }
+    await toggleFavorite(currentTrack)
   }
 
   async function handleDownload() {
@@ -431,12 +420,12 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       />
 
       <header className="relative flex items-center justify-between px-4 md:px-6 h-14 flex-none">
-        <button onClick={requestClose} className="p-2 rounded-full hover:bg-white/[0.06] transition-colors" style={{ color: 'var(--text-primary)' }} aria-label="Fechar">
+        <button onClick={requestClose} className="p-2 rounded-full hover:bg-state-hover transition-colors" style={{ color: 'var(--text-primary)' }} aria-label="Fechar">
           <ChevronDown className="w-6 h-6" />
         </button>
         <button
           onClick={() => setShowQueueOnMobile(!showQueueOnMobile)}
-          className="md:hidden p-2 rounded-full hover:bg-white/[0.06] transition-colors"
+          className="md:hidden p-2 rounded-full hover:bg-state-hover transition-colors"
           style={{ color: showQueueOnMobile ? 'var(--accent-from)' : 'var(--text-secondary)' }}
           aria-label="Fila"
         >
@@ -669,7 +658,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                     ))
                   )}
                 </div>
-                <div className="sticky bottom-0 z-10 flex-none flex items-center gap-2 px-2 py-8 border-t border-white/5 pointer-events-none" style={{ backgroundColor: 'rgba(49, 45, 41, 0.13)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
+                <div className="sticky bottom-0 z-10 flex-none flex items-center gap-2 px-2 py-8 border-t border-outline-variant pointer-events-none" style={{ backgroundColor: 'rgba(49, 45, 41, 0.13)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
                   <button
                     onClick={() => { setIsSearchOpen(!isSearchOpen); if (!isSearchOpen) setSearchQuery('') }}
                     className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"

@@ -420,7 +420,7 @@ function PlaylistContent() {
 
             {isOwner && (
               <div ref={editMenuRef} className="relative">
-                <button onClick={() => setEditMenuOpen((v) => !v)} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Editar">
+                <button onClick={() => setEditMenuOpen((v) => !v)} className="p-2 rounded-full transition-colors hover:bg-state-hover" style={{ color: 'var(--text-secondary)' }} title="Editar">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
@@ -432,16 +432,16 @@ function PlaylistContent() {
                   >
                     <button
                       onClick={() => { setCoverModalOpen(true); setEditMenuOpen(false) }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-white/5 text-left"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-state-hover text-left"
                       style={{ color: 'var(--text-primary)' }}
                     >
                       <Camera size={16} />
                       Trocar capa
                     </button>
-                    <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
+                    <div style={{ height: 1, backgroundColor: 'var(--outline-variant)' }} />
                     <button
                       onClick={() => { setEditModalOpen(true); setEditMenuOpen(false) }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-white/5 text-left"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-state-hover text-left"
                       style={{ color: 'var(--text-primary)' }}
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -455,7 +455,7 @@ function PlaylistContent() {
             )}
 
             {isOwner && (
-              <button onClick={handleDuplicate} disabled={duplicating} className="p-2 rounded-full transition-colors hover:bg-white/5 disabled:opacity-50" style={{ color: 'var(--text-secondary)' }} title="Duplicar">
+              <button onClick={handleDuplicate} disabled={duplicating} className="p-2 rounded-full transition-colors hover:bg-state-hover disabled:opacity-50" style={{ color: 'var(--text-secondary)' }} title="Duplicar">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
@@ -463,14 +463,14 @@ function PlaylistContent() {
             )}
 
             {isOwner && (
-              <button onClick={() => setDeleteModalOpen(true)} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: 'var(--text-secondary)' }} title="Excluir">
+              <button onClick={() => setDeleteModalOpen(true)} className="p-2 rounded-full transition-colors hover:bg-state-hover" style={{ color: 'var(--text-secondary)' }} title="Excluir">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </button>
             )}
 
-            <button onClick={handleShare} className="p-2 rounded-full transition-colors hover:bg-white/5" style={{ color: playlist.is_public ? 'var(--text-secondary)' : 'var(--text-disabled)' }} title={playlist.is_public ? 'Compartilhar' : 'Torne pública para compartilhar'}>
+            <button onClick={handleShare} className="p-2 rounded-full transition-colors hover:bg-state-hover" style={{ color: playlist.is_public ? 'var(--text-secondary)' : 'var(--text-disabled)' }} title={playlist.is_public ? 'Compartilhar' : 'Torne pública para compartilhar'}>
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
               </svg>
@@ -586,7 +586,7 @@ function SortableTrackRow({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-3 px-3 py-2 rounded-lg group transition-colors cursor-pointer hover:bg-white/5"
+      className="flex items-center gap-3 px-3 py-2 rounded-lg group transition-colors cursor-pointer hover:bg-state-hover"
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -633,11 +633,11 @@ function SortableTrackRow({
       {isOwner && (
         <button
           onClick={(e) => { e.stopPropagation(); onRemove() }}
-          className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{ color: 'var(--text-secondary)' }}
+          className="p-1.5 rounded-full transition-colors state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           title="Remover"
+          aria-label={`Remover ${track.name} da playlist`}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>

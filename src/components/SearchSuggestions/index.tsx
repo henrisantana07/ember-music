@@ -186,12 +186,12 @@ export function SearchSuggestions({ query, onSelect, onClose, onSearch, inputRef
   return (
     <div
       ref={panelRef}
-      className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-xl overflow-hidden z-50 border border-white/5"
+      className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-xl overflow-hidden z-50 border border-outline-variant"
       style={{ backgroundColor: 'var(--bg-surface)' }}
     >
       {showHistory && (
         <>
-          <div className="px-4 py-2 flex items-center justify-between border-b border-white/5">
+          <div className="px-4 py-2 flex items-center justify-between border-b border-outline-variant">
             <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-disabled)' }}>Buscas recentes</span>
             <button onClick={clearHistory} className="text-xs font-medium" style={{ color: 'var(--accent-solid)' }}>Limpar histórico</button>
           </div>
@@ -212,7 +212,7 @@ export function SearchSuggestions({ query, onSelect, onClose, onSearch, inputRef
                 tabIndex={0}
                 onClick={(e) => { e.stopPropagation(); void removeHistoryItem(entry) }}
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); void removeHistoryItem(entry) } }}
-                className="p-1 rounded-full hover:bg-white/10"
+                className="p-1 rounded-full hover:bg-state-pressed"
                 aria-label={`Remover ${entry.query} do histórico`}
               >
                 <svg className="w-3.5 h-3.5" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

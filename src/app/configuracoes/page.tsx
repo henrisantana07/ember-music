@@ -387,18 +387,18 @@ export default function ConfiguracoesPage() {
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={avatarUploading}
-                    className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full flex items-center justify-center shadow-elevation-2 transition-transform hover:scale-105"
+                    style={{ backgroundColor: 'var(--surface-container-highest)', color: 'var(--text-primary)', outlineColor: 'var(--accent-solid)' }}
+                    aria-label="Trocar foto de perfil"
+                    title="Trocar foto"
                   >
                     {avatarUploading ? (
-                      <span className="text-xs">Enviando…</span>
+                      <span className="text-[10px]">…</span>
                     ) : (
-                      <div className="flex flex-col items-center gap-0.5">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <span className="text-[10px]">Trocar foto</span>
-                      </div>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
                     )}
                   </button>
                 </div>
@@ -426,7 +426,7 @@ export default function ConfiguracoesPage() {
 
               {/* Crop modal */}
               {cropImage && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={cancelCrop}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim" onClick={cancelCrop}>
                   <div
                     className="p-6 rounded-xl max-w-lg w-full mx-4"
                     style={{ backgroundColor: 'var(--bg-elevated)' }}
@@ -457,7 +457,7 @@ export default function ConfiguracoesPage() {
                   value={displayName}
                   onChange={(e) => handleNameChange(e.target.value)}
                   maxLength={50}
-                  className="w-full px-4 py-2.5 rounded-lg border text-sm transition-colors focus:outline-none"
+                  className="w-full px-4 py-2.5 rounded-lg border text-sm transition-colors "
                   style={{
                     backgroundColor: 'var(--bg-surface)',
                     borderColor: 'var(--bg-elevated)',
@@ -477,7 +477,7 @@ export default function ConfiguracoesPage() {
                   value={preferredGenre}
                   onChange={(e) => handleGenreChange(e.target.value)}
                   placeholder="Ex: rock, jazz, electronic…"
-                  className="w-full px-4 py-2.5 rounded-lg border text-sm transition-colors focus:outline-none"
+                  className="w-full px-4 py-2.5 rounded-lg border text-sm transition-colors "
                   style={{
                     backgroundColor: 'var(--bg-surface)',
                     borderColor: 'var(--bg-elevated)',
@@ -497,7 +497,7 @@ export default function ConfiguracoesPage() {
                   maxLength={160}
                   rows={3}
                   placeholder="Conte um pouco sobre seu gosto musical…"
-                  className="w-full px-4 py-2.5 rounded-lg border text-sm transition-colors focus:outline-none resize-y"
+                  className="w-full px-4 py-2.5 rounded-lg border text-sm transition-colors  resize-y"
                   style={{
                     backgroundColor: 'var(--bg-surface)',
                     borderColor: 'var(--bg-elevated)',
@@ -530,7 +530,7 @@ export default function ConfiguracoesPage() {
                   <button
                     onClick={() => setDeleteModalOpen(true)}
                     className="px-4 py-2 text-sm rounded-lg"
-                    style={{ backgroundColor: 'var(--error)', color: '#fff' }}
+                    style={{ backgroundColor: 'var(--error)', color: 'var(--text-on-accent)' }}
                   >
                     Excluir conta
                   </button>
@@ -539,7 +539,7 @@ export default function ConfiguracoesPage() {
 
               {/* Delete modal */}
               {deleteModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setDeleteModalOpen(false)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim" onClick={() => setDeleteModalOpen(false)}>
                   <div
                     className="p-6 rounded-xl max-w-sm w-full mx-4"
                     style={{ backgroundColor: 'var(--bg-elevated)' }}
@@ -554,7 +554,7 @@ export default function ConfiguracoesPage() {
                       value={deleteConfirm}
                       onChange={(e) => setDeleteConfirm(e.target.value)}
                       placeholder="Digite EXCLUIR"
-                      className="w-full px-3 py-2 rounded-lg border text-sm mb-4 focus:outline-none"
+                      className="w-full px-3 py-2 rounded-lg border text-sm mb-4 "
                       style={{
                         backgroundColor: 'var(--bg-surface)',
                         borderColor: 'var(--bg-elevated)',
@@ -632,7 +632,7 @@ export default function ConfiguracoesPage() {
                 <select
                   value={settings.language}
                   onChange={(e) => handleLanguageChange(e.target.value)}
-                  className="px-4 py-2.5 rounded-lg border text-sm focus:outline-none transition-colors"
+                  className="px-4 py-2.5 rounded-lg border text-sm  transition-colors"
                   style={{
                     backgroundColor: 'var(--bg-surface)',
                     borderColor: 'var(--bg-elevated)',

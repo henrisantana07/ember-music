@@ -121,7 +121,7 @@ function SearchResults({ query }: { query: string }) {
                   <a
                     key={album.id}
                     href={`/albums/${album.id}`}
-                    className="flex-shrink-0 w-40 p-3 rounded-xl transition-colors hover:bg-white/5 group relative"
+                    className="flex-shrink-0 w-40 p-3 rounded-xl transition-colors hover:bg-state-hover group relative"
                   >
                     <div className="relative mb-2">
                       <img
@@ -262,7 +262,7 @@ function HomeContent() {
           <h2 className="text-xl font-bold mb-4">Artistas do momento</h2>
           <Carousel>
             {artists.map((artist) => (
-              <div key={artist.id} className="w-36 flex-shrink-0 p-3 rounded-xl text-center transition-colors hover:bg-white/5 flex flex-col items-center">
+              <div key={artist.id} className="w-36 flex-shrink-0 p-3 rounded-xl text-center transition-colors hover:bg-state-hover flex flex-col items-center">
                 <a href={`/artists/${artist.id}`} className="w-full flex flex-col items-center">
                   <img src={artist.image || '/placeholder.svg'} alt={artist.name} className="w-full aspect-square rounded-full object-cover mb-3" loading="lazy" />
                   <p className="text-sm font-semibold truncate mb-3">{artist.name}</p>

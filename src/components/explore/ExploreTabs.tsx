@@ -34,7 +34,7 @@ const TAB_COUNT_KEYS: Record<string, keyof TabCounts> = {
 
 export function ExploreTabs({ activeTab, onTabChange, counts }: ExploreTabsProps) {
   return (
-    <div className="flex gap-0 border-b border-white/10 overflow-x-auto hide-scrollbar">
+    <div role="tablist" aria-label="Categorias de resultado" className="flex gap-0 border-b border-outline-variant overflow-x-auto hide-scrollbar">
       {TABS.map((tab) => {
         const isActive = activeTab === tab
         const countKey = TAB_COUNT_KEYS[tab]
@@ -42,9 +42,13 @@ export function ExploreTabs({ activeTab, onTabChange, counts }: ExploreTabsProps
         return (
           <button
             key={tab}
+            role="tab"
+            id={`explore-tab-${tab}`}
+            aria-selected={isActive}
+            aria-controls={`explore-panel-${tab}`}
             onClick={() => onTabChange(tab)}
-            className={`relative px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors ${
-              isActive ? '' : 'hover:text-white/80'
+            className={`relative px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors state-layer ${
+              isActive ? '' : 'hover:text-on-surface'
             }`}
             style={{ color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)' }}
           >

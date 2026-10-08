@@ -6,6 +6,9 @@ import { useLocalLibrary } from '@/features/local-library/hooks/use-local-librar
 import { LocalLibraryHeader } from '@/features/local-library/components/LocalLibraryHeader'
 import { LocalTrackList } from '@/features/local-library/components/LocalTrackList'
 import { LocalTrackGrid } from '@/features/local-library/components/LocalTrackGrid'
+import { ControlToolbar } from '@/components/ui/ControlToolbar'
+import { SortMenu } from '@/components/ui/SortMenu'
+import { SegmentedToggle } from '@/components/ui/SegmentedToggle'
 
 function FolderTreeItem({
   folder,
@@ -32,16 +35,16 @@ function FolderTreeItem({
         onClick={() => onSelect(isSelected ? null : folder.id)}
         className={`flex items-center gap-2 w-full px-3 py-1.5 rounded-lg text-sm transition-colors ${
           isSelected
-            ? 'bg-[var(--accent-solid)] text-white'
+            ? 'bg-[var(--accent-solid)] text-on-accent'
             : 'hover:bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
         }`}
-        style={{ color: isSelected ? 'white' : 'var(--text-secondary)' }}
+        style={{ color: isSelected ? 'var(--text-on-accent)' : 'var(--text-secondary)' }}
       >
         <FolderOpen className="w-4 h-4 flex-shrink-0" />
         <span className="truncate flex-1">{folder.name}</span>
         {hasTracks && (
           <span className="text-xs px-1.5 py-0.5 rounded" style={{
-            backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : 'var(--bg-elevated)',
+            backgroundColor: isSelected ? 'var(--outline)' : 'var(--bg-elevated)',
             color: isSelected ? 'white' : 'var(--text-disabled)'
           }}>
             {folderTracks.length}
@@ -84,7 +87,7 @@ function FolderSidebar({
           onClick={() => onSelectFolder(null)}
           className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
             selectedFolderId === null
-              ? 'bg-[var(--accent-solid)] text-white'
+              ? 'bg-[var(--accent-solid)] text-on-accent'
               : 'hover:bg-[var(--bg-elevated)]'
           }`}
         >
@@ -123,6 +126,7 @@ function LocalLibraryContent() {
     initialized,
     loading,
     viewMode,
+    setViewMode,
   } = useLocalLibrary()
 
   const [trackSort, setTrackSort] = useState<'title' | 'artist' | 'album' | 'duration' | 'added'>('added')
@@ -199,8 +203,8 @@ function LocalLibraryContent() {
         </aside>
 
         <main className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm" style={{ color: 'var(--text-disabled)' }}>
+          <div className="mb-4 space-y-3">
+            <span className="text-body-small block" style={{ color: 'var(--text-disabled)' }} aria-live="polite">
               {tracksToShow.length} {tracksToShow.length === 1 ? 'música' : 'músicas'}
               {selectedFolderId && (
                 <>
@@ -211,21 +215,49 @@ function LocalLibraryContent() {
                 </>
               )}
             </span>
-
-            {tracksToShow.length > 0 && !selectedFolderId && (
-              <select
-                value={trackSort}
-                onChange={(e) => setTrackSort(e.target.value as typeof trackSort)}
-                className="sort-select text-sm rounded-lg px-3 py-1.5 outline-none cursor-pointer"
-                style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid rgba(255,255,255,0.1)' }}
-              >
-                <option value="added">Adicionadas recentemente</option>
-                <option value="title">Título (A → Z)</option>
-                <option value="artist">Artista (A → Z)</option>
-                <option value="album">Álbum (A → Z)</option>
-                <option value="duration">Duração</option>
-              </select>
-            )}
+            <ControlToolbar
+              sort={
+                <SortMenu
+                  options={[
+                    { value: 'added', label: 'Adicionadas recentemente' },
+                    { value: 'title', label: 'Título (A → Z)' },
+                    { value: 'artist', label: 'Artista (A → Z)' },
+                    { value: 'album', label: 'Álbum (A → Z)' },
+                    { value: 'duration', label: 'Duração' },
+                  ]}
+                  value={trackSort}
+                  onChange={setTrackSort}
+                />
+              }
+              view={
+                <SegmentedToggle
+                  ariaLabel="Modo de exibição"
+                  size="sm"
+                  value={viewMode}
+                  onChange={setViewMode}
+                  options={[
+                    {
+                      value: 'list',
+                      ariaLabel: 'Exibir como lista',
+                      icon: (
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                      ),
+                    },
+                    {
+                      value: 'grid',
+                      ariaLabel: 'Exibir como grade',
+                      icon: (
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z" />
+                        </svg>
+                      ),
+                    },
+                  ]}
+                />
+              }
+            />
           </div>
 
           {tracksToShow.length === 0 && (

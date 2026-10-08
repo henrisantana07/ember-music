@@ -165,8 +165,11 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
     <div className="relative" ref={menuRef}>
       <button
         onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen) }}
-        className="p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="p-1 rounded-full transition-colors state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         title="Mais opções"
+        aria-label={`Mais opções para ${track.title}`}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--text-disabled)' }}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v.01M12 12v.01M12 19v.01" />
@@ -175,16 +178,16 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
 
       {isOpen && (
         <div
-          className="absolute right-0 top-full mt-1 z-50 min-w-[180px] rounded-lg shadow-xl border border-white/5 animate-fade-in"
+          className="absolute right-0 top-full mt-1 z-50 min-w-[180px] rounded-lg shadow-xl border border-outline-variant animate-fade-in"
           style={{ backgroundColor: 'var(--bg-elevated)' }}
         >
-          <div className="px-2 py-1 border-b border-white/5 text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-disabled)' }}>
+          <div className="px-2 py-1 border-b border-outline-variant text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-disabled)' }}>
             {track.title}
           </div>
           <div className="py-1">
             {menuItems.map((item, index) => {
               if (item.divider) {
-                return <div key={`divider-${index}`} className="border-t border-white/5 my-1" />
+                return <div key={`divider-${index}`} className="border-t border-outline-variant my-1" />
               }
               return (
                 <button

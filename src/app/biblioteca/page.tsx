@@ -309,7 +309,7 @@ function BibliotecaContent() {
             value={trackSort}
             onChange={(e) => setTrackSort(e.target.value as typeof trackSort)}
             className="sort-select text-sm rounded-lg px-3 py-1.5 outline-none cursor-pointer"
-            style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid rgba(255,255,255,0.1)' }}
+            style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid var(--outline-variant)' }}
           >
             <option value="recent">Adicionado recentemente</option>
             <option value="oldest">Mais antigo primeiro</option>
@@ -325,7 +325,7 @@ function BibliotecaContent() {
             value={artistSort}
             onChange={(e) => setArtistSort(e.target.value as typeof artistSort)}
             className="sort-select text-sm rounded-lg px-3 py-1.5 outline-none cursor-pointer"
-            style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid rgba(255,255,255,0.1)' }}
+            style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid var(--outline-variant)' }}
           >
             <option value="recent">Seguido recentemente</option>
             <option value="a-z">A → Z</option>
@@ -338,7 +338,7 @@ function BibliotecaContent() {
             value={playlistSort}
             onChange={(e) => setPlaylistSort(e.target.value as typeof playlistSort)}
             className="sort-select text-sm rounded-lg px-3 py-1.5 outline-none cursor-pointer"
-            style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid rgba(255,255,255,0.1)' }}
+            style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid var(--outline-variant)' }}
           >
             <option value="recent">Criada recentemente</option>
             <option value="updated">Modificada recentemente</option>
@@ -380,7 +380,7 @@ function BibliotecaContent() {
               <button
                 onClick={() => setConfirmClear(false)}
                 className="text-sm px-3 py-1.5 rounded-lg"
-                style={{ color: 'var(--text-secondary)', border: '1px solid rgba(255,255,255,0.1)' }}
+                style={{ color: 'var(--text-secondary)', border: '1px solid var(--outline-variant)' }}
               >
                 Não
               </button>
@@ -389,7 +389,7 @@ function BibliotecaContent() {
             <button
               onClick={() => setConfirmClear(true)}
               className="text-sm px-3 py-1.5 rounded-lg transition-colors"
-              style={{ color: 'var(--text-secondary)', border: '1px solid rgba(255,255,255,0.1)' }}
+              style={{ color: 'var(--text-secondary)', border: '1px solid var(--outline-variant)' }}
             >
               Limpar histórico
             </button>
@@ -397,14 +397,16 @@ function BibliotecaContent() {
         )}
       </div>
 
-      <div className="flex items-center gap-2 mb-6 overflow-x-auto hide-scrollbar">
+      <div role="tablist" aria-label="Seções da biblioteca" className="flex items-center gap-2 mb-6 overflow-x-auto hide-scrollbar">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id
           return (
             <button
               key={tab.id}
+              role="tab"
+              aria-selected={isActive}
               onClick={() => setTab(tab.id)}
-              className="tab-pill text-sm font-medium px-4 py-1.5 rounded-full transition-all duration-150 whitespace-nowrap"
+              className="tab-pill text-sm font-medium px-4 py-1.5 rounded-full transition-all duration-150 whitespace-nowrap state-layer"
               style={{
                 background: isActive
                   ? 'linear-gradient(135deg, var(--accent-from), var(--accent-to))'
@@ -492,12 +494,9 @@ function BibliotecaContent() {
                       <div
                         className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
                         style={{ background: 'var(--accent-overlay)' }}
+                        aria-hidden="true"
                       >
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg transform transition-transform duration-150 group-hover:scale-105" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}>
-                          <svg className="w-5 h-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z" />
-                          </svg>
-                        </div>
+                        <span className="text-label-large font-semibold" style={{ color: 'var(--text-on-accent)' }}>Ver artista</span>
                       </div>
                     </div>
                     <p className="font-semibold text-sm truncate w-full">{a.artist_data?.name ?? 'Artista'}</p>
@@ -543,16 +542,21 @@ function BibliotecaContent() {
                         className="w-full aspect-square"
                       />
                       <div
-                        className="absolute inset-0 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
+                        className="absolute inset-0 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                         style={{ background: 'var(--accent-overlay)' }}
+                        aria-hidden="true"
+                      />
+                      <button
+                        type="button"
+                        className="absolute bottom-2 right-2 w-11 h-11 rounded-full flex items-center justify-center shadow-elevation-3 transition-transform duration-150 hover:scale-105"
+                        style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
                         onClick={(e) => { e.stopPropagation(); handlePlayPlaylist(pl) }}
+                        aria-label={`Tocar playlist ${pl.name}`}
                       >
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg transform transition-transform duration-150 group-hover:scale-105" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}>
-                          <svg className="w-5 h-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z" />
-                          </svg>
-                        </div>
-                      </div>
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </button>
                     </div>
                     <h3 className="font-semibold text-sm truncate">{pl.name}</h3>
                     <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>

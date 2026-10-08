@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
+import { Modal } from '@/components/ui/Modal'
 import { updateTrackCoverIfNeeded } from '@/lib/playlist/updateTrackCover'
 import type { Track } from '@/types/music'
 import type { Json } from '@/types/database'
@@ -156,24 +157,7 @@ export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
 
   return (
     <>
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
-        onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-      >
-        <div
-          className="w-full max-w-sm rounded-xl p-6 shadow-xl"
-          style={{ backgroundColor: 'var(--bg-elevated)' }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">Adicionar à playlist</h2>
-            <button onClick={onClose} className="p-1" style={{ color: 'var(--text-secondary)' }}>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
+      <Modal open={open} onClose={onClose} title="Adicionar à playlist">
           <p className="text-sm truncate mb-3" style={{ color: 'var(--text-secondary)' }}>
             {track.name} — {track.artist_name}
           </p>
@@ -191,14 +175,16 @@ export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
                 <button
                   key={pl.id}
                   onClick={() => handleToggle(pl.id, isIn)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors hover:bg-white/5 text-left"
+                  aria-pressed={isIn}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors hover:bg-state-hover text-left state-layer"
                 >
                   <div
                     className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border transition-colors"
                     style={{
-                      borderColor: isIn ? 'var(--accent-from)' : 'rgba(255,255,255,0.2)',
+                      borderColor: isIn ? 'var(--accent-from)' : 'var(--outline)',
                       backgroundColor: isIn ? 'var(--accent-from)' : 'transparent',
                     }}
+                    aria-hidden="true"
                   >
                     {isIn && (
                       <svg className="w-3 h-3" fill="white" viewBox="0 0 24 24">
@@ -222,16 +208,15 @@ export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
 
           <button
             onClick={() => setShowCreate(true)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm mt-2 transition-colors hover:bg-white/5"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm mt-2 transition-colors hover:bg-state-hover state-layer"
             style={{ color: 'var(--accent-from)' }}
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
             Criar playlist
           </button>
-        </div>
-      </div>
+      </Modal>
 
       <CreatePlaylistModal
         open={showCreate}

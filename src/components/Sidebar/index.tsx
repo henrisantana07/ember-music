@@ -95,8 +95,8 @@ export default function Sidebar() {
           collapsed ? 'justify-center py-3 px-2' : ''
         } ${
           active
-            ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
-            : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
+            ? 'font-bold bg-state-hover text-[var(--text-primary)]'
+            : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
         }`}
         title={collapsed ? label : undefined}
       >
@@ -111,7 +111,7 @@ export default function Sidebar() {
       <div className="flex-none flex items-center h-14 px-4 gap-3">
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1 rounded-lg hover:bg-white/[0.06] transition-colors duration-200"
+          className="p-1 rounded-lg hover:bg-state-hover transition-colors duration-200"
           aria-label={collapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
         >
           <svg className="w-5 h-5" style={{ color: 'var(--text-primary)' }} viewBox="0 0 24 24" fill="currentColor">
@@ -132,7 +132,7 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <hr className="mx-4 my-2 border-white/5" />
+      <hr className="mx-4 my-2 border-outline-variant" />
 
       {!collapsed && playlists.length > 0 && (
         <div className="flex-none px-2 space-y-0.5">
@@ -149,8 +149,8 @@ export default function Sidebar() {
                   aria-current={active ? 'page' : undefined}
                   className={`flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
                     active
-                      ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
-                      : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
+                      ? 'font-bold bg-state-hover text-[var(--text-primary)]'
+                      : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
                   }`}
                 >
                   <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
@@ -164,7 +164,7 @@ export default function Sidebar() {
         </div>
       )}
 
-      <hr className={`mx-4 my-2 border-white/5 ${collapsed ? 'hidden' : ''}`} />
+      <hr className={`mx-4 my-2 border-outline-variant ${collapsed ? 'hidden' : ''}`} />
 
       {!collapsed && (
         <div className="flex-1 overflow-y-auto scrollbar-thin px-2 space-y-0.5 min-h-[150px] max-h-[calc(100vh-8rem)]">
@@ -182,15 +182,15 @@ export default function Sidebar() {
                 aria-current={active ? 'page' : undefined}
                 className={`flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
                   active
-                    ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
-                    : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
+                    ? 'font-bold bg-state-hover text-[var(--text-primary)]'
+                    : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
                 }`}
               >
                 <div className="relative w-8 h-8 flex-shrink-0">
                   {artist.artist_data?.image ? (
                     <img src={artist.artist_data.image} alt="" className="w-full h-full rounded-full object-cover" />
                   ) : (
-                    <div className="w-full h-full rounded-full bg-white/10 flex items-center justify-center text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                    <div className="w-full h-full rounded-full bg-surface-container-highest flex items-center justify-center text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
                       {artist.artist_data?.name?.[0] ?? '?'}
                     </div>
                   )}
@@ -208,12 +208,12 @@ export default function Sidebar() {
       )}
 
       {!collapsed && (
-        <div className="flex-none border-t border-white/5 px-2 py-1">
+        <div className="flex-none border-t border-outline-variant px-2 py-1">
           {user && (
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
-                className="flex items-center gap-3 w-full px-2 py-2 rounded-lg text-sm transition-colors duration-200 hover:bg-white/[0.06]"
+                className="flex items-center gap-3 w-full px-2 py-2 rounded-lg text-sm transition-colors duration-200 hover:bg-state-hover"
                 style={{ color: 'var(--text-secondary)' }}
               >
                 {avatarUrl ? (
@@ -230,12 +230,12 @@ export default function Sidebar() {
               </button>
               {showDropdown && (
                 <div
-                  className="absolute bottom-full left-0 right-0 mb-1 rounded-lg shadow-lg py-1 z-50 border border-white/5"
+                  className="absolute bottom-full left-0 right-0 mb-1 rounded-lg shadow-lg py-1 z-50 border border-outline-variant"
                   style={{ backgroundColor: 'var(--bg-elevated)' }}
                 >
                   <button
                     onClick={() => { router.push('/configuracoes'); setShowDropdown(false) }}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-white/5 transition-colors flex items-center gap-2"
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-state-hover transition-colors flex items-center gap-2"
                     style={{ color: 'var(--text-secondary)' }}
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
@@ -246,7 +246,7 @@ export default function Sidebar() {
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-white/5 transition-colors flex items-center gap-2"
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-state-hover transition-colors flex items-center gap-2"
                     style={{ color: 'var(--error)' }}
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
@@ -267,14 +267,14 @@ export default function Sidebar() {
     <>
       <aside
         ref={desktopAsideRef}
-        className={`hidden md:flex flex-col h-full bg-[var(--bg-surface)] border-r border-white/5 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] flex-shrink-0 ${
+        className={`hidden md:flex flex-col h-full bg-[var(--bg-surface)] border-r border-outline-variant transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] flex-shrink-0 ${
           collapsed ? 'w-[72px]' : 'w-[240px]'
         }`}
       >
         {sidebarContent}
       </aside>
 
-<nav className="fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around bg-[var(--bg-base)] border-t border-white/10 z-50 md:hidden safe-area-bottom">
+<nav className="fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around bg-[var(--bg-base)] border-t border-outline-variant z-50 md:hidden safe-area-bottom">
   {NAV_SECTION1.map(item => {
           const active = isActive(item.href)
           const isLibrary = item.href === '/biblioteca' || item.href === '/biblioteca/local'
@@ -298,14 +298,14 @@ export default function Sidebar() {
 
       {drawerOpen && (
         <>
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden" onClick={() => setDrawerOpen(false)} />
+          <div className="fixed inset-0 bg-scrim backdrop-blur-sm z-40 md:hidden" onClick={() => setDrawerOpen(false)} />
           <aside className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-[300px] bg-[var(--bg-surface)] z-50 flex flex-col md:hidden shadow-2xl">
             <div className="flex items-center justify-between h-14 px-4 flex-none">
               <Link href="/" className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
                 <span className="gradient-accent-text">Ember</span>
                 <span> Music</span>
               </Link>
-              <button onClick={() => setDrawerOpen(false)} className="p-1 rounded-lg hover:bg-white/[0.06] transition-colors duration-200">
+              <button onClick={() => setDrawerOpen(false)} className="p-1 rounded-lg hover:bg-state-hover transition-colors duration-200">
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--text-primary)' }}>
                   <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -322,8 +322,8 @@ export default function Sidebar() {
                     onClick={() => setDrawerOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
                       active
-                        ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
-                        : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
+                        ? 'font-bold bg-state-hover text-[var(--text-primary)]'
+                        : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
                     }`}
                   >
                     <NavIcon icon={{ outline: item.outline, fill: item.fill }} active={active} />
@@ -333,7 +333,7 @@ export default function Sidebar() {
               })}
             </nav>
 
-            <hr className="mx-4 my-2 border-white/5 flex-none" />
+            <hr className="mx-4 my-2 border-outline-variant flex-none" />
 
             {playlists.length > 0 && (
             <div className="flex-none px-2 space-y-0.5">
@@ -351,8 +351,8 @@ export default function Sidebar() {
                         aria-current={active ? 'page' : undefined}
                         className={`flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
                           active
-                            ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
-                            : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
+                            ? 'font-bold bg-state-hover text-[var(--text-primary)]'
+                            : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
                         }`}
                       >
                         <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
@@ -366,7 +366,7 @@ export default function Sidebar() {
             </div>
             )}
 
-            <hr className="mx-4 my-2 border-white/5 flex-none" />
+            <hr className="mx-4 my-2 border-outline-variant flex-none" />
 
             <div className="flex-1 overflow-y-auto scrollbar-thin px-2 space-y-0.5 min-h-[150px] max-h-[calc(100dvh-8rem)]">
               {artists.length > 0 && (
@@ -384,15 +384,15 @@ export default function Sidebar() {
                     aria-current={active ? 'page' : undefined}
                     className={`flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
                       active
-                        ? 'font-bold bg-white/[0.08] text-[var(--text-primary)]'
-                        : 'text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-[var(--text-primary)]'
+                        ? 'font-bold bg-state-hover text-[var(--text-primary)]'
+                        : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
                     }`}
                   >
                     <div className="relative w-8 h-8 flex-shrink-0">
                       {artist.artist_data?.image ? (
                         <img src={artist.artist_data.image} alt="" className="w-full h-full rounded-full object-cover" />
                       ) : (
-                        <div className="w-full h-full rounded-full bg-white/10 flex items-center justify-center text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                        <div className="w-full h-full rounded-full bg-surface-container-highest flex items-center justify-center text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
                           {artist.artist_data?.name?.[0] ?? '?'}
                         </div>
                       )}
@@ -404,11 +404,11 @@ export default function Sidebar() {
             </div>
 
             {user && (
-              <div className="flex-none border-t border-white/5 px-2 py-1">
+              <div className="flex-none border-t border-outline-variant px-2 py-1">
                 <div className="relative">
                   <button
                     onClick={() => { router.push('/configuracoes'); setDrawerOpen(false) }}
-                    className="flex items-center gap-3 w-full px-2 py-2 rounded-lg text-sm transition-colors duration-200 hover:bg-white/[0.06]"
+                    className="flex items-center gap-3 w-full px-2 py-2 rounded-lg text-sm transition-colors duration-200 hover:bg-state-hover"
                     style={{ color: 'var(--text-secondary)' }}
                   >
                     {avatarUrl ? (

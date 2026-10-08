@@ -37,7 +37,7 @@ export function PwaRegister() {
   if (!showInstall) return null
 
   return (
-    <div className="fixed bottom-28 left-4 right-4 md:left-auto md:right-4 md:w-80 z-50 rounded-xl p-4 shadow-xl border border-white/5 animate-fade-in"
+    <div className="fixed bottom-28 left-4 right-4 md:left-auto md:right-4 md:w-80 z-50 rounded-xl p-4 shadow-xl border border-outline-variant animate-fade-in"
       style={{ backgroundColor: 'var(--bg-elevated)' }}>
       <p className="text-sm font-semibold mb-1">Instale o Ember Music</p>
       <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>

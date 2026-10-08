@@ -295,7 +295,7 @@ export function Player() {
     return (
       <>
         <audio ref={audioRef} />
-        <footer className={`h-14 md:hidden flex-shrink-0 items-center px-3 gap-3 border-t border-white/5 ${isExpandedOpen ? 'hidden' : 'flex'}`}
+        <footer className={`h-14 md:hidden flex-shrink-0 items-center px-3 gap-3 border-t border-outline-variant ${isExpandedOpen ? 'hidden' : 'flex'}`}
           style={{ backgroundColor: 'var(--bg-elevated)' }}
         >
           <button onClick={openExpanded} className="flex-shrink-0" aria-label="Abrir player expandido">
@@ -338,7 +338,7 @@ export function Player() {
 
       {toast && (
         <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-sm shadow-lg animate-fade-in"
-          style={{ backgroundColor: 'var(--success)', color: '#fff' }}>
+          style={{ backgroundColor: 'var(--success)', color: 'var(--text-on-accent)' }}>
           {toast}
         </div>
       )}
@@ -359,7 +359,7 @@ export function Player() {
       )}
 
       <footer
-        className={`h-20 flex-shrink-0 items-center px-4 border-t border-white/5 ${isExpandedOpen ? 'hidden' : 'flex'}`}
+        className={`h-20 flex-shrink-0 items-center px-4 border-t border-outline-variant ${isExpandedOpen ? 'hidden' : 'flex'}`}
         style={{ backgroundColor: 'var(--bg-elevated)' }}
       >
         <div className="flex items-center gap-3 w-72">
@@ -475,7 +475,7 @@ function YouTubeBadge() {
   return (
     <span
       className="flex-shrink-0 text-[9px] font-semibold px-1 py-0.5 rounded"
-      style={{ backgroundColor: 'rgba(255,0,0,0.15)', color: '#FF4444' }}
+      style={{ backgroundColor: 'color-mix(in srgb, var(--error) 15%, transparent)', color: 'var(--error)' }}
     >
       YT
     </span>
@@ -511,7 +511,7 @@ function SleepTimerDropdown() {
             style={{ backgroundColor: 'var(--bg-elevated)' }}>
             {sleepTimerMinutes && (
               <button onClick={() => { setSleepTimer(null); setOpen(false) }}
-                className="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors hover:bg-white/5"
+                className="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors hover:bg-state-hover"
                 style={{ color: 'var(--accent-from)' }}>
                 Desativar timer
               </button>
@@ -519,7 +519,7 @@ function SleepTimerDropdown() {
             {options.map((opt) => (
               <button key={opt.value}
                 onClick={() => { setSleepTimer(opt.value); setOpen(false) }}
-                className="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors hover:bg-white/5"
+                className="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors hover:bg-state-hover"
                 style={{ color: sleepTimerMinutes === opt.value ? 'var(--accent-from)' : 'var(--text-primary)' }}>
                 {opt.label}
               </button>

@@ -189,7 +189,7 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+      style={{ backgroundColor: 'var(--scrim)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
@@ -252,7 +252,7 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
 
             {currentCoverSource === 'custom' && (
               <>
-                <div className="border-t mb-3" style={{ borderColor: 'rgba(255,255,255,0.1)' }} />
+                <div className="border-t mb-3" style={{ borderColor: 'var(--outline-variant)' }} />
                 <button
                   onClick={handleRemove}
                   className="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors"

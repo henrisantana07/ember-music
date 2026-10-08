@@ -38,6 +38,13 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
     cancelCrop()
   }, [open])
 
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
   if (!open) return null
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -149,14 +156,17 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+      style={{ backgroundColor: 'var(--scrim)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="create-playlist-title"
         className="w-full max-w-md rounded-xl p-6 shadow-xl overflow-y-auto max-h-[90vh]"
         style={{ backgroundColor: 'var(--bg-elevated)' }}
       >
-        <h2 className="text-lg font-bold mb-4">Nova playlist</h2>
+        <h2 id="create-playlist-title" className="text-lg font-bold mb-4">Nova playlist</h2>
 
         <div className="flex gap-4 mb-5">
           <div className="flex-shrink-0">
@@ -171,10 +181,8 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
                   <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
                 </svg>
               )}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                </svg>
+              <div className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-scrim py-1 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity">
+                <span className="text-label-small text-white">Escolher capa</span>
               </div>
             </button>
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileSelect} />
@@ -205,7 +213,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
         {cropImage && (
           <div
             className="fixed inset-0 z-[60] flex items-center justify-center p-4"
-            style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+            style={{ backgroundColor: 'var(--scrim)' }}
             onClick={(e) => { if (e.target === e.currentTarget) cancelCrop() }}
           >
             <div className="w-full max-w-sm rounded-xl p-6 shadow-xl" style={{ backgroundColor: 'var(--bg-elevated)' }}>
@@ -248,7 +256,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
               style={{
                 backgroundColor: 'var(--bg-surface)',
                 color: 'var(--text-primary)',
-                borderColor: name ? 'var(--accent-from)' : 'rgba(255,255,255,0.1)',
+                borderColor: name ? 'var(--accent-from)' : 'var(--outline-variant)',
               }}
               autoFocus
               maxLength={80}
@@ -268,7 +276,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
               style={{
                 backgroundColor: 'var(--bg-surface)',
                 color: 'var(--text-primary)',
-                borderColor: 'rgba(255,255,255,0.1)',
+                borderColor: 'var(--outline-variant)',
               }}
               maxLength={300}
             />
@@ -284,7 +292,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
                 onClick={() => setIsPublic(false)}
                 className="flex flex-col items-center gap-1.5 p-3 rounded-xl text-center transition-all"
                 style={{
-                  border: isPublic ? '2px solid rgba(255,255,255,0.1)' : '2px solid transparent',
+                  border: isPublic ? '2px solid var(--outline-variant)' : '2px solid transparent',
                   background: !isPublic ? 'linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box, linear-gradient(135deg, var(--accent-from), var(--accent-to)) border-box' : 'var(--bg-surface)',
                 }}
               >
@@ -297,7 +305,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
                 onClick={() => setIsPublic(true)}
                 className="flex flex-col items-center gap-1.5 p-3 rounded-xl text-center transition-all"
                 style={{
-                  border: isPublic ? '2px solid transparent' : '2px solid rgba(255,255,255,0.1)',
+                  border: isPublic ? '2px solid transparent' : '2px solid var(--outline-variant)',
                   background: isPublic ? 'linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box, linear-gradient(135deg, var(--accent-from), var(--accent-to)) border-box' : 'var(--bg-surface)',
                 }}
               >

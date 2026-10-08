@@ -1,5 +1,75 @@
 @import "tailwindcss";
 
+/*
+ * M3 design tokens exposed as Tailwind v4 utilities.
+ * Values are inlined (not referenced) so the `.theme-light` overrides on <html>
+ * are picked up at the point of use.
+ */
+@theme inline {
+  /* Color roles */
+  --color-base: var(--bg-base);
+  --color-surface: var(--bg-surface);
+  --color-elevated: var(--bg-elevated);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--bg-surface);
+  --color-surface-container-high: var(--bg-elevated);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-primary: var(--accent-solid);
+  --color-on-primary: var(--text-on-accent);
+  --color-primary-container: var(--accent-muted);
+  --color-secondary: var(--text-secondary);
+  --color-on-surface: var(--text-primary);
+  --color-on-surface-variant: var(--text-secondary);
+  --color-on-surface-disabled: var(--text-disabled);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+  --color-error: var(--error);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-scrim: var(--scrim);
+  --color-state-hover: var(--state-hover);
+  --color-state-focus: var(--state-focus);
+  --color-state-pressed: var(--state-pressed);
+  --color-state-hover-on-accent: var(--state-hover-on-accent);
+
+  /* Elevation scale */
+  --shadow-elevation-1: var(--elevation-1);
+  --shadow-elevation-2: var(--elevation-2);
+  --shadow-elevation-3: var(--elevation-3);
+
+  /* M3 typescale */
+  --text-display-large: 3.5625rem;
+  --text-display-large--line-height: 4rem;
+  --text-display-medium: 2.8125rem;
+  --text-display-medium--line-height: 3.25rem;
+  --text-display-small: 2.25rem;
+  --text-display-small--line-height: 2.75rem;
+  --text-headline-large: 2rem;
+  --text-headline-large--line-height: 2.5rem;
+  --text-headline-medium: 1.75rem;
+  --text-headline-medium--line-height: 2.25rem;
+  --text-headline-small: 1.5rem;
+  --text-headline-small--line-height: 2rem;
+  --text-title-large: 1.375rem;
+  --text-title-large--line-height: 1.75rem;
+  --text-title-medium: 1rem;
+  --text-title-medium--line-height: 1.5rem;
+  --text-title-small: 0.875rem;
+  --text-title-small--line-height: 1.25rem;
+  --text-body-large: 1rem;
+  --text-body-large--line-height: 1.5rem;
+  --text-body-medium: 0.875rem;
+  --text-body-medium--line-height: 1.25rem;
+  --text-body-small: 0.75rem;
+  --text-body-small--line-height: 1rem;
+  --text-label-large: 0.875rem;
+  --text-label-large--line-height: 1.25rem;
+  --text-label-medium: 0.75rem;
+  --text-label-medium--line-height: 1rem;
+  --text-label-small: 0.6875rem;
+  --text-label-small--line-height: 1rem;
+}
+
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
@@ -40,6 +110,36 @@
   --space-md: 16px;
   --space-lg: 24px;
   --space-xl: 48px;
+
+  /* M3 shape scale (use via rounded-(--shape-*) to avoid clashing with
+     Tailwind's own radius utilities) */
+  --shape-extra-small: var(--radius-sm);
+  --shape-small: var(--radius-md);
+  --shape-medium: var(--radius-lg);
+  --shape-large: 16px;
+  --shape-extra-large: 28px;
+  --shape-full: 9999px;
+
+  /* M3 surface containers */
+  --surface-container-low: #12100E;
+  --surface-container-highest: #2C2620;
+
+  /* M3 outlines */
+  --outline: #5C564F;
+  --outline-variant: #2A2521;
+
+  /* M3 scrims & state layers */
+  --scrim: rgba(0, 0, 0, 0.6);
+  --state-hover: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  --state-focus: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  --state-pressed: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  --state-hover-on-accent: color-mix(in srgb, var(--bg-base) 8%, transparent);
+  --state-pressed-on-accent: color-mix(in srgb, var(--bg-base) 10%, transparent);
+
+  /* M3 elevation */
+  --elevation-1: 0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
+  --elevation-2: 0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 2px 6px 2px rgba(0, 0, 0, 0.15);
+  --elevation-3: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 4px 8px 3px rgba(0, 0, 0, 0.15);
 
   --sidebar-w: 0px;
 }
@@ -135,6 +235,63 @@ body {
   outline-offset: 2px;
 }
 
+/* Global keyboard focus indicator (low specificity: explicit rules win) */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent-solid);
+  outline-offset: 2px;
+}
+
+/* M3 state layer: 8% hover / 10% focus / 10% pressed */
+.state-layer {
+  position: relative;
+  isolation: isolate;
+}
+
+.state-layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 150ms linear;
+  pointer-events: none;
+}
+
+.state-layer:hover::after {
+  opacity: 0.08;
+}
+
+.state-layer:focus-visible::after {
+  opacity: 0.1;
+}
+
+.state-layer:active::after {
+  opacity: 0.1;
+}
+
+.state-layer-on-accent::after {
+  background: var(--bg-base);
+}
+
+/* Touch devices have no hover: keep affordances visible */
+@media (hover: none) {
+  .hover-reveal {
+    opacity: 1 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
 }
@@ -228,18 +385,23 @@ body {
 }
 
 .theme-light {
+  color-scheme: light;
   --bg-base: #FAF8F5;
   --bg-surface: #F0EDE8;
   --bg-elevated: #E5E0D8;
   --text-primary: #1A1512;
   --text-secondary: #6B5F54;
   --text-disabled: #B0A89E;
+  --surface-container-low: #F5F2EE;
+  --surface-container-highest: #DBD5CC;
+  --outline: #9C958B;
+  --outline-variant: #DED8CE;
+  --scrim: rgba(0, 0, 0, 0.4);
+  --elevation-1: 0 1px 2px 0 rgba(0, 0, 0, 0.12), 0 1px 3px 1px rgba(0, 0, 0, 0.06);
+  --elevation-2: 0 1px 2px 0 rgba(0, 0, 0, 0.12), 0 2px 6px 2px rgba(0, 0, 0, 0.06);
+  --elevation-3: 0 1px 3px 0 rgba(0, 0, 0, 0.12), 0 4px 8px 3px rgba(0, 0, 0, 0.06);
   --accent-overlay: linear-gradient(135deg, color-mix(in srgb, var(--accent-from) 15%, transparent), color-mix(in srgb, var(--accent-to) 15%, transparent));
   --bg-nowplaying-fallback: linear-gradient(135deg, color-mix(in srgb, var(--accent-from) 8%, transparent), var(--bg-base));
-}
-
-.theme-light html {
-  color-scheme: light;
 }
 
 @keyframes waveform {

@@ -53,24 +53,29 @@ export function LocalTrackGrid({ tracks }: LocalTrackGridProps) {
                 </div>
               )}
               <div
-                className="absolute inset-0 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
+                className="absolute inset-0 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                 style={{ background: 'var(--accent-overlay)' }}
+                aria-hidden="true"
+              />
+              <button
+                className="absolute bottom-2 right-2 w-11 h-11 rounded-full flex items-center justify-center shadow-elevation-3 transition-transform duration-150 hover:scale-105"
+                style={{
+                  background: isActive ? 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' : 'var(--surface-container-highest)',
+                  color: isActive ? 'var(--bg-base)' : 'var(--accent-solid)',
+                }}
+                aria-label={isActive && isPlaying ? `Pausar ${track.title}` : `Tocar ${track.title}`}
+                aria-pressed={isActive && isPlaying}
               >
-                <button
-                  className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg transform transition-transform duration-150 group-hover:scale-105"
-                  style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
-                >
-                  {isActive && isPlaying ? (
-                    <svg className="w-5 h-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M6 4h4v16H6zM14 4h4v16h-4z" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
+                {isActive && isPlaying ? (
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 4h4v16H6zM14 4h4v16h-4z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                )}
+              </button>
               {track.missing && (
                 <div className="absolute top-2 right-2 p-1 rounded-full" style={{ backgroundColor: 'var(--error)' }}>
                   <span className="text-[10px] font-bold" style={{ color: 'white' }}>⚠</span>
@@ -92,7 +97,7 @@ export function LocalTrackGrid({ tracks }: LocalTrackGridProps) {
               <span className="text-xs" style={{ color: 'var(--text-disabled)' }}>
                 {track.duration > 0 ? formatDuration(Math.floor(track.duration)) : '--:--'}
               </span>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-1">
                 <TrackActionsMenu track={track} allTracks={tracks} />
               </div>
             </div>

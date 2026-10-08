@@ -16,7 +16,7 @@ export function Toggle({
       aria-checked={checked}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className="relative inline-flex h-6 w-11 items-center rounded-full shrink-0 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+      className="relative inline-flex h-6 w-11 items-center rounded-full shrink-0 transition-colors duration-200"
       style={{
         backgroundColor: checked ? undefined : 'var(--bg-elevated)',
         background: checked ? 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' : undefined,

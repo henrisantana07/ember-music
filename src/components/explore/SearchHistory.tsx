@@ -49,27 +49,33 @@ export function SearchHistory({ user, onSearch }: { user: User | null; onSearch:
       </div>
       <div className="space-y-1" style={{ maxHeight: 320, overflowY: 'auto' }}>
         {history.map((item) => (
-          <button
+          <div
             key={item.id}
-            onClick={() => onSearch(item.query)}
-            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-left transition-colors hover:bg-white/5 group"
+            className="flex items-center gap-1 rounded-lg transition-colors hover:bg-state-hover group"
           >
-            <svg className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="flex-1 text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-              {item.query}
-            </span>
-            <span
-              onClick={(e) => { e.stopPropagation(); removeItem(item.id) }}
-              className="p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/10"
-              style={{ color: 'var(--text-disabled)' }}
+            <button
+              type="button"
+              onClick={() => onSearch(item.query)}
+              className="flex items-center gap-3 flex-1 min-w-0 px-3 py-2 text-left rounded-lg state-layer"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="flex-1 text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                {item.query}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); removeItem(item.id) }}
+              className="p-1 mr-2 rounded-full transition-colors state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              aria-label={`Remover busca "${item.query}" do histórico`}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
-            </span>
-          </button>
+            </button>
+          </div>
         ))}
       </div>
     </section>

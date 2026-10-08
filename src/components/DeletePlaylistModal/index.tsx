@@ -32,7 +32,7 @@ export function DeletePlaylistModal({ open, playlistName, onClose, onConfirm, de
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+      style={{ backgroundColor: 'var(--scrim)' }}
       onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}
     >
       <div
@@ -66,7 +66,7 @@ export function DeletePlaylistModal({ open, playlistName, onClose, onConfirm, de
           style={{
             backgroundColor: 'var(--bg-surface)',
             color: 'var(--text-primary)',
-            borderColor: submitted && !canConfirm ? 'var(--error)' : 'rgba(255,255,255,0.1)',
+            borderColor: submitted && !canConfirm ? 'var(--error)' : 'var(--outline-variant)',
           }}
           disabled={deleting}
           autoFocus

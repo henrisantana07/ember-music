@@ -34,7 +34,7 @@ export function ArtistMenu({ artistName, artistUrl }: ArtistMenuProps) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="p-2 rounded-full transition-colors hover:bg-white/10"
+        className="p-2 rounded-full transition-colors hover:bg-state-pressed"
         style={{ color: 'var(--text-secondary)' }}
         aria-label="Mais ações"
       >
@@ -52,7 +52,7 @@ export function ArtistMenu({ artistName, artistUrl }: ArtistMenuProps) {
         >
           <button
             onClick={handleShare}
-            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-left transition-colors hover:bg-white/5"
+            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-left transition-colors hover:bg-state-hover"
             style={{ color: 'var(--text-primary)' }}
           >
             <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -67,7 +67,7 @@ export function ArtistMenu({ artistName, artistUrl }: ArtistMenuProps) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-left transition-colors hover:bg-white/5"
+              className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-left transition-colors hover:bg-state-hover"
               style={{ color: 'var(--text-primary)' }}
             >
               <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

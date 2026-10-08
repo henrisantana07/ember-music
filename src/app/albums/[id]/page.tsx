@@ -68,7 +68,7 @@ export default function AlbumPage() {
             <button
               onClick={() => album.tracks.length > 0 && play(album.tracks, 0)}
               className="px-6 py-2 rounded-full text-sm font-bold transition-transform hover:scale-105"
-              style={{ background: 'linear-gradient(to right, var(--accent-from), var(--accent-to))', color: '#fff' }}
+              style={{ background: 'linear-gradient(to right, var(--accent-from), var(--accent-to))', color: 'var(--text-on-accent)' }}
             >
               Tocar tudo
             </button>

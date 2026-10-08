@@ -6,7 +6,7 @@ import { formatDuration } from '@/lib/spotify'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
-import type { Json } from '@/types/database'
+import { useEnsureFavorites, useFavoritesStore, useFavoritesSync, useIsFavorite } from '@/lib/favorites-store'
 import { PlaylistModal } from '@/components/PlaylistModal'
 
 interface TopResultCardProps {
@@ -16,38 +16,29 @@ interface TopResultCardProps {
 export function TopResultCard({ track }: TopResultCardProps) {
   const { play, currentTrack, isPlaying, togglePlay } = usePlayerStore()
   const [user, setUser] = useState<User | null>(null)
-  const [isFav, setIsFav] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [playlistOpen, setPlaylistOpen] = useState(false)
   const supabase = createClient()
+  const isFav = useIsFavorite(track.id)
+  const toggleFavorite = useFavoritesStore((s) => s.toggle)
 
   const isActive = currentTrack?.id === track.id
+  useFavoritesSync(user?.id)
+  useEnsureFavorites([track.id])
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
   }, [])
 
-  useEffect(() => {
-    if (!user) return
-    supabase.from('favorites').select('id').eq('track_id', track.id).eq('user_id', user.id).maybeSingle()
-      .then(({ data }) => setIsFav(!!data))
-  }, [user, track.id])
-
   async function handleFavorite() {
     if (!user) return
-    if (isFav) {
-      await supabase.from('favorites').delete().eq('track_id', track.id).eq('user_id', user.id)
-      setIsFav(false)
-    } else {
-      await supabase.from('favorites').insert({ user_id: user.id, track_id: track.id, track_data: track as unknown as Json })
-      setIsFav(true)
-    }
+    await toggleFavorite(track)
   }
 
   return (
     <>
       <div
-        className="flex flex-col sm:flex-row items-start gap-4 p-4 rounded-xl cursor-pointer transition-colors hover:bg-white/[0.03]"
+        className="flex flex-col sm:flex-row items-start gap-4 p-4 rounded-xl cursor-pointer transition-colors hover:bg-state-hover"
         style={{ backgroundColor: 'var(--bg-surface)', borderLeft: '4px solid', borderImage: 'linear-gradient(135deg, var(--accent-from), var(--accent-to)) 1' }}
         onClick={() => { if (isActive) togglePlay(); else play(track) }}
       >
@@ -74,20 +65,20 @@ export function TopResultCard({ track }: TopResultCardProps) {
               {isActive && isPlaying ? 'Pausar' : 'Tocar'}
             </button>
             {user && (
-              <button onClick={(e) => { e.stopPropagation(); handleFavorite() }} className="p-2 rounded-full hover:bg-white/10 transition-colors">
+              <button onClick={(e) => { e.stopPropagation(); handleFavorite() }} className="p-2 rounded-full hover:bg-state-pressed transition-colors">
                 <svg className="w-5 h-5" fill={isFav ? 'url(#favGradientTop)' : 'none'} viewBox="0 0 24 24" stroke={isFav ? 'none' : 'currentColor'} strokeWidth={2} style={{ color: 'var(--text-disabled)' }}>
                   <defs><linearGradient id="favGradientTop" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="var(--accent-from)" /><stop offset="100%" stopColor="var(--accent-to)" /></linearGradient></defs>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </button>
             )}
-            <button onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen) }} className="p-2 rounded-full hover:bg-white/10 transition-colors" style={{ color: 'var(--text-disabled)' }}>
+            <button onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen) }} className="p-2 rounded-full hover:bg-state-pressed transition-colors" style={{ color: 'var(--text-disabled)' }}>
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" /></svg>
             </button>
             {menuOpen && (
               <div className="relative">
                 <div className="absolute right-0 top-0 mt-8 w-36 rounded-lg shadow-lg py-1 z-50" style={{ backgroundColor: 'var(--bg-elevated)' }}>
-                  <button onClick={(e) => { e.stopPropagation(); setPlaylistOpen(true); setMenuOpen(false) }} className="w-full text-left px-3 py-2 text-sm hover:bg-white/5" style={{ color: 'var(--text-secondary)' }}>Adicionar à playlist</button>
+                  <button onClick={(e) => { e.stopPropagation(); setPlaylistOpen(true); setMenuOpen(false) }} className="w-full text-left px-3 py-2 text-sm hover:bg-state-hover" style={{ color: 'var(--text-secondary)' }}>Adicionar à playlist</button>
                 </div>
               </div>
             )}

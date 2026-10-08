@@ -118,7 +118,7 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
         const isSaved = savedIds.has(album.id)
 
         return (
-          <div key={album.id} className="group relative p-3 rounded-xl transition-colors hover:bg-white/5">
+          <div key={album.id} className="group relative p-3 rounded-xl transition-colors hover:bg-state-hover">
             <a href={`/albums/${album.id}`} className="block">
               <div className="relative mb-2">
                 <img
@@ -128,18 +128,22 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
                   loading="lazy"
                 />
                 <div
-                  className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center z-10"
+                  className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                   style={{ background: 'var(--accent-overlay)' }}
-                >
+                  aria-hidden="true"
+                />
+                <div className="absolute bottom-2 right-2 z-10">
                   <button
                     onClick={(e) => handleSaveAlbum(e, album)}
                     disabled={!user || isSaving || isSaved}
-                    className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg transform transition-transform duration-150 group-hover:scale-105"
+                    className="w-11 h-11 rounded-full flex items-center justify-center shadow-elevation-3 transition-transform duration-150 hover:scale-105 disabled:opacity-70"
                     style={{
                       background: isSaved
                         ? 'var(--accent-solid)'
                         : 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
+                      color: 'white',
                     }}
+                    aria-label={isSaved ? `${album.name} salvo` : `Salvar álbum ${album.name} como playlist`}
                     title={isSaved ? 'Salvo' : 'Salvar álbum como playlist'}
                   >
                     {isSaving ? (

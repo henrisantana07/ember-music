@@ -77,7 +77,7 @@ export default function ArtistPage() {
           className="px-6 py-2 rounded-full text-sm font-bold"
           style={{
             background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
-            color: '#fff',
+            color: 'var(--text-on-accent)',
           }}
         >
           Tentar novamente
@@ -106,13 +106,15 @@ export default function ArtistPage() {
           <h2 className="text-xl font-bold mb-4">Álbuns</h2>
           <Carousel>
             {albums.slice(0, 10).map((album) => (
-              <div key={album.id} className="flex-shrink-0 w-40 p-3 rounded-xl transition-colors hover:bg-white/5 group relative">
+              <div key={album.id} className="flex-shrink-0 w-40 p-3 rounded-xl transition-colors hover:bg-state-hover group relative">
                 <a href={`/albums/${album.id}`} className="block">
                   <div className="relative mb-2">
                     <img src={album.image || '/placeholder.svg'} alt={album.name}
                       className="w-full aspect-square rounded-lg object-cover shadow-md" loading="lazy" />
-                    <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
-                      style={{ background: 'var(--accent-overlay)' }}>
+                    <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      style={{ background: 'var(--accent-overlay)' }}
+                      aria-hidden="true" />
+                    <div className="absolute bottom-2 right-2 z-10">
                       <SaveAlbumButton album={album} />
                     </div>
                   </div>
@@ -135,7 +137,7 @@ export default function ArtistPage() {
               <a
                 key={rel.id}
                 href={`/artists/${rel.id}`}
-                className="flex-shrink-0 w-32 flex flex-col items-center gap-2 p-3 rounded-xl transition-colors hover:bg-white/5"
+                className="flex-shrink-0 w-32 flex flex-col items-center gap-2 p-3 rounded-xl transition-colors hover:bg-state-hover"
               >
                 <img
                   src={rel.image || '/placeholder.svg'}
