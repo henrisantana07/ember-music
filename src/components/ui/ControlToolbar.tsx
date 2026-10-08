@@ -34,12 +34,13 @@ export function SearchBar({
       </span>
       <input
         ref={inputRef}
-        type="search"
+        type="text"
+        inputMode="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="flex-1 bg-transparent outline-none text-body-large placeholder:text-[var(--text-disabled)]"
+        className="flex-1 min-w-0 bg-transparent outline-none text-body-large leading-none py-0 appearance-none placeholder:text-[var(--text-disabled)]"
       />
       {value && (
         <button

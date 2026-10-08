@@ -96,11 +96,13 @@ export function LocalLibraryHeader() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-disabled)' }} />
           <input
-            type="search"
+            type="text"
+            inputMode="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Pesquisar na biblioteca..."
-            className="w-full pl-12 pr-12 min-h-[48px] rounded-full text-body-large border-none"
+            aria-label="Pesquisar na biblioteca"
+            className="block w-full h-12 pl-12 pr-12 py-0 rounded-full text-body-large leading-none border-none appearance-none focus:outline-none"
             style={{
               backgroundColor: 'var(--bg-surface)',
               color: 'var(--text-primary)',

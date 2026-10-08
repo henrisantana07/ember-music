@@ -80,14 +80,15 @@ export function Topbar() {
           </svg>
           <input
             ref={inputRef}
-            type="search"
+            type="text"
+            inputMode="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
             placeholder="O que você quer ouvir?"
             aria-label="Buscar músicas, álbuns ou artistas"
-            className="w-full pl-12 pr-14 min-h-[48px] rounded-full text-body-large border-none transition-all [&::-webkit-search-cancel-button]:hidden"
+            className="block w-full h-12 pl-12 pr-14 py-0 rounded-full text-body-large leading-none border-none appearance-none focus:outline-none transition-colors [&::-webkit-search-cancel-button]:hidden"
             style={{
               backgroundColor: 'var(--bg-surface)',
               color: 'var(--text-primary)',
