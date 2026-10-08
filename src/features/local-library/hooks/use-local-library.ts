@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { getAllFolders, getAllMusicFiles, clearDatabase, getDirectoryTreeByFolder, getMusicFilesByFolder } from '@/lib/database'
+import { getAllFolders, getAllMusicFiles, clearDatabase, getDirectoryTreeByFolder, getMusicFilesByFolder, deleteFolder, deleteMusicFilesByFolder } from '@/lib/database'
 import { scanAllFolders } from '@/features/local-library/services/scanner'
 import { useLibraryStore } from '@/features/local-library/stores/library-store'
 import type { LocalFolder, LocalMusicFile, DirectoryNode } from '@/features/local-library/types'
@@ -88,6 +88,10 @@ export function useLocalLibrary() {
 
   const removeFolder = useCallback(async (folderId: string) => {
     await storeRemoveFolder(folderId)
+    await Promise.all([
+      deleteFolder(folderId),
+      deleteMusicFilesByFolder(folderId),
+    ])
   }, [storeRemoveFolder])
 
   const reconnectFolder = useCallback(async (folderId: string) => {

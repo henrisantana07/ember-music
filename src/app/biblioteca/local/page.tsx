@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
-import { FolderOpen, FolderClosed, ChevronRight, Link2, Music, Search, MoreVertical } from 'lucide-react'
+import { FolderOpen, FolderClosed, ChevronRight, Link2, Music, Search, MoreVertical, X } from 'lucide-react'
 import { useLocalLibrary } from '@/features/local-library/hooks/use-local-library'
 import { LocalLibraryHeader } from '@/features/local-library/components/LocalLibraryHeader'
 import { LocalTrackList } from '@/features/local-library/components/LocalTrackList'
@@ -10,6 +10,7 @@ import { ControlToolbar } from '@/components/ui/ControlToolbar'
 import { SortMenu } from '@/components/ui/SortMenu'
 import { SegmentedToggle } from '@/components/ui/SegmentedToggle'
 import { Modal } from '@/components/ui/Modal'
+import { Snackbar } from '@/components/ui/Snackbar'
 
 interface FolderTreeItemData {
   id: string
@@ -29,6 +30,7 @@ function FolderTreeItem({
   onSelect,
   getTracksByFolder,
   onReconnect,
+  onRemove,
   reconnectingFolderId,
   level = 0,
 }: {
@@ -37,6 +39,7 @@ function FolderTreeItem({
   onSelect: (folderId: string | null) => void
   getTracksByFolder: (folderId: string) => { id: string }[]
   onReconnect: (folderId: string) => void
+  onRemove: (folderId: string) => Promise<void>
   reconnectingFolderId: string | null
   level: number
 }) {
@@ -45,6 +48,8 @@ function FolderTreeItem({
   const hasTracks = folderTracks.length > 0
   const isReconnecting = reconnectingFolderId === folder.id
   const [infoOpen, setInfoOpen] = useState(false)
+  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false)
+  const [removing, setRemoving] = useState(false)
 
   const formatDate = (timestamp?: number) => {
     if (!timestamp) return 'Nunca'
@@ -112,6 +117,16 @@ function FolderTreeItem({
         >
           <MoreVertical className="w-5 h-5" />
         </button>
+        <button
+          onClick={() => setConfirmRemoveOpen(true)}
+          title="Remover pasta da biblioteca"
+          aria-label={`Remover pasta ${folder.name} da biblioteca`}
+          aria-haspopup="dialog"
+          className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors hover:bg-[var(--bg-elevated)] state-layer flex-shrink-0"
+          style={{ color: 'var(--error)' }}
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       {infoOpen && (
@@ -126,6 +141,41 @@ function FolderTreeItem({
           </dl>
         </Modal>
       )}
+
+      {confirmRemoveOpen && (
+        <Modal open={confirmRemoveOpen} onClose={() => setConfirmRemoveOpen(false)} title="Remover pasta">
+          <p className="text-body-medium mb-4" style={{ color: 'var(--text-secondary)' }}>
+            Remover <strong style={{ color: 'var(--text-primary)' }}>{folder.name}</strong> da biblioteca? As faixas desta pasta sairão da lista — os arquivos no seu disco não serão apagados.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmRemoveOpen(false)}
+              className="min-h-[48px] px-5 text-label-large rounded-lg"
+              style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                setRemoving(true)
+                try {
+                  await onRemove(folder.id)
+                } finally {
+                  setRemoving(false)
+                  setConfirmRemoveOpen(false)
+                }
+              }}
+              disabled={removing}
+              className="min-h-[48px] px-5 text-label-large rounded-lg disabled:opacity-50"
+              style={{ backgroundColor: 'var(--error)', color: 'white' }}
+            >
+              {removing ? 'Removendo…' : 'Remover'}
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }
@@ -136,6 +186,7 @@ function FolderSidebar({
   onSelectFolder,
   getTracksByFolder,
   onReconnect,
+  onRemove,
   reconnectingFolderId,
 }: {
   folders: FolderTreeItemData[]
@@ -143,6 +194,7 @@ function FolderSidebar({
   onSelectFolder: (folderId: string | null) => void
   getTracksByFolder: (folderId: string) => { id: string }[]
   onReconnect: (folderId: string) => void
+  onRemove: (folderId: string) => Promise<void>
   reconnectingFolderId: string | null
 }) {
   if (folders.length === 0) {
@@ -186,6 +238,7 @@ function FolderSidebar({
             onSelect={onSelectFolder}
             getTracksByFolder={getTracksByFolder}
             onReconnect={onReconnect}
+            onRemove={onRemove}
             reconnectingFolderId={reconnectingFolderId}
             level={0}
           />
@@ -208,6 +261,7 @@ function LocalLibraryContent() {
     viewMode,
     setViewMode,
     reconnectFolder,
+    removeFolder,
     startScan,
   } = useLocalLibrary()
 
@@ -215,14 +269,22 @@ function LocalLibraryContent() {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [reconnectingFolderId, setReconnectingFolderId] = useState<string | null>(null)
+  const [reconnectMessage, setReconnectMessage] = useState<string | null>(null)
 
   const handleReconnect = async (folderId: string) => {
     setReconnectingFolderId(folderId)
     try {
       const handle = await reconnectFolder(folderId)
       await startScan(folderId, handle)
+      setReconnectMessage('Pasta reconectada e atualizada.')
     } catch (error) {
-      if (!(error instanceof Error && error.name === 'AbortError')) {
+      if (error instanceof Error && error.name === 'AbortError') return
+      if (error instanceof Error && error.message.includes('not supported')) {
+        setReconnectMessage('Seu navegador não suporta reconexão de pastas. Use Chrome ou Edge.')
+      } else if (error instanceof Error && error.message.includes('Permission denied')) {
+        setReconnectMessage('Permissão negada. Tente novamente e permita o acesso à pasta.')
+      } else {
+        setReconnectMessage('Não foi possível reconectar a pasta. Tente novamente.')
         console.error('Failed to reconnect folder:', error)
       }
     } finally {
@@ -297,6 +359,10 @@ function LocalLibraryContent() {
             onSelectFolder={setSelectedFolderId}
             getTracksByFolder={getTracksByFolder}
             onReconnect={handleReconnect}
+            onRemove={async (folderId) => {
+              await removeFolder(folderId)
+              if (selectedFolderId === folderId) setSelectedFolderId(null)
+            }}
             reconnectingFolderId={reconnectingFolderId}
           />
         </aside>
@@ -386,6 +452,12 @@ function LocalLibraryContent() {
           )}
         </main>
       </div>
+
+      <Snackbar
+        open={reconnectMessage !== null}
+        message={reconnectMessage ?? ''}
+        onDismiss={() => setReconnectMessage(null)}
+      />
     </div>
   )
 }
