@@ -10,6 +10,7 @@ import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { usePlayerStore } from '@/lib/store'
 import { FollowButton } from '@/components/FollowButton'
+import { ErrorState } from '@/components/ui/states'
 import { useUser } from '@/hooks/use-user'
 import type { Track } from '@/types/music'
 import type { Json } from '@/types/database'
@@ -83,7 +84,7 @@ function BibliotecaContent() {
   const { user, loading: userLoading } = useUser()
   const activeTab = (searchParams.get('tab') as TabId) || 'favoritos'
 
-  const [artistSort, setArtistSort] = useState<'recent' | 'a-z' | 'popular'>('recent')
+  const [artistSort, setArtistSort] = useState<'recent' | 'a-z'>('recent')
   const [playlistSort, setPlaylistSort] = useState<'recent' | 'updated' | 'a-z' | 'tracks'>('recent')
   const [trackSort, setTrackSort] = useState<'recent' | 'oldest' | 'a-z' | 'z-a' | 'artist' | 'duration'>('recent')
 
@@ -96,6 +97,8 @@ function BibliotecaContent() {
 
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [loadError, setLoadError] = useState(false)
+  const [loadAttempt, setLoadAttempt] = useState(0)
   const [hasMore, setHasMore] = useState(false)
   const [trackOffset, setTrackOffset] = useState(0)
   const [createModalOpen, setCreateModalOpen] = useState(false)
@@ -126,65 +129,93 @@ function BibliotecaContent() {
     setLoading(!append)
     if (append) setLoadingMore(true)
 
-    const { data } = await supabase
-      .from('favorites')
-      .select('track_data, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + PAGE_SIZE - 1)
+    try {
+      const { data, error } = await supabase
+        .from('favorites')
+        .select('track_data, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + PAGE_SIZE - 1)
 
-    if (data) {
-      const parsed = data.map((f) => f.track_data as unknown as Track).filter(Boolean)
-      if (append) {
-        setTracks((prev) => [...prev, ...parsed])
-      } else {
-        setTracks(parsed)
+      if (error) throw error
+      if (data) {
+        const parsed = data.map((f) => f.track_data as unknown as Track).filter(Boolean)
+        if (append) {
+          setTracks((prev) => [...prev, ...parsed])
+        } else {
+          setTracks(parsed)
+        }
+        setHasMore(parsed.length === PAGE_SIZE)
+        if (append) setTrackOffset((prev) => prev + PAGE_SIZE)
       }
-      setHasMore(parsed.length === PAGE_SIZE)
-      if (append) setTrackOffset((prev) => prev + PAGE_SIZE)
+      setLoadError(false)
+    } catch {
+      if (!append) setLoadError(true)
+    } finally {
+      setLoading(false)
+      setLoadingMore(false)
     }
-    setLoading(false)
-    setLoadingMore(false)
   }, [user, trackOffset])
 
   const fetchArtists = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    const { data } = await supabase
-      .from('followed_artists')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('followed_at', { ascending: false })
-    if (data) setArtists(data as unknown as FollowedArtist[])
-    setLoading(false)
+    try {
+      const { data, error } = await supabase
+        .from('followed_artists')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('followed_at', { ascending: false })
+      if (error) throw error
+      if (data) setArtists(data as unknown as FollowedArtist[])
+      setLoadError(false)
+    } catch {
+      setLoadError(true)
+    } finally {
+      setLoading(false)
+    }
   }, [user])
 
   const fetchHistory = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    const { data } = await supabase
-      .from('listening_history')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('played_at', { ascending: false })
-      .limit(50)
-    if (data) setHistory(data as unknown as HistoryItem[])
-    setLoading(false)
+    try {
+      const { data, error } = await supabase
+        .from('listening_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('played_at', { ascending: false })
+        .limit(50)
+      if (error) throw error
+      if (data) setHistory(data as unknown as HistoryItem[])
+      setLoadError(false)
+    } catch {
+      setLoadError(true)
+    } finally {
+      setLoading(false)
+    }
   }, [user])
 
   const fetchDownloads = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    const { data } = await supabase
-      .from('downloads')
-      .select('track_data')
-      .eq('user_id', user.id)
-      .order('downloaded_at', { ascending: false })
-    if (data) {
-      const parsed = data.map((d: any) => d.track_data as unknown as Track).filter(Boolean)
-      setDownloads(parsed)
+    try {
+      const { data, error } = await supabase
+        .from('downloads')
+        .select('track_data')
+        .eq('user_id', user.id)
+        .order('downloaded_at', { ascending: false })
+      if (error) throw error
+      if (data) {
+        const parsed = data.map((d: any) => d.track_data as unknown as Track).filter(Boolean)
+        setDownloads(parsed)
+      }
+      setLoadError(false)
+    } catch {
+      setLoadError(true)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [user])
 
   const storePlaylists = usePlaylistsStore((s) => s.playlists)
@@ -232,7 +263,7 @@ function BibliotecaContent() {
         fetchDownloads()
         break
     }
-  }, [user, activeTab])
+  }, [user, activeTab, loadAttempt])
 
   const loadMoreTracks = useCallback(() => {
     if (activeTab === 'favoritos') fetchTracks(true)
@@ -271,9 +302,8 @@ function BibliotecaContent() {
   function getSortedArtists(): FollowedArtist[] {
     const list = [...artists]
     switch (artistSort) {
-      case 'recent': return list
       case 'a-z': return list.sort((a, b) => (a.artist_data?.name ?? '').localeCompare(b.artist_data?.name ?? ''))
-      case 'popular': return list
+      case 'recent':
       default: return list
     }
   }
@@ -329,7 +359,6 @@ function BibliotecaContent() {
           >
             <option value="recent">Seguido recentemente</option>
             <option value="a-z">A → Z</option>
-            <option value="popular">Mais popular</option>
           </select>
         )
       case 'playlists':
@@ -432,9 +461,15 @@ function BibliotecaContent() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" role="status" aria-label="Carregando biblioteca">
           {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
+      ) : loadError ? (
+        <ErrorState
+          title="Não foi possível carregar sua biblioteca"
+          description="Verifique sua conexão e tente novamente."
+          action={{ label: 'Tentar novamente', onClick: () => { setLoadError(false); setLoading(true); setLoadAttempt((a) => a + 1) } }}
+        />
       ) : (
         <>
           {activeTab === 'favoritos' && (

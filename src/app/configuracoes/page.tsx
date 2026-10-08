@@ -58,7 +58,6 @@ export default function ConfiguracoesPage() {
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [cropImage, setCropImage] = useState<string | null>(null)
   const [avatarError, setAvatarError] = useState<string | null>(null)
-  const [confirmLang, setConfirmLang] = useState(false)
   const cropperRef = useRef<HTMLImageElement>(null)
   const cropperInstance = useRef<Cropper | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -92,6 +91,11 @@ export default function ConfiguracoesPage() {
       loadData(data.user)
     })
   }, [])
+
+  // Keep <html lang> in sync with the saved preference (screen readers / browser translate).
+  useEffect(() => {
+    if (settings.language) document.documentElement.lang = settings.language
+  }, [settings.language])
 
   async function loadData(user: User) {
     const { data: profile } = await supabase
@@ -299,8 +303,10 @@ export default function ConfiguracoesPage() {
   // --- Language ---
   function handleLanguageChange(lang: string) {
     setSettings((s) => ({ ...s, language: lang }))
+    // Apply immediately: screen readers and browser translate prompts read <html lang>.
+    document.documentElement.lang = lang
+    try { localStorage.setItem('ember-lang', lang) } catch { }
     saveSettingsField('language', lang)
-    setConfirmLang(true)
   }
 
   // --- Delete account ---
@@ -645,25 +651,9 @@ export default function ConfiguracoesPage() {
                   <option value="pt-BR">Português (BR)</option>
                   <option value="en">English</option>
                 </select>
-                {confirmLang && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>A página será recarregada para aplicar o idioma.</span>
-                    <button
-                      onClick={() => { setConfirmLang(false); window.location.reload() }}
-                      className="text-xs px-2 py-1 rounded font-bold"
-                      style={{ background: 'var(--accent-solid)', color: 'white' }}
-                    >
-                      Recarregar
-                    </button>
-                    <button
-                      onClick={() => setConfirmLang(false)}
-                      className="text-xs px-2 py-1 rounded"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      Agora não
-                    </button>
-                  </div>
-                )}
+                <p className="text-xs mt-1.5" style={{ color: 'var(--text-disabled)' }}>
+                  Define o idioma do documento para leitores de tela e tradução do navegador. O conteúdo da interface continua em português.
+                </p>
               </div>
             </section>
           )}

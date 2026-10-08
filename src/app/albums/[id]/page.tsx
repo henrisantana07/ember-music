@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { ShareButton } from '@/components/ShareButton'
 import { SaveAlbumButton } from '@/components/SaveAlbumButton'
@@ -8,6 +8,7 @@ import { TrackCard } from '@/components/TrackCard'
 import { usePlayerStore } from '@/lib/store'
 import { useUser } from '@/hooks/use-user'
 import type { Track, Album } from '@/types/music'
+import { ErrorState } from '@/components/ui/states'
 
 export default function AlbumPage() {
   const { user } = useUser()
@@ -18,30 +19,56 @@ export default function AlbumPage() {
     release_date: string; tracks: Track[]
   } | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+  const [attempt, setAttempt] = useState(0)
   const play = usePlayerStore((s) => s.play)
 
+  const retry = useCallback(() => {
+    setError(false)
+    setLoading(true)
+    setAttempt((a) => a + 1)
+  }, [])
+
   useEffect(() => {
-    fetch(`/api/deezer?endpoint=albums&id=${albumId}`).then((r) => r.json()).then((albumRes) => {
-      const a = albumRes?.album ?? albumRes?.results?.[0]
-      if (!a) { setLoading(false); return }
-      setAlbum({
-        id: a.id,
-        name: a.name,
-        image: a.image,
-        artist_name: a.artist_name,
-        artist_id: a.artist_id,
-        release_date: a.release_date,
-        tracks: albumRes?.tracks ?? [],
+    let cancelled = false
+    fetch(`/api/deezer?endpoint=albums&id=${albumId}`)
+      .then((r) => r.json())
+      .then((albumRes) => {
+        if (cancelled) return
+        const a = albumRes?.album ?? albumRes?.results?.[0]
+        if (!a) { setLoading(false); return }
+        setAlbum({
+          id: a.id,
+          name: a.name,
+          image: a.image,
+          artist_name: a.artist_name,
+          artist_id: a.artist_id,
+          release_date: a.release_date,
+          tracks: albumRes?.tracks ?? [],
+        })
+        setLoading(false)
       })
-      setLoading(false)
-    })
-  }, [albumId])
+      .catch(() => {
+        if (!cancelled) { setError(true); setLoading(false) }
+      })
+    return () => { cancelled = true }
+  }, [albumId, attempt])
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-32">
+      <div className="flex items-center justify-center py-32" role="status" aria-label="Carregando álbum">
         <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--accent-from)', borderTopColor: 'transparent' }} />
       </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <ErrorState
+        title="Não foi possível carregar o álbum"
+        description="Verifique sua conexão e tente novamente."
+        action={{ label: 'Tentar novamente', onClick: retry }}
+      />
     )
   }
 
@@ -52,19 +79,19 @@ export default function AlbumPage() {
 
   return (
     <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
-      <div className="flex items-end gap-6 mb-8 p-6 rounded-2xl" style={{ background: 'var(--bg-elevated)' }}>
+      <div className="flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-6 mb-8 p-4 md:p-6 rounded-2xl" style={{ background: 'var(--bg-elevated)' }}>
         <img src={album.image || '/placeholder.svg'} alt={album.name}
-          className="w-48 h-48 rounded-xl object-cover shadow-lg" />
-        <div className="flex-1 min-w-0">
+          className="w-40 h-40 md:w-48 md:h-48 rounded-xl object-cover shadow-lg flex-shrink-0" />
+        <div className="flex-1 min-w-0 w-full md:w-auto text-center md:text-left">
           <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-secondary)' }}>Álbum</p>
-          <h1 className="text-3xl font-bold mb-2 truncate">{album.name}</h1>
-          <a href={`/artists/${album.artist_id}`} className="text-sm font-semibold hover:underline" style={{ color: 'var(--text-primary)' }}>
+          <h1 className="text-2xl md:text-3xl font-bold mb-2 truncate">{album.name}</h1>
+          <a href={`/artists/${album.artist_id}`} className="text-sm font-semibold hover:underline inline-block truncate max-w-full" style={{ color: 'var(--text-primary)' }}>
             {album.artist_name}
           </a>
           <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
             {album.release_date?.slice(0, 4)} &middot; {album.tracks.length} músicas &middot; {minutes} min
           </p>
-          <div className="flex items-center gap-3 mt-4">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
             <button
               onClick={() => album.tracks.length > 0 && play(album.tracks, 0)}
               className="px-6 py-2 rounded-full text-sm font-bold transition-transform hover:scale-105"

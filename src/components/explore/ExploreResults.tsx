@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useEnsureFavorites, useFavoritesSync } from '@/lib/favorites-store'
 import { TrackTable } from '@/components/TrackTable'
 import { Button } from '@/components/ui/Button'
+import { ErrorState } from '@/components/ui/states'
 import { ExploreTabs } from './ExploreTabs'
 import { ExploreFilters } from './ExploreFilters'
 import { TopResultCard } from './TopResultCard'
@@ -47,6 +48,8 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
   const [youtubeLoading, setYoutubeLoading] = useState(false)
   const visibleYoutubeTracks = useMemo(() => (query ? youtubeTracks : []), [query, youtubeTracks])
   const [loading, setLoading] = useState(true)
+  const [searchError, setSearchError] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
   const [user, setUser] = useState<{ id: string } | null>(null)
   const [page, setPage] = useState(0)
   const PAGE_SIZE = 20
@@ -120,18 +123,20 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
           setArtists(artistData.artists ?? [])
           loadingRef.current = false
           setLoading(false)
+          setSearchError(false)
         }
       } catch (e) {
         console.error('Erro ao buscar resultados:', e)
         if (!controller.signal.aborted) {
           loadingRef.current = false
           setLoading(false)
+          setSearchError(true)
         }
       }
     }
     void fetchResults()
     return () => controller.abort()
-  }, [query])
+  }, [query, retryCount])
 
   const fetchYouTube = useCallback(async (searchQuery: string) => {
     abortRef.current?.abort()
@@ -192,6 +197,18 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
   const totalPages = Math.max(1, Math.ceil(allTracks.length / PAGE_SIZE))
 
   const hasResults = filteredTracks.length > 0 || filteredArtists.length > 0 || filteredAlbums.length > 0 || visibleYoutubeTracks.length > 0
+
+  if (searchError && !loading && !hasResults) {
+    return (
+      <div className="mx-auto max-w-[1100px] px-8">
+        <ErrorState
+          title="Não foi possível buscar agora"
+          description="Verifique sua conexão e tente novamente."
+          action={{ label: 'Tentar novamente', onClick: () => { setSearchError(false); setLoading(true); setRetryCount((c) => c + 1) } }}
+        />
+      </div>
+    )
+  }
 
   if (!hasResults && !loading && !youtubeLoading) {
     return <ExploreNoResults query={query} activeFilterCount={activeFilterCount} onClearFilters={onClearFilters} />

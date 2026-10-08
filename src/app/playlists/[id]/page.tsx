@@ -23,6 +23,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import type { Track } from '@/types/music'
 import type { Database } from '@/types/database'
+import { ErrorState } from '@/components/ui/states'
 
 type PlaylistTrack = Database['public']['Tables']['playlist_tracks']['Row']
 
@@ -38,6 +39,8 @@ function PlaylistContent() {
   const [playlist, setPlaylist] = useState<Database['public']['Tables']['playlists']['Row'] | null>(null)
   const [tracks, setTracks] = useState<PlaylistTrack[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [loadAttempt, setLoadAttempt] = useState(0)
   const [userId, setUserId] = useState<string | null>(null)
   const [isOwner, setIsOwner] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
@@ -59,40 +62,46 @@ function PlaylistContent() {
 
   async function load() {
     setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    setUserId(user?.id ?? null)
+    setLoadError(false)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUserId(user?.id ?? null)
 
-    let { data: pl, error } = await supabase
-      .from('playlists')
-      .select('*')
-      .eq('id', id)
-      .single()
-
-    if (error || !pl) {
-      if (!token) { router.push('/'); return }
-      const { data: plByToken } = await supabase
+      let { data: pl, error } = await supabase
         .from('playlists')
         .select('*')
-        .eq('share_token', token)
+        .eq('id', id)
         .single()
-      if (!plByToken) { router.push('/'); return }
-      pl = plByToken
+
+      if (error || !pl) {
+        if (!token) { router.push('/'); return }
+        const { data: plByToken } = await supabase
+          .from('playlists')
+          .select('*')
+          .eq('share_token', token)
+          .single()
+        if (!plByToken) { router.push('/'); return }
+        pl = plByToken
+      }
+
+      setIsOwner(user?.id === pl.user_id)
+      setPlaylist(pl)
+
+      const { data: pts } = await supabase
+        .from('playlist_tracks')
+        .select('*')
+        .eq('playlist_id', id)
+        .order('position', { ascending: true })
+
+      setTracks(pts ?? [])
+    } catch {
+      setLoadError(true)
+    } finally {
+      setLoading(false)
     }
-
-    setIsOwner(user?.id === pl.user_id)
-    setPlaylist(pl)
-
-    const { data: pts } = await supabase
-      .from('playlist_tracks')
-      .select('*')
-      .eq('playlist_id', id)
-      .order('position', { ascending: true })
-
-    setTracks(pts ?? [])
-    setLoading(false)
   }
 
-  useEffect(() => { load() }, [id])
+  useEffect(() => { load() }, [id, loadAttempt])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -345,11 +354,21 @@ function PlaylistContent() {
     }
   }, [tracks, id, showToast])
 
-  if (loading || !playlist) {
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-64" role="status" aria-label="Carregando playlist">
         <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--accent-from)', borderTopColor: 'transparent' }} />
       </div>
+    )
+  }
+
+  if (loadError || !playlist) {
+    return (
+      <ErrorState
+        title="Não foi possível carregar a playlist"
+        description="Verifique sua conexão e tente novamente."
+        action={{ label: 'Tentar novamente', onClick: () => setLoadAttempt((a) => a + 1) }}
+      />
     )
   }
 

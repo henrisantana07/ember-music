@@ -80,7 +80,14 @@ export const usePlayerStore = create<PlayerState>()(
   isExpandedOpen: false,
 
   play: ((arg: Track | Track[], opt1?: unknown, opt2?: unknown, opt3?: unknown) => {
-    const tracks = Array.isArray(arg) ? arg : (opt1 as Track[] | undefined) ?? []
+    const prev = get()
+    // Single track without explicit queue: keep the existing queue if it already
+    // contains the track, otherwise fall back to a single-item queue (never wipe
+    // the queue to [] — that breaks next/prev).
+    const tracks = Array.isArray(arg)
+      ? arg
+      : (opt1 as Track[] | undefined)
+        ?? (prev.queue.some((t) => t.id === arg.id) ? prev.queue : [arg])
     const index = Array.isArray(arg) ? (opt1 as number | undefined) ?? 0 : tracks.findIndex((t) => t.id === arg.id)
     const track = Array.isArray(arg) ? (tracks[index] ?? tracks[0]) : arg
     const playlistId = Array.isArray(arg) ? (opt2 as string | undefined) : (opt2 as string | undefined)
