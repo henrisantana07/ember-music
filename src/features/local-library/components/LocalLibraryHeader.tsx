@@ -1,9 +1,22 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { FolderPlus, RefreshCw, Search, X } from 'lucide-react'
 import { useLocalLibrary } from '@/features/local-library/hooks/use-local-library'
 import { pickDirectory } from '@/lib/filesystem'
+import { Snackbar } from '@/components/ui/Snackbar'
+
+function describeScanError(error: unknown): string {
+  if (!(error instanceof Error)) return 'Falha ao adicionar a pasta. Tente novamente.'
+  if (error.name === 'AbortError') return ''
+  if (error.name === 'NotAllowedError' || error.name === 'SecurityError') {
+    return 'Permissão negada para acessar a pasta.'
+  }
+  if (error.message.toLowerCase().includes('reconnect')) {
+    return 'É preciso reconectar a pasta antes de escanear.'
+  }
+  return `Falha ao adicionar a pasta: ${error.message}`
+}
 
 export function LocalLibraryHeader() {
   const {
@@ -17,6 +30,7 @@ export function LocalLibraryHeader() {
   } = useLocalLibrary()
 
   const legacyInputRef = useRef<HTMLInputElement>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const handleLegacyFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -26,13 +40,17 @@ export function LocalLibraryHeader() {
     const path = (firstFile as File & { webkitRelativePath?: string }).webkitRelativePath || firstFile.name
     const folderName = path.split('/')[0]
 
-    const { createMockHandle } = await import('@/lib/filesystem')
-    const handle = await createMockHandle(folderName, files)
-    
-    const folderId = await addFolder({ handle, name: folderName, path: folderName })
-    await startScan(folderId, handle)
-    
-    e.target.value = ''
+    try {
+      const { createMockHandle } = await import('@/lib/filesystem')
+      const handle = await createMockHandle(folderName, files)
+      const folderId = await addFolder({ handle, name: folderName, path: folderName })
+      await startScan(folderId, handle)
+    } catch (error) {
+      const message = describeScanError(error)
+      if (message) setErrorMessage(message)
+    } finally {
+      e.target.value = ''
+    }
   }
 
   const handleAddFolder = async () => {
@@ -48,9 +66,8 @@ export function LocalLibraryHeader() {
         await startScan(folderId, result.handle)
       }
     } catch (error) {
-      if (error instanceof Error && error.name !== 'AbortError') {
-        console.error('Failed to add folder:', error)
-      }
+      const message = describeScanError(error)
+      if (message) setErrorMessage(message)
     }
   }
 
@@ -128,6 +145,13 @@ export function LocalLibraryHeader() {
         multiple
         onChange={handleLegacyFileSelect}
         style={{ display: 'none' }}
+      />
+
+      <Snackbar
+        open={errorMessage !== null}
+        message={errorMessage ?? ''}
+        tone="error"
+        onDismiss={() => setErrorMessage(null)}
       />
     </div>
   )
