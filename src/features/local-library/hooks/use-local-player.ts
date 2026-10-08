@@ -3,75 +3,61 @@
 import { useCallback } from 'react'
 import { usePlayerStore } from '@/lib/store'
 import { useLocalLibrary } from '@/features/local-library/hooks/use-local-library'
+import { localTrackToPlayerTrack, localTracksToPlayerTracks } from '@/features/local-library/lib/local-audio'
 import type { LocalMusicFile } from '@/features/local-library/types'
-
-function localTrackToPlayerTrack(track: LocalMusicFile) {
-  return {
-    id: track.id,
-    name: track.title,
-    duration: Math.floor(track.duration || 0),
-    artist_id: track.artist,
-    artist_name: track.artist,
-    album_id: track.album,
-    album_name: track.album,
-    image: track.artwork || '/placeholder.svg',
-    audio: URL.createObjectURL(new Blob([], { type: 'audio/mpeg' })),
-    url: '',
-    localPath: track.path,
-    localFile: track,
-  } as const
-}
 
 export function useLocalPlayer() {
   const { play, pause, resume, togglePlay, next, prev, queue, currentTrack, isPlaying } = usePlayerStore()
-  const { getFilteredTracks, getTracksByFolder, getTracksByArtist, getTracksByAlbum } = useLocalLibrary()
+  const { folders, getFilteredTracks, getTracksByFolder, getTracksByArtist, getTracksByAlbum } = useLocalLibrary()
 
   const playTrack = useCallback(
-    (track: LocalMusicFile, contextTracks?: LocalMusicFile[]) => {
+    async (track: LocalMusicFile, contextTracks?: LocalMusicFile[]) => {
       const tracksToPlay = contextTracks || getFilteredTracks()
-      const playerTracks = tracksToPlay.map(localTrackToPlayerTrack)
-      const playerTrack = localTrackToPlayerTrack(track)
+      const [playerTracks, playerTrack] = await Promise.all([
+        localTracksToPlayerTracks(tracksToPlay, folders),
+        localTrackToPlayerTrack(track, folders),
+      ])
       play(playerTrack, playerTracks)
     },
-    [play, getFilteredTracks]
+    [play, getFilteredTracks, folders]
   )
 
   const playFolder = useCallback(
-    (folderId: string) => {
+    async (folderId: string) => {
       const tracks = getTracksByFolder(folderId)
       if (tracks.length === 0) return
-      const playerTracks = tracks.map(localTrackToPlayerTrack)
+      const playerTracks = await localTracksToPlayerTracks(tracks, folders)
       play(playerTracks[0], playerTracks)
     },
-    [play, getTracksByFolder]
+    [play, getTracksByFolder, folders]
   )
 
   const playArtist = useCallback(
-    (artist: string) => {
+    async (artist: string) => {
       const tracks = getTracksByArtist(artist)
       if (tracks.length === 0) return
-      const playerTracks = tracks.map(localTrackToPlayerTrack)
+      const playerTracks = await localTracksToPlayerTracks(tracks, folders)
       play(playerTracks[0], playerTracks)
     },
-    [play, getTracksByArtist]
+    [play, getTracksByArtist, folders]
   )
 
   const playAlbum = useCallback(
-    (album: string, artist: string) => {
+    async (album: string, artist: string) => {
       const tracks = getTracksByAlbum(album, artist)
       if (tracks.length === 0) return
-      const playerTracks = tracks.map(localTrackToPlayerTrack)
+      const playerTracks = await localTracksToPlayerTracks(tracks, folders)
       play(playerTracks[0], playerTracks)
     },
-    [play, getTracksByAlbum]
+    [play, getTracksByAlbum, folders]
   )
 
-  const playAll = useCallback(() => {
+  const playAll = useCallback(async () => {
     const tracks = getFilteredTracks()
     if (tracks.length === 0) return
-    const playerTracks = tracks.map(localTrackToPlayerTrack)
+    const playerTracks = await localTracksToPlayerTracks(tracks, folders)
     play(playerTracks[0], playerTracks)
-  }, [play, getFilteredTracks])
+  }, [play, getFilteredTracks, folders])
 
   return {
     playTrack,

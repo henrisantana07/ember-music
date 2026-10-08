@@ -107,8 +107,10 @@ function inferFromFileName(fileName: string): FileMetadata {
 export function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer)
   let binary = ''
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i])
+  const CHUNK = 0x8000
+  for (let i = 0; i < bytes.byteLength; i += CHUNK) {
+    const chunk = bytes.subarray(i, i + CHUNK)
+    binary += String.fromCharCode.apply(null, chunk as unknown as number[])
   }
   return btoa(binary)
 }

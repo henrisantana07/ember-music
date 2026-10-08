@@ -95,13 +95,16 @@ export async function getDirectoryHandle(handle: FileSystemDirectoryHandle, path
 }
 
 export async function *iterateFiles(handle: FileSystemDirectoryHandle): AsyncGenerator<File, void, unknown> {
-  const entries = handle as unknown as { [Symbol.asyncIterator](): AsyncIterator<[string, FileSystemFileHandle | FileSystemDirectoryHandle]> }
+  const entries = handle as unknown as { [Symbol.asyncIterator](): AsyncIterator<[string, FileSystemFileHandle | FileSystemDirectoryHandle | File]> }
   for await (const [, entry] of entries) {
-    if (entry.kind === 'file') {
-      const file = await entry.getFile()
+    // Legacy/mock handles (webkitdirectory path) yield raw File objects, not handles.
+    if (entry instanceof File) {
+      yield entry
+    } else if (entry.kind === 'file') {
+      const file = await (entry as FileSystemFileHandle).getFile()
       yield file
     } else if (entry.kind === 'directory') {
-      yield* iterateFiles(entry)
+      yield* iterateFiles(entry as FileSystemDirectoryHandle)
     }
   }
 }

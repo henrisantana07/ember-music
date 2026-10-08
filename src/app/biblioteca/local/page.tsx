@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
-import { FolderOpen, FolderClosed, ChevronRight, Music, Search } from 'lucide-react'
+import { FolderOpen, FolderClosed, ChevronRight, Link2, Music, Search } from 'lucide-react'
 import { useLocalLibrary } from '@/features/local-library/hooks/use-local-library'
 import { LocalLibraryHeader } from '@/features/local-library/components/LocalLibraryHeader'
 import { LocalTrackList } from '@/features/local-library/components/LocalTrackList'
@@ -16,41 +16,60 @@ function FolderTreeItem({
   selectedFolderId,
   onSelect,
   getTracksByFolder,
+  onReconnect,
+  reconnectingFolderId,
   level = 0,
 }: {
-  folder: { id: string; name: string; path: string }
+  folder: { id: string; name: string; path: string; needsReconnect?: boolean }
   folders: { id: string; name: string; path: string }[]
   selectedFolderId: string | null
   onSelect: (folderId: string | null) => void
   getTracksByFolder: (folderId: string) => { id: string }[]
+  onReconnect: (folderId: string) => void
+  reconnectingFolderId: string | null
   level: number
 }) {
   const isSelected = selectedFolderId === folder.id
   const folderTracks = getTracksByFolder(folder.id)
   const hasTracks = folderTracks.length > 0
+  const isReconnecting = reconnectingFolderId === folder.id
 
   return (
     <div style={{ paddingLeft: `${level * 16 + 8}px` }}>
-      <button
-        onClick={() => onSelect(isSelected ? null : folder.id)}
-        className={`flex items-center gap-2 w-full px-3 py-1.5 rounded-lg text-sm transition-colors ${
-          isSelected
-            ? 'bg-[var(--accent-solid)] text-on-accent'
-            : 'hover:bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
-        }`}
-        style={{ color: isSelected ? 'var(--text-on-accent)' : 'var(--text-secondary)' }}
-      >
-        <FolderOpen className="w-4 h-4 flex-shrink-0" />
-        <span className="truncate flex-1">{folder.name}</span>
-        {hasTracks && (
-          <span className="text-xs px-1.5 py-0.5 rounded" style={{
-            backgroundColor: isSelected ? 'var(--outline)' : 'var(--bg-elevated)',
-            color: isSelected ? 'white' : 'var(--text-disabled)'
-          }}>
-            {folderTracks.length}
-          </span>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => onSelect(isSelected ? null : folder.id)}
+          className={`flex items-center gap-2 flex-1 min-w-0 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+            isSelected
+              ? 'bg-[var(--accent-solid)] text-on-accent'
+              : 'hover:bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
+          }`}
+          style={{ color: isSelected ? 'var(--text-on-accent)' : 'var(--text-secondary)' }}
+        >
+          <FolderOpen className="w-4 h-4 flex-shrink-0" />
+          <span className="truncate flex-1">{folder.name}</span>
+          {hasTracks && (
+            <span className="text-xs px-1.5 py-0.5 rounded" style={{
+              backgroundColor: isSelected ? 'var(--outline)' : 'var(--bg-elevated)',
+              color: isSelected ? 'white' : 'var(--text-disabled)'
+            }}>
+              {folderTracks.length}
+            </span>
+          )}
+        </button>
+        {folder.needsReconnect && (
+          <button
+            onClick={() => onReconnect(folder.id)}
+            disabled={isReconnecting}
+            title="Reconectar pasta"
+            aria-label={`Reconectar pasta ${folder.name}`}
+            className="p-1.5 rounded-lg transition-colors hover:bg-[var(--bg-elevated)] flex-shrink-0"
+            style={{ color: 'var(--warning, #f59e0b)' }}
+          >
+            <Link2 className={`w-4 h-4 ${isReconnecting ? 'animate-pulse' : ''}`} />
+          </button>
         )}
-      </button>
+      </div>
     </div>
   )
 }
@@ -60,11 +79,15 @@ function FolderSidebar({
   selectedFolderId,
   onSelectFolder,
   getTracksByFolder,
+  onReconnect,
+  reconnectingFolderId,
 }: {
-  folders: { id: string; name: string; path: string }[]
+  folders: { id: string; name: string; path: string; needsReconnect?: boolean }[]
   selectedFolderId: string | null
   onSelectFolder: (folderId: string | null) => void
   getTracksByFolder: (folderId: string) => { id: string }[]
+  onReconnect: (folderId: string) => void
+  reconnectingFolderId: string | null
 }) {
   if (folders.length === 0) {
     return (
@@ -107,6 +130,8 @@ function FolderSidebar({
             selectedFolderId={selectedFolderId}
             onSelect={onSelectFolder}
             getTracksByFolder={getTracksByFolder}
+            onReconnect={onReconnect}
+            reconnectingFolderId={reconnectingFolderId}
             level={0}
           />
         ))}
@@ -127,11 +152,28 @@ function LocalLibraryContent() {
     loading,
     viewMode,
     setViewMode,
+    reconnectFolder,
+    startScan,
   } = useLocalLibrary()
 
   const [trackSort, setTrackSort] = useState<'title' | 'artist' | 'album' | 'duration' | 'added'>('added')
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [reconnectingFolderId, setReconnectingFolderId] = useState<string | null>(null)
+
+  const handleReconnect = async (folderId: string) => {
+    setReconnectingFolderId(folderId)
+    try {
+      const handle = await reconnectFolder(folderId)
+      await startScan(folderId, handle)
+    } catch (error) {
+      if (!(error instanceof Error && error.name === 'AbortError')) {
+        console.error('Failed to reconnect folder:', error)
+      }
+    } finally {
+      setReconnectingFolderId(null)
+    }
+  }
 
   const filteredTracks = getFilteredTracks()
 
@@ -199,6 +241,8 @@ function LocalLibraryContent() {
             selectedFolderId={selectedFolderId}
             onSelectFolder={setSelectedFolderId}
             getTracksByFolder={getTracksByFolder}
+            onReconnect={handleReconnect}
+            reconnectingFolderId={reconnectingFolderId}
           />
         </aside>
 

@@ -11,6 +11,7 @@ interface StoredFolder {
   albumCount: number
   artistCount: number
   needsReconnect: boolean
+  handle: FileSystemDirectoryHandle | null
 }
 
 interface LocalLibraryDB extends DBSchema {
@@ -110,17 +111,15 @@ export async function deleteMusicFilesByFolder(folderId: string): Promise<void> 
 
 export async function saveFolder(folder: LocalFolder): Promise<void> {
   const db = await getDB()
-  const { handle, ...folderData } = folder
-  await db.put('folders', folderData)
+  // FileSystemDirectoryHandle is structured-cloneable and storable in IndexedDB,
+  // which lets us restore the folder handle across reloads.
+  await db.put('folders', folder)
 }
 
 export async function saveFolders(folders: LocalFolder[]): Promise<void> {
   const db = await getDB()
   const tx = db.transaction('folders', 'readwrite')
-  await Promise.all(folders.map((folder) => {
-    const { handle, ...folderData } = folder
-    tx.store.put(folderData)
-  }))
+  await Promise.all(folders.map((folder) => tx.store.put(folder)))
   await tx.done
 }
 
@@ -128,13 +127,17 @@ export async function getFolder(id: string): Promise<LocalFolder | undefined> {
   const db = await getDB()
   const stored = await db.get('folders', id)
   if (!stored) return undefined
-  return { ...stored, handle: null }
+  const handle = stored.handle ?? null
+  return { ...stored, handle, needsReconnect: !handle }
 }
 
 export async function getAllFolders(): Promise<LocalFolder[]> {
   const db = await getDB()
   const stored = await db.getAll('folders')
-  return stored.map((f) => ({ ...f, handle: null }))
+  return stored.map((f) => {
+    const handle = f.handle ?? null
+    return { ...f, handle, needsReconnect: !handle }
+  })
 }
 
 export async function deleteFolder(id: string): Promise<void> {

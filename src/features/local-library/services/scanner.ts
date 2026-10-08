@@ -167,6 +167,15 @@ async function scanFolder(
         const metadata = await extractMetadata(file)
         const inferred = parseFileName(file.name)
 
+        let artwork: string | null = null
+        if (metadata.artwork) {
+          try {
+            artwork = createArtworkDataUrl(metadata.artwork)
+          } catch (artworkError) {
+            console.warn(`Failed to encode artwork for ${file.name}:`, artworkError)
+          }
+        }
+
         const track: LocalMusicFile = {
           id: existing?.id || generateId(),
           name: file.name,
@@ -185,7 +194,7 @@ async function scanFolder(
           discNumber: metadata.discNumber || 0,
           bitrate: metadata.bitrate || 0,
           sampleRate: metadata.sampleRate || 0,
-          artwork: metadata.artwork ? createArtworkDataUrl(metadata.artwork) : null,
+          artwork,
           folderId: folder.id,
           inferred: !!metadata.inferred,
           missing: false,

@@ -6,6 +6,39 @@ import { scanAllFolders } from '@/features/local-library/services/scanner'
 import { useLibraryStore } from '@/features/local-library/stores/library-store'
 import type { LocalFolder, LocalMusicFile, DirectoryNode } from '@/features/local-library/types'
 
+// Run init once globally: useLocalLibrary() is mounted by many components,
+// and each re-init would clobber live folder handles with nulls.
+let initPromise: Promise<void> | null = null
+let initDone = false
+const initListeners = new Set<() => void>()
+
+function notifyInitDone() {
+  initDone = true
+  initListeners.forEach((listener) => listener())
+  initListeners.clear()
+}
+
+function ensureLibraryLoaded(): Promise<void> {
+  if (!initPromise) {
+    initPromise = (async () => {
+      const [storedFolders, storedTracks] = await Promise.all([
+        getAllFolders(),
+        getAllMusicFiles(),
+      ])
+      // getAllFolders() restores persisted handles; folders without a
+      // handle (older records) are flagged as needing reconnection.
+      useLibraryStore.setState({ folders: storedFolders, tracks: storedTracks })
+    })()
+      .catch((error) => {
+        console.error('Failed to initialize library:', error)
+        // Allow a later mount to retry after a failure.
+        initPromise = null
+      })
+      .finally(notifyInitDone)
+  }
+  return initPromise
+}
+
 export function useLocalLibrary() {
   const {
     folders,
@@ -29,32 +62,23 @@ export function useLocalLibrary() {
     selectAll,
   } = useLibraryStore()
 
-  const [initialized, setInitialized] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [initialized, setInitialized] = useState(initDone)
+  const [loading, setLoading] = useState(!initDone)
 
   useEffect(() => {
-    async function init() {
-      setLoading(true)
-      try {
-        const [storedFolders, storedTracks] = await Promise.all([
-          getAllFolders(),
-          getAllMusicFiles(),
-        ])
-        // Mark folders without handles as needing reconnection
-        const foldersWithReconnect = storedFolders.map((f) => ({
-          ...f,
-          needsReconnect: !f.handle,
-          handle: null, // Handles can't be persisted
-        }))
-        useLibraryStore.setState({ folders: foldersWithReconnect, tracks: storedTracks })
-        setInitialized(true)
-      } catch (error) {
-        console.error('Failed to initialize library:', error)
-      } finally {
-        setLoading(false)
-      }
+    if (initDone) return
+    let active = true
+    const onDone = () => {
+      if (!active) return
+      setInitialized(true)
+      setLoading(false)
     }
-    init()
+    initListeners.add(onDone)
+    ensureLibraryLoaded()
+    return () => {
+      active = false
+      initListeners.delete(onDone)
+    }
   }, [])
 
   const addFolder = useCallback(async (folder: { handle: FileSystemDirectoryHandle; name: string; path: string }) => {

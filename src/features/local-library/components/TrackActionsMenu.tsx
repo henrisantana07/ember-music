@@ -16,26 +16,11 @@ import {
   FolderOpen,
 } from 'lucide-react'
 import { useLocalPlayer } from '@/features/local-library/hooks/use-local-player'
+import { useLocalLibrary } from '@/features/local-library/hooks/use-local-library'
 import { usePlayerStore } from '@/lib/store'
+import { localTrackToPlayerTrack } from '@/features/local-library/lib/local-audio'
 import { formatDuration } from '@/lib/spotify'
 import type { LocalMusicFile } from '@/features/local-library/types'
-
-function localTrackToPlayerTrack(track: LocalMusicFile) {
-  return {
-    id: track.id,
-    name: track.title,
-    duration: Math.floor(track.duration || 0),
-    artist_id: track.artist,
-    artist_name: track.artist,
-    album_id: track.album,
-    album_name: track.album,
-    image: track.artwork || '/placeholder.svg',
-    audio: URL.createObjectURL(new Blob([], { type: 'audio/mpeg' })),
-    url: '',
-    localPath: track.path,
-    localFile: track,
-  } as const
-}
 
 interface TrackActionsMenuProps {
   track: LocalMusicFile
@@ -46,6 +31,7 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
   const [isOpen, setIsOpen] = useState(false)
   const { playTrack, next: playNextTrack } = useLocalPlayer()
+  const { folders } = useLocalLibrary()
   const { currentTrack, isPlaying, queue, addToQueue: storeAddToQueue, togglePlay } = usePlayerStore()
   const [copied, setCopied] = useState(false)
 
@@ -69,23 +55,22 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
     setIsOpen(false)
   }
 
-  const handlePlayNext = () => {
+  const handlePlayNext = async () => {
     // Add to queue right after current track
+    const playerTrack = await localTrackToPlayerTrack(track, folders)
     const currentIndex = queue.findIndex((t) => t.id === currentTrack?.id)
     if (currentIndex >= 0) {
-      const playerTrack = localTrackToPlayerTrack(track)
       const newQueue = [...queue]
       newQueue.splice(currentIndex + 1, 0, playerTrack)
       usePlayerStore.setState({ queue: newQueue, originalQueue: [...newQueue] })
     } else {
-      const playerTrack = localTrackToPlayerTrack(track)
       storeAddToQueue(playerTrack)
     }
     setIsOpen(false)
   }
 
-  const handleAddToQueue = () => {
-    const playerTrack = localTrackToPlayerTrack(track)
+  const handleAddToQueue = async () => {
+    const playerTrack = await localTrackToPlayerTrack(track, folders)
     storeAddToQueue(playerTrack)
     setIsOpen(false)
   }
