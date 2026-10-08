@@ -21,7 +21,10 @@ set search_path = public
 as $$
 begin
   return (
-    select results
+    select jsonb_build_object(
+      'results', results,
+      'nextPageToken', next_page_token
+    )
     from public.youtube_search_cache
     where query_key = p_key
       and expires_at > now()

@@ -45,6 +45,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
   const [artists, setArtists] = useState<Artist[]>([])
   const [youtubeTracks, setYoutubeTracks] = useState<Track[]>([])
   const [youtubeLoading, setYoutubeLoading] = useState(false)
+  const visibleYoutubeTracks = useMemo(() => (query ? youtubeTracks : []), [query, youtubeTracks])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<{ id: string } | null>(null)
   const [favs, setFavs] = useState<Set<string>>(new Set())
@@ -87,7 +88,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
     return true
   }), [artists, artistFilter, genreFilter])
 
-  const allTracks = useMemo(() => [...filteredTracks, ...youtubeTracks], [filteredTracks, youtubeTracks])
+  const allTracks = useMemo(() => [...filteredTracks, ...visibleYoutubeTracks], [filteredTracks, visibleYoutubeTracks])
 
   useEffect(() => {
     if (!user) { setFavs(prev => new Set()); return }
@@ -179,15 +180,12 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
         if (!controller.signal.aborted) setYoutubeTracks([])
       }
     } finally {
-      if (!controller.signal.aborted) setYoutubeLoading(false)
+      if (abortRef.current === controller) setYoutubeLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    if (!query) {
-      setYoutubeTracks([])
-      return
-    }
+    if (!query) return
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       fetchYouTube(normalizeQuery(query))
@@ -204,17 +202,17 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
   const activeFilterCount = Number(!!artistFilter) + Number(!!genreFilter) + Number(!!durationFilter)
 
   const counts = {
-    total: filteredTracks.length + filteredAlbums.length + filteredArtists.length + youtubeTracks.length,
+    total: filteredTracks.length + filteredAlbums.length + filteredArtists.length + visibleYoutubeTracks.length,
     tracks: filteredTracks.length,
     artists: filteredArtists.length,
     albums: filteredAlbums.length,
-    youtube: youtubeTracks.length,
+    youtube: visibleYoutubeTracks.length,
   }
 
   const paginatedTracks = useMemo(() => allTracks.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [allTracks, page])
   const totalPages = Math.max(1, Math.ceil(allTracks.length / PAGE_SIZE))
 
-  const hasResults = filteredTracks.length > 0 || filteredArtists.length > 0 || filteredAlbums.length > 0 || youtubeTracks.length > 0
+  const hasResults = filteredTracks.length > 0 || filteredArtists.length > 0 || filteredAlbums.length > 0 || visibleYoutubeTracks.length > 0
 
   if (!hasResults && !loading && !youtubeLoading) {
     return <ExploreNoResults query={query} activeFilterCount={activeFilterCount} onClearFilters={onClearFilters} />
@@ -248,7 +246,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
               <TrackResultGrid tracks={filteredTracks.slice(1, 7)} />
             </section>
           )}
-          {youtubeTracks.length > 0 && (
+          {visibleYoutubeTracks.length > 0 && (
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold flex items-center gap-2">
@@ -257,7 +255,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
                 </h2>
                 <button onClick={() => onTabChange('youtube')} className="text-xs font-semibold" style={{ color: 'var(--accent-solid)' }}>Ver tudo →</button>
               </div>
-              <TrackResultGrid tracks={youtubeTracks.slice(0, 6)} loading={youtubeLoading} />
+              <TrackResultGrid tracks={visibleYoutubeTracks.slice(0, 6)} loading={youtubeLoading} />
             </section>
           )}
           {filteredArtists.length > 0 && (
@@ -293,8 +291,8 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
             <div className="space-y-2">
               {Array.from({ length: 5 }).map((_, i) => <ExploreTrackSkeleton key={i} />)}
             </div>
-          ) : youtubeTracks.length > 0 ? (
-            <TrackResultGrid tracks={youtubeTracks} />
+          ) : visibleYoutubeTracks.length > 0 ? (
+            <TrackResultGrid tracks={visibleYoutubeTracks} />
           ) : (
             <p className="text-center py-8" style={{ color: 'var(--text-disabled)' }}>Nenhum resultado no YouTube</p>
           )}

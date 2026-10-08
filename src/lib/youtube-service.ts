@@ -7,6 +7,7 @@ export const YOUTUBE_SEARCH_MAX_RESULTS = 10
 export const YOUTUBE_SEARCH_RATE_LIMIT = 20
 export const YOUTUBE_SEARCH_RATE_WINDOW = 60_000
 export const YOUTUBE_SEARCH_RATE_LIMIT_USER = 30
+export const YOUTUBE_SEARCH_MAX_RETRIES = 1
 
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3'
 
@@ -93,9 +94,14 @@ async function fetchFromSupabaseCache(key: string): Promise<CacheEntry | null> {
       logEvent('cache_error', { key, error: error.message })
       return null
     }
-    if (data) {
-      logEvent('cache_hit', { key })
-      return data as unknown as CacheEntry
+    const entry = data as { results: YouTubeTrack[]; nextPageToken: string | null } | null
+    if (entry && Array.isArray(entry.results)) {
+      logEvent('cache_hit', { key, source: 'supabase' })
+      return {
+        results: entry.results,
+        nextPageToken: entry.nextPageToken ?? null,
+        expiresAt: Date.now() + YOUTUBE_SEARCH_CACHE_TTL * 1000,
+      }
     }
   } catch (e) {
     logEvent('cache_error', { key, error: String(e) })
@@ -131,6 +137,15 @@ function setMemoryCache(key: string, results: YouTubeTrack[], nextPageToken: str
   cache.set(key, { results, nextPageToken, expiresAt: Date.now() + YOUTUBE_SEARCH_CACHE_TTL * 1000 })
 }
 
+async function fetchWithRetry(url: string): Promise<Response> {
+  let res = await fetch(url)
+  for (let attempt = 0; res.status >= 500 && res.status < 600 && attempt < YOUTUBE_SEARCH_MAX_RETRIES; attempt++) {
+    logEvent('retry', { url: url.split('?')[0], status: res.status, attempt: attempt + 1 })
+    res = await fetch(url)
+  }
+  return res
+}
+
 async function fetchYouTubeSearch(query: string, pageToken: string | null): Promise<{ items: YouTubeRawItem[]; nextPageToken: string | null }> {
   const key = getApiKey()
   const params = new URLSearchParams({
@@ -144,7 +159,7 @@ async function fetchYouTubeSearch(query: string, pageToken: string | null): Prom
   })
   if (pageToken) params.set('pageToken', pageToken)
 
-  const res = await fetch(`${YOUTUBE_API_BASE}/search?${params}`)
+  const res = await fetchWithRetry(`${YOUTUBE_API_BASE}/search?${params}`)
   if (!res.ok) {
     const body = await res.text()
     throw new Error(`YouTube search API error ${res.status}: ${body}`)
@@ -161,7 +176,7 @@ async function fetchYouTubeVideoDetails(videoIds: string[]): Promise<Map<string,
     id: videoIds.join(','),
     key,
   })
-  const res = await fetch(`${YOUTUBE_API_BASE}/videos?${params}`)
+  const res = await fetchWithRetry(`${YOUTUBE_API_BASE}/videos?${params}`)
   if (!res.ok) {
     const body = await res.text()
     throw new Error(`YouTube videos API error ${res.status}: ${body}`)
@@ -247,7 +262,6 @@ export async function searchYouTube(
   const sbEntry = await fetchFromSupabaseCache(cacheKey)
   if (sbEntry && !pageToken) {
     setMemoryCache(cacheKey, sbEntry.results, sbEntry.nextPageToken)
-    logEvent('cache_hit', { key: cacheKey, source: 'supabase' })
     return { tracks: sbEntry.results, nextPageToken: sbEntry.nextPageToken }
   }
 
