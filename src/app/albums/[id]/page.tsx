@@ -83,18 +83,18 @@ export default function AlbumPage() {
         <img src={album.image || '/placeholder.svg'} alt={album.name}
           className="w-40 h-40 md:w-48 md:h-48 rounded-xl object-cover shadow-lg flex-shrink-0" />
         <div className="flex-1 min-w-0 w-full md:w-auto text-center md:text-left">
-          <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-secondary)' }}>Álbum</p>
+          <p className="text-label-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-secondary)' }}>Álbum</p>
           <h1 className="text-2xl md:text-3xl font-bold mb-2 truncate">{album.name}</h1>
-          <a href={`/artists/${album.artist_id}`} className="text-sm font-semibold hover:underline inline-block truncate max-w-full" style={{ color: 'var(--text-primary)' }}>
+          <a href={`/artists/${album.artist_id}`} className="text-body-large font-semibold hover:underline inline-block truncate max-w-full" style={{ color: 'var(--text-primary)' }}>
             {album.artist_name}
           </a>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+          <p className="text-body-medium mt-1" style={{ color: 'var(--text-secondary)' }}>
             {album.release_date?.slice(0, 4)} &middot; {album.tracks.length} músicas &middot; {minutes} min
           </p>
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
             <button
               onClick={() => album.tracks.length > 0 && play(album.tracks, 0)}
-              className="px-6 py-2 rounded-full text-sm font-bold transition-transform hover:scale-105"
+              className="min-h-[48px] px-6 rounded-full text-label-large font-bold transition-transform hover:scale-105 state-layer"
               style={{ background: 'linear-gradient(to right, var(--accent-from), var(--accent-to))', color: 'var(--text-on-accent)' }}
             >
               Tocar tudo
@@ -109,7 +109,7 @@ export default function AlbumPage() {
 
       <div className="mt-8">
         <h2 className="text-xl font-bold mb-4">Faixas</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {album.tracks.map((track) => (
             <TrackCard key={track.id} track={track} tracks={album.tracks} user={user} />
           ))}

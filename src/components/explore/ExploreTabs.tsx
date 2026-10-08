@@ -47,14 +47,14 @@ export function ExploreTabs({ activeTab, onTabChange, counts }: ExploreTabsProps
             aria-selected={isActive}
             aria-controls={`explore-panel-${tab}`}
             onClick={() => onTabChange(tab)}
-            className={`relative px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors state-layer ${
+            className={`relative px-5 min-h-[48px] text-body-large font-semibold whitespace-nowrap transition-colors state-layer ${
               isActive ? '' : 'hover:text-on-surface'
             }`}
             style={{ color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)' }}
           >
             {TAB_LABELS[tab](count)}
             {isActive && (
-              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full" style={{ backgroundColor: 'var(--accent-solid)' }} />
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-[3px] rounded-full" style={{ backgroundColor: 'var(--accent-solid)' }} />
             )}
           </button>
         )

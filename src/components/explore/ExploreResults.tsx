@@ -219,7 +219,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
       className="mx-auto max-w-[1100px] px-8 space-y-6"
     >
       <div>
-        <p className="text-sm mb-1" style={{ color: 'var(--text-disabled)' }}>Resultados para</p>
+        <p className="text-body-medium mb-1" style={{ color: 'var(--text-disabled)' }}>Resultados para</p>
         <h1 className="text-3xl font-bold">&ldquo;{query}&rdquo;</h1>
       </div>
 
@@ -237,7 +237,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold">Faixas</h2>
-                <button onClick={() => onTabChange('faixas')} className="text-xs font-semibold" style={{ color: 'var(--accent-solid)' }}>Ver tudo →</button>
+                <button onClick={() => onTabChange('faixas')} className="text-label-medium font-semibold px-3 min-h-[44px] rounded-full state-layer" style={{ color: 'var(--accent-solid)' }}>Ver tudo →</button>
               </div>
               <TrackResultGrid tracks={filteredTracks.slice(1, 7)} />
             </section>
@@ -247,9 +247,9 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold flex items-center gap-2">
                   YouTube
-                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-solid)' }}>YT</span>
+                  <span className="text-label-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-solid)' }}>YT</span>
                 </h2>
-                <button onClick={() => onTabChange('youtube')} className="text-xs font-semibold" style={{ color: 'var(--accent-solid)' }}>Ver tudo →</button>
+                <button onClick={() => onTabChange('youtube')} className="text-label-medium font-semibold px-3 min-h-[44px] rounded-full state-layer" style={{ color: 'var(--accent-solid)' }}>Ver tudo →</button>
               </div>
               <TrackResultGrid tracks={visibleYoutubeTracks.slice(0, 6)} loading={youtubeLoading} />
             </section>
@@ -258,7 +258,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold">Artistas</h2>
-                <button onClick={() => onTabChange('artistas')} className="text-xs font-semibold" style={{ color: 'var(--accent-solid)' }}>Ver tudo →</button>
+                <button onClick={() => onTabChange('artistas')} className="text-label-medium font-semibold px-3 min-h-[44px] rounded-full state-layer" style={{ color: 'var(--accent-solid)' }}>Ver tudo →</button>
               </div>
               <ArtistResultCarousel artists={filteredArtists} maxItems={8} />
             </section>
@@ -267,7 +267,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold">Álbuns</h2>
-                <button onClick={() => onTabChange('albuns')} className="text-xs font-semibold" style={{ color: 'var(--accent-solid)' }}>Ver tudo →</button>
+                <button onClick={() => onTabChange('albuns')} className="text-label-medium font-semibold px-3 min-h-[44px] rounded-full state-layer" style={{ color: 'var(--accent-solid)' }}>Ver tudo →</button>
               </div>
               <AlbumResultGrid albums={filteredAlbums} maxItems={4} />
             </section>
@@ -280,7 +280,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold flex items-center gap-2">
               YouTube
-              <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-solid)' }}>YT</span>
+              <span className="text-label-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-solid)' }}>YT</span>
             </h2>
           </div>
           {youtubeLoading ? (
@@ -310,19 +310,19 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
             <nav className="flex items-center justify-center gap-4 mt-6" aria-label="Paginação de faixas">
               <Button
                 variant="outlined"
-                size="sm"
+                size="md"
                 onClick={() => setPage(p => Math.max(0, p - 1))}
                 disabled={page === 0}
                 aria-label="Página anterior"
               >
                 ← Anterior
               </Button>
-              <span className="text-body-small" aria-live="polite" style={{ color: 'var(--text-disabled)' }}>
+              <span className="text-body-medium" aria-live="polite" style={{ color: 'var(--text-disabled)' }}>
                 {page + 1} / {totalPages}
               </span>
               <Button
                 variant="outlined"
-                size="sm"
+                size="md"
                 onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
                 aria-label="Próxima página"
@@ -348,8 +348,8 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
                   <div className="w-[120px] h-[120px] rounded-full overflow-hidden border-2 transition-colors group-hover:border-transparent" style={{ borderColor: 'var(--bg-elevated)' }}>
                     <img src={artist.image || '/placeholder.svg'} alt={artist.name} className="w-full h-full object-cover" loading="lazy" />
                   </div>
-                  <p className="text-sm font-semibold text-center truncate w-full">{artist.name}</p>
-                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  <p className="text-body-large font-semibold text-center truncate w-full">{artist.name}</p>
+                  <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>
                     {artist.followers > 0 ? `${(artist.followers / 1000).toFixed(0)}K fãs` : ''}
                   </p>
                 </a>

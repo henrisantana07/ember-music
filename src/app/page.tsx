@@ -90,9 +90,9 @@ function SearchResults({ query }: { query: string }) {
                   <a
                     key={artist.id}
                     href={`/artists/${artist.id}`}
-                    className="flex flex-col items-center gap-2 w-24 flex-shrink-0 group"
+                    className="flex flex-col items-center gap-2 w-32 flex-shrink-0 group"
                   >
-                    <div className="w-[96px] h-[96px] rounded-full overflow-hidden border-2 transition-colors duration-200 group-hover:border-transparent"
+                    <div className="w-[120px] h-[120px] rounded-full overflow-hidden border-2 transition-colors duration-200 group-hover:border-transparent"
                       style={{ borderColor: 'var(--bg-elevated)' }}>
                       <img
                         src={artist.image || '/placeholder.svg'}
@@ -101,9 +101,9 @@ function SearchResults({ query }: { query: string }) {
                         loading="lazy"
                       />
                     </div>
-                    <p className="text-sm font-semibold text-center truncate w-full">{artist.name}</p>
+                    <p className="text-body-large font-semibold text-center truncate w-full">{artist.name}</p>
                     {artist.followers > 0 && (
-                      <p className="text-xs text-center" style={{ color: 'var(--text-secondary)' }}>
+                      <p className="text-body-medium text-center" style={{ color: 'var(--text-secondary)' }}>
                         {(artist.followers / 1000).toFixed(0)}K fãs
                       </p>
                     )}
@@ -121,9 +121,9 @@ function SearchResults({ query }: { query: string }) {
                   <a
                     key={album.id}
                     href={`/albums/${album.id}`}
-                    className="flex-shrink-0 w-40 p-3 rounded-xl transition-colors hover:bg-state-hover group relative"
+                    className="flex-shrink-0 w-44 p-4 rounded-xl transition-colors hover:bg-state-hover group relative"
                   >
-                    <div className="relative mb-2">
+                    <div className="relative mb-3">
                       <img
                         src={album.image || '/placeholder.svg'}
                         alt={album.name}
@@ -131,10 +131,10 @@ function SearchResults({ query }: { query: string }) {
                         loading="lazy"
                       />
                     </div>
-                    <p className="text-sm font-medium truncate">{album.name}</p>
-                    <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{album.artist_name}</p>
+                    <p className="text-body-large font-medium truncate">{album.name}</p>
+                    <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{album.artist_name}</p>
                     {album.release_date && (
-                      <p className="text-xs" style={{ color: 'var(--text-disabled)' }}>{album.release_date.slice(0, 4)}</p>
+                      <p className="text-body-medium" style={{ color: 'var(--text-disabled)' }}>{album.release_date.slice(0, 4)}</p>
                     )}
                   </a>
                 ))}
@@ -231,7 +231,7 @@ function HomeContent() {
     <>
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-1">Bem-vindo ao Ember Music</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>Descubra música com Ember Music!</p>
+        <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>Descubra música com Ember Music!</p>
       </div>
 
       {trending.length > 0 && (
@@ -246,11 +246,11 @@ function HomeContent() {
               <a
                 key={genre.id}
                 href={`/buscar?q=${encodeURIComponent(genre.name)}`}
-                className="w-32 flex-shrink-0 p-2 rounded-xl text-center transition-transform hover:scale-105"
+                className="w-36 flex-shrink-0 p-3 rounded-xl text-center transition-transform hover:scale-105"
                 style={{ backgroundColor: 'var(--bg-elevated)' }}
               >
                 <img src={genre.image} alt={genre.name} className="w-full aspect-square rounded-lg object-cover mb-2" loading="lazy" />
-                <p className="text-xs font-semibold truncate">{genre.name}</p>
+                <p className="text-body-medium font-semibold truncate">{genre.name}</p>
               </a>
             ))}
           </Carousel>
@@ -262,10 +262,10 @@ function HomeContent() {
           <h2 className="text-xl font-bold mb-4">Artistas do momento</h2>
           <Carousel>
             {artists.map((artist) => (
-              <div key={artist.id} className="w-36 flex-shrink-0 p-3 rounded-xl text-center transition-colors hover:bg-state-hover flex flex-col items-center">
+              <div key={artist.id} className="w-40 flex-shrink-0 p-4 rounded-xl text-center transition-colors hover:bg-state-hover flex flex-col items-center">
                 <a href={`/artists/${artist.id}`} className="w-full flex flex-col items-center">
                   <img src={artist.image || '/placeholder.svg'} alt={artist.name} className="w-full aspect-square rounded-full object-cover mb-3" loading="lazy" />
-                  <p className="text-sm font-semibold truncate mb-3">{artist.name}</p>
+                  <p className="text-body-large font-semibold truncate mb-3">{artist.name}</p>
                 </a>
                 <FollowButton artistId={artist.id} artistData={{ id: artist.id, name: artist.name, image: artist.image }} />
               </div>

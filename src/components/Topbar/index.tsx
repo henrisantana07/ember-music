@@ -75,7 +75,7 @@ export function Topbar() {
       />
       <form onSubmit={handleSearch} className="w-full max-w-md relative">
         <div className="relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
@@ -86,7 +86,8 @@ export function Topbar() {
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
             placeholder="O que você quer ouvir?"
-            className="w-full pl-10 pr-10 py-2 rounded-full text-sm border-none transition-all [&::-webkit-search-cancel-button]:hidden"
+            aria-label="Buscar músicas, álbuns ou artistas"
+            className="w-full pl-12 pr-14 min-h-[48px] rounded-full text-body-large border-none transition-all [&::-webkit-search-cancel-button]:hidden"
             style={{
               backgroundColor: 'var(--bg-surface)',
               color: 'var(--text-primary)',
@@ -97,10 +98,11 @@ export function Topbar() {
             <button
               type="button"
               onClick={handleClear}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center transition-colors hover:bg-state-pressed"
+              aria-label="Limpar busca"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center transition-colors hover:bg-state-pressed state-layer"
               style={{ color: 'var(--text-secondary)' }}
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -143,7 +145,7 @@ export function Topbar() {
         ) : (
           <button
             onClick={() => router.push('/login')}
-            className="btn-primary text-sm py-2 px-4"
+            className="btn-primary text-label-large min-h-[48px] py-2 px-5"
           >
             Entrar
           </button>
@@ -151,22 +153,22 @@ export function Topbar() {
 
         {showDropdown && user && (
           <div
-            className="absolute right-0 top-full mt-2 w-48 rounded-lg shadow-lg py-1 z-50"
+            className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-elevation-2 border border-outline-variant py-1 z-50"
             style={{ backgroundColor: 'var(--bg-elevated)' }}
           >
-            <div className="px-4 py-2 border-b border-outline-variant">
-              <p className="text-sm font-medium truncate">{user.email}</p>
+            <div className="px-4 py-3 border-b border-outline-variant">
+              <p className="text-body-medium font-medium truncate">{user.email}</p>
             </div>
             <button
               onClick={() => { router.push('/configuracoes'); setShowDropdown(false) }}
-              className="w-full text-left px-4 py-2 text-sm hover:bg-state-hover transition-colors"
+              className="w-full text-left px-4 min-h-[48px] text-body-medium hover:bg-state-hover transition-colors state-layer"
               style={{ color: 'var(--text-secondary)' }}
             >
               Configurações
             </button>
             <button
               onClick={handleLogout}
-              className="w-full text-left px-4 py-2 text-sm hover:bg-state-hover transition-colors"
+              className="w-full text-left px-4 min-h-[48px] text-body-medium hover:bg-state-hover transition-colors state-layer"
               style={{ color: 'var(--error)' }}
             >
               Sair

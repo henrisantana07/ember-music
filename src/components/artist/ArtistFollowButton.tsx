@@ -60,7 +60,7 @@ export function ArtistFollowButton({ artistId, artistData }: ArtistFollowButtonP
     <button
       onClick={handleClick}
       disabled={loading}
-      className="flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-bold transition-all duration-200 disabled:opacity-50"
+      className="flex items-center gap-2 min-h-[48px] px-6 rounded-full text-label-large font-bold transition-all duration-200 disabled:opacity-50 state-layer"
       style={{
         background: following
           ? 'linear-gradient(135deg, var(--accent-from), var(--accent-to))'
@@ -69,7 +69,7 @@ export function ArtistFollowButton({ artistId, artistData }: ArtistFollowButtonP
         border: following ? 'none' : '1px solid var(--text-disabled)',
       }}
     >
-      <svg className="w-4 h-4" viewBox="0 0 24 24" fill={following ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}>
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill={following ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
       </svg>
       {following ? 'Seguindo' : 'Seguir'}

@@ -74,14 +74,15 @@ export function ExploreFilters({ tracks, albums, artists }: ExploreFiltersProps)
         <select
           value={genreFilter}
           onChange={(e) => updateParam('genre', e.target.value)}
-          className="rounded-full px-3 py-1.5 text-xs font-semibold border transition-all"
+          aria-label="Filtrar por gênero"
+          className="rounded-full px-4 min-h-[44px] text-label-large font-semibold border transition-all cursor-pointer state-layer"
           style={{
             backgroundColor: genreFilter ? 'var(--accent-muted)' : 'var(--bg-surface)',
             borderColor: genreFilter ? 'var(--accent-solid)' : 'var(--bg-elevated)',
             color: genreFilter ? 'var(--text-primary)' : 'var(--text-secondary)',
           }}
         >
-          <option value="">Género</option>
+          <option value="">Gênero</option>
           {genreOptions.map((name) => (
             <option key={name} value={name.toLowerCase()}>{name}</option>
           ))}
@@ -89,12 +90,13 @@ export function ExploreFilters({ tracks, albums, artists }: ExploreFiltersProps)
         <select
           value={artistFilter}
           onChange={(e) => updateParam('artist', e.target.value)}
-          className="rounded-full px-3 py-1.5 text-xs font-semibold border transition-all"
+          aria-label="Filtrar por artista"
+          className="rounded-full px-4 min-h-[44px] text-label-large font-semibold border transition-all cursor-pointer state-layer"
           style={{
             backgroundColor: artistFilter ? 'var(--accent-muted)' : 'var(--bg-surface)',
             borderColor: artistFilter ? 'var(--accent-solid)' : 'var(--bg-elevated)',
             color: artistFilter ? 'var(--text-primary)' : 'var(--text-secondary)',
-            maxWidth: 140,
+            maxWidth: 200,
           }}
         >
           <option value="">Artista</option>
@@ -105,7 +107,8 @@ export function ExploreFilters({ tracks, albums, artists }: ExploreFiltersProps)
         <select
           value={durationFilter}
           onChange={(e) => updateParam('duration', e.target.value)}
-          className="rounded-full px-3 py-1.5 text-xs font-semibold border transition-all"
+          aria-label="Filtrar por duração"
+          className="rounded-full px-4 min-h-[44px] text-label-large font-semibold border transition-all cursor-pointer state-layer"
           style={{
             backgroundColor: durationFilter ? 'var(--accent-muted)' : 'var(--bg-surface)',
             borderColor: durationFilter ? 'var(--accent-solid)' : 'var(--bg-elevated)',
@@ -117,22 +120,23 @@ export function ExploreFilters({ tracks, albums, artists }: ExploreFiltersProps)
           ))}
         </select>
         {hasFilters && (
-          <button onClick={clearFilters} className="text-xs font-semibold px-3 py-1.5 whitespace-nowrap" style={{ color: 'var(--accent-solid)' }}>
+          <button onClick={clearFilters} className="text-label-large font-semibold px-4 min-h-[44px] rounded-full whitespace-nowrap state-layer" style={{ color: 'var(--accent-solid)' }}>
             ✕ Limpar filtros
           </button>
         )}
       </div>
       {activeFilters.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-2">
           {activeFilters.map((f) => (
             <button
               key={f.key}
               onClick={() => updateParam(f.key, '')}
-              className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium"
+              aria-label={`Remover filtro ${f.label}`}
+              className="flex items-center gap-1.5 rounded-full px-3 min-h-[40px] text-label-medium font-medium"
               style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-solid)' }}
             >
               {f.label}
-              <span aria-hidden>×</span>
+              <span aria-hidden className="text-body-medium">×</span>
             </button>
           ))}
         </div>

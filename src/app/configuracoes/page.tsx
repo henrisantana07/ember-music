@@ -31,8 +31,8 @@ const SECTIONS: { id: Section; label: string }[] = [
 ]
 
 function SaveIndicator({ saving, saved }: { saving: boolean; saved: boolean }) {
-  if (saving) return <span className="text-xs ml-2" style={{ color: 'var(--text-disabled)' }}>Salvando…</span>
-  if (saved) return <span className="text-xs ml-2" style={{ color: 'var(--success)' }}>✓ Salvo</span>
+  if (saving) return <span className="text-body-medium ml-2" style={{ color: 'var(--text-disabled)' }}>Salvando…</span>
+  if (saved) return <span className="text-body-medium ml-2" style={{ color: 'var(--success)' }}>✓ Salvo</span>
   return null
 }
 
@@ -335,7 +335,7 @@ export default function ConfiguracoesPage() {
           <button
             key={s.id}
             onClick={() => setActiveSection(s.id)}
-            className="px-4 py-2 text-sm rounded-full whitespace-nowrap transition-colors"
+            className="min-h-[44px] px-5 text-label-large rounded-full whitespace-nowrap transition-colors state-layer"
             style={{
               backgroundColor: activeSection === s.id ? 'var(--bg-elevated)' : 'transparent',
               color: activeSection === s.id ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -354,7 +354,7 @@ export default function ConfiguracoesPage() {
               <button
                 key={s.id}
                 onClick={() => setActiveSection(s.id)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors text-left"
+                className="w-full flex items-center gap-3 px-3 min-h-[48px] text-body-medium rounded-lg transition-colors text-left state-layer"
                 style={{
                   backgroundColor: activeSection === s.id ? 'var(--bg-elevated)' : 'transparent',
                   color: activeSection === s.id ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -393,15 +393,15 @@ export default function ConfiguracoesPage() {
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={avatarUploading}
-                    className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full flex items-center justify-center shadow-elevation-2 transition-transform hover:scale-105"
+                    className="absolute -bottom-2 -right-2 h-11 w-11 rounded-full flex items-center justify-center shadow-elevation-2 transition-transform hover:scale-105 state-layer"
                     style={{ backgroundColor: 'var(--surface-container-highest)', color: 'var(--text-primary)', outlineColor: 'var(--accent-solid)' }}
                     aria-label="Trocar foto de perfil"
                     title="Trocar foto"
                   >
                     {avatarUploading ? (
-                      <span className="text-[10px]">…</span>
+                      <span className="text-body-medium">…</span>
                     ) : (
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
@@ -412,11 +412,11 @@ export default function ConfiguracoesPage() {
                 <div className="flex gap-3 flex-wrap">
                   <div className="p-3 rounded-lg min-w-[100px] text-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
                     <p className="text-xl font-bold gradient-accent-text">{favCount}</p>
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>Favoritas</p>
+                    <p className="text-body-medium mt-0.5" style={{ color: 'var(--text-secondary)' }}>Favoritas</p>
                   </div>
                   <div className="p-3 rounded-lg min-w-[100px] text-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
                     <p className="text-xl font-bold gradient-accent-text">{preferredGenre || '—'}</p>
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>Gênero</p>
+                    <p className="text-body-medium mt-0.5" style={{ color: 'var(--text-secondary)' }}>Gênero</p>
                   </div>
                   <div className="flex items-center">
                     <SaveIndicator saving={profileSaving} saved={profileSaved} />
@@ -427,7 +427,7 @@ export default function ConfiguracoesPage() {
               <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileSelect} />
 
               {avatarError && (
-                <p className="text-xs mt-2" style={{ color: 'var(--error)' }}>{avatarError}</p>
+                <p className="text-body-medium mt-2" style={{ color: 'var(--error)' }}>{avatarError}</p>
               )}
 
               {/* Crop modal */}
@@ -439,15 +439,16 @@ export default function ConfiguracoesPage() {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <h3 className="text-lg font-bold mb-4">Ajustar foto</h3>
-                    <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Arraste para reposicionar e use as bordas para redimensionar.</p>
+                    <p className="text-body-medium mb-4" style={{ color: 'var(--text-secondary)' }}>Arraste para reposicionar e use as bordas para redimensionar.</p>
                     <div className="w-full max-h-80 flex items-center justify-center overflow-hidden rounded-lg" style={{ backgroundColor: 'var(--bg-base)' }}>
                       <img ref={cropperRef} src={cropImage} alt="Crop" className="max-w-full" style={{ maxHeight: '320px' }} />
                     </div>
                     <div className="flex gap-2 mt-4 justify-end">
-                      <button onClick={cancelCrop} className="px-4 py-2 text-sm rounded-lg" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}>
+                      <button onClick={cancelCrop} className="min-h-[48px] px-5 text-label-large rounded-lg" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}>
                         Cancelar
                       </button>
-                      <button onClick={confirmCrop} disabled={avatarUploading} className="btn-primary text-sm">
+                       <button onClick={confirmCrop} disabled={avatarUploading} className="btn-primary
+                       text-label-large">
                         {avatarUploading ? 'Enviando…' : 'Aplicar'}
                       </button>
                     </div>
@@ -463,7 +464,7 @@ export default function ConfiguracoesPage() {
                   value={displayName}
                   onChange={(e) => handleNameChange(e.target.value)}
                   maxLength={50}
-                  className="w-full px-4 py-2.5 rounded-lg border text-sm transition-colors "
+                  className="w-full min-h-[48px] px-4 rounded-lg border text-body-large transition-colors "
                   style={{
                     backgroundColor: 'var(--bg-surface)',
                     borderColor: 'var(--bg-elevated)',
@@ -472,7 +473,7 @@ export default function ConfiguracoesPage() {
                   onFocus={(e) => e.target.style.borderColor = 'var(--accent-solid)'}
                   onBlur={(e) => e.target.style.borderColor = 'var(--bg-elevated)'}
                 />
-                <p className="text-xs mt-1 text-right" style={{ color: 'var(--text-secondary)' }}>{displayName.length}/50</p>
+                <p className="text-body-medium mt-1 text-right" style={{ color: 'var(--text-secondary)' }}>{displayName.length}/50</p>
               </div>
 
               {/* Gênero favorito */}
@@ -483,7 +484,7 @@ export default function ConfiguracoesPage() {
                   value={preferredGenre}
                   onChange={(e) => handleGenreChange(e.target.value)}
                   placeholder="Ex: rock, jazz, electronic…"
-                  className="w-full px-4 py-2.5 rounded-lg border text-sm transition-colors "
+                  className="w-full min-h-[48px] px-4 rounded-lg border text-body-large transition-colors "
                   style={{
                     backgroundColor: 'var(--bg-surface)',
                     borderColor: 'var(--bg-elevated)',
@@ -503,7 +504,7 @@ export default function ConfiguracoesPage() {
                   maxLength={160}
                   rows={3}
                   placeholder="Conte um pouco sobre seu gosto musical…"
-                  className="w-full px-4 py-2.5 rounded-lg border text-sm transition-colors  resize-y"
+                  className="w-full min-h-[48px] px-4 rounded-lg border text-body-large transition-colors  resize-y"
                   style={{
                     backgroundColor: 'var(--bg-surface)',
                     borderColor: 'var(--bg-elevated)',
@@ -512,30 +513,30 @@ export default function ConfiguracoesPage() {
                   onFocus={(e) => e.target.style.borderColor = 'var(--accent-solid)'}
                   onBlur={(e) => e.target.style.borderColor = 'var(--bg-elevated)'}
                 />
-                <p className="text-xs mt-1 text-right" style={{ color: 'var(--text-secondary)' }}>{bio.length}/160</p>
+                <p className="text-body-medium mt-1 text-right" style={{ color: 'var(--text-secondary)' }}>{bio.length}/160</p>
               </div>
 
               {/* Read-only info */}
               <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: 'var(--bg-surface)' }}>
-                <p className="text-sm mb-1">
+                <p className="text-body-large mb-1">
                   <span style={{ color: 'var(--text-secondary)' }}>E-mail: </span>
                   <span>{email}</span>
                 </p>
-                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Conta Google — não editável</p>
+                <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>Conta Google — não editável</p>
               </div>
-              <p className="text-xs mb-6" style={{ color: 'var(--text-secondary)' }}>{memberSince}</p>
+              <p className="text-body-medium mb-6" style={{ color: 'var(--text-secondary)' }}>{memberSince}</p>
 
               {/* Danger zone */}
               <hr className="my-8" style={{ borderColor: 'var(--bg-elevated)' }} />
-              <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--error)' }}>Zona de perigo</h3>
+              <h3 className="text-title-medium font-semibold mb-4" style={{ color: 'var(--error)' }}>Zona de perigo</h3>
               <div className="space-y-3">
-                <button onClick={handleSignOutAll} className="px-4 py-2 text-sm rounded-lg border" style={{ borderColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
+                <button onClick={handleSignOutAll} className="min-h-[48px] px-5 text-label-large rounded-lg border" style={{ borderColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
                   Sair de todos os dispositivos
                 </button>
                 <div>
                   <button
                     onClick={() => setDeleteModalOpen(true)}
-                    className="px-4 py-2 text-sm rounded-lg"
+                    className="min-h-[48px] px-5 text-label-large rounded-lg"
                     style={{ backgroundColor: 'var(--error)', color: 'var(--text-on-accent)' }}
                   >
                     Excluir conta
@@ -552,7 +553,7 @@ export default function ConfiguracoesPage() {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <h3 className="text-lg font-bold mb-2">Excluir conta</h3>
-                    <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+                    <p className="text-body-medium mb-4" style={{ color: 'var(--text-secondary)' }}>
                       Esta ação é irreversível. Digite <strong>EXCLUIR</strong> para confirmar.
                     </p>
                     <input
@@ -560,7 +561,7 @@ export default function ConfiguracoesPage() {
                       value={deleteConfirm}
                       onChange={(e) => setDeleteConfirm(e.target.value)}
                       placeholder="Digite EXCLUIR"
-                      className="w-full px-3 py-2 rounded-lg border text-sm mb-4 "
+                      className="w-full min-h-[48px] px-4 rounded-lg border text-body-large mb-4 "
                       style={{
                         backgroundColor: 'var(--bg-surface)',
                         borderColor: 'var(--bg-elevated)',
@@ -570,7 +571,7 @@ export default function ConfiguracoesPage() {
                     <div className="flex gap-2 justify-end">
                       <button
                         onClick={() => { setDeleteModalOpen(false); setDeleteConfirm('') }}
-                        className="px-4 py-2 text-sm rounded-lg"
+                        className="min-h-[48px] px-5 text-label-large rounded-lg"
                         style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}
                       >
                         Cancelar
@@ -578,7 +579,7 @@ export default function ConfiguracoesPage() {
                       <button
                         onClick={handleDeleteAccount}
                         disabled={deleteConfirm !== 'EXCLUIR'}
-                        className="px-4 py-2 text-sm rounded-lg"
+                        className="min-h-[48px] px-5 text-label-large rounded-lg"
                         style={{
                           backgroundColor: deleteConfirm === 'EXCLUIR' ? 'var(--error)' : 'var(--bg-surface)',
                           color: deleteConfirm === 'EXCLUIR' ? '#fff' : 'var(--text-disabled)',
@@ -620,7 +621,7 @@ export default function ConfiguracoesPage() {
                     >
                       <div className="flex items-center gap-2 mb-3">
                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: theme.accent }} />
-                        <span className="text-xs font-medium" style={{ color: theme.id === 'dark' ? '#F5F1ED' : '#1A1512' }}>{theme.label}</span>
+                        <span className="text-body-medium font-medium" style={{ color: theme.id === 'dark' ? '#F5F1ED' : '#1A1512' }}>{theme.label}</span>
                       </div>
                       <div className="space-y-1">
                         <div className="h-2 rounded" style={{ backgroundColor: theme.surface, width: '80%' }} />
@@ -638,7 +639,7 @@ export default function ConfiguracoesPage() {
                 <select
                   value={settings.language}
                   onChange={(e) => handleLanguageChange(e.target.value)}
-                  className="px-4 py-2.5 rounded-lg border text-sm  transition-colors"
+                  className="min-h-[48px] px-4 rounded-lg border text-body-large  transition-colors"
                   style={{
                     backgroundColor: 'var(--bg-surface)',
                     borderColor: 'var(--bg-elevated)',
@@ -651,7 +652,7 @@ export default function ConfiguracoesPage() {
                   <option value="pt-BR">Português (BR)</option>
                   <option value="en">English</option>
                 </select>
-                <p className="text-xs mt-1.5" style={{ color: 'var(--text-disabled)' }}>
+                <p className="text-body-medium mt-1.5" style={{ color: 'var(--text-disabled)' }}>
                   Define o idioma do documento para leitores de tela e tradução do navegador. O conteúdo da interface continua em português.
                 </p>
               </div>
@@ -677,7 +678,7 @@ export default function ConfiguracoesPage() {
                           setSettings((s) => ({ ...s, audio_quality: opt.value }))
                           saveSettingsField('audio_quality', opt.value)
                         }}
-                        className="px-4 py-2.5 rounded-lg border text-sm transition-colors"
+                        className="min-h-[48px] px-4 rounded-lg border text-body-large transition-colors"
                         style={{
                           backgroundColor: settings.audio_quality === opt.value ? 'var(--bg-elevated)' : 'var(--bg-surface)',
                           borderColor: settings.audio_quality === opt.value ? 'var(--accent-solid)' : 'var(--bg-elevated)',
@@ -688,14 +689,14 @@ export default function ConfiguracoesPage() {
                       </button>
                     ))}
                   </div>
-                  <p className="text-xs mt-1.5" style={{ color: 'var(--text-secondary)' }}>Qualidade mais alta usa mais dados de internet</p>
+                  <p className="text-body-medium mt-1.5" style={{ color: 'var(--text-secondary)' }}>Qualidade mais alta usa mais dados de internet</p>
                 </div>
 
                 {/* Autoplay */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Autoplay</p>
-                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Tocar automaticamente a próxima faixa</p>
+                    <p className="text-title-medium font-medium" style={{ color: 'var(--text-primary)' }}>Autoplay</p>
+                    <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>Tocar automaticamente a próxima faixa</p>
                   </div>
                   <Toggle
                     checked={settings.autoplay}
@@ -709,8 +710,8 @@ export default function ConfiguracoesPage() {
                 {/* Crossfade */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Crossfade</p>
-                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Transição suave entre faixas</p>
+                    <p className="text-title-medium font-medium" style={{ color: 'var(--text-primary)' }}>Crossfade</p>
+                    <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>Transição suave entre faixas</p>
                   </div>
                   <Toggle
                     checked={settings.crossfade}
@@ -722,7 +723,7 @@ export default function ConfiguracoesPage() {
                 </div>
                 {settings.crossfade && (
                   <div className="pl-4">
-                    <p className="text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>Transição de {settings.crossfade_duration} segundos entre faixas</p>
+                    <p className="text-body-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Transição de {settings.crossfade_duration} segundos entre faixas</p>
                     <Slider
                       value={settings.crossfade_duration}
                       onChange={(v) => {
@@ -739,8 +740,8 @@ export default function ConfiguracoesPage() {
                 {/* Volume normalization */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Normalização de volume</p>
-                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Equalizar o volume entre faixas</p>
+                    <p className="text-title-medium font-medium" style={{ color: 'var(--text-primary)' }}>Normalização de volume</p>
+                    <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>Equalizar o volume entre faixas</p>
                   </div>
                   <Toggle
                     checked={settings.volume_normalization}
@@ -757,7 +758,7 @@ export default function ConfiguracoesPage() {
           {activeSection === 'notificacoes' && (
             <section>
               <h2 className="text-2xl font-bold mb-1">Notificações</h2>
-              <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>Alertas exibidos dentro do EmberMusic</p>
+              <p className="text-body-medium mb-6" style={{ color: 'var(--text-secondary)' }}>Alertas exibidos dentro do EmberMusic</p>
 
               <div className="space-y-5 max-w-sm">
                 {[
@@ -768,8 +769,8 @@ export default function ConfiguracoesPage() {
                 ].map((item) => (
                   <div key={item.key} className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{item.label}</p>
-                      <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{item.desc}</p>
+                      <p className="text-title-medium font-medium" style={{ color: 'var(--text-primary)' }}>{item.label}</p>
+                      <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>{item.desc}</p>
                     </div>
                     <Toggle
                       checked={settings[item.key as keyof UserSettings] as boolean}

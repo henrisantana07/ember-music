@@ -150,23 +150,23 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
     <div className="relative" ref={menuRef}>
       <button
         onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen) }}
-        className="p-1 rounded-full transition-colors state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+        className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         title="Mais opções"
         aria-label={`Mais opções para ${track.title}`}
         aria-haspopup="menu"
         aria-expanded={isOpen}
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--text-disabled)' }}>
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--text-disabled)' }}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v.01M12 12v.01M12 19v.01" />
         </svg>
       </button>
 
       {isOpen && (
         <div
-          className="absolute right-0 top-full mt-1 z-50 min-w-[180px] rounded-lg shadow-xl border border-outline-variant animate-fade-in"
+          className="absolute right-0 top-full mt-1 z-50 min-w-[220px] rounded-[var(--shape-large)] shadow-elevation-2 border border-outline-variant animate-fade-in"
           style={{ backgroundColor: 'var(--bg-elevated)' }}
         >
-          <div className="px-2 py-1 border-b border-outline-variant text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-disabled)' }}>
+          <div className="px-4 py-2 border-b border-outline-variant text-label-medium font-medium uppercase tracking-wider" style={{ color: 'var(--text-disabled)' }}>
             {track.title}
           </div>
           <div className="py-1">
@@ -178,7 +178,7 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
                 <button
                   key={index}
                   onClick={item.action}
-                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${item.primary ? 'font-medium' : ''} ${item.danger ? 'text-red-400' : ''}`}
+                  className={`w-full flex items-center gap-3 px-4 min-h-[48px] text-body-medium transition-colors state-layer ${item.primary ? 'font-semibold' : ''} ${item.danger ? 'text-red-400' : ''}`}
                   style={{
                     color: item.danger ? 'var(--error)' : item.primary ? 'var(--accent-from)' : 'var(--text-primary)',
                     backgroundColor: 'transparent',

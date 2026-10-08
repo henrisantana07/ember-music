@@ -50,7 +50,7 @@ export function Slider({
           onChange(Math.max(min, value - step))
         }
       }}
-      className="relative h-6 flex items-center cursor-pointer group"
+      className="relative h-12 flex items-center cursor-pointer group"
       style={{ opacity: disabled ? 0.5 : 1 }}
     >
       <div className="relative w-full h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--bg-elevated)' }}>

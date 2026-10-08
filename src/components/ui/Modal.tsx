@@ -48,9 +48,9 @@ export function Modal({ open, onClose, title, children, maxWidth = 'max-w-sm', l
         style={{ backgroundColor: 'var(--bg-elevated)' }}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 id={titleId} className="text-lg font-bold">{title}</h2>
+          <h2 id={titleId} className="text-title-medium font-bold">{title}</h2>
           <IconButton
-            size="sm"
+            size="lg"
             label="Fechar"
             onClick={onClose}
           >

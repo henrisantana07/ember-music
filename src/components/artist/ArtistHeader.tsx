@@ -29,14 +29,14 @@ export function ArtistHeader({ artist, onPlay }: ArtistHeaderProps) {
 
         <h1 className="text-4xl font-bold tracking-tight">{artist.name}</h1>
 
-        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+        <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>
           {formatFollowers(artist.followers)} seguidores
         </p>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap justify-center">
           <button
             onClick={onPlay}
-            className="px-8 py-2.5 rounded-full text-sm font-bold transition-transform hover:scale-105 active:scale-95"
+            className="min-h-[48px] px-8 rounded-full text-label-large font-bold transition-transform hover:scale-105 active:scale-95 state-layer"
             style={{
               background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
               color: 'var(--text-on-accent)',

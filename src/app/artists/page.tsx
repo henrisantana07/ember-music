@@ -55,10 +55,10 @@ export default function ArtistsPage() {
           Você ainda não segue nenhum artista.
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {artists.map((a) => (
             <div key={a.artist_id}
-              className="flex items-center gap-4 p-3 rounded-xl transition-colors hover:bg-state-hover"
+              className="flex items-center gap-4 p-4 rounded-xl transition-colors hover:bg-state-hover"
               style={{ background: 'var(--bg-elevated)' }}>
               <a href={`/artists/${a.artist_id}`} className="flex items-center gap-4 flex-1 min-w-0">
                 <img
@@ -67,8 +67,8 @@ export default function ArtistsPage() {
                   className="w-14 h-14 rounded-full object-cover"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold truncate">{a.artist_data?.name ?? 'Artista'}</p>
-                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  <p className="text-body-large font-semibold truncate">{a.artist_data?.name ?? 'Artista'}</p>
+                  <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>
                     Seguindo desde {new Date(a.followed_at).toLocaleDateString('pt-BR')}
                   </p>
                 </div>

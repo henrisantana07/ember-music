@@ -46,8 +46,8 @@ function SortableQueueItem({ track, isCurrent, isPlaying, onPlay, onRemove }: {
         isCurrent ? 'bg-[var(--accent-muted)]' : 'hover:bg-[var(--bg-elevated)]'
       }`}
     >
-      <button {...attributes} {...listeners} className="p-0.5 cursor-grab active:cursor-grabbing touch-none" style={{ color: 'var(--text-disabled)' }} aria-label="Arrastar">
-        <GripVertical className="w-3.5 h-3.5" />
+      <button {...attributes} {...listeners} className="h-9 w-9 -ml-1 inline-flex items-center justify-center cursor-grab active:cursor-grabbing touch-none rounded-full state-layer" style={{ color: 'var(--text-disabled)' }} aria-label="Arrastar">
+        <GripVertical className="w-5 h-5" />
       </button>
 
       {isCurrent && isPlaying ? (
@@ -72,20 +72,20 @@ function SortableQueueItem({ track, isCurrent, isPlaying, onPlay, onRemove }: {
       )}
 
       <div className="min-w-0 flex-1">
-        <p className={`text-sm truncate ${isCurrent ? 'font-semibold' : ''}`} style={{ color: isCurrent ? 'var(--accent-from)' : 'var(--text-primary)' }}>
+        <p className={`text-body-medium truncate ${isCurrent ? 'font-semibold' : ''}`} style={{ color: isCurrent ? 'var(--accent-from)' : 'var(--text-primary)' }}>
           {track.name}
         </p>
-        <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
-        <p className="text-[10px]" style={{ color: 'var(--text-disabled)' }}>{formatDuration(Math.floor(track.duration))}</p>
+        <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
+        <p className="text-label-medium" style={{ color: 'var(--text-disabled)' }}>{formatDuration(Math.floor(track.duration))}</p>
       </div>
 
       <button
         onClick={onRemove}
-        className="p-1.5 rounded-full z-10 relative transition-colors state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+        className="h-11 w-11 rounded-full z-10 relative inline-flex items-center justify-center transition-colors state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         title="Remover da fila"
         aria-label={`Remover ${track.name} da fila`}
       >
-        <Trash2 className="w-3.5 h-3.5" />
+        <Trash2 className="w-5 h-5" />
       </button>
     </div>
   )
@@ -420,12 +420,12 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       />
 
       <header className="relative flex items-center justify-between px-4 md:px-6 h-14 flex-none">
-        <button onClick={requestClose} className="p-2 rounded-full hover:bg-state-hover transition-colors" style={{ color: 'var(--text-primary)' }} aria-label="Fechar">
+        <button onClick={requestClose} className="h-12 w-12 inline-flex items-center justify-center rounded-full hover:bg-state-hover transition-colors state-layer" style={{ color: 'var(--text-primary)' }} aria-label="Fechar">
           <ChevronDown className="w-6 h-6" />
         </button>
         <button
           onClick={() => setShowQueueOnMobile(!showQueueOnMobile)}
-          className="md:hidden p-2 rounded-full hover:bg-state-hover transition-colors"
+          className="md:hidden h-12 w-12 inline-flex items-center justify-center rounded-full hover:bg-state-hover transition-colors state-layer"
           style={{ color: showQueueOnMobile ? 'var(--accent-from)' : 'var(--text-secondary)' }}
           aria-label="Fila"
         >
@@ -465,14 +465,14 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             </Link>
           </div>
 
-          <div className="flex items-center gap-3" style={{ color: 'var(--text-secondary)' }}>
-            <button onClick={handleDownload} className="p-1.5 transition-colors hover:text-[var(--text-primary)]" aria-label="Download" title="Baixar música">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+            <button onClick={handleDownload} className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors hover:text-[var(--text-primary)] state-layer" aria-label="Download" title="Baixar música">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </button>
             {user && (
-              <button onClick={handleFavorite} className="p-1.5 transition-colors" aria-label="Favoritar">
+              <button onClick={handleFavorite} className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors state-layer" aria-label="Favoritar" aria-pressed={isFav}>
                 <svg
                   className="w-5 h-5 transition-colors duration-150"
                   fill={isFav ? 'url(#favGradientNow)' : 'none'}
@@ -494,7 +494,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
           </div>
 
           {toast && (
-            <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-sm shadow-lg animate-slide-up" style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
+            <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl text-body-medium shadow-elevation-3 animate-slide-up" style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
               {toast}
             </div>
           )}
@@ -520,7 +520,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 />
               </div>
             </div>
-            <div className="flex justify-between text-xs" style={{ color: 'var(--text-secondary)' }}>
+            <div className="flex justify-between text-label-medium" style={{ color: 'var(--text-secondary)' }}>
               <span>{formatDuration(Math.floor(currentProgress))}</span>
               <span>{formatDuration(Math.floor(currentDuration))}</span>
             </div>
@@ -528,12 +528,12 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
           <div className="w-full flex flex-col md:flex-row items-center justify-center gap-3 md:gap-6">
             <div className="flex items-center justify-center gap-2 md:gap-3">
-              <button onClick={handlePrev} className="p-1.5 transition-colors" style={{ color: 'var(--text-secondary)' }} title="Anterior">
-                <SkipBack className="w-5 h-5 md:w-6 md:h-6" />
+              <button onClick={handlePrev} className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer" style={{ color: 'var(--text-secondary)' }} title="Anterior" aria-label="Faixa anterior">
+                <SkipBack className="w-6 h-6" fill="currentColor" />
               </button>
 
-              <button onClick={toggleShuffle} className="p-1.5 transition-colors" style={{ color: shuffle ? 'var(--accent-from)' : 'var(--text-secondary)' }} title={shuffle ? 'Desativar shuffle' : 'Ativar shuffle'}>
-                <Shuffle className="w-4 h-4 md:w-5 md:h-5" />
+              <button onClick={toggleShuffle} className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer" style={{ color: shuffle ? 'var(--accent-from)' : 'var(--text-secondary)' }} title={shuffle ? 'Desativar shuffle' : 'Ativar shuffle'} aria-label={shuffle ? 'Desativar shuffle' : 'Ativar shuffle'} aria-pressed={shuffle}>
+                <Shuffle className="w-5 h-5" />
               </button>
 
               <button
@@ -555,29 +555,30 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                   const idx = modes.indexOf(repeat)
                   setRepeat(modes[(idx + 1) % modes.length])
                 }}
-                className="p-1.5 transition-colors relative"
+                className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors relative state-layer"
                 style={{ color: repeat !== 'none' ? 'var(--accent-from)' : 'var(--text-secondary)' }}
                 title={repeatLabel[repeat]}
+                aria-label={repeatLabel[repeat]}
               >
                 {RepeatIcon ? (
-                  <RepeatIcon className="w-4 h-4 md:w-5 md:h-5" />
+                  <RepeatIcon className="w-5 h-5" />
                 ) : (
-                  <Repeat className="w-4 h-4 md:w-5 md:h-5" />
+                  <Repeat className="w-5 h-5" />
                 )}
               </button>
 
-              <button onClick={next} className="p-1.5 transition-colors" style={{ color: 'var(--text-secondary)' }} title="Próxima">
-                <SkipForward className="w-5 h-5 md:w-6 md:h-6" />
+              <button onClick={next} className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer" style={{ color: 'var(--text-secondary)' }} title="Próxima" aria-label="Próxima faixa">
+                <SkipForward className="w-6 h-6" fill="currentColor" />
               </button>
             </div>
 
             <div className="flex items-center gap-2 w-[180px]" style={{ color: 'var(--text-secondary)' }}>
               {volume === 0 ? (
-                <VolumeX className="w-4 h-4 flex-none" />
+                <VolumeX className="w-5 h-5 flex-none" />
               ) : volume < 0.5 ? (
-                <Volume1 className="w-4 h-4 flex-none" />
+                <Volume1 className="w-5 h-5 flex-none" />
               ) : (
-                <Volume2 className="w-4 h-4 flex-none" />
+                <Volume2 className="w-5 h-5 flex-none" />
               )}
               <input
                 type="range"
@@ -586,6 +587,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 step={0.01}
                 value={volume}
                 onChange={(e) => setVolume(parseFloat(e.target.value))}
+                aria-label="Volume"
                 className="w-full h-1 accent-[var(--accent-from)] cursor-pointer"
               />
             </div>
@@ -593,53 +595,53 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
           <button
             onClick={() => setShowQueueOnMobile(true)}
-            className="md:hidden flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-colors"
+            className="md:hidden flex items-center gap-2 min-h-[48px] px-5 rounded-full text-label-large transition-colors state-layer"
             style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}
           >
-            <Music className="w-4 h-4" />
+            <Music className="w-5 h-5" />
             A seguir
           </button>
         </div>
 
           <div className={`w-full md:w-auto md:flex-[2] flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none ${showQueueOnMobile ? '' : 'hidden md:flex'}`}>
-            <div className="flex-none px-2 py-2">
-              <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>A seguir</h2>
+            <div className="flex-none px-3 py-3">
+              <h2 className="text-title-medium font-semibold" style={{ color: 'var(--text-primary)' }}>A seguir</h2>
               {usePlayerStore.getState().currentPlaylistName && (
-                <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{usePlayerStore.getState().currentPlaylistName}</p>
+                <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{usePlayerStore.getState().currentPlaylistName}</p>
               )}
             </div>
 
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={queue.map(t => t.id)} strategy={verticalListSortingStrategy}>
                 <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full">
-                  <div className="px-1 space-y-0.5">
+                  <div className="px-1 space-y-1">
                   {queue.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center px-4">
                       <Music className="w-10 h-10 mb-3" style={{ color: 'var(--text-disabled)' }} />
-                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Nenhuma faixa na fila</p>
+                      <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>Nenhuma faixa na fila</p>
                       {suggestions.length > 0 && (
                         <div className="w-full mt-4 text-left">
-                          <p className="text-[11px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: 'var(--text-disabled)' }}>
+                          <p className="text-label-medium font-semibold uppercase tracking-widest mb-1.5" style={{ color: 'var(--text-disabled)' }}>
                             Faixas relacionadas
                           </p>
                           {suggestions.map((track) => (
                             <button
                               key={track.id}
                               onClick={() => play(track, suggestions)}
-                              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors text-left"
+                              className="flex items-center gap-3 w-full px-3 min-h-[56px] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors text-left state-layer"
                             >
                               {track.image ? (
                                 <img src={track.image} alt="" className="w-10 h-10 rounded object-cover flex-none" />
                               ) : (
                                 <div className="w-10 h-10 rounded flex items-center justify-center flex-none" style={{ backgroundColor: 'var(--bg-surface)' }}>
-                                  <Music className="w-4 h-4" style={{ color: 'var(--text-disabled)' }} />
+                                  <Music className="w-5 h-5" style={{ color: 'var(--text-disabled)' }} />
                                 </div>
                               )}
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>{track.name}</p>
-                                <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
+                                <p className="text-body-medium truncate" style={{ color: 'var(--text-primary)' }}>{track.name}</p>
+                                <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
                               </div>
-                              <Play className="w-4 h-4 flex-none" style={{ color: 'var(--text-disabled)' }} />
+                              <Play className="w-5 h-5 flex-none" style={{ color: 'var(--text-disabled)' }} />
                             </button>
                           ))}
                         </div>
@@ -661,20 +663,20 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 <div className="sticky bottom-0 z-10 flex-none flex items-center gap-2 px-2 py-8 border-t border-outline-variant pointer-events-none" style={{ backgroundColor: 'rgba(49, 45, 41, 0.13)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
                   <button
                     onClick={() => { setIsSearchOpen(!isSearchOpen); if (!isSearchOpen) setSearchQuery('') }}
-                    className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
+                    className="pointer-events-auto flex items-center gap-2 px-4 min-h-[48px] rounded-lg text-label-large transition-colors state-layer"
                     style={{ color: isSearchOpen ? 'var(--accent-from)' : 'var(--text-secondary)', backgroundColor: 'var(--bg-surface)' }}
                   >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
                     {isSearchOpen ? 'Fechar busca' : 'Adicionar à fila'}
                   </button>
                   <button
                     onClick={() => { clearQueue(); showToast('Fila limpa') }}
-                    className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
+                    className="pointer-events-auto flex items-center gap-2 px-4 min-h-[48px] rounded-lg text-label-large transition-colors state-layer"
                     style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg-surface)' }}
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-5 h-5" />
                     Limpar fila
                   </button>
                 </div>
@@ -685,17 +687,18 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
           {isSearchOpen && (
             <div className="absolute inset-0 z-10 flex flex-col" style={{ backgroundColor: 'var(--bg-base)' }}>
               <div className="flex-none px-3 pt-3 pb-2">
-                <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ backgroundColor: 'var(--bg-elevated)' }}>
-                  <svg className="w-4 h-4 flex-none" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <div className="flex items-center gap-3 rounded-full px-4 min-h-[48px]" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+                  <svg className="w-5 h-5 flex-none" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   <input
                     ref={searchInputRef}
                     type="text"
                     placeholder="Buscar faixas..."
+                    aria-label="Buscar faixas para adicionar à fila"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 bg-transparent outline-none text-sm"
+                    className="flex-1 bg-transparent outline-none text-body-large min-h-[40px]"
                     style={{ color: 'var(--text-primary)' }}
                   />
                   {searchLoading && (
@@ -709,27 +712,27 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
               <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar px-2 pb-2 space-y-0.5 queue-scroll">
                 {searchResults.length === 0 && searchQuery.trim() && !searchLoading && (
                   <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Nenhum resultado</p>
+                    <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>Nenhum resultado</p>
                   </div>
                 )}
                 {searchResults.map((track) => (
                   <button
                     key={track.id}
                     onClick={() => { addToQueue(track); setSearchQuery(''); setSearchResults([]); searchInputRef.current?.focus() }}
-                    className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors text-left"
+                    className="flex items-center gap-3 w-full px-3 min-h-[56px] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors text-left state-layer"
                   >
                     {track.image ? (
                       <img src={track.image} alt="" className="w-10 h-10 rounded object-cover flex-none" />
                     ) : (
                       <div className="w-10 h-10 rounded flex items-center justify-center flex-none" style={{ backgroundColor: 'var(--bg-surface)' }}>
-                        <Music className="w-4 h-4" style={{ color: 'var(--text-disabled)' }} />
+                        <Music className="w-5 h-5" style={{ color: 'var(--text-disabled)' }} />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>{track.name}</p>
-                      <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
+                      <p className="text-body-medium truncate" style={{ color: 'var(--text-primary)' }}>{track.name}</p>
+                      <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
                     </div>
-                    <svg className="w-4 h-4 flex-none" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-5 h-5 flex-none" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
                   </button>

@@ -74,7 +74,7 @@ export default function ArtistPage() {
         </p>
         <button
           onClick={() => window.location.reload()}
-          className="px-6 py-2 rounded-full text-sm font-bold"
+          className="min-h-[48px] px-6 rounded-full text-label-large font-bold state-layer"
           style={{
             background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
             color: 'var(--text-on-accent)',
@@ -93,7 +93,7 @@ export default function ArtistPage() {
       {tracks.length > 0 && (
         <section className="mt-10">
           <h2 className="text-xl font-bold mb-4">Top Músicas</h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {tracks.map((track) => (
               <TrackCard key={track.id} track={track} tracks={tracks} user={user} />
             ))}
@@ -106,9 +106,9 @@ export default function ArtistPage() {
           <h2 className="text-xl font-bold mb-4">Álbuns</h2>
           <Carousel>
             {albums.slice(0, 10).map((album) => (
-              <div key={album.id} className="flex-shrink-0 w-40 p-3 rounded-xl transition-colors hover:bg-state-hover group relative">
+              <div key={album.id} className="flex-shrink-0 w-44 p-4 rounded-xl transition-colors hover:bg-state-hover group relative">
                 <a href={`/albums/${album.id}`} className="block">
-                  <div className="relative mb-2">
+                  <div className="relative mb-3">
                     <img src={album.image || '/placeholder.svg'} alt={album.name}
                       className="w-full aspect-square rounded-lg object-cover shadow-md" loading="lazy" />
                     <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"
@@ -118,8 +118,8 @@ export default function ArtistPage() {
                       <SaveAlbumButton album={album} />
                     </div>
                   </div>
-                  <p className="text-sm font-medium truncate text-center">{album.name}</p>
-                  <p className="text-xs text-center truncate" style={{ color: 'var(--text-disabled)' }}>
+                  <p className="text-body-large font-medium truncate text-center">{album.name}</p>
+                  <p className="text-body-medium text-center truncate" style={{ color: 'var(--text-disabled)' }}>
                     {album.release_date?.slice(0, 4) || ''}
                   </p>
                 </a>
@@ -137,16 +137,16 @@ export default function ArtistPage() {
               <a
                 key={rel.id}
                 href={`/artists/${rel.id}`}
-                className="flex-shrink-0 w-32 flex flex-col items-center gap-2 p-3 rounded-xl transition-colors hover:bg-state-hover"
+                className="flex-shrink-0 w-36 flex flex-col items-center gap-2 p-4 rounded-xl transition-colors hover:bg-state-hover"
               >
                 <img
                   src={rel.image || '/placeholder.svg'}
                   alt={rel.name}
-                  className="w-24 h-24 rounded-full object-cover shadow-md"
+                  className="w-28 h-28 rounded-full object-cover shadow-md"
                   loading="lazy"
                 />
-                <p className="text-sm font-medium text-center truncate w-full">{rel.name}</p>
-                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                <p className="text-body-medium font-medium text-center truncate w-full">{rel.name}</p>
+                <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>
                   {rel.followers.toLocaleString('pt-BR')} seguidores
                 </p>
               </a>

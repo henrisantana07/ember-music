@@ -25,13 +25,13 @@ export function LocalTrackGrid({ tracks }: LocalTrackGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
       {tracks.map((track) => {
         const isActive = currentTrack?.id === track.id
         return (
           <div
             key={track.id}
-            className={`card-hover group p-3 cursor-pointer flex flex-col ${track.missing ? 'opacity-50' : ''}`}
+            className={`card-hover group p-4 cursor-pointer flex flex-col ${track.missing ? 'opacity-50' : ''}`}
             onClick={() => handlePlay(track, tracks)}
             role="button"
             tabIndex={0}
@@ -58,7 +58,7 @@ export function LocalTrackGrid({ tracks }: LocalTrackGridProps) {
                 aria-hidden="true"
               />
               <button
-                className="absolute bottom-2 right-2 w-11 h-11 rounded-full flex items-center justify-center shadow-elevation-3 transition-transform duration-150 hover:scale-105"
+                className="absolute bottom-2 right-2 w-12 h-12 rounded-full flex items-center justify-center shadow-elevation-3 transition-transform duration-150 hover:scale-105"
                 style={{
                   background: isActive ? 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' : 'var(--surface-container-highest)',
                   color: isActive ? 'var(--bg-base)' : 'var(--accent-solid)',
@@ -67,34 +67,34 @@ export function LocalTrackGrid({ tracks }: LocalTrackGridProps) {
                 aria-pressed={isActive && isPlaying}
               >
                 {isActive && isPlaying ? (
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M6 4h4v16H6zM14 4h4v16h-4z" />
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 )}
               </button>
               {track.missing && (
-                <div className="absolute top-2 right-2 p-1 rounded-full" style={{ backgroundColor: 'var(--error)' }}>
-                  <span className="text-[10px] font-bold" style={{ color: 'white' }}>⚠</span>
+                <div className="absolute top-2 right-2 p-1.5 rounded-full" style={{ backgroundColor: 'var(--error)' }}>
+                  <span className="text-body-medium font-bold" style={{ color: 'white' }}>⚠</span>
                 </div>
               )}
             </div>
 
-            <h3 className="font-semibold text-sm truncate">{track.title}</h3>
+            <h3 className="font-semibold text-title-medium truncate">{track.title}</h3>
             {track.inferred && (
-              <span className="text-xs mt-0.5" style={{ color: 'var(--text-disabled)' }}>Inferido do nome do arquivo</span>
+              <span className="text-body-medium mt-1" style={{ color: 'var(--text-disabled)' }}>Inferido do nome do arquivo</span>
             )}
-            <p className="text-xs truncate mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-body-medium truncate mt-1" style={{ color: 'var(--text-secondary)' }}>
               {track.artist}
             </p>
-            <p className="text-xs truncate mt-0.5" style={{ color: 'var(--text-disabled)' }}>
+            <p className="text-body-medium truncate mt-1" style={{ color: 'var(--text-disabled)' }}>
               {track.album}
             </p>
             <div className="flex items-center justify-between mt-auto pt-2">
-              <span className="text-xs" style={{ color: 'var(--text-disabled)' }}>
+              <span className="text-body-medium" style={{ color: 'var(--text-disabled)' }}>
                 {track.duration > 0 ? formatDuration(Math.floor(track.duration)) : '--:--'}
               </span>
               <div className="flex items-center gap-1">

@@ -18,7 +18,7 @@ interface SegmentedToggleProps<T extends string> {
   className?: string
 }
 
-const HEIGHTS = { sm: 'h-8', md: 'h-10' } as const
+const HEIGHTS = { sm: 'h-11', md: 'h-12' } as const
 
 /** M3 segmented button: one explicit control per option, selected state announced. */
 export function SegmentedToggle<T extends string>({
@@ -44,12 +44,12 @@ export function SegmentedToggle<T extends string>({
             aria-pressed={selected}
             aria-label={option.ariaLabel ?? option.label}
             onClick={() => onChange(option.value)}
-            className={`inline-flex items-center justify-center gap-1.5 px-4 text-label-large font-semibold transition-colors state-layer border-r border-outline last:border-r-0 ${
+            className={`inline-flex items-center justify-center gap-1.5 px-5 min-w-[48px] text-label-large font-semibold transition-colors state-layer border-r border-outline last:border-r-0 ${
               HEIGHTS[size]
             } ${selected ? 'bg-[var(--surface-container-highest)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
           >
             {selected && (
-              <svg className="w-4 h-4" style={{ color: 'var(--accent-solid)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+              <svg className="w-5 h-5" style={{ color: 'var(--accent-solid)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             )}

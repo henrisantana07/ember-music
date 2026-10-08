@@ -36,13 +36,13 @@ export function ExploreNoResults({ query, activeFilterCount, onClearFilters }: E
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10 6v3m0 3h.01" />
         </svg>
         <h2 className="text-xl font-bold mb-1">Nenhum resultado para &ldquo;{query}&rdquo;</h2>
-        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+        <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>
           Verifique a ortografia ou tente termos mais gerais.
         </p>
         {activeFilterCount > 0 && (
-          <div className="mt-4 px-4 py-2 rounded-lg text-sm" style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-solid)' }}>
+          <div className="mt-4 px-5 min-h-[44px] inline-flex items-center rounded-full text-body-medium" style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-solid)' }}>
             Você tem {activeFilterCount} filtro(s) ativo(s) —{' '}
-            <button onClick={onClearFilters} className="font-semibold underline">Limpar filtros</button>
+            <button onClick={onClearFilters} className="font-semibold underline min-h-[44px] px-1">Limpar filtros</button>
           </div>
         )}
       </div>

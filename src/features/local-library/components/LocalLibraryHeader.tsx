@@ -76,7 +76,7 @@ export function LocalLibraryHeader() {
       <div className="flex items-center gap-3">
         <h1 className="text-3xl font-bold">Biblioteca Local</h1>
         {folders.length > 0 && (
-          <span className="px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}>
+          <span className="px-3 min-h-[32px] inline-flex items-center rounded-full text-label-medium font-medium" style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}>
             {folders.length} pasta{folders.length !== 1 ? 's' : ''}
           </span>
         )}
@@ -86,21 +86,21 @@ export function LocalLibraryHeader() {
         <button
           onClick={handleAddFolder}
           disabled={scanning}
-          className="btn-primary text-sm flex items-center gap-2"
-          style={{ minWidth: '140px', justifyContent: 'center' }}
+          className="btn-primary text-label-large flex items-center gap-2 min-h-[48px] px-5"
+          style={{ minWidth: '160px', justifyContent: 'center' }}
         >
-          <FolderPlus className="w-4 h-4" />
+          <FolderPlus className="w-5 h-5" />
           Adicionar pasta
         </button>
 
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-disabled)' }} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-disabled)' }} />
           <input
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Pesquisar na biblioteca..."
-            className="w-full pl-10 pr-10 py-2 rounded-lg text-sm border-none"
+            className="w-full pl-12 pr-12 min-h-[48px] rounded-full text-body-large border-none"
             style={{
               backgroundColor: 'var(--bg-surface)',
               color: 'var(--text-primary)',
@@ -110,17 +110,18 @@ export function LocalLibraryHeader() {
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-state-pressed"
+              aria-label="Limpar busca"
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 inline-flex items-center justify-center rounded-full hover:bg-state-pressed state-layer"
               style={{ color: 'var(--text-secondary)' }}
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
           )}
         </div>
       </div>
 
       {scanning && (
-        <div className="w-full sm:w-auto flex items-center gap-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
+        <div className="w-full sm:w-auto flex items-center gap-3 text-body-medium" style={{ color: 'var(--text-secondary)' }}>
           <div className="flex-1 max-w-xs h-2 rounded overflow-hidden" style={{ backgroundColor: 'var(--bg-elevated)' }}>
             <div
               className="h-full rounded"

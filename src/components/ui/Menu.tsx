@@ -88,13 +88,13 @@ export function MenuItem({ selected, danger, className = '', children, ...rest }
     <button
       type="button"
       role="menuitem"
-      className={`w-full text-left px-4 py-2.5 text-body-medium flex items-center gap-3 transition-colors state-layer ${
+      className={`w-full text-left px-4 min-h-[48px] text-body-medium flex items-center gap-3 transition-colors state-layer ${
         danger ? 'text-[var(--error)]' : 'text-[var(--text-primary)]'
       } ${className}`}
       {...rest}
     >
       {selected && (
-        <svg className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--accent-solid)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+        <svg className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--accent-solid)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
         </svg>
       )}

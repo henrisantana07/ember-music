@@ -23,8 +23,8 @@ function TrendingColumn({ tracks, label, subtitle }: { tracks: Track[]; label: s
   return (
     <div className="flex-1 min-w-0">
       <h3 className="text-base font-bold mb-1">{label}</h3>
-      <p className="text-xs mb-4" style={{ color: 'var(--text-secondary)' }}>{subtitle}</p>
-      <div className="space-y-0.5">
+      <p className="text-body-medium mb-4" style={{ color: 'var(--text-secondary)' }}>{subtitle}</p>
+      <div className="space-y-1">
         {tracks.map((track, index) => {
           const isActive = currentTrack?.id === track.id
           return (
@@ -34,15 +34,15 @@ function TrendingColumn({ tracks, label, subtitle }: { tracks: Track[]; label: s
                 if (isActive) { togglePlay(); return }
                 play(track, tracks)
               }}
-              className="flex items-center gap-3 px-2 py-1.5 rounded-lg cursor-pointer transition-colors group"
-              style={{ minHeight: 52 }}
+              className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors group"
+              style={{ minHeight: 64 }}
               onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--bg-surface)' }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
             >
-              <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0 relative">
+              <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 relative">
                 <img src={track.image} alt="" className="w-full h-full object-cover" loading="lazy" />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                     {isActive && isPlaying ? (
                       <path d="M6 4h4v16H6zM14 4h4v16h-4z" />
                     ) : (
@@ -57,19 +57,19 @@ function TrendingColumn({ tracks, label, subtitle }: { tracks: Track[]; label: s
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{track.name}</p>
-                <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
+                <p className="text-body-large font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{track.name}</p>
+                <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
               </div>
-              <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-disabled)' }}>
+              <span className="text-body-medium flex-shrink-0" style={{ color: 'var(--text-disabled)' }}>
                 {formatDuration(track.duration)}
               </span>
               <IconButton
-                size="sm"
+                size="md"
                 label={`Adicionar ${track.name} à playlist`}
                 onClick={(e) => { e.stopPropagation(); setPlaylistTrack(track) }}
                 className="flex-shrink-0"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
               </IconButton>

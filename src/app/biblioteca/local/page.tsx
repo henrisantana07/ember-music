@@ -39,17 +39,17 @@ function FolderTreeItem({
       <div className="flex items-center gap-1">
         <button
           onClick={() => onSelect(isSelected ? null : folder.id)}
-          className={`flex items-center gap-2 flex-1 min-w-0 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+          className={`flex items-center gap-2.5 flex-1 min-w-0 px-3 min-h-[48px] rounded-lg text-body-medium transition-colors ${
             isSelected
               ? 'bg-[var(--accent-solid)] text-on-accent'
               : 'hover:bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
           }`}
           style={{ color: isSelected ? 'var(--text-on-accent)' : 'var(--text-secondary)' }}
         >
-          <FolderOpen className="w-4 h-4 flex-shrink-0" />
+          <FolderOpen className="w-5 h-5 flex-shrink-0" />
           <span className="truncate flex-1">{folder.name}</span>
           {hasTracks && (
-            <span className="text-xs px-1.5 py-0.5 rounded" style={{
+            <span className="text-label-medium px-2 py-0.5 rounded-full" style={{
               backgroundColor: isSelected ? 'var(--outline)' : 'var(--bg-elevated)',
               color: isSelected ? 'white' : 'var(--text-disabled)'
             }}>
@@ -63,10 +63,10 @@ function FolderTreeItem({
             disabled={isReconnecting}
             title="Reconectar pasta"
             aria-label={`Reconectar pasta ${folder.name}`}
-            className="p-1.5 rounded-lg transition-colors hover:bg-[var(--bg-elevated)] flex-shrink-0"
+            className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors hover:bg-[var(--bg-elevated)] state-layer flex-shrink-0"
             style={{ color: 'var(--warning, #f59e0b)' }}
           >
-            <Link2 className={`w-4 h-4 ${isReconnecting ? 'animate-pulse' : ''}`} />
+            <Link2 className={`w-5 h-5 ${isReconnecting ? 'animate-pulse' : ''}`} />
           </button>
         )}
       </div>
@@ -93,10 +93,10 @@ function FolderSidebar({
     return (
       <div className="flex flex-col items-center justify-center h-full py-8 px-4">
         <FolderClosed className="w-12 h-12 mb-3" style={{ color: 'var(--text-disabled)' }} />
-        <p className="text-sm text-center" style={{ color: 'var(--text-secondary)' }}>
+        <p className="text-body-medium text-center" style={{ color: 'var(--text-secondary)' }}>
           Nenhuma pasta adicionada
         </p>
-        <p className="text-xs text-center" style={{ color: 'var(--text-disabled)' }}>
+        <p className="text-body-medium text-center" style={{ color: 'var(--text-disabled)' }}>
           Use o botão "Adicionar pasta" acima
         </p>
       </div>
@@ -108,18 +108,18 @@ function FolderSidebar({
       <div className="p-3 border-b" style={{ borderColor: 'var(--border)' }}>
         <button
           onClick={() => onSelectFolder(null)}
-          className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+          className={`flex items-center gap-2.5 w-full px-3 min-h-[48px] rounded-lg text-body-medium font-medium transition-colors state-layer ${
             selectedFolderId === null
               ? 'bg-[var(--accent-solid)] text-on-accent'
               : 'hover:bg-[var(--bg-elevated)]'
           }`}
         >
-          <Music className="w-4 h-4" />
+          <Music className="w-5 h-5" />
           <span>Todas as músicas</span>
         </button>
       </div>
       <div className="p-3 border-b" style={{ borderColor: 'var(--border)' }}>
-        <h3 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-disabled)' }}>
+        <h3 className="text-label-medium font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-disabled)' }}>
           Pastas
         </h3>
         {folders.map((folder) => (
@@ -215,7 +215,7 @@ function LocalLibraryContent() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
+            className="h-12 w-12 inline-flex items-center justify-center rounded-full hover:bg-[var(--bg-elevated)] transition-colors state-layer"
             style={{ color: 'var(--text-secondary)' }}
             aria-label={sidebarOpen ? 'Fechar painel de pastas' : 'Abrir painel de pastas'}
           >
@@ -248,7 +248,7 @@ function LocalLibraryContent() {
 
         <main className="flex-1 min-w-0">
           <div className="mb-4 space-y-3">
-            <span className="text-body-small block" style={{ color: 'var(--text-disabled)' }} aria-live="polite">
+            <span className="text-body-medium block" style={{ color: 'var(--text-disabled)' }} aria-live="polite">
               {tracksToShow.length} {tracksToShow.length === 1 ? 'música' : 'músicas'}
               {selectedFolderId && (
                 <>
@@ -276,7 +276,7 @@ function LocalLibraryContent() {
               view={
                 <SegmentedToggle
                   ariaLabel="Modo de exibição"
-                  size="sm"
+                  size="md"
                   value={viewMode}
                   onChange={setViewMode}
                   options={[
@@ -284,7 +284,7 @@ function LocalLibraryContent() {
                       value: 'list',
                       ariaLabel: 'Exibir como lista',
                       icon: (
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
                       ),
@@ -293,7 +293,7 @@ function LocalLibraryContent() {
                       value: 'grid',
                       ariaLabel: 'Exibir como grade',
                       icon: (
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z" />
                         </svg>
                       ),
@@ -312,7 +312,7 @@ function LocalLibraryContent() {
               <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>
                 {selectedFolderId ? 'Nenhuma música nesta pasta' : 'Nenhuma música encontrada'}
               </p>
-              <p className="text-sm" style={{ color: 'var(--text-disabled)' }}>
+              <p className="text-body-medium" style={{ color: 'var(--text-disabled)' }}>
                 {selectedFolderId
                   ? 'Esta pasta não contém arquivos de áudio suportados'
                   : 'Adicione uma pasta com suas músicas para começar'}

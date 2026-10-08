@@ -386,11 +386,11 @@ function PlaylistContent() {
 
         <div className="flex flex-col justify-end flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-label-medium font-medium uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
               Playlist
             </p>
             <span
-              className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+              className="inline-flex items-center gap-1 text-label-medium px-2.5 py-1 rounded-full"
               style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-secondary)' }}
             >
               {playlist.is_public ? '🌐 Pública' : '🔒 Privada'}
@@ -398,26 +398,26 @@ function PlaylistContent() {
           </div>
           <h1 className="text-2xl md:text-3xl font-bold truncate">{playlist.name}</h1>
           {playlist.description && (
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-body-medium mt-1" style={{ color: 'var(--text-secondary)' }}>
               {playlist.description}
             </p>
           )}
-          <p className="text-sm mt-1" style={{ color: 'var(--text-disabled)' }}>
+          <p className="text-body-medium mt-1" style={{ color: 'var(--text-disabled)' }}>
             Criada por {isOwner ? 'você' : 'outro usuário'} · {tracks.length} {tracks.length === 1 ? 'faixa' : 'faixas'}
             {totalDuration > 0 && ` — ${formatDuration(Math.floor(totalDuration))}`}
           </p>
 
           {!isOwner && !playlist.is_public && (
-            <div className="mt-4 p-3 rounded-lg text-sm" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-secondary)' }}>
+            <div className="mt-4 p-4 rounded-lg text-body-medium" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-secondary)' }}>
               Faça login para salvar esta playlist
             </div>
           )}
 
-          <div className="flex items-center gap-3 mt-4">
+          <div className="flex items-center gap-3 mt-4 flex-wrap">
             {tracks.length > 0 && (
               <button
                 onClick={handlePlayAll}
-                className="flex items-center gap-2 px-5 py-2 rounded-full text-sm font-bold transition-transform hover:scale-105"
+                className="flex items-center gap-2 min-h-[48px] px-6 rounded-full text-label-large font-bold transition-transform hover:scale-105 state-layer"
                 style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -430,7 +430,7 @@ function PlaylistContent() {
             {tracks.length > 0 && (
               <button
                 onClick={handlePlayShuffled}
-                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                className="flex items-center gap-2 min-h-[48px] px-5 rounded-full text-label-large font-medium transition-colors state-layer"
                 style={{ color: 'var(--text-secondary)' }}
               >
                 ⇄ Aleatório
@@ -439,31 +439,39 @@ function PlaylistContent() {
 
             {isOwner && (
               <div ref={editMenuRef} className="relative">
-                <button onClick={() => setEditMenuOpen((v) => !v)} className="p-2 rounded-full transition-colors hover:bg-state-hover" style={{ color: 'var(--text-secondary)' }} title="Editar">
+                <button
+                  onClick={() => setEditMenuOpen((v) => !v)}
+                  className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer"
+                  style={{ color: 'var(--text-secondary)' }}
+                  title="Editar"
+                  aria-label="Editar playlist"
+                  aria-haspopup="menu"
+                  aria-expanded={editMenuOpen}
+                >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </button>
                 {editMenuOpen && (
                   <div
-                    className="absolute right-0 top-full mt-1 z-50 min-w-[180px] rounded-xl overflow-hidden shadow-xl"
+                    className="absolute right-0 top-full mt-1 z-50 min-w-[220px] rounded-xl overflow-hidden shadow-elevation-2 border border-outline-variant"
                     style={{ backgroundColor: 'var(--bg-elevated)' }}
                   >
                     <button
                       onClick={() => { setCoverModalOpen(true); setEditMenuOpen(false) }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-state-hover text-left"
+                      className="w-full flex items-center gap-3 px-4 min-h-[48px] text-body-medium transition-colors hover:bg-state-hover text-left state-layer"
                       style={{ color: 'var(--text-primary)' }}
                     >
-                      <Camera size={16} />
+                      <Camera size={20} />
                       Trocar capa
                     </button>
                     <div style={{ height: 1, backgroundColor: 'var(--outline-variant)' }} />
                     <button
                       onClick={() => { setEditModalOpen(true); setEditMenuOpen(false) }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-state-hover text-left"
+                      className="w-full flex items-center gap-3 px-4 min-h-[48px] text-body-medium transition-colors hover:bg-state-hover text-left state-layer"
                       style={{ color: 'var(--text-primary)' }}
                     >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
                       Editar informações
@@ -474,7 +482,14 @@ function PlaylistContent() {
             )}
 
             {isOwner && (
-              <button onClick={handleDuplicate} disabled={duplicating} className="p-2 rounded-full transition-colors hover:bg-state-hover disabled:opacity-50" style={{ color: 'var(--text-secondary)' }} title="Duplicar">
+              <button
+                onClick={handleDuplicate}
+                disabled={duplicating}
+                className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors hover:bg-state-hover disabled:opacity-50 state-layer"
+                style={{ color: 'var(--text-secondary)' }}
+                title="Duplicar"
+                aria-label="Duplicar playlist"
+              >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
@@ -482,14 +497,26 @@ function PlaylistContent() {
             )}
 
             {isOwner && (
-              <button onClick={() => setDeleteModalOpen(true)} className="p-2 rounded-full transition-colors hover:bg-state-hover" style={{ color: 'var(--text-secondary)' }} title="Excluir">
+              <button
+                onClick={() => setDeleteModalOpen(true)}
+                className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer"
+                style={{ color: 'var(--text-secondary)' }}
+                title="Excluir"
+                aria-label="Excluir playlist"
+              >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </button>
             )}
 
-            <button onClick={handleShare} className="p-2 rounded-full transition-colors hover:bg-state-hover" style={{ color: playlist.is_public ? 'var(--text-secondary)' : 'var(--text-disabled)' }} title={playlist.is_public ? 'Compartilhar' : 'Torne pública para compartilhar'}>
+            <button
+              onClick={handleShare}
+              className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer"
+              style={{ color: playlist.is_public ? 'var(--text-secondary)' : 'var(--text-disabled)' }}
+              title={playlist.is_public ? 'Compartilhar' : 'Torne pública para compartilhar'}
+              aria-label="Compartilhar playlist"
+            >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
               </svg>
@@ -507,7 +534,7 @@ function PlaylistContent() {
             <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>
               Esta playlist ainda não tem músicas
             </p>
-            <p className="text-sm mt-1 mb-6" style={{ color: 'var(--text-disabled)' }}>
+            <p className="text-body-medium mt-1 mb-6" style={{ color: 'var(--text-disabled)' }}>
               Adicione faixas usando o menu em cada música
             </p>
           </div>
@@ -561,7 +588,7 @@ function PlaylistContent() {
 
       {toast && (
         <div
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-4 py-3 rounded-xl shadow-lg text-sm"
+          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-5 py-3 rounded-xl shadow-elevation-3 text-body-medium"
           style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}
         >
           <span>{toast.message}</span>
@@ -614,17 +641,18 @@ function SortableTrackRow({
       <button
         {...attributes}
         {...listeners}
-        className="p-1 cursor-grab active:cursor-grabbing touch-none"
+        className="h-11 w-11 -ml-1 inline-flex items-center justify-center rounded-full cursor-grab active:cursor-grabbing touch-none state-layer"
         style={{ color: 'var(--text-disabled)' }}
         onClick={(e) => e.stopPropagation()}
         title="Arrastar"
+        aria-label={`Reordenar ${track.name}`}
       >
-        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
           <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
         </svg>
       </button>
 
-      <span className="w-6 text-center text-sm" style={{ color: 'var(--text-disabled)' }}>
+      <span className="w-7 text-center text-body-medium" style={{ color: 'var(--text-disabled)' }}>
         {isActive ? (
           <span style={{ color: 'var(--accent-from)' }}>
             {isPlaying ? '♫' : '◼'}
@@ -634,29 +662,29 @@ function SortableTrackRow({
         )}
       </span>
 
-      <img src={track.image} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+      <img src={track.image} alt="" className="w-12 h-12 rounded object-cover flex-shrink-0" />
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate" style={{ color: isActive ? 'var(--accent-from)' : 'var(--text-primary)' }}>
+        <p className="text-body-large font-medium truncate" style={{ color: isActive ? 'var(--accent-from)' : 'var(--text-primary)' }}>
           {track.name}
         </p>
-        <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
+        <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>
           {track.artist_name}
         </p>
       </div>
 
-      <span className="text-xs" style={{ color: 'var(--text-disabled)' }}>
+      <span className="text-body-medium" style={{ color: 'var(--text-disabled)' }}>
         {formatDuration(track.duration)}
       </span>
 
       {isOwner && (
         <button
           onClick={(e) => { e.stopPropagation(); onRemove() }}
-          className="p-1.5 rounded-full transition-colors state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           title="Remover"
           aria-label={`Remover ${track.name} da playlist`}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>

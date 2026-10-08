@@ -28,13 +28,13 @@ export function ArtistResultCarousel({ artists, loading, maxItems }: ArtistResul
         <a
           key={artist.id}
           href={`/artists/${artist.id}`}
-          className="flex flex-col items-center gap-2 w-24 flex-shrink-0 group"
+          className="flex flex-col items-center gap-2 w-32 flex-shrink-0 group"
         >
-          <div className="w-[96px] h-[96px] rounded-full overflow-hidden border-2 transition-colors duration-200 group-hover:border-transparent" style={{ borderColor: 'var(--bg-elevated)' }}>
+          <div className="w-[120px] h-[120px] rounded-full overflow-hidden border-2 transition-colors duration-200 group-hover:border-transparent" style={{ borderColor: 'var(--bg-elevated)' }}>
             <img src={artist.image || '/placeholder.svg'} alt={artist.name} className="w-full h-full object-cover" loading="lazy" />
           </div>
-          <p className="text-sm font-semibold text-center truncate w-full">{artist.name}</p>
-          <p className="text-xs text-center" style={{ color: 'var(--text-secondary)' }}>
+          <p className="text-body-large font-semibold text-center truncate w-full">{artist.name}</p>
+          <p className="text-body-medium text-center" style={{ color: 'var(--text-secondary)' }}>
             {artist.followers > 0 ? `${(artist.followers / 1000).toFixed(0)}K fãs` : 'Artista'}
           </p>
         </a>

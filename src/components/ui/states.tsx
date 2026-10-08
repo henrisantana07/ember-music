@@ -26,9 +26,9 @@ function StateBlock({ icon, title, description, action, secondaryAction, classNa
       <h2 className="text-title-medium font-semibold text-[var(--text-primary)]">{title}</h2>
       {description && <p className="text-body-medium max-w-sm text-[var(--text-secondary)]">{description}</p>}
       {(action || secondaryAction) && (
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-          {action && <Button variant="filled" size="sm" onClick={action.onClick}>{action.label}</Button>}
-          {secondaryAction && <Button variant="tonal" size="sm" onClick={secondaryAction.onClick}>{secondaryAction.label}</Button>}
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
+          {action && <Button variant="filled" size="lg" onClick={action.onClick}>{action.label}</Button>}
+          {secondaryAction && <Button variant="tonal" size="lg" onClick={secondaryAction.onClick}>{secondaryAction.label}</Button>}
         </div>
       )}
     </div>

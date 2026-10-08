@@ -102,10 +102,10 @@ export default function HistoryPage() {
       ) : (
         Object.entries(grouped).map(([date, group]) => (
           <section key={date} className="mb-8">
-            <h2 className="text-sm font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-secondary)' }}>
+            <h2 className="text-label-medium font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-secondary)' }}>
               {date}
             </h2>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {group.map((item) => (
                 <TrackCard
                   key={`${item.track_data.id}-${item.played_at}`}

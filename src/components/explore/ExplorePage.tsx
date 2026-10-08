@@ -112,7 +112,7 @@ function GenrePage({ genero, genreId }: { genero: string; genreId: string }) {
         <h1 className="text-4xl font-bold capitalize" style={{ color: 'var(--text-on-accent)', textShadow: '0 2px 6px rgba(0,0,0,0.3)' }}>
           {genero}
         </h1>
-        <p className="text-sm mt-1" style={{ color: 'rgba(245,241,237,0.7)' }}>
+        <p className="text-body-medium mt-1" style={{ color: 'rgba(245,241,237,0.7)' }}>
           {loading ? 'A carregar...' : `${tracks.length} faixas · ${artists.length} artistas · ${albums.length} álbuns`}
         </p>
       </div>

@@ -112,15 +112,15 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
   if (displayAlbums.length === 0) return null
 
   return (
-    <><div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+    <><div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
       {displayAlbums.map((album) => {
         const isSaving = savingId === album.id
         const isSaved = savedIds.has(album.id)
 
         return (
-          <div key={album.id} className="group relative p-3 rounded-xl transition-colors hover:bg-state-hover">
+          <div key={album.id} className="group relative p-4 rounded-xl transition-colors hover:bg-state-hover">
             <a href={`/albums/${album.id}`} className="block">
-              <div className="relative mb-2">
+              <div className="relative mb-3">
                 <img
                   src={album.image || '/placeholder.svg'}
                   alt={album.name}
@@ -136,7 +136,7 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
                   <button
                     onClick={(e) => handleSaveAlbum(e, album)}
                     disabled={!user || isSaving || isSaved}
-                    className="w-11 h-11 rounded-full flex items-center justify-center shadow-elevation-3 transition-transform duration-150 hover:scale-105 disabled:opacity-70"
+                    className="w-12 h-12 rounded-full flex items-center justify-center shadow-elevation-3 transition-transform duration-150 hover:scale-105 disabled:opacity-70"
                     style={{
                       background: isSaved
                         ? 'var(--accent-solid)'
@@ -147,22 +147,22 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
                     title={isSaved ? 'Salvo' : 'Salvar álbum como playlist'}
                   >
                     {isSaving ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     ) : isSaved ? (
-                      <svg className="w-5 h-5" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5} fill="none" strokeLinecap="round">
+                      <svg className="w-6 h-6" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5} fill="none" strokeLinecap="round">
                         <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                       </svg>
                     ) : (
-                      <svg className="w-5 h-5" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5} fill="none" strokeLinecap="round">
+                      <svg className="w-6 h-6" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5} fill="none" strokeLinecap="round">
                         <path d="M12 4v16m8-8H4" />
                       </svg>
                     )}
                   </button>
                 </div>
               </div>
-              <p className="text-sm font-semibold truncate">{album.name}</p>
-              <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{album.artist_name}</p>
-              <p className="text-xs" style={{ color: 'var(--text-disabled)' }}>
+              <p className="text-body-large font-semibold truncate">{album.name}</p>
+              <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{album.artist_name}</p>
+              <p className="text-body-medium" style={{ color: 'var(--text-disabled)' }}>
                 {album.release_date ? album.release_date.split('-')[0] : ''}
               </p>
             </a>
@@ -171,7 +171,7 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
       })}
     </div>
       {toast && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-sm shadow-lg animate-slide-up" style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl text-body-medium shadow-elevation-3 animate-slide-up" style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
           {toast}
         </div>
       )}
