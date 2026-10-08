@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
-import { FolderOpen, FolderClosed, ChevronRight, Link2, Music, Search } from 'lucide-react'
+import { FolderOpen, FolderClosed, ChevronRight, Link2, Music, Search, MoreVertical } from 'lucide-react'
 import { useLocalLibrary } from '@/features/local-library/hooks/use-local-library'
 import { LocalLibraryHeader } from '@/features/local-library/components/LocalLibraryHeader'
 import { LocalTrackList } from '@/features/local-library/components/LocalTrackList'
@@ -9,10 +9,22 @@ import { LocalTrackGrid } from '@/features/local-library/components/LocalTrackGr
 import { ControlToolbar } from '@/components/ui/ControlToolbar'
 import { SortMenu } from '@/components/ui/SortMenu'
 import { SegmentedToggle } from '@/components/ui/SegmentedToggle'
+import { Modal } from '@/components/ui/Modal'
+
+interface FolderTreeItemData {
+  id: string
+  name: string
+  path: string
+  needsReconnect?: boolean
+  trackCount?: number
+  albumCount?: number
+  artistCount?: number
+  lastScan?: number
+  handle?: FileSystemDirectoryHandle | null
+}
 
 function FolderTreeItem({
   folder,
-  folders,
   selectedFolderId,
   onSelect,
   getTracksByFolder,
@@ -20,8 +32,7 @@ function FolderTreeItem({
   reconnectingFolderId,
   level = 0,
 }: {
-  folder: { id: string; name: string; path: string; needsReconnect?: boolean }
-  folders: { id: string; name: string; path: string }[]
+  folder: FolderTreeItemData
   selectedFolderId: string | null
   onSelect: (folderId: string | null) => void
   getTracksByFolder: (folderId: string) => { id: string }[]
@@ -33,6 +44,28 @@ function FolderTreeItem({
   const folderTracks = getTracksByFolder(folder.id)
   const hasTracks = folderTracks.length > 0
   const isReconnecting = reconnectingFolderId === folder.id
+  const [infoOpen, setInfoOpen] = useState(false)
+
+  const formatDate = (timestamp?: number) => {
+    if (!timestamp) return 'Nunca'
+    return new Date(timestamp).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  }
+
+  const status = folder.needsReconnect
+    ? 'Requer reconexão'
+    : !folder.handle
+      ? 'Indisponível'
+      : 'Disponível'
+
+  const infoRows: Array<{ label: string; value: string }> = [
+    { label: 'Nome', value: folder.name },
+    { label: 'Caminho', value: folder.path },
+    { label: 'Músicas', value: String(folder.trackCount ?? folderTracks.length) },
+    { label: 'Álbuns', value: String(folder.albumCount ?? '—') },
+    { label: 'Artistas', value: String(folder.artistCount ?? '—') },
+    { label: 'Última verificação', value: formatDate(folder.lastScan) },
+    { label: 'Status', value: status },
+  ]
 
   return (
     <div style={{ paddingLeft: `${level * 16 + 8}px` }}>
@@ -69,7 +102,30 @@ function FolderTreeItem({
             <Link2 className={`w-5 h-5 ${isReconnecting ? 'animate-pulse' : ''}`} />
           </button>
         )}
+        <button
+          onClick={() => setInfoOpen(true)}
+          title="Ver informações da pasta"
+          aria-label={`Informações da pasta ${folder.name}`}
+          aria-haspopup="dialog"
+          className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors hover:bg-[var(--bg-elevated)] state-layer flex-shrink-0"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          <MoreVertical className="w-5 h-5" />
+        </button>
       </div>
+
+      {infoOpen && (
+        <Modal open={infoOpen} onClose={() => setInfoOpen(false)} title="Informações da pasta">
+          <dl className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+            {infoRows.map((row) => (
+              <div key={row.label} className="flex items-baseline justify-between gap-4">
+                <dt className="text-body-medium shrink-0" style={{ color: 'var(--text-secondary)' }}>{row.label}</dt>
+                <dd className="text-body-medium text-right break-all" style={{ color: 'var(--text-primary)' }}>{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </Modal>
+      )}
     </div>
   )
 }
@@ -82,7 +138,7 @@ function FolderSidebar({
   onReconnect,
   reconnectingFolderId,
 }: {
-  folders: { id: string; name: string; path: string; needsReconnect?: boolean }[]
+  folders: FolderTreeItemData[]
   selectedFolderId: string | null
   onSelectFolder: (folderId: string | null) => void
   getTracksByFolder: (folderId: string) => { id: string }[]
@@ -97,7 +153,7 @@ function FolderSidebar({
           Nenhuma pasta adicionada
         </p>
         <p className="text-body-medium text-center" style={{ color: 'var(--text-disabled)' }}>
-          Use o botão "Adicionar pasta" acima
+          Use o botão &quot;Adicionar pasta&quot; acima
         </p>
       </div>
     )
@@ -126,7 +182,6 @@ function FolderSidebar({
           <FolderTreeItem
             key={folder.id}
             folder={folder}
-            folders={folders}
             selectedFolderId={selectedFolderId}
             onSelect={onSelectFolder}
             getTracksByFolder={getTracksByFolder}
