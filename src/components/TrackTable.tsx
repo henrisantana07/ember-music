@@ -185,7 +185,7 @@ export function TrackTable({
 
   return (
     <div className={`overflow-x-auto ${className}`}>
-      <table className="w-full text-body-medium">
+      <table className="w-full text-body-medium table-fixed">
         <caption className="sr-only">Faixas</caption>
         <thead>
           <tr className="border-b border-outline-variant">
@@ -195,12 +195,12 @@ export function TrackTable({
             <th scope="col" className="py-2 text-left text-label-medium font-semibold uppercase tracking-wider" style={{ color: 'var(--text-disabled)' }}>
               Título
             </th>
-            <SortHeader label="Álbum" sortKey="album" current={sort} dir={sortDir} onSort={onSort} className="hidden md:table-cell" />
-            <SortHeader label="Adicionada em" sortKey="date" current={sort} dir={sortDir} onSort={onSort} className="hidden lg:table-cell" />
+            <SortHeader label="Álbum" sortKey="album" current={sort} dir={sortDir} onSort={onSort} className="hidden md:table-cell w-44" />
+            <SortHeader label="Adicionada em" sortKey="date" current={sort} dir={sortDir} onSort={onSort} className="hidden lg:table-cell w-36" />
             <th scope="col" className="py-2 w-24 text-left text-label-medium font-semibold uppercase tracking-wider" style={{ color: 'var(--text-disabled)' }}>
               Ações
             </th>
-            <SortHeader label="Duração" sortKey="duration" current={sort} dir={sortDir} onSort={onSort} className="text-right" />
+            <SortHeader label="Duração" sortKey="duration" current={sort} dir={sortDir} onSort={onSort} className="text-right w-20" />
           </tr>
         </thead>
         <tbody>
