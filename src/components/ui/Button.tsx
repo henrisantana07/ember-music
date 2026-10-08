@@ -6,7 +6,7 @@ export type ButtonVariant = 'filled' | 'tonal' | 'outlined' | 'text'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
-  size?: 'sm' | 'md'
+  size?: 'sm' | 'md' | 'lg'
   children: ReactNode
 }
 
@@ -20,6 +20,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
 const SIZES = {
   sm: 'h-8 px-3 text-label-medium gap-1.5',
   md: 'h-10 px-5 text-label-large gap-2',
+  lg: 'h-12 px-6 text-label-large gap-2',
 } as const
 
 /** M3 button (filled / tonal / outlined / text) with state layer. */

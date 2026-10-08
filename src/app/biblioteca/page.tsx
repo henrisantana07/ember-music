@@ -338,7 +338,7 @@ function BibliotecaContent() {
           <select
             value={trackSort}
             onChange={(e) => setTrackSort(e.target.value as typeof trackSort)}
-            className="sort-select text-sm rounded-lg px-3 py-1.5 outline-none cursor-pointer"
+            className="sort-select text-label-large rounded-full px-4 min-h-[48px] outline-none cursor-pointer state-layer"
             style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid var(--outline-variant)' }}
           >
             <option value="recent">Adicionado recentemente</option>
@@ -354,7 +354,7 @@ function BibliotecaContent() {
           <select
             value={artistSort}
             onChange={(e) => setArtistSort(e.target.value as typeof artistSort)}
-            className="sort-select text-sm rounded-lg px-3 py-1.5 outline-none cursor-pointer"
+            className="sort-select text-label-large rounded-full px-4 min-h-[48px] outline-none cursor-pointer state-layer"
             style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid var(--outline-variant)' }}
           >
             <option value="recent">Seguido recentemente</option>
@@ -366,7 +366,7 @@ function BibliotecaContent() {
           <select
             value={playlistSort}
             onChange={(e) => setPlaylistSort(e.target.value as typeof playlistSort)}
-            className="sort-select text-sm rounded-lg px-3 py-1.5 outline-none cursor-pointer"
+            className="sort-select text-label-large rounded-full px-4 min-h-[48px] outline-none cursor-pointer state-layer"
             style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid var(--outline-variant)' }}
           >
             <option value="recent">Criada recentemente</option>
@@ -387,9 +387,9 @@ function BibliotecaContent() {
         {activeTab === 'playlists' && (
           <button
             onClick={() => setCreateModalOpen(true)}
-            className="btn-primary text-sm flex items-center gap-1.5"
+            className="btn-primary text-label-large flex items-center gap-2 min-h-[48px] px-5"
           >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 4v16m8-8H4" />
             </svg>
             Nova Playlist
@@ -398,17 +398,17 @@ function BibliotecaContent() {
         {activeTab === 'recentes' && history.length > 0 && (
           confirmClear ? (
             <div className="flex items-center gap-2">
-              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Limpar histórico?</span>
+              <span className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>Limpar histórico?</span>
               <button
                 onClick={() => { handleClearHistory(); setConfirmClear(false) }}
-                className="text-sm px-3 py-1.5 rounded-lg font-bold"
+                className="text-label-large px-4 min-h-[48px] rounded-full font-bold state-layer"
                 style={{ background: 'var(--error)', color: 'white' }}
               >
                 Sim
               </button>
               <button
                 onClick={() => setConfirmClear(false)}
-                className="text-sm px-3 py-1.5 rounded-lg"
+                className="text-label-large px-4 min-h-[48px] rounded-full state-layer"
                 style={{ color: 'var(--text-secondary)', border: '1px solid var(--outline-variant)' }}
               >
                 Não
@@ -417,7 +417,7 @@ function BibliotecaContent() {
           ) : (
             <button
               onClick={() => setConfirmClear(true)}
-              className="text-sm px-3 py-1.5 rounded-lg transition-colors"
+              className="text-label-large px-4 min-h-[48px] rounded-full transition-colors state-layer"
               style={{ color: 'var(--text-secondary)', border: '1px solid var(--outline-variant)' }}
             >
               Limpar histórico
@@ -435,7 +435,7 @@ function BibliotecaContent() {
               role="tab"
               aria-selected={isActive}
               onClick={() => setTab(tab.id)}
-              className="tab-pill text-sm font-medium px-4 py-1.5 rounded-full transition-all duration-150 whitespace-nowrap state-layer"
+              className="tab-pill text-label-large font-medium px-5 min-h-[48px] rounded-full transition-all duration-150 whitespace-nowrap state-layer"
               style={{
                 background: isActive
                   ? 'linear-gradient(135deg, var(--accent-from), var(--accent-to))'
@@ -450,7 +450,7 @@ function BibliotecaContent() {
       </div>
 
       <div className="flex items-center justify-between mb-4">
-        <span className="text-sm" style={{ color: 'var(--text-disabled)' }}>
+        <span className="text-body-medium" style={{ color: 'var(--text-disabled)' }}>
           {activeTab === 'favoritos' && `${tracks.length} ${tracks.length === 1 ? 'favorito' : 'favoritos'}`}
           {activeTab === 'artistas' && `${artists.length} ${artists.length === 1 ? 'artista' : 'artistas'}`}
           {activeTab === 'playlists' && `${playlists.length} ${playlists.length === 1 ? 'playlist' : 'playlists'}`}
@@ -479,7 +479,7 @@ function BibliotecaContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
                 <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>Nenhum favorito ainda</p>
-                <button onClick={() => router.push('/buscar')} className="btn-primary text-sm">Descobrir músicas</button>
+                <button onClick={() => router.push('/buscar')} className="btn-primary text-label-large min-h-[48px] px-6">Descobrir músicas</button>
               </div>
             ) : (
               <>
@@ -502,10 +502,10 @@ function BibliotecaContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>Nenhum artista seguido ainda</p>
-                <button onClick={() => router.push('/buscar?filtro=artistas')} className="btn-primary text-sm">Explorar artistas</button>
+                <button onClick={() => router.push('/buscar?filtro=artistas')} className="btn-primary text-label-large min-h-[48px] px-6">Explorar artistas</button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {getSortedArtists().map((a) => (
                   <div
                     key={a.artist_id}
@@ -534,7 +534,7 @@ function BibliotecaContent() {
                         <span className="text-label-large font-semibold" style={{ color: 'var(--text-on-accent)' }}>Ver artista</span>
                       </div>
                     </div>
-                    <p className="font-semibold text-sm truncate w-full">{a.artist_data?.name ?? 'Artista'}</p>
+                    <p className="font-semibold text-body-medium truncate w-full">{a.artist_data?.name ?? 'Artista'}</p>
                     <div className="mt-3">
                       <FollowButton artistId={a.artist_id} artistData={a.artist_data ?? undefined} />
                     </div>
@@ -554,17 +554,17 @@ function BibliotecaContent() {
                 <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>Nenhuma playlist criada</p>
                 <button
                   onClick={() => setCreateModalOpen(true)}
-                  className="btn-primary text-sm"
+                  className="btn-primary text-label-large min-h-[48px] px-6"
                 >
                   Criar minha primeira playlist
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {getSortedPlaylists().map((pl) => (
                   <div
                     key={pl.id}
-                    className="card-hover group p-3 cursor-pointer"
+                    className="card-hover group p-4 cursor-pointer"
                     onClick={() => router.push(`/playlists/${pl.id}`)}
                     role="button"
                     tabIndex={0}
@@ -583,18 +583,18 @@ function BibliotecaContent() {
                       />
                       <button
                         type="button"
-                        className="absolute bottom-2 right-2 w-11 h-11 rounded-full flex items-center justify-center shadow-elevation-3 transition-transform duration-150 hover:scale-105"
+                        className="absolute bottom-2 right-2 w-12 h-12 rounded-full flex items-center justify-center shadow-elevation-3 transition-transform duration-150 hover:scale-105"
                         style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
                         onClick={(e) => { e.stopPropagation(); handlePlayPlaylist(pl) }}
                         aria-label={`Tocar playlist ${pl.name}`}
                       >
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path d="M8 5v14l11-7z" />
                         </svg>
                       </button>
                     </div>
-                    <h3 className="font-semibold text-sm truncate">{pl.name}</h3>
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                    <h3 className="font-semibold text-body-large truncate">{pl.name}</h3>
+                    <p className="text-body-medium mt-1" style={{ color: 'var(--text-secondary)' }}>
                       {pl.track_count} {pl.track_count === 1 ? 'faixa' : 'faixas'}
                     </p>
                   </div>
@@ -611,7 +611,7 @@ function BibliotecaContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>Nenhuma música tocada ainda</p>
-                <button onClick={() => router.push('/')} className="btn-primary text-sm">Comece a ouvir</button>
+                <button onClick={() => router.push('/')} className="btn-primary text-label-large min-h-[48px] px-6">Comece a ouvir</button>
               </div>
             ) : (
               <TrackTable tracks={getSortedTracks(history.map((h) => h.track_data))} user={user} />
@@ -625,7 +625,7 @@ function BibliotecaContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>Nenhuma música baixada ainda</p>
-              <p className="text-sm" style={{ color: 'var(--text-disabled)' }}>Baixe músicas para ouvir offline</p>
+              <p className="text-body-medium" style={{ color: 'var(--text-disabled)' }}>Baixe músicas para ouvir offline</p>
             </div>
           )}
 

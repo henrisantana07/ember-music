@@ -3,7 +3,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
 type Variant = 'standard' | 'tonal' | 'filled'
-type Size = 'sm' | 'md'
+type Size = 'sm' | 'md' | 'lg'
 
 interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
   /** Required: becomes aria-label + title, so icon-only buttons stay announced. */
@@ -22,9 +22,10 @@ const VARIANTS: Record<Variant, string> = {
 const SIZES: Record<Size, string> = {
   sm: 'h-8 w-8',
   md: 'h-10 w-10',
+  lg: 'h-12 w-12',
 }
 
-/** M3 icon button: 40dp container, state layer, mandatory accessible name. */
+/** M3 icon button: 48dp container (lg), state layer, mandatory accessible name. */
 export function IconButton({ label, variant = 'standard', size = 'md', className = '', title, children, ...rest }: IconButtonProps) {
   return (
     <button
