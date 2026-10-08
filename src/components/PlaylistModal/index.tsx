@@ -16,9 +16,10 @@ interface PlaylistModalProps {
 }
 
 export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
-  const { playlists, fetchPlaylists, updatePlaylist, updatePlaylistCover } = usePlaylistsStore()
+  const { playlists, fetchPlaylists, updatePlaylist, updatePlaylistCover, loading } = usePlaylistsStore()
   const [containingIds, setContainingIds] = useState<Set<string>>(new Set())
   const [showCreate, setShowCreate] = useState(false)
+  const [togglingId, setTogglingId] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -43,6 +44,9 @@ export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
   }, [playlists, track.id])
 
   async function handleToggle(playlistId: string, isIn: boolean) {
+    if (togglingId) return
+    setTogglingId(playlistId)
+    try {
     if (isIn) {
       const { error: deleteError } = await supabase
         .from('playlist_tracks')
@@ -151,6 +155,9 @@ export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
         last_track_cover_url: track.image,
       })
     }
+    } finally {
+      setTogglingId(null)
+    }
   }
 
   if (!open) return null
@@ -163,7 +170,20 @@ export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
           </p>
 
           <div className="space-y-1 max-h-60 overflow-y-auto">
-            {playlists.length === 0 && (
+            {loading && playlists.length === 0 && (
+              <div className="flex items-center justify-center gap-2 py-4" role="status">
+                <span
+                  className="w-4 h-4 rounded-full border-2 animate-spin"
+                  style={{ borderColor: 'var(--accent-from)', borderTopColor: 'transparent' }}
+                  aria-hidden="true"
+                />
+                <p className="text-sm" style={{ color: 'var(--text-disabled)' }}>
+                  Carregando playlists…
+                </p>
+              </div>
+            )}
+
+            {!loading && playlists.length === 0 && (
               <p className="text-sm py-4 text-center" style={{ color: 'var(--text-disabled)' }}>
                 Nenhuma playlist ainda
               </p>
@@ -171,22 +191,30 @@ export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
 
             {playlists.map((pl) => {
               const isIn = containingIds.has(pl.id)
+              const isToggling = togglingId === pl.id
               return (
                 <button
                   key={pl.id}
                   onClick={() => handleToggle(pl.id, isIn)}
+                  disabled={isToggling}
                   aria-pressed={isIn}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors hover:bg-state-hover text-left state-layer"
+                  aria-busy={isToggling}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors hover:bg-state-hover text-left state-layer disabled:opacity-60"
                 >
                   <div
                     className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border transition-colors"
                     style={{
-                      borderColor: isIn ? 'var(--accent-from)' : 'var(--outline)',
-                      backgroundColor: isIn ? 'var(--accent-from)' : 'transparent',
+                      borderColor: isToggling ? 'var(--accent-from)' : isIn ? 'var(--accent-from)' : 'var(--outline)',
+                      backgroundColor: isIn && !isToggling ? 'var(--accent-from)' : 'transparent',
                     }}
                     aria-hidden="true"
                   >
-                    {isIn && (
+                    {isToggling ? (
+                      <span
+                        className="w-3 h-3 rounded-full border-2 animate-spin"
+                        style={{ borderColor: 'var(--accent-from)', borderTopColor: 'transparent' }}
+                      />
+                    ) : isIn && (
                       <svg className="w-3 h-3" fill="white" viewBox="0 0 24 24">
                         <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                       </svg>
