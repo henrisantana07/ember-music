@@ -75,7 +75,7 @@ export function Topbar() {
       />
       <form onSubmit={handleSearch} className="w-full max-w-md relative">
         <div className="relative">
-          <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
@@ -88,7 +88,7 @@ export function Topbar() {
             onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
             placeholder="O que você quer ouvir?"
             aria-label="Buscar músicas, álbuns ou artistas"
-            className="block w-full h-12 pl-12 pr-14 py-0 rounded-full text-body-large leading-none border-none appearance-none focus:outline-none transition-colors [&::-webkit-search-cancel-button]:hidden"
+            className="block w-full h-9 pl-10 pr-10 py-0 rounded-full text-sm leading-none border-none appearance-none focus:outline-none focus:ring-2 transition-all [&::-webkit-search-cancel-button]:hidden"
             style={{
               backgroundColor: 'var(--bg-surface)',
               color: 'var(--text-primary)',
@@ -100,10 +100,10 @@ export function Topbar() {
               type="button"
               onClick={handleClear}
               aria-label="Limpar busca"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center transition-colors hover:bg-state-pressed state-layer"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
               style={{ color: 'var(--text-secondary)' }}
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
