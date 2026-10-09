@@ -384,15 +384,9 @@ body {
   }
 }
 
-/* Vídeo YouTube: caixa 16:9 sem barras pretas (letterbox) */
-.now-cover-video {
-  width: min(960px, 100%, calc(42vh * 16 / 9));
-  aspect-ratio: 16 / 9;
-}
-
-/* Desktop áudio: lado a lado — reserva 272px (info) + 32px (gap) para a coluna de metadados */
+/* Desktop: lado a lado — reserva 272px (info) + 32px (gap) para a coluna de metadados */
 @media (min-width: 768px) {
-  .now-cover:not(.now-cover-video) {
+  .now-cover {
     width: min(560px, calc(100% - 304px), 52vh);
   }
 }
