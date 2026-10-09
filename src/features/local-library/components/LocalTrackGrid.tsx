@@ -24,7 +24,7 @@ export function LocalTrackGrid({ tracks }: LocalTrackGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+    <div className="grid [grid-template-columns:repeat(auto-fill,minmax(180px,1fr))] gap-4">
       {tracks.map((track) => {
         const isActive = currentTrack?.id === track.id
         return (

@@ -135,12 +135,12 @@ export default function Sidebar() {
       <hr className="mx-4 my-2 border-outline-variant" />
 
       {!collapsed && playlists.length > 0 && (
-        <div className="flex-none px-2 space-y-0.5">
+        <div className="flex-none px-2 space-y-0.5 max-h-[40vh] overflow-y-auto scrollbar-thin">
           <p className="px-3 pt-1 pb-1 text-label-medium font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
             Sua Biblioteca
           </p>
           <div className="space-y-0.5">
-            {playlists.slice(0, 5).map(pl => {
+            {playlists.map(pl => {
               const active = pathname === `/playlists/${pl.id}`
               return (
                 <Link
@@ -173,7 +173,7 @@ export default function Sidebar() {
               Artistas
             </p>
           )}
-          {artists.slice(0, 10).map(artist => {
+          {artists.map(artist => {
             const active = pathname === `/artists/${artist.artist_id}`
             return (
               <Link
@@ -200,7 +200,7 @@ export default function Sidebar() {
             )
           })}
           {artists.length === 0 && (
-            <div className="px-3 py-8 text-center text-body-medium" style={{ color: 'var(--text-disabled)' }}>
+            <div className="px-3 py-6 text-center text-body-medium" style={{ color: 'var(--text-disabled)' }}>
               Siga artistas para vê-los aqui
             </div>
           )}
@@ -336,12 +336,12 @@ export default function Sidebar() {
             <hr className="mx-4 my-2 border-outline-variant flex-none" />
 
             {playlists.length > 0 && (
-            <div className="flex-none px-2 space-y-0.5">
+            <div className="flex-none px-2 space-y-0.5 max-h-[40vh] overflow-y-auto scrollbar-thin">
               <p className="px-3 pt-1 pb-1 text-label-medium font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
                 Sua Biblioteca
               </p>
                 <div className="space-y-0.5">
-                  {playlists.slice(0, 5).map(pl => {
+                  {playlists.map(pl => {
                     const active = pathname === `/playlists/${pl.id}`
                     return (
                       <Link
@@ -374,7 +374,7 @@ export default function Sidebar() {
                   Artistas
                 </p>
               )}
-              {artists.slice(0, 10).map(artist => {
+              {artists.map(artist => {
                 const active = pathname === `/artists/${artist.artist_id}`
                 return (
                   <Link

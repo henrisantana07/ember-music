@@ -327,7 +327,7 @@ function LocalLibraryContent() {
   }
 
   return (
-    <div className="mx-auto w-full" style={{ maxWidth: 1400 }}>
+    <div className="mx-auto w-full">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <button
@@ -342,30 +342,30 @@ function LocalLibraryContent() {
         </div>
       </div>
 
-      <div className="flex gap-4" style={{ minHeight: 'calc(100vh - 280px)' }}>
-        <aside
-          className={`transition-all duration-300 ${
-            sidebarOpen ? 'w-72 flex-shrink-0' : 'w-0 overflow-hidden'
-          }`}
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            borderRight: '1px solid var(--border)',
-            borderRadius: '12px 0 0 12px',
-          }}
-        >
-          <FolderSidebar
-            folders={folders}
-            selectedFolderId={selectedFolderId}
-            onSelectFolder={setSelectedFolderId}
-            getTracksByFolder={getTracksByFolder}
-            onReconnect={handleReconnect}
-            onRemove={async (folderId) => {
-              await removeFolder(folderId)
-              if (selectedFolderId === folderId) setSelectedFolderId(null)
+      <div className="flex gap-4">
+        {sidebarOpen && (
+          <aside
+            className="w-72 flex-shrink-0 transition-all duration-300"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              borderRight: '1px solid var(--border)',
+              borderRadius: '12px 0 0 12px',
             }}
-            reconnectingFolderId={reconnectingFolderId}
-          />
-        </aside>
+          >
+            <FolderSidebar
+              folders={folders}
+              selectedFolderId={selectedFolderId}
+              onSelectFolder={setSelectedFolderId}
+              getTracksByFolder={getTracksByFolder}
+              onReconnect={handleReconnect}
+              onRemove={async (folderId) => {
+                await removeFolder(folderId)
+                if (selectedFolderId === folderId) setSelectedFolderId(null)
+              }}
+              reconnectingFolderId={reconnectingFolderId}
+            />
+          </aside>
+        )}
 
         <main className="flex-1 min-w-0">
           <div className="mb-4 space-y-3">
