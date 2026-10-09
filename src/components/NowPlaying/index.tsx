@@ -20,6 +20,7 @@ import {
   Music, Trash2, GripVertical,
 } from 'lucide-react'
 import { useYouTube } from '@/components/YouTubePlayer/context'
+import { extractDominantColor } from '@/lib/color/extractDominantColor'
 
 function getAudioEl(): HTMLAudioElement | null {
   return document.querySelector('audio')
@@ -160,17 +161,13 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     if (!currentTrack?.image) {
       return
     }
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.src = currentTrack.image
-    img.onload = () => {
-      import('fast-average-color').then(({ FastAverageColor }) => {
-        new FastAverageColor().getColorAsync(img, { mode: 'precision', algorithm: 'dominant' })
-          .then((c) => setDominantColor(c.hex))
-          .catch(() => {})
-      }).catch(() => {})
+    let cancelled = false
+    extractDominantColor(currentTrack.image).then((color) => {
+      if (!cancelled && color) setDominantColor(color)
+    })
+    return () => {
+      cancelled = true
     }
-    img.onerror = () => {}
   }, [currentTrack?.id, currentTrack?.image])
 
   useEffect(() => {

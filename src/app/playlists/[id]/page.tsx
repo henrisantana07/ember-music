@@ -12,6 +12,8 @@ import { EditPlaylistModal } from '@/components/EditPlaylistModal'
 import { DeletePlaylistModal } from '@/components/DeletePlaylistModal'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
 import { formatDuration } from '@/lib/spotify'
+import { resolveCover, type CoverSource } from '@/lib/playlist/resolveCover'
+import { extractDominantColor } from '@/lib/color/extractDominantColor'
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -51,6 +53,7 @@ function PlaylistContent() {
   const [deleting, setDeleting] = useState(false)
   const [duplicating, setDuplicating] = useState(false)
   const [toast, setToast] = useState<{ message: string; action?: { label: string; onClick: () => void } } | null>(null)
+  const [coverColorEntry, setCoverColorEntry] = useState<{ src: string; color: string | null } | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(null)
   const pendingRemove = useRef<{ trackId: string; trackRow: PlaylistTrack; timeout: ReturnType<typeof setTimeout> } | null>(null)
 
@@ -354,6 +357,29 @@ function PlaylistContent() {
     }
   }, [tracks, id, showToast])
 
+  const coverColorSource = playlist
+    ? resolveCover({
+        cover_source: playlist.cover_source as CoverSource,
+        custom_cover_url: playlist.custom_cover_url,
+        last_track_cover_url: playlist.last_track_cover_url,
+      }).url ??
+      ((tracks[0]?.track_data as unknown as Track | null)?.image ?? null)
+    : null
+
+  useEffect(() => {
+    if (!coverColorSource) return
+    let cancelled = false
+    extractDominantColor(coverColorSource).then((color) => {
+      if (!cancelled) setCoverColorEntry({ src: coverColorSource, color })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [coverColorSource])
+
+  const coverColor =
+    coverColorSource && coverColorEntry?.src === coverColorSource ? coverColorEntry.color : null
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-48" role="status" aria-label="Carregando playlist">
@@ -377,12 +403,27 @@ function PlaylistContent() {
 
   return (
     <div className="w-full relative">
-      <div className="flex flex-col md:flex-row gap-6 mb-6">
-        <PlaylistCover
-          playlist={playlist as any}
-          size={240}
-          onClick={isOwner ? () => setCoverModalOpen(true) : undefined}
-        />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-6 left-0 right-0 h-[400px] transition-opacity duration-500"
+        style={{
+          opacity: coverColor ? 1 : 0,
+          background: coverColor
+            ? `radial-gradient(ellipse 75% 95% at 22% 32%, ${coverColor}66 0%, transparent 62%), radial-gradient(ellipse 70% 85% at 78% 8%, ${coverColor}40 0%, transparent 60%)`
+            : 'none',
+        }}
+      />
+      <div className="relative z-10 flex flex-col md:flex-row gap-6 mb-6">
+        <div
+          className="rounded-lg flex-shrink-0"
+          style={{ boxShadow: coverColor ? `0 24px 64px ${coverColor}59` : undefined }}
+        >
+          <PlaylistCover
+            playlist={playlist as any}
+            size={240}
+            onClick={isOwner ? () => setCoverModalOpen(true) : undefined}
+          />
+        </div>
 
         <div className="flex flex-col justify-end flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -525,7 +566,7 @@ function PlaylistContent() {
         </div>
       </div>
 
-      <div className="space-y-1">
+      <div className="relative z-10 space-y-1">
         {tracks.length === 0 && (
           <div className="text-center py-12">
             <svg className="w-16 h-16 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1} style={{ color: 'var(--text-disabled)' }}>
