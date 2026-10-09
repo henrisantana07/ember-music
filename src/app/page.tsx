@@ -292,9 +292,15 @@ function HomeContent() {
 export default function HomePage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center gap-3 py-10">
-        <div className="w-5 h-5 border-2 border-[var(--accent-from)] border-t-transparent rounded-full animate-spin" />
-        <span style={{ color: 'var(--text-secondary)' }}>Carregando...</span>
+      <div className="space-y-6">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i}>
+            <div className="w-48 h-5 rounded mb-3" style={{ background: 'var(--bg-elevated)', animation: 'shimmer 1.5s infinite' }} />
+            <div className="flex gap-3 overflow-hidden">
+              {Array.from({ length: 6 }).map((_, j) => <TrackCardSkeleton key={j} />)}
+            </div>
+          </div>
+        ))}
       </div>
     }>
       <HomePageInner />

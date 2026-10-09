@@ -72,7 +72,7 @@ export default function AlbumPage() {
     )
   }
 
-  if (!album) return <div className="py-20 text-center" style={{ color: 'var(--text-secondary)' }}>Álbum não encontrado</div>
+  if (!album) return <div className="py-16 text-center" style={{ color: 'var(--text-secondary)' }}>Álbum não encontrado</div>
 
   const durationTotal = album.tracks.reduce((acc, t) => acc + (t.duration || 0), 0)
   const minutes = Math.floor(durationTotal / 60)

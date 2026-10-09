@@ -435,7 +435,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       </header>
 
       <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-0 min-h-0 px-4 md:px-6 pb-4">
-        <div className={`flex-1 md:flex-[3] flex flex-col items-center justify-center gap-3 md:gap-4 min-h-0 overflow-hidden pt-1 md:pt-2 pb-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
+        <div className={`flex-1 md:flex-[3] flex flex-col items-center justify-center gap-3 md:gap-3 min-h-0 overflow-hidden pt-1 md:pt-2 pb-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
           <div ref={coverRef} className="now-cover relative flex-shrink-0" style={{ aspectRatio: '1' }}>
             {currentTrack.image ? (
               <img
@@ -452,7 +452,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             )}
           </div>
 
-          <div className="w-full max-w-[480px] text-center space-y-0.5">
+          <div className="w-full max-w-[520px] text-center space-y-0.5">
             <h1 className="text-[28px] md:text-[32px] leading-tight font-bold truncate" style={{ color: 'var(--text-primary)' }} title={currentTrack.name}>
               {currentTrack.name}
             </h1>
