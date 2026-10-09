@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { savePlaybackHistory } from '@/lib/playback-history'
 import { ExpandedPlayerModal } from '@/components/ExpandedPlayerModal'
-import { useYouTube } from '@/components/YouTubePlayer/context'
+import { useYouTube, useYouTubeTime } from '@/components/YouTubePlayer/context'
 import { ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause } from 'lucide-react'
 
 export function Player() {
@@ -39,7 +39,8 @@ export function Player() {
   const isYouTubeTrack = currentTrack?.source === 'youtube' && !!currentTrack.youtubeVideoId
 
   const yt = useYouTube()
-  const { seek: ytSeek, currentTime: ytCurrentTime, duration: ytDuration } = yt
+  const { seek: ytSeek, getCurrentTime: ytGetCurrentTime } = yt
+  const { currentTime: ytCurrentTime, duration: ytDuration } = useYouTubeTime()
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
@@ -196,13 +197,13 @@ export function Player() {
   }, [isYouTubeTrack, ytSeek])
 
   const handlePrev = useCallback(() => {
-    const currentTime = isYouTubeTrack ? ytCurrentTime : (audioRef.current?.currentTime ?? 0)
+    const currentTime = isYouTubeTrack ? ytGetCurrentTime() : (audioRef.current?.currentTime ?? 0)
     if (currentTime > 3) {
       handleSeek(0)
     } else {
       prev()
     }
-  }, [isYouTubeTrack, ytCurrentTime, handleSeek, prev])
+  }, [isYouTubeTrack, ytGetCurrentTime, handleSeek, prev])
 
   const showToast = useCallback((msg: string) => {
     setToast(msg)

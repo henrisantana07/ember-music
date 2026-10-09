@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { usePlayerStore } from '@/lib/store'
@@ -19,7 +19,7 @@ import {
   Shuffle, Repeat, Repeat1, Volume2, Volume1, VolumeX,
   Music, Trash2, GripVertical,
 } from 'lucide-react'
-import { useYouTube } from '@/components/YouTubePlayer/context'
+import { useYouTube, useYouTubeTime } from '@/components/YouTubePlayer/context'
 import { extractDominantColor } from '@/lib/color/extractDominantColor'
 
 function getAudioEl(): HTMLAudioElement | null {
@@ -31,9 +31,9 @@ function queueIndexFromItemKey(key: string | number): number {
   return Number.isFinite(parsed) ? parsed : -1
 }
 
-function SortableQueueItem({ track, sortableId, isCurrent, isPlaying, onPlay, onRemove }: {
-  track: Track; sortableId: string; isCurrent: boolean; isPlaying: boolean;
-  onPlay: () => void; onRemove: () => void
+const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, index, isCurrent, isPlaying, onPlay, onRemove }: {
+  track: Track; sortableId: string; index: number; isCurrent: boolean; isPlaying: boolean;
+  onPlay: (index: number) => void; onRemove: (index: number) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: sortableId })
   const style = {
@@ -63,7 +63,7 @@ function SortableQueueItem({ track, sortableId, isCurrent, isPlaying, onPlay, on
           </div>
         </div>
       ) : (
-        <button onClick={onPlay} className="w-10 h-10 rounded flex-shrink-0 overflow-hidden relative">
+        <button onClick={() => onPlay(index)} className="w-10 h-10 rounded flex-shrink-0 overflow-hidden relative">
           {track.image ? (
             <img src={track.image} alt="" className="w-full h-full object-cover" />
           ) : (
@@ -86,7 +86,7 @@ function SortableQueueItem({ track, sortableId, isCurrent, isPlaying, onPlay, on
       </div>
 
       <button
-        onClick={onRemove}
+        onClick={() => onRemove(index)}
         className="h-11 w-11 rounded-full z-10 relative inline-flex items-center justify-center transition-colors state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         title="Remover da fila"
         aria-label={`Remover ${track.name} da fila`}
@@ -95,11 +95,70 @@ function SortableQueueItem({ track, sortableId, isCurrent, isPlaying, onPlay, on
       </button>
     </div>
   )
-}
+})
+
+const ProgressSection = memo(function ProgressSection({ isYouTubeTrack, handleSeek, isDragging, setIsDragging }: {
+  isYouTubeTrack: boolean
+  handleSeek: (seconds: number) => void
+  isDragging: boolean
+  setIsDragging: (dragging: boolean) => void
+}) {
+  const progress = usePlayerStore((s) => s.progress)
+  const duration = usePlayerStore((s) => s.duration)
+  const { currentTime: ytCurrentTime, duration: ytDuration } = useYouTubeTime()
+  const progressRef = useRef<HTMLDivElement>(null)
+
+  const currentDuration = isYouTubeTrack ? ytDuration : duration
+  const currentProgress = isYouTubeTrack ? ytCurrentTime : progress
+  const progressPercent = currentDuration > 0 ? (currentProgress / currentDuration) * 100 : 0
+
+  function handleProgressClick(e: React.MouseEvent) {
+    const rect = progressRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const x = (e.clientX - rect.left) / rect.width
+    handleSeek(x * currentDuration)
+  }
+
+  function handleProgressDrag(e: React.MouseEvent) {
+    if (!isDragging) return
+    const rect = progressRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+    handleSeek(x * currentDuration)
+  }
+
+  return (
+    <div className="w-full space-y-1">
+      <div
+        ref={progressRef}
+        className="w-full h-1 rounded-full cursor-pointer relative group hover:h-1.5 transition-all duration-200"
+        style={{ backgroundColor: 'var(--text-disabled)' }}
+        onClick={handleProgressClick}
+        onMouseDown={() => setIsDragging(true)}
+        onMouseMove={handleProgressDrag}
+        onMouseUp={() => setIsDragging(false)}
+        onMouseLeave={() => setIsDragging(false)}
+      >
+        <div
+          className="h-full rounded-full relative"
+          style={{ width: `${progressPercent}%`, background: 'linear-gradient(90deg, var(--accent-from), var(--accent-to))' }}
+        >
+          <div
+            className="absolute right-0 top-1/2 -translate-y-1/2 w-[14px] h-[14px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            style={{ backgroundColor: 'var(--accent-to)' }}
+          />
+        </div>
+      </div>
+      <div className="flex justify-between text-label-medium" style={{ color: 'var(--text-secondary)' }}>
+        <span>{formatDuration(Math.floor(currentProgress))}</span>
+        <span>{formatDuration(Math.floor(currentDuration))}</span>
+      </div>
+    </div>
+  )
+})
 
 export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const router = useRouter()
-  const progressRef = useRef<HTMLDivElement>(null)
   const [dominantColor, setDominantColor] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [showQueueOnMobile, setShowQueueOnMobile] = useState(false)
@@ -114,14 +173,26 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const [suggestions, setSuggestions] = useState<Track[]>([])
   const supabase = createClient()
 
-  const {
-    currentTrack, isPlaying, volume, progress, duration, queue,
-    repeat, shuffle, isExpandedOpen,
-    play, togglePlay, next, prev,
-    setVolume, setProgress, setDuration,
-    setRepeat, toggleShuffle,
-    removeFromQueue, reorderQueue, clearQueue, addToQueue,
-  } = usePlayerStore()
+  const currentTrack = usePlayerStore((s) => s.currentTrack)
+  const isPlaying = usePlayerStore((s) => s.isPlaying)
+  const volume = usePlayerStore((s) => s.volume)
+  const queue = usePlayerStore((s) => s.queue)
+  const repeat = usePlayerStore((s) => s.repeat)
+  const shuffle = usePlayerStore((s) => s.shuffle)
+  const isExpandedOpen = usePlayerStore((s) => s.isExpandedOpen)
+  const play = usePlayerStore((s) => s.play)
+  const togglePlay = usePlayerStore((s) => s.togglePlay)
+  const next = usePlayerStore((s) => s.next)
+  const prev = usePlayerStore((s) => s.prev)
+  const setVolume = usePlayerStore((s) => s.setVolume)
+  const setProgress = usePlayerStore((s) => s.setProgress)
+  const setDuration = usePlayerStore((s) => s.setDuration)
+  const setRepeat = usePlayerStore((s) => s.setRepeat)
+  const toggleShuffle = usePlayerStore((s) => s.toggleShuffle)
+  const removeFromQueue = usePlayerStore((s) => s.removeFromQueue)
+  const reorderQueue = usePlayerStore((s) => s.reorderQueue)
+  const clearQueue = usePlayerStore((s) => s.clearQueue)
+  const addToQueue = usePlayerStore((s) => s.addToQueue)
 
   const isFav = useIsFavorite(currentTrack?.id ?? '')
   const toggleFavorite = useFavoritesStore((s) => s.toggle)
@@ -131,9 +202,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const isYouTubeTrack = currentTrack?.source === 'youtube' && !!currentTrack.youtubeVideoId
 
   const yt = useYouTube()
-  const {
-    seek: ytSeek, currentTime: ytCurrentTime, duration: ytDuration,
-  } = yt
+  const { seek: ytSeek, getCurrentTime: ytGetCurrentTime } = yt
   const coverRef = useRef<HTMLDivElement>(null)
 
   function requestClose() {
@@ -154,13 +223,20 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   }, [isYouTubeTrack, ytSeek])
 
   const handlePrev = useCallback(() => {
-    const currentTime = isYouTubeTrack ? ytCurrentTime : (getAudioEl()?.currentTime ?? 0)
+    const currentTime = isYouTubeTrack ? ytGetCurrentTime() : (getAudioEl()?.currentTime ?? 0)
     if (currentTime > 3) {
       handleSeek(0)
     } else {
       prev()
     }
-  }, [isYouTubeTrack, ytCurrentTime, handleSeek, prev])
+  }, [isYouTubeTrack, ytGetCurrentTime, handleSeek, prev])
+
+  const playTrackAt = useCallback((queueIndex: number) => {
+    const track = queue[queueIndex]
+    if (!track) return
+    const store = usePlayerStore.getState()
+    store.play(track, store.originalQueue, store.currentPlaylistId ?? undefined, store.currentPlaylistName ?? undefined)
+  }, [queue])
 
   useEffect(() => {
     if (!currentTrack?.image) {
@@ -266,27 +342,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     )
   }
 
-  const currentDuration = isYouTubeTrack ? ytDuration : duration
-  const currentProgress = isYouTubeTrack ? ytCurrentTime : progress
-  const progressPercent = currentDuration > 0 ? (currentProgress / currentDuration) * 100 : 0
-
-  function handleProgressClick(e: React.MouseEvent) {
-    const rect = progressRef.current?.getBoundingClientRect()
-    if (!rect) return
-    const x = (e.clientX - rect.left) / rect.width
-    const newTime = x * currentDuration
-    handleSeek(newTime)
-  }
-
-  function handleProgressDrag(e: React.MouseEvent) {
-    if (!isDragging) return
-    const rect = progressRef.current?.getBoundingClientRect()
-    if (!rect) return
-    const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
-    const newTime = x * currentDuration
-    handleSeek(newTime)
-  }
-
   const bgGradient = dominantColor
     ? `radial-gradient(ellipse at 30% 20%, ${dominantColor}66 0%, var(--bg-base) 60%)`
     : 'var(--bg-nowplaying-fallback)'
@@ -383,13 +438,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     reorderQueue(fromIndex, toIndex)
   }
 
-  function playTrackAt(queueIndex: number) {
-    const track = queue[queueIndex]
-    if (!track) return
-    const store = usePlayerStore.getState()
-    store.play(track, store.originalQueue, store.currentPlaylistId ?? undefined, store.currentPlaylistName ?? undefined)
-  }
-
   return (
     <div
       className={`h-full relative flex flex-col overflow-hidden ${onClose ? '' : 'animate-slide-up'}`}
@@ -408,8 +456,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
         className="pointer-events-none absolute inset-0"
         style={{
           background: glowTint,
-          backdropFilter: 'blur(80px)',
-          WebkitBackdropFilter: 'blur(80px)',
         }}
       />
 
@@ -493,32 +539,12 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             </div>
           )}
 
-          <div className="w-full space-y-1">
-            <div
-              ref={progressRef}
-              className="w-full h-1 rounded-full cursor-pointer relative group hover:h-1.5 transition-all duration-200"
-              style={{ backgroundColor: 'var(--text-disabled)' }}
-              onClick={handleProgressClick}
-              onMouseDown={() => setIsDragging(true)}
-              onMouseMove={handleProgressDrag}
-              onMouseUp={() => setIsDragging(false)}
-              onMouseLeave={() => setIsDragging(false)}
-            >
-              <div
-                className="h-full rounded-full relative"
-                style={{ width: `${progressPercent}%`, background: 'linear-gradient(90deg, var(--accent-from), var(--accent-to))' }}
-              >
-                <div
-                  className="absolute right-0 top-1/2 -translate-y-1/2 w-[14px] h-[14px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ backgroundColor: 'var(--accent-to)' }}
-                />
-              </div>
-            </div>
-            <div className="flex justify-between text-label-medium" style={{ color: 'var(--text-secondary)' }}>
-              <span>{formatDuration(Math.floor(currentProgress))}</span>
-              <span>{formatDuration(Math.floor(currentDuration))}</span>
-            </div>
-          </div>
+          <ProgressSection
+            isYouTubeTrack={isYouTubeTrack}
+            handleSeek={handleSeek}
+            isDragging={isDragging}
+            setIsDragging={setIsDragging}
+          />
 
           <div className="w-full flex flex-col md:flex-row items-center justify-center gap-3 md:gap-6">
             <div className="flex items-center justify-center gap-2 md:gap-3">
@@ -647,10 +673,11 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                         key={`${index}-${track.id}`}
                         track={track}
                         sortableId={`${index}::${track.id}`}
+                        index={index}
                         isCurrent={track.id === currentTrack.id}
                         isPlaying={isPlaying}
-                        onPlay={() => playTrackAt(index)}
-                        onRemove={() => removeFromQueue(index)}
+                        onPlay={playTrackAt}
+                        onRemove={removeFromQueue}
                       />
                     ))
                   )}

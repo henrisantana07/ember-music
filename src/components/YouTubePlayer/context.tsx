@@ -19,19 +19,29 @@ export interface YouTubeContextValue {
   videoId: string | null
   isReady: boolean
   isPlaying: boolean
-  currentTime: number
-  duration: number
   error: string | null
   seek: (seconds: number) => void
   setOverlayTarget: (el: HTMLElement | null) => void
+  getCurrentTime: () => number
+  getDuration: () => number
+}
+
+export interface YouTubeTimeValue {
+  currentTime: number
+  duration: number
 }
 
 const YouTubeContext = createContext<YouTubeContextValue | null>(null)
+const YouTubeTimeContext = createContext<YouTubeTimeValue>({ currentTime: 0, duration: 0 })
 
 export function useYouTube(): YouTubeContextValue {
   const ctx = useContext(YouTubeContext)
   if (!ctx) throw new Error('useYouTube deve ser usado dentro de YouTubePlayerProvider')
   return ctx
+}
+
+export function useYouTubeTime(): YouTubeTimeValue {
+  return useContext(YouTubeTimeContext)
 }
 
 function applyHidden(el: HTMLDivElement) {
@@ -80,22 +90,32 @@ export function YouTubePlayerProvider({ children }: { children: ReactNode }) {
   const stageRef = useRef<HTMLDivElement>(null)
   const [overlayTarget, setOverlayTarget] = useState<HTMLElement | null>(null)
 
+  const timeRef = useRef({ currentTime: 0, duration: 0 })
+  timeRef.current.currentTime = ytCurrentTime
+  timeRef.current.duration = ytDuration
+
+  const getCurrentTime = useCallback(() => timeRef.current.currentTime, [])
+  const getDuration = useCallback(() => timeRef.current.duration, [])
+
   useEffect(() => {
     const stage = stageRef.current
     if (!stage) return
 
+    let lastRect = ''
+
     const sync = () => {
       if (!overlayTarget || !overlayTarget.isConnected) {
-        applyHidden(stage)
+        if (lastRect !== 'hidden') {
+          applyHidden(stage)
+          lastRect = 'hidden'
+        }
         return
       }
       const r = overlayTarget.getBoundingClientRect()
-      applyOverlay(stage, {
-        left: r.left,
-        top: r.top,
-        width: r.width,
-        height: r.height,
-      })
+      const key = `${r.left},${r.top},${r.width},${r.height}`
+      if (key === lastRect) return
+      lastRect = key
+      applyOverlay(stage, { left: r.left, top: r.top, width: r.width, height: r.height })
     }
 
     sync()
@@ -135,24 +155,31 @@ export function YouTubePlayerProvider({ children }: { children: ReactNode }) {
     [ytIsReady, ytSeek]
   )
 
-  const value = useMemo<YouTubeContextValue>(
+  const stableValue = useMemo<YouTubeContextValue>(
     () => ({
       isYouTubeTrack: !!isYouTubeTrack,
       videoId,
       isReady: ytIsReady,
       isPlaying: ytIsPlaying,
-      currentTime: ytCurrentTime,
-      duration: ytDuration,
       error: ytError,
       seek,
       setOverlayTarget,
+      getCurrentTime,
+      getDuration,
     }),
-    [isYouTubeTrack, videoId, ytIsReady, ytIsPlaying, ytCurrentTime, ytDuration, ytError, seek]
+    [isYouTubeTrack, videoId, ytIsReady, ytIsPlaying, ytError, seek, getCurrentTime, getDuration]
+  )
+
+  const timeValue = useMemo<YouTubeTimeValue>(
+    () => ({ currentTime: ytCurrentTime, duration: ytDuration }),
+    [ytCurrentTime, ytDuration]
   )
 
   return (
-    <YouTubeContext.Provider value={value}>
-      {children}
+    <YouTubeContext.Provider value={stableValue}>
+      <YouTubeTimeContext.Provider value={timeValue}>
+        {children}
+      </YouTubeTimeContext.Provider>
       <div ref={stageRef} style={{ position: 'fixed', left: 0, top: 0, width: 1, height: 1, opacity: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: -1 }} aria-hidden="true" data-ember-yt-stage="">
         <div ref={containerRef} className="w-full h-full block" title="YouTube player" />
       </div>
