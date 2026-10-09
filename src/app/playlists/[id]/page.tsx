@@ -337,7 +337,7 @@ function PlaylistContent() {
     const [moved] = reordered.splice(oldIndex, 1)
     reordered.splice(newIndex, 0, moved)
 
-    setTracks(reordered)
+    setTracks(reordered.map((t, i) => ({ ...t, position: i })))
 
     const updates = reordered.map((t, i) => ({
       id: t.id,

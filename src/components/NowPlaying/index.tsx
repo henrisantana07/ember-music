@@ -26,11 +26,16 @@ function getAudioEl(): HTMLAudioElement | null {
   return document.querySelector('audio')
 }
 
-function SortableQueueItem({ track, isCurrent, isPlaying, onPlay, onRemove }: {
-  track: Track; isCurrent: boolean; isPlaying: boolean;
+function queueIndexFromItemKey(key: string | number): number {
+  const parsed = Number(String(key).split('::')[0])
+  return Number.isFinite(parsed) ? parsed : -1
+}
+
+function SortableQueueItem({ track, sortableId, isCurrent, isPlaying, onPlay, onRemove }: {
+  track: Track; sortableId: string; isCurrent: boolean; isPlaying: boolean;
   onPlay: () => void; onRemove: () => void
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: track.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: sortableId })
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -370,9 +375,11 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   function handleDragEnd(event: { active: { id: string | number }; over: { id: string | number } | null }) {
     const { active, over } = event
     if (!over || active.id === over.id) return
-    const fromIndex = queue.findIndex(t => t.id === active.id)
-    const toIndex = queue.findIndex(t => t.id === over.id)
-    if (fromIndex === -1 || toIndex === -1) return
+    const fromIndex = queueIndexFromItemKey(active.id)
+    const toIndex = queueIndexFromItemKey(over.id)
+    if (fromIndex < 0 || fromIndex >= queue.length) return
+    if (toIndex < 0 || toIndex >= queue.length) return
+    if (fromIndex === toIndex) return
     reorderQueue(fromIndex, toIndex)
   }
 
@@ -599,7 +606,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             </div>
 
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={queue.map(t => t.id)} strategy={verticalListSortingStrategy}>
+              <SortableContext items={queue.map((t, index) => `${index}::${t.id}`)} strategy={verticalListSortingStrategy}>
                 <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full">
                   <div className="px-1 space-y-1">
                   {queue.length === 0 ? (
@@ -639,6 +646,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                       <SortableQueueItem
                         key={`${index}-${track.id}`}
                         track={track}
+                        sortableId={`${index}::${track.id}`}
                         isCurrent={track.id === currentTrack.id}
                         isPlaying={isPlaying}
                         onPlay={() => playTrackAt(index)}

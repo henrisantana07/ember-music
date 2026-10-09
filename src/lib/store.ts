@@ -171,20 +171,59 @@ export const usePlayerStore = create<PlayerState>()(
 
   addToQueue: (track) => set((s) => ({ queue: [...s.queue, track], originalQueue: [...s.originalQueue, track] })),
   removeFromQueue: (index) => set((s) => {
+    if (index < 0 || index >= s.queue.length) return {}
+
     const newQueue = [...s.queue]
     newQueue.splice(index, 1)
     const newOriginal = [...s.originalQueue]
-    newOriginal.splice(index, 1)
-    return { queue: newQueue, originalQueue: newOriginal }
+    if (index < newOriginal.length) newOriginal.splice(index, 1)
+
+    if (!s.shuffle || s.shuffleOrder.length === 0) {
+      return { queue: newQueue, originalQueue: newOriginal }
+    }
+
+    const removedAt = s.shuffleOrder.indexOf(index)
+    const newShuffleOrder = s.shuffleOrder
+      .filter((idx) => idx !== index)
+      .map((idx) => (idx > index ? idx - 1 : idx))
+
+    let currentShuffleIndex = s.currentShuffleIndex
+    if (removedAt !== -1) {
+      if (removedAt < s.currentShuffleIndex) {
+        currentShuffleIndex = s.currentShuffleIndex - 1
+      } else if (removedAt === s.currentShuffleIndex) {
+        currentShuffleIndex = Math.min(s.currentShuffleIndex, Math.max(0, newShuffleOrder.length - 1))
+      }
+    }
+
+    return { queue: newQueue, originalQueue: newOriginal, shuffleOrder: newShuffleOrder, currentShuffleIndex }
   }),
   reorderQueue: (fromIndex, toIndex) => set((s) => {
+    if (fromIndex === toIndex) return {}
+    if (fromIndex < 0 || fromIndex >= s.queue.length) return {}
+    if (toIndex < 0 || toIndex >= s.queue.length) return {}
+
     const newQueue = [...s.queue]
     const [moved] = newQueue.splice(fromIndex, 1)
     newQueue.splice(toIndex, 0, moved)
     const newOriginal = [...s.originalQueue]
-    const [movedOrig] = newOriginal.splice(fromIndex, 1)
-    newOriginal.splice(toIndex, 0, movedOrig)
-    return { queue: newQueue, originalQueue: newOriginal }
+    if (fromIndex < newOriginal.length) {
+      const [movedOrig] = newOriginal.splice(fromIndex, 1)
+      if (movedOrig !== undefined) newOriginal.splice(toIndex, 0, movedOrig)
+    }
+
+    if (!s.shuffle || s.shuffleOrder.length === 0) {
+      return { queue: newQueue, originalQueue: newOriginal }
+    }
+
+    const newShuffleOrder = s.shuffleOrder.map((idx) => {
+      if (idx === fromIndex) return toIndex
+      if (fromIndex < toIndex && idx > fromIndex && idx <= toIndex) return idx - 1
+      if (fromIndex > toIndex && idx >= toIndex && idx < fromIndex) return idx + 1
+      return idx
+    })
+
+    return { queue: newQueue, originalQueue: newOriginal, shuffleOrder: newShuffleOrder }
   }),
   clearQueue: () => set({ queue: [], originalQueue: [], shuffleOrder: [], currentShuffleIndex: 0, currentPlaylistId: null, currentPlaylistName: null }),
 
