@@ -103,10 +103,10 @@ function GenrePage({ genero, genreId }: { genero: string; genreId: string }) {
 
   return (
     <div
-      className="mx-auto max-w-[1100px] px-8 space-y-8"
+      className="w-full space-y-8"
     >
       <div
-        className="rounded-2xl p-8 -mx-8"
+        className="rounded-2xl p-8"
         style={{ background: `linear-gradient(135deg, ${gradient.from}, ${gradient.to})` }}
       >
         <h1 className="text-4xl font-bold capitalize" style={{ color: 'var(--text-on-accent)', textShadow: '0 2px 6px rgba(0,0,0,0.3)' }}>
@@ -127,7 +127,7 @@ function GenrePage({ genero, genreId }: { genero: string; genreId: string }) {
           </div>
           <div className="space-y-3">
             <div className="h-5 w-28 rounded skeleton" />
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid [grid-template-columns:repeat(auto-fill,minmax(180px,1fr))] gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="space-y-2">
                   <div className="aspect-square rounded-lg skeleton" />

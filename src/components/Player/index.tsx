@@ -430,7 +430,7 @@ export function Player() {
             </button>
           </div>
 
-          <div className="w-full max-w-lg flex items-center gap-2 text-label-medium" style={{ color: 'var(--text-disabled)' }}>
+          <div className="w-full flex items-center gap-2 text-label-medium" style={{ color: 'var(--text-disabled)' }}>
             <span className="w-8 text-right">{formatDuration(Math.floor(currentProgress))}</span>
             <div ref={progressRef}
               className="flex-1 h-1 rounded-full cursor-pointer relative"

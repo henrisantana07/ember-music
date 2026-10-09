@@ -24,7 +24,7 @@ export function ArtistHeader({ artist, onPlay }: ArtistHeaderProps) {
     <div className="relative overflow-hidden rounded-2xl" style={{ minHeight: 400 }}>
       <ArtistHeaderBackground imageUrl={imageUrl} artistName={artist.name} />
 
-      <div className="relative z-10 flex flex-col items-center justify-center gap-6 px-6 py-16 text-center">
+      <div className="relative z-10 flex flex-col items-center justify-center gap-5 px-6 py-10 text-center">
         <ArtistPhoto imageUrl={imageUrl} name={artist.name} />
 
         <h1 className="text-4xl font-bold tracking-tight">{artist.name}</h1>

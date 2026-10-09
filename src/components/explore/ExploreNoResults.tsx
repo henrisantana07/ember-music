@@ -50,7 +50,7 @@ export function ExploreNoResults({ query, activeFilterCount, onClearFilters }: E
       {trending.length > 0 && (
         <section>
           <h2 className="text-lg font-bold mb-4">Tendências enquanto isso</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))] gap-4">
             {trending.map((track) => (
               <TrackCard key={track.id} track={track} tracks={trending} user={user} />
             ))}

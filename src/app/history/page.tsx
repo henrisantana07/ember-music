@@ -54,7 +54,7 @@ export default function HistoryPage() {
 
   if (stillLoading) {
     return (
-      <div className="flex items-center justify-center py-32" role="status" aria-label="Carregando histórico">
+      <div className="flex items-center justify-center py-16" role="status" aria-label="Carregando histórico">
         <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--accent-from)', borderTopColor: 'transparent' }} />
       </div>
     )
@@ -62,7 +62,7 @@ export default function HistoryPage() {
 
   if (error) {
     return (
-      <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
+      <div className="mx-auto w-full">
         <h1 className="text-2xl font-bold mb-6">Histórico de Reprodução</h1>
         <ErrorState
           title="Não foi possível carregar o histórico"
@@ -75,7 +75,7 @@ export default function HistoryPage() {
 
   if (!user) {
     return (
-      <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
+      <div className="mx-auto w-full">
         <h1 className="text-2xl font-bold mb-6">Histórico de Reprodução</h1>
         <EmptyState
           title="Entre para ver seu histórico"
@@ -90,7 +90,7 @@ export default function HistoryPage() {
   const flatTracks = items.map((i) => i.track_data)
 
   return (
-    <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
+    <div className="mx-auto w-full">
       <h1 className="text-2xl font-bold mb-6">Histórico de Reprodução</h1>
 
       {items.length === 0 ? (
@@ -105,7 +105,7 @@ export default function HistoryPage() {
             <h2 className="text-label-medium font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-secondary)' }}>
               {date}
             </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
               {group.map((item) => (
                 <TrackCard
                   key={`${item.track_data.id}-${item.played_at}`}

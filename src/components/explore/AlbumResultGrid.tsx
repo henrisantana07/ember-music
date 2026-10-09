@@ -96,7 +96,7 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div className="grid [grid-template-columns:repeat(auto-fill,minmax(180px,1fr))] gap-3">
         {Array.from({ length: maxItems ?? 4 }).map((_, i) => (
           <div key={i} className="space-y-2">
             <div className="aspect-square rounded-lg skeleton" />
@@ -112,7 +112,7 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
   if (displayAlbums.length === 0) return null
 
   return (
-    <><div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+    <><div className="grid [grid-template-columns:repeat(auto-fill,minmax(180px,1fr))] gap-4">
       {displayAlbums.map((album) => {
         const isSaving = savingId === album.id
         const isSaved = savedIds.has(album.id)

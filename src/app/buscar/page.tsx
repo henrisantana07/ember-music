@@ -5,7 +5,7 @@ import { ExplorePage } from '@/components/explore/ExplorePage'
 
 function ExploreResultsSkeleton() {
   return (
-    <div className="mx-auto space-y-6" style={{ maxWidth: 1100, paddingLeft: 32, paddingRight: 32 }}>
+    <div className="w-full space-y-6">
       <div className="h-4 w-24 rounded skeleton mb-2" />
       <div className="h-8 w-64 rounded skeleton mb-8" />
       <div className="flex gap-6">

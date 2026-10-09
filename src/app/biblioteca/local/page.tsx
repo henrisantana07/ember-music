@@ -327,7 +327,7 @@ function LocalLibraryContent() {
   }
 
   return (
-    <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1400 }}>
+    <div className="mx-auto w-full" style={{ maxWidth: 1400 }}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <button

@@ -60,7 +60,7 @@ export default function ArtistPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
+      <div className="mx-auto w-full">
         <ArtistHeaderSkeleton />
       </div>
     )
@@ -68,7 +68,7 @@ export default function ArtistPage() {
 
   if (error || !artist) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 gap-4 mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
+      <div className="flex flex-col items-center justify-center py-16 gap-4 mx-auto w-full">
         <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
           {error || 'Artista não encontrado'}
         </p>
@@ -87,13 +87,13 @@ export default function ArtistPage() {
   }
 
   return (
-    <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
+    <div className="mx-auto w-full">
       <ArtistHeader artist={artist} onPlay={handlePlay} />
 
       {tracks.length > 0 && (
         <section className="mt-10">
           <h2 className="text-xl font-bold mb-4">Top Músicas</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
             {tracks.map((track) => (
               <TrackCard key={track.id} track={track} tracks={tracks} user={user} />
             ))}

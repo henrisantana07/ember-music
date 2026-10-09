@@ -23,7 +23,7 @@ export function GenreGrid() {
     return (
       <section>
         <h2 className="text-lg font-bold mb-4">Explorar gêneros</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid [grid-template-columns:repeat(auto-fill,minmax(220px,1fr))] gap-4">
           {Array.from({ length: 8 }).map((_, i) => <GenreCardSkeleton key={i} />)}
         </div>
       </section>
@@ -35,7 +35,7 @@ export function GenreGrid() {
   return (
     <section>
       <h2 className="text-lg font-bold mb-4">Explorar gêneros</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid [grid-template-columns:repeat(auto-fill,minmax(220px,1fr))] gap-4">
         {genres.map((genre) => {
           const gradient = getGenreGradient(genre.name)
           return (

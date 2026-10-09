@@ -328,7 +328,7 @@ export default function ConfiguracoesPage() {
   if (!user || loading) return null
 
   return (
-    <div className="mx-auto w-full px-4 md:px-8">
+    <div className="mx-auto w-full">
       {/* Mobile tabs */}
       <div className="flex md:hidden gap-1 mb-6 overflow-x-auto hide-scrollbar">
         {SECTIONS.map((s) => (

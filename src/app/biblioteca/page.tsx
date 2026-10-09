@@ -381,7 +381,7 @@ function BibliotecaContent() {
   if (!user) return null
 
   return (
-    <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
+    <div className="mx-auto w-full">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Biblioteca</h1>
         {activeTab === 'playlists' && (
@@ -461,7 +461,7 @@ function BibliotecaContent() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" role="status" aria-label="Carregando biblioteca">
+        <div className="grid [grid-template-columns:repeat(auto-fill,minmax(180px,1fr))] gap-3" role="status" aria-label="Carregando biblioteca">
           {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : loadError ? (
@@ -505,7 +505,7 @@ function BibliotecaContent() {
                 <button onClick={() => router.push('/buscar?filtro=artistas')} className="btn-primary text-label-large min-h-[48px] px-6">Explorar artistas</button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div className="grid [grid-template-columns:repeat(auto-fill,minmax(180px,1fr))] gap-4">
                 {getSortedArtists().map((a) => (
                   <div
                     key={a.artist_id}
@@ -560,7 +560,7 @@ function BibliotecaContent() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div className="grid [grid-template-columns:repeat(auto-fill,minmax(180px,1fr))] gap-4">
                 {getSortedPlaylists().map((pl) => (
                   <div
                     key={pl.id}

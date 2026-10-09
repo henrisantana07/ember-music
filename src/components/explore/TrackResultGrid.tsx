@@ -42,7 +42,7 @@ export function TrackResultGrid({ tracks, loading, compact, maxItems }: TrackRes
 
   if (loading) {
     return (
-      <div className={compact ? 'space-y-2' : 'grid grid-cols-1 sm:grid-cols-2 gap-3'}>
+      <div className={compact ? 'space-y-2' : 'grid [grid-template-columns:repeat(auto-fill,minmax(320px,1fr))] gap-3'}>
         {Array.from({ length: maxItems ?? 6 }).map((_, i) => <ExploreTrackSkeleton key={i} compact={compact} />)}
       </div>
     )
@@ -120,7 +120,7 @@ export function TrackResultGrid({ tracks, loading, compact, maxItems }: TrackRes
   }
 
   return (
-    <><div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <><div className="grid [grid-template-columns:repeat(auto-fill,minmax(320px,1fr))] gap-4">
       {displayTracks.map((track, index) => {
         const isActive = currentTrack?.id === track.id
         const isFav = favs[track.id] === true

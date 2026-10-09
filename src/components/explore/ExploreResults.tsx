@@ -200,7 +200,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
 
   if (searchError && !loading && !hasResults) {
     return (
-      <div className="mx-auto max-w-[1100px] px-8">
+      <div className="w-full">
         <ErrorState
           title="Não foi possível buscar agora"
           description="Verifique sua conexão e tente novamente."
@@ -216,7 +216,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
 
   return (
     <><div
-      className="mx-auto max-w-[1100px] px-8 space-y-6"
+      className="w-full space-y-6"
     >
       <div>
         <p className="text-body-medium mb-1" style={{ color: 'var(--text-disabled)' }}>Resultados para</p>
@@ -338,7 +338,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
         <section>
           <ArtistResultCarousel artists={filteredArtists} />
           {filteredArtists.length > 8 && (
-            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-4 mt-4">
+            <div className="grid [grid-template-columns:repeat(auto-fill,minmax(160px,1fr))] gap-4 mt-4">
               {filteredArtists.slice(8).map((artist) => (
                 <a
                   key={artist.id}

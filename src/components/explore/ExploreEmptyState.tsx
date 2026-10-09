@@ -16,7 +16,7 @@ interface ExploreEmptyStateProps {
 export function ExploreEmptyState({ user, onSearch, userTracks, userLabel }: ExploreEmptyStateProps) {
   return (
     <div
-      className="mx-auto max-w-[1100px] px-8 space-y-10"
+      className="w-full space-y-10"
     >
       <SearchHistory user={user} onSearch={onSearch} />
       <ExploreTrending userLabel={userLabel} userTracks={userTracks} />

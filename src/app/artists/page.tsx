@@ -41,21 +41,21 @@ export default function ArtistsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-32">
+      <div className="flex items-center justify-center py-16">
         <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--accent-from)', borderTopColor: 'transparent' }} />
       </div>
     )
   }
 
   return (
-    <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
+    <div className="mx-auto w-full">
       <h1 className="text-2xl font-bold mb-6">Meus Artistas</h1>
       {artists.length === 0 ? (
-        <div className="py-20 text-center" style={{ color: 'var(--text-secondary)' }}>
+        <div className="py-16 text-center" style={{ color: 'var(--text-secondary)' }}>
           Você ainda não segue nenhum artista.
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(320px,1fr))]">
           {artists.map((a) => (
             <div key={a.artist_id}
               className="flex items-center gap-4 p-4 rounded-xl transition-colors hover:bg-state-hover"

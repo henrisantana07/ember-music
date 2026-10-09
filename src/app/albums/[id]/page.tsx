@@ -56,7 +56,7 @@ export default function AlbumPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-32" role="status" aria-label="Carregando álbum">
+      <div className="flex items-center justify-center py-16" role="status" aria-label="Carregando álbum">
         <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--accent-from)', borderTopColor: 'transparent' }} />
       </div>
     )
@@ -78,7 +78,7 @@ export default function AlbumPage() {
   const minutes = Math.floor(durationTotal / 60)
 
   return (
-    <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
+    <div className="mx-auto w-full">
       <div className="flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-6 mb-8 p-4 md:p-6 rounded-2xl" style={{ background: 'var(--bg-elevated)' }}>
         <img src={album.image || '/placeholder.svg'} alt={album.name}
           className="w-40 h-40 md:w-48 md:h-48 rounded-xl object-cover shadow-lg flex-shrink-0" />
@@ -109,7 +109,7 @@ export default function AlbumPage() {
 
       <div className="mt-8">
         <h2 className="text-xl font-bold mb-4">Faixas</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
           {album.tracks.map((track) => (
             <TrackCard key={track.id} track={track} tracks={album.tracks} user={user} />
           ))}
