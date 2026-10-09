@@ -328,7 +328,7 @@ export default function ConfiguracoesPage() {
   if (!user || loading) return null
 
   return (
-    <div className="mx-auto w-full px-4 md:px-8" style={{ maxWidth: 1100 }}>
+    <div className="mx-auto w-full px-4 md:px-8">
       {/* Mobile tabs */}
       <div className="flex md:hidden gap-1 mb-6 overflow-x-auto hide-scrollbar">
         {SECTIONS.map((s) => (
@@ -346,7 +346,7 @@ export default function ConfiguracoesPage() {
         ))}
       </div>
 
-      <div className="flex gap-8">
+      <div className="flex gap-6">
         {/* Desktop sidebar menu */}
         <nav className="hidden md:block w-[200px] shrink-0 sticky top-0 self-start" style={{ paddingTop: '2px' }}>
           <div className="space-y-1">
@@ -370,7 +370,7 @@ export default function ConfiguracoesPage() {
         </nav>
 
         {/* Content */}
-        <div className="flex-1 min-w-0" style={{ maxWidth: 680 }}>
+        <div className="flex-1 min-w-0">
           {/* Save indicator */}
           <div className="flex items-center justify-end h-6 mb-4">
             <SaveIndicator saving={settingsSaving} saved={settingsSaved} />
@@ -457,7 +457,7 @@ export default function ConfiguracoesPage() {
               )}
 
               {/* Display name */}
-              <div className="mb-5">
+              <div className="mb-5 max-w-2xl">
                 <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-primary)' }}>Nome de exibição</label>
                 <input
                   type="text"
@@ -477,7 +477,7 @@ export default function ConfiguracoesPage() {
               </div>
 
               {/* Gênero favorito */}
-              <div className="mb-5">
+              <div className="mb-5 max-w-2xl">
                 <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-primary)' }}>Gênero musical favorito</label>
                 <input
                   type="text"
@@ -496,7 +496,7 @@ export default function ConfiguracoesPage() {
               </div>
 
               {/* Bio */}
-              <div className="mb-5">
+              <div className="mb-5 max-w-2xl">
                 <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-primary)' }}>Bio</label>
                 <textarea
                   value={bio}
@@ -517,7 +517,7 @@ export default function ConfiguracoesPage() {
               </div>
 
               {/* Read-only info */}
-              <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: 'var(--bg-surface)' }}>
+              <div className="mb-6 p-4 rounded-lg max-w-2xl" style={{ backgroundColor: 'var(--bg-surface)' }}>
                 <p className="text-body-large mb-1">
                   <span style={{ color: 'var(--text-secondary)' }}>E-mail: </span>
                   <span>{email}</span>
@@ -529,7 +529,7 @@ export default function ConfiguracoesPage() {
               {/* Danger zone */}
               <hr className="my-8" style={{ borderColor: 'var(--bg-elevated)' }} />
               <h3 className="text-title-medium font-semibold mb-4" style={{ color: 'var(--error)' }}>Zona de perigo</h3>
-              <div className="space-y-3">
+              <div className="space-y-3 max-w-2xl">
                 <button onClick={handleSignOutAll} className="min-h-[48px] px-5 text-label-large rounded-lg border" style={{ borderColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
                   Sair de todos os dispositivos
                 </button>
@@ -603,7 +603,7 @@ export default function ConfiguracoesPage() {
               {/* Theme */}
               <div className="mb-8">
                 <label className="block text-sm font-medium mb-3" style={{ color: 'var(--text-primary)' }}>Tema</label>
-                <div className="grid grid-cols-2 gap-4 max-w-sm">
+                <div className="grid grid-cols-2 gap-4 max-w-md">
                   {[
                     { id: 'dark', label: 'Escuro', bg: '#0A0908', surface: '#161311', accent: '#FF6A00' },
                     { id: 'light', label: 'Claro', bg: '#FAF8F5', surface: '#F0EDE8', accent: '#FF6A00' },
@@ -663,7 +663,7 @@ export default function ConfiguracoesPage() {
             <section>
               <h2 className="text-2xl font-bold mb-6">Preferências de Reprodução</h2>
 
-              <div className="space-y-6 max-w-sm">
+              <div className="grid gap-6 md:grid-cols-2">
                 {/* Audio quality */}
                 <div>
                   <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-primary)' }}>Qualidade de áudio</label>
@@ -760,7 +760,7 @@ export default function ConfiguracoesPage() {
               <h2 className="text-2xl font-bold mb-1">Notificações</h2>
               <p className="text-body-medium mb-6" style={{ color: 'var(--text-secondary)' }}>Alertas exibidos dentro do EmberMusic</p>
 
-              <div className="space-y-5 max-w-sm">
+              <div className="grid gap-5 md:grid-cols-2">
                 {[
                   { key: 'notif_favorite', label: 'Confirmação ao favoritar', desc: 'Exibir confirmação ao favoritar uma faixa' },
                   { key: 'notif_download', label: 'Aviso de download', desc: 'Notificar quando o download de uma faixa for concluído' },

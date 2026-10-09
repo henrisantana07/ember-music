@@ -356,7 +356,7 @@ function PlaylistContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64" role="status" aria-label="Carregando playlist">
+      <div className="flex items-center justify-center h-48" role="status" aria-label="Carregando playlist">
         <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--accent-from)', borderTopColor: 'transparent' }} />
       </div>
     )
@@ -376,11 +376,11 @@ function PlaylistContent() {
   const totalDuration = parsedTracks.reduce((acc, t) => acc + (t?.duration ?? 0), 0)
 
   return (
-    <div className="max-w-4xl mx-auto relative">
-      <div className="flex flex-col md:flex-row gap-6 mb-8">
+    <div className="w-full relative">
+      <div className="flex flex-col md:flex-row gap-6 mb-6">
         <PlaylistCover
           playlist={playlist as any}
-          size={192}
+          size={240}
           onClick={isOwner ? () => setCoverModalOpen(true) : undefined}
         />
 
@@ -396,7 +396,7 @@ function PlaylistContent() {
               {playlist.is_public ? '🌐 Pública' : '🔒 Privada'}
             </span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-bold truncate">{playlist.name}</h1>
+          <h1 className="text-3xl xl:text-5xl font-bold truncate">{playlist.name}</h1>
           {playlist.description && (
             <p className="text-body-medium mt-1" style={{ color: 'var(--text-secondary)' }}>
               {playlist.description}
@@ -527,7 +527,7 @@ function PlaylistContent() {
 
       <div className="space-y-1">
         {tracks.length === 0 && (
-          <div className="text-center py-16">
+          <div className="text-center py-12">
             <svg className="w-16 h-16 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1} style={{ color: 'var(--text-disabled)' }}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z" />
             </svg>
@@ -632,7 +632,7 @@ function SortableTrackRow({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-3 px-3 py-2 rounded-lg group transition-colors cursor-pointer hover:bg-state-hover"
+      className="flex items-center gap-4 px-3 min-h-[64px] rounded-lg group transition-colors cursor-pointer hover:bg-state-hover"
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -664,7 +664,7 @@ function SortableTrackRow({
 
       <img src={track.image} alt="" className="w-12 h-12 rounded object-cover flex-shrink-0" />
 
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0" style={{ flex: '3 1 200px' }}>
         <p className="text-body-large font-medium truncate" style={{ color: isActive ? 'var(--accent-from)' : 'var(--text-primary)' }}>
           {track.name}
         </p>
@@ -673,7 +673,11 @@ function SortableTrackRow({
         </p>
       </div>
 
-      <span className="text-body-medium" style={{ color: 'var(--text-disabled)' }}>
+      <div className="hidden lg:block min-w-0 flex-[2_1_160px] truncate text-body-medium" style={{ color: 'var(--text-secondary)' }}>
+        {track.album_name}
+      </div>
+
+      <span className="w-20 text-right text-body-medium" style={{ color: 'var(--text-disabled)' }}>
         {formatDuration(track.duration)}
       </span>
 
