@@ -375,19 +375,12 @@ body {
 }
 
 .now-cover {
-  width: min(560px, 100%, 52vh);
+  width: min(560px, 100%, calc(100vh - 440px));
 }
 
 @media (max-width: 767px) {
   .now-cover {
     width: min(200px, 60vw);
-  }
-}
-
-/* Desktop: lado a lado — reserva 272px (info) + 32px (gap) para a coluna de metadados */
-@media (min-width: 768px) {
-  .now-cover {
-    width: min(560px, calc(100% - 304px), 52vh);
   }
 }
 
