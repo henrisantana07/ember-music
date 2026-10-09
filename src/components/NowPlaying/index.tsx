@@ -435,8 +435,12 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       </header>
 
       <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-0 min-h-0 px-4 md:px-6 pb-4">
-        <div className={`flex-1 md:flex-[3] flex flex-col items-center justify-center gap-3 md:gap-3 min-h-0 overflow-hidden pt-1 md:pt-2 pb-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
-          <div ref={coverRef} className="now-cover relative flex-shrink-0" style={{ aspectRatio: '1' }}>
+        <div className={`flex-1 md:flex-[3] flex flex-col items-center justify-center gap-3 min-h-0 overflow-hidden pt-1 md:pt-2 pb-4 ${isYouTubeTrack ? 'md:gap-4' : 'md:gap-8 md:flex-row'} ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
+          <div
+            ref={coverRef}
+            className={`now-cover relative flex-shrink-0 ${isYouTubeTrack ? 'now-cover-video' : ''}`}
+            style={{ aspectRatio: isYouTubeTrack ? '16 / 9' : '1' }}
+          >
             {currentTrack.image ? (
               <img
                 key={currentTrack.id}
@@ -452,8 +456,9 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             )}
           </div>
 
-          <div className="w-full max-w-[520px] text-center space-y-0.5">
-            <h1 className="text-[28px] md:text-[32px] leading-tight font-bold truncate" style={{ color: 'var(--text-primary)' }} title={currentTrack.name}>
+          <div className={`flex flex-col gap-3 w-full min-w-0 ${isYouTubeTrack ? 'max-w-[560px] items-center text-center' : 'items-center text-center md:items-start md:text-left md:flex-1 md:min-w-[272px] md:max-w-[600px]'}`}>
+          <div className="w-full space-y-0.5">
+            <h1 className="text-[28px] md:text-[36px] leading-tight font-bold truncate" style={{ color: 'var(--text-primary)' }} title={currentTrack.name}>
               {currentTrack.name}
             </h1>
             <Link
@@ -526,7 +531,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             </div>
           </div>
 
-          <div className="w-full flex flex-col md:flex-row items-center justify-center gap-3 md:gap-6">
+          <div className={`w-full flex flex-col md:flex-row items-center justify-center ${!isYouTubeTrack ? 'md:justify-start' : ''} gap-3 md:gap-6`}>
             <div className="flex items-center justify-center gap-2 md:gap-3">
               <button onClick={handlePrev} className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer" style={{ color: 'var(--text-secondary)' }} title="Anterior" aria-label="Faixa anterior">
                 <SkipBack className="w-6 h-6" fill="currentColor" />
@@ -601,6 +606,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             <Music className="w-5 h-5" />
             A seguir
           </button>
+          </div>
         </div>
 
           <div className={`w-full md:w-auto md:flex-[2] flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none ${showQueueOnMobile ? '' : 'hidden md:flex'}`}>

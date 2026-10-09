@@ -375,12 +375,25 @@ body {
 }
 
 .now-cover {
-  width: min(520px, 100%, 46vh);
+  width: min(560px, 100%, 52vh);
 }
 
 @media (max-width: 767px) {
   .now-cover {
     width: min(200px, 60vw);
+  }
+}
+
+/* Vídeo YouTube: caixa 16:9 sem barras pretas (letterbox) */
+.now-cover-video {
+  width: min(960px, 100%, calc(42vh * 16 / 9));
+  aspect-ratio: 16 / 9;
+}
+
+/* Desktop áudio: lado a lado — reserva 272px (info) + 32px (gap) para a coluna de metadados */
+@media (min-width: 768px) {
+  .now-cover:not(.now-cover-video) {
+    width: min(560px, calc(100% - 304px), 52vh);
   }
 }
 
