@@ -3,9 +3,19 @@ function extractFromImageSource(src: string): Promise<string | null> {
     const img = new Image()
     img.crossOrigin = 'anonymous'
     img.onload = () => {
+      const w = img.naturalWidth
+      const h = img.naturalHeight
+      const boxW = Math.max(1, Math.floor(w / 2))
+      const boxH = Math.max(1, Math.floor(h / 2))
+      const box: [number, number, number, number] = [
+        Math.floor((w - boxW) / 2),
+        Math.floor((h - boxH) / 2),
+        boxW,
+        boxH,
+      ]
       import('fast-average-color')
         .then(({ FastAverageColor }) =>
-          new FastAverageColor().getColorAsync(img, { mode: 'precision', algorithm: 'dominant' }),
+          new FastAverageColor().getColorAsync(img, { mode: 'precision', algorithm: 'dominant', box }),
         )
         .then((color) => resolve(color.hex))
         .catch(() => resolve(null))
