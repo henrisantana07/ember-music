@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { TrackTable } from '@/components/TrackTable'
 import { PlaylistCover } from '@/components/playlist/PlaylistCover'
+import { resolveCover, type CoverSource } from '@/lib/playlist/resolveCover'
+import { extractDominantColor } from '@/lib/color/extractDominantColor'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
 import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
 import { usePlaylistsStore } from '@/lib/playlists-store'
@@ -104,6 +106,41 @@ function BibliotecaContent() {
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
   const { play } = usePlayerStore()
+
+  const coverColorSource =
+    activeTab === 'playlists'
+      ? (playlists[0]
+          ? resolveCover({
+              cover_source: playlists[0].cover_source as CoverSource,
+              custom_cover_url: playlists[0].custom_cover_url,
+              last_track_cover_url: playlists[0].last_track_cover_url,
+            }).url
+          : null) ??
+        history[0]?.track_data?.image ??
+        null
+      : activeTab === 'artistas'
+        ? artists[0]?.artist_data?.image ?? null
+        : activeTab === 'recentes'
+          ? history[0]?.track_data?.image ?? null
+          : activeTab === 'baixadas'
+            ? downloads[0]?.image ?? null
+            : tracks[0]?.image ?? history[0]?.track_data?.image ?? null
+
+  const [coverColorEntry, setCoverColorEntry] = useState<{ src: string; color: string | null } | null>(null)
+
+  useEffect(() => {
+    if (!coverColorSource) return
+    let cancelled = false
+    extractDominantColor(coverColorSource).then((color) => {
+      if (!cancelled) setCoverColorEntry({ src: coverColorSource, color })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [coverColorSource])
+
+  const coverColor =
+    coverColorSource && coverColorEntry?.src === coverColorSource ? coverColorEntry.color : null
 
   async function handlePlayPlaylist(pl: PlaylistTabItem) {
     const { data: pts } = await supabase
@@ -381,7 +418,17 @@ function BibliotecaContent() {
   if (!user) return null
 
   return (
-    <div className="mx-auto w-full">
+    <div className="mx-auto w-full relative isolate">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-6 left-0 right-0 h-[380px] z-[-1] transition-opacity duration-500"
+        style={{
+          opacity: coverColor ? 1 : 0,
+          background: coverColor
+            ? `radial-gradient(ellipse 75% 95% at 25% 28%, ${coverColor}59 0%, transparent 62%), radial-gradient(ellipse 65% 80% at 80% 5%, ${coverColor}40 0%, transparent 60%)`
+            : 'none',
+        }}
+      />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Biblioteca</h1>
         {activeTab === 'playlists' && (

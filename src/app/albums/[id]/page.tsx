@@ -9,6 +9,7 @@ import { usePlayerStore } from '@/lib/store'
 import { useUser } from '@/hooks/use-user'
 import type { Track, Album } from '@/types/music'
 import { ErrorState } from '@/components/ui/states'
+import { extractDominantColor } from '@/lib/color/extractDominantColor'
 
 export default function AlbumPage() {
   const { user } = useUser()
@@ -54,6 +55,23 @@ export default function AlbumPage() {
     return () => { cancelled = true }
   }, [albumId, attempt])
 
+  const coverColorSource = album?.image || null
+  const [coverColorEntry, setCoverColorEntry] = useState<{ src: string; color: string | null } | null>(null)
+
+  useEffect(() => {
+    if (!coverColorSource) return
+    let cancelled = false
+    extractDominantColor(coverColorSource).then((color) => {
+      if (!cancelled) setCoverColorEntry({ src: coverColorSource, color })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [coverColorSource])
+
+  const coverColor =
+    coverColorSource && coverColorEntry?.src === coverColorSource ? coverColorEntry.color : null
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16" role="status" aria-label="Carregando álbum">
@@ -79,9 +97,17 @@ export default function AlbumPage() {
 
   return (
     <div className="mx-auto w-full">
-      <div className="flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-6 mb-8 p-4 md:p-6 rounded-2xl" style={{ background: 'var(--bg-elevated)' }}>
+      <div
+        className="flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-6 mb-8 p-4 md:p-6 rounded-2xl transition-[background] duration-500"
+        style={{
+          background: coverColor
+            ? `radial-gradient(ellipse 90% 130% at 25% 25%, ${coverColor}59 0%, transparent 70%), var(--bg-elevated)`
+            : 'var(--bg-elevated)',
+        }}
+      >
         <img src={album.image || '/placeholder.svg'} alt={album.name}
-          className="w-40 h-40 md:w-48 md:h-48 rounded-xl object-cover shadow-lg flex-shrink-0" />
+          className="w-40 h-40 md:w-48 md:h-48 rounded-xl object-cover shadow-lg flex-shrink-0"
+          style={{ boxShadow: coverColor ? `0 24px 48px ${coverColor}66` : undefined }} />
         <div className="flex-1 min-w-0 w-full md:w-auto text-center md:text-left">
           <p className="text-label-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-secondary)' }}>Álbum</p>
           <h1 className="text-2xl md:text-3xl font-bold mb-2 truncate">{album.name}</h1>
