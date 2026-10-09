@@ -325,6 +325,7 @@ function PlaylistContent() {
   )
 
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    if (!isOwner) return
     const { active, over } = event
     if (!over || active.id === over.id) return
 
@@ -355,7 +356,7 @@ function PlaylistContent() {
       setTracks(previous)
       showToast('Erro ao reordenar')
     }
-  }, [tracks, id, showToast])
+  }, [tracks, id, isOwner, showToast])
 
   const coverColorSource = playlist
     ? resolveCover({
@@ -660,7 +661,7 @@ function SortableTrackRow({
   onClick: () => void
   onRemove: () => void
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !isOwner })
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
