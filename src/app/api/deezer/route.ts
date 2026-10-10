@@ -195,7 +195,7 @@ function mapTrack(item: Record<string, unknown>) {
     artist_name: (artist?.name as string) ?? '',
     album_id: String(album?.id ?? ''),
     album_name: (album?.title as string) ?? '',
-    image: (album?.cover_medium as string) ?? '',
+    image: (album?.cover_xl as string) ?? (album?.cover_big as string) ?? (album?.cover_medium as string) ?? '',
     audio: (item.preview as string) ?? null,
     url: (item.link as string) ?? '',
   }
@@ -208,7 +208,7 @@ function mapAlbum(item: Record<string, unknown>) {
     name: (item.title as string) ?? '',
     artist_id: String(artist?.id ?? ''),
     artist_name: (artist?.name as string) ?? '',
-    image: (item.cover_medium as string) ?? '',
+    image: (item.cover_xl as string) ?? (item.cover_big as string) ?? (item.cover_medium as string) ?? '',
     release_date: (item.release_date as string) ?? '',
     total_tracks: (item.nb_tracks as number) ?? 0,
     url: (item.link as string) ?? '',

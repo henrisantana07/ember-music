@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { useYouTube, useYouTubeTime } from '@/components/YouTubePlayer/context'
 import { extractDominantColor } from '@/lib/color/extractDominantColor'
+import { getHighResCoverUrl, getLowResCoverUrl } from '@/lib/image-utils'
 
 function getAudioEl(): HTMLAudioElement | null {
   return document.querySelector('audio')
@@ -160,6 +161,7 @@ const ProgressSection = memo(function ProgressSection({ isYouTubeTrack, handleSe
 export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const router = useRouter()
   const [dominantColor, setDominantColor] = useState<string | null>(null)
+  const [coverFallback, setCoverFallback] = useState<{ id: string; src: string } | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [showQueueOnMobile, setShowQueueOnMobile] = useState(false)
   const [user, setUser] = useState<User | null>(null)
@@ -239,17 +241,18 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   }, [queue])
 
   useEffect(() => {
-    if (!currentTrack?.image) {
+    if (!currentTrack?.image && !currentTrack?.youtubeVideoId) {
       return
     }
     let cancelled = false
-    extractDominantColor(currentTrack.image).then((color) => {
+    const hdCover = getHighResCoverUrl(currentTrack?.image, currentTrack?.youtubeVideoId)
+    extractDominantColor(hdCover).then((color) => {
       if (!cancelled && color) setDominantColor(color)
     })
     return () => {
       cancelled = true
     }
-  }, [currentTrack?.id, currentTrack?.image])
+  }, [currentTrack?.id, currentTrack?.image, currentTrack?.youtubeVideoId])
 
   useEffect(() => {
     if (isYouTubeTrack) return
@@ -480,10 +483,23 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             {(currentTrack.image || (isYouTubeTrack && currentTrack.youtubeVideoId)) ? (
               <img
                 key={currentTrack.id}
-                src={currentTrack.image || `https://i.ytimg.com/vi/${currentTrack.youtubeVideoId}/hqdefault.jpg`}
+                src={
+                  coverFallback?.id === currentTrack.id
+                    ? coverFallback.src
+                    : getHighResCoverUrl(currentTrack.image, currentTrack.youtubeVideoId)
+                }
                 alt={currentTrack.name}
                 className="w-full h-full rounded-2xl object-cover animate-cover-in"
                 style={{ boxShadow: coverShadow }}
+                onError={() => {
+                  const hd = getHighResCoverUrl(currentTrack.image, currentTrack.youtubeVideoId)
+                  if (hd.includes('maxresdefault')) {
+                    setCoverFallback({
+                      id: currentTrack.id,
+                      src: getLowResCoverUrl(hd, currentTrack.youtubeVideoId),
+                    })
+                  }
+                }}
               />
             ) : (
               <div key={currentTrack.id} className="w-full h-full rounded-2xl flex items-center justify-center animate-cover-in" style={{ backgroundColor: 'var(--bg-surface)' }}>
