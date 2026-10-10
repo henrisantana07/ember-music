@@ -268,7 +268,8 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     if (!currentTrack?.id || !baseCover) return
     // Kill-switch: NEXT_PUBLIC_COVER_HD=off restaura o comportamento da v.2_reordenar
     if (process.env.NEXT_PUBLIC_COVER_HD === 'off') return
-    if (brokenCover?.id === currentTrack.id) return
+    // Se a HD já falhou para esta faixa, não tenta de novo (mantém a capa base)
+    if (hdFailed === currentTrack.id) return
     const hd = getHighResCoverUrl(currentTrack.image, currentTrack.youtubeVideoId)
     if (!hd || hd === baseCover) return
     let cancelled = false
@@ -277,13 +278,13 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       if (!cancelled) setHdCover({ id: currentTrack.id, src: hd })
     }
     probe.onerror = () => {
-      if (!cancelled) setBrokenCover({ id: currentTrack.id })
+      if (!cancelled) setHdFailed(currentTrack.id)
     }
     probe.src = hd
     return () => {
       cancelled = true
     }
-  }, [currentTrack?.id, currentTrack?.image, currentTrack?.youtubeVideoId, baseCover, brokenCover])
+  }, [currentTrack?.id, currentTrack?.image, currentTrack?.youtubeVideoId, baseCover, hdFailed])
 
   useEffect(() => {
     if (isYouTubeTrack) return
@@ -511,21 +512,21 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-0 min-h-0 px-4 md:px-6 pb-4">
         <div className={`flex-1 md:flex-[3] flex flex-col items-center justify-center gap-3 md:gap-4 min-h-0 overflow-hidden pt-1 md:pt-2 pb-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
           <div ref={coverRef} className="now-cover relative flex-shrink-0" style={{ aspectRatio: '1' }}>
-            {baseCover ? (
+            {baseCover && baseFailed !== currentTrack.id ? (
               <img
                 key={currentTrack.id}
                 src={hdCover?.id === currentTrack.id ? hdCover.src : baseCover}
                 alt={currentTrack.name}
                 className="w-full h-full rounded-2xl object-cover animate-cover-in"
                 style={{ boxShadow: coverShadow }}
-                onError={() => {
+                onError={(e) => {
                   // Fallback seguro: se a HD falhar, repara para a capa base (v.2_reordenar);
                   // se a base também falhar, mostra o placeholder (sem ícone quebrado)
-                  if (hdCover?.id === currentTrack.id) {
+                  if (hdCover?.id === currentTrack.id && e.currentTarget.src !== baseCover) {
                     setHdCover(null)
-                    setBrokenCover({ id: currentTrack.id })
+                    setHdFailed(currentTrack.id)
                   } else {
-                    setBrokenCover({ id: currentTrack.id })
+                    setBaseFailed(currentTrack.id)
                   }
                 }}
               />
