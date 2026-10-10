@@ -491,13 +491,13 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 alt={currentTrack.name}
                 className="w-full h-full rounded-2xl object-cover animate-cover-in"
                 style={{ boxShadow: coverShadow }}
-                onError={() => {
-                  const hd = getHighResCoverUrl(currentTrack.image, currentTrack.youtubeVideoId)
-                  if (hd.includes('maxresdefault') || hd.includes('dzcdn.net')) {
-                    setCoverFallback({
-                      id: currentTrack.id,
-                      src: getLowResCoverUrl(hd, currentTrack.youtubeVideoId),
-                    })
+                onError={(e) => {
+                  const failed = e.currentTarget.src
+                  if (failed.includes('maxresdefault') || failed.includes('/1000x1000-')) {
+                    const fallback = getLowResCoverUrl(failed, currentTrack.youtubeVideoId)
+                    if (fallback && fallback !== failed) {
+                      setCoverFallback({ id: currentTrack.id, src: fallback })
+                    }
                   }
                 }}
               />

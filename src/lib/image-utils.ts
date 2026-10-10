@@ -24,6 +24,10 @@ export function getHighResCoverUrl(url?: string | null, videoId?: string): strin
   }
 
   if (url.includes('ytimg.com')) {
+    // Já é a máxima resolução — evita o regex casar "default" dentro de "maxresdefault"
+    if (url.includes('maxresdefault')) {
+      return url
+    }
     if (YOUTUBE_LOW_RES_PATTERN.test(url)) {
       return url.replace(YOUTUBE_LOW_RES_PATTERN, 'maxresdefault.jpg')
     }
