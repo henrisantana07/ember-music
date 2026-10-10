@@ -275,7 +275,14 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     let cancelled = false
     const probe = new Image()
     probe.onload = () => {
-      if (!cancelled) setHdCover({ id: currentTrack.id, src: hd })
+      if (cancelled) return
+      // O YouTube pode responder 200 com uma placeholder cinza de 120x90 quando
+      // o maxresdefault não existe de verdade — só promove se a HD for real (>=640px)
+      if (probe.naturalWidth < 640) {
+        setHdFailed(currentTrack.id)
+        return
+      }
+      setHdCover({ id: currentTrack.id, src: hd })
     }
     probe.onerror = () => {
       if (!cancelled) setHdFailed(currentTrack.id)
