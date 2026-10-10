@@ -162,6 +162,8 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const router = useRouter()
   const [dominantColor, setDominantColor] = useState<string | null>(null)
   const [hdCover, setHdCover] = useState<{ id: string; src: string } | null>(null)
+  const [hdFailed, setHdFailed] = useState<string | null>(null)
+  const [baseFailed, setBaseFailed] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [showQueueOnMobile, setShowQueueOnMobile] = useState(false)
   const [user, setUser] = useState<User | null>(null)
@@ -264,6 +266,9 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   // Só promove para a capa HD quando ela realmente carrega (evita404/flash quebrado)
   useEffect(() => {
     if (!currentTrack?.id || !baseCover) return
+    // Kill-switch: NEXT_PUBLIC_COVER_HD=off restaura o comportamento da v.2_reordenar
+    if (process.env.NEXT_PUBLIC_COVER_HD === 'off') return
+    if (brokenCover?.id === currentTrack.id) return
     const hd = getHighResCoverUrl(currentTrack.image, currentTrack.youtubeVideoId)
     if (!hd || hd === baseCover) return
     let cancelled = false
@@ -271,11 +276,14 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     probe.onload = () => {
       if (!cancelled) setHdCover({ id: currentTrack.id, src: hd })
     }
+    probe.onerror = () => {
+      if (!cancelled) setBrokenCover({ id: currentTrack.id })
+    }
     probe.src = hd
     return () => {
       cancelled = true
     }
-  }, [currentTrack?.id, currentTrack?.image, currentTrack?.youtubeVideoId, baseCover])
+  }, [currentTrack?.id, currentTrack?.image, currentTrack?.youtubeVideoId, baseCover, brokenCover])
 
   useEffect(() => {
     if (isYouTubeTrack) return
@@ -510,6 +518,16 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 alt={currentTrack.name}
                 className="w-full h-full rounded-2xl object-cover animate-cover-in"
                 style={{ boxShadow: coverShadow }}
+                onError={() => {
+                  // Fallback seguro: se a HD falhar, repara para a capa base (v.2_reordenar);
+                  // se a base também falhar, mostra o placeholder (sem ícone quebrado)
+                  if (hdCover?.id === currentTrack.id) {
+                    setHdCover(null)
+                    setBrokenCover({ id: currentTrack.id })
+                  } else {
+                    setBrokenCover({ id: currentTrack.id })
+                  }
+                }}
               />
             ) : (
               <div key={currentTrack.id} className="w-full h-full rounded-2xl flex items-center justify-center animate-cover-in" style={{ backgroundColor: 'var(--bg-surface)' }}>
