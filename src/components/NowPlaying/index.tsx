@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { useYouTube, useYouTubeTime } from '@/components/YouTubePlayer/context'
 import { extractDominantColor } from '@/lib/color/extractDominantColor'
-import { getHighResCoverUrl, getLowResCoverUrl } from '@/lib/image-utils'
+import { getHighResCoverUrl } from '@/lib/image-utils'
 
 function getAudioEl(): HTMLAudioElement | null {
   return document.querySelector('audio')
@@ -161,7 +161,7 @@ const ProgressSection = memo(function ProgressSection({ isYouTubeTrack, handleSe
 export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const router = useRouter()
   const [dominantColor, setDominantColor] = useState<string | null>(null)
-  const [coverFallback, setCoverFallback] = useState<{ id: string; src: string } | null>(null)
+  const [hdCover, setHdCover] = useState<{ id: string; src: string } | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [showQueueOnMobile, setShowQueueOnMobile] = useState(false)
   const [user, setUser] = useState<User | null>(null)
@@ -202,6 +202,13 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   useEnsureFavorites(currentTrack ? [currentTrack.id] : [])
 
   const isYouTubeTrack = currentTrack?.source === 'youtube' && !!currentTrack.youtubeVideoId
+
+  // Capa base sempre válida (evita flash de imagem quebrada enquanto tentamos a HD)
+  const baseCover = currentTrack?.image
+    ? currentTrack.image
+    : isYouTubeTrack && currentTrack?.youtubeVideoId
+      ? `https://i.ytimg.com/vi/${currentTrack.youtubeVideoId}/hqdefault.jpg`
+      : ''
 
   const yt = useYouTube()
   const { seek: ytSeek, getCurrentTime: ytGetCurrentTime } = yt
@@ -245,14 +252,30 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       return
     }
     let cancelled = false
-    const hdCover = getHighResCoverUrl(currentTrack?.image, currentTrack?.youtubeVideoId)
-    extractDominantColor(hdCover).then((color) => {
+    const colorSrc = getHighResCoverUrl(currentTrack?.image, currentTrack?.youtubeVideoId)
+    extractDominantColor(colorSrc).then((color) => {
       if (!cancelled && color) setDominantColor(color)
     })
     return () => {
       cancelled = true
     }
   }, [currentTrack?.id, currentTrack?.image, currentTrack?.youtubeVideoId])
+
+  // Só promove para a capa HD quando ela realmente carrega (evita404/flash quebrado)
+  useEffect(() => {
+    if (!currentTrack?.id || !baseCover) return
+    const hd = getHighResCoverUrl(currentTrack.image, currentTrack.youtubeVideoId)
+    if (!hd || hd === baseCover) return
+    let cancelled = false
+    const probe = new Image()
+    probe.onload = () => {
+      if (!cancelled) setHdCover({ id: currentTrack.id, src: hd })
+    }
+    probe.src = hd
+    return () => {
+      cancelled = true
+    }
+  }, [currentTrack?.id, currentTrack?.image, currentTrack?.youtubeVideoId, baseCover])
 
   useEffect(() => {
     if (isYouTubeTrack) return
@@ -480,26 +503,13 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-0 min-h-0 px-4 md:px-6 pb-4">
         <div className={`flex-1 md:flex-[3] flex flex-col items-center justify-center gap-3 md:gap-4 min-h-0 overflow-hidden pt-1 md:pt-2 pb-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
           <div ref={coverRef} className="now-cover relative flex-shrink-0" style={{ aspectRatio: '1' }}>
-            {(currentTrack.image || (isYouTubeTrack && currentTrack.youtubeVideoId)) ? (
+            {baseCover ? (
               <img
                 key={currentTrack.id}
-                src={
-                  coverFallback?.id === currentTrack.id
-                    ? coverFallback.src
-                    : getHighResCoverUrl(currentTrack.image, currentTrack.youtubeVideoId)
-                }
+                src={hdCover?.id === currentTrack.id ? hdCover.src : baseCover}
                 alt={currentTrack.name}
                 className="w-full h-full rounded-2xl object-cover animate-cover-in"
                 style={{ boxShadow: coverShadow }}
-                onError={(e) => {
-                  const failed = e.currentTarget.src
-                  if (failed.includes('maxresdefault') || failed.includes('/1000x1000-')) {
-                    const fallback = getLowResCoverUrl(failed, currentTrack.youtubeVideoId)
-                    if (fallback && fallback !== failed) {
-                      setCoverFallback({ id: currentTrack.id, src: fallback })
-                    }
-                  }
-                }}
               />
             ) : (
               <div key={currentTrack.id} className="w-full h-full rounded-2xl flex items-center justify-center animate-cover-in" style={{ backgroundColor: 'var(--bg-surface)' }}>
