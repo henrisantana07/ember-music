@@ -3,11 +3,15 @@ const YOUTUBE_VIDEO_URL = (videoId: string) =>
 
 const YOUTUBE_LOW_RES_PATTERN = /(hqdefault|mqdefault|sddefault|default)\.jpg/
 
+// Deezer: .../images/cover/<hash>/<W>x<H>-000000-80-0-0.jpg -> 1000x1000 (cover_xl)
+const DEEZER_SIZE_PATTERN = /\/\d+x\d+-/
+
 /**
  * Eleva uma URL de capa para a maior resolução disponível.
  * - YouTube (i.ytimg.com): hqdefault/mqdefault/etc -> maxresdefault
  * - YouTube Music (googleusercontent.com): =w120-h120 -> =w1200-h1200
- * - Demais fontes (ex.: Deezer) retornam inalteradas.
+ * - Deezer (dzcdn.net): qualquer tamanho -> 1000x1000 (cover_xl)
+ * - Demais fontes retornam inalteradas.
  */
 export function getHighResCoverUrl(url?: string | null, videoId?: string): string {
   if (!url) {
@@ -26,16 +30,23 @@ export function getHighResCoverUrl(url?: string | null, videoId?: string): strin
     return url
   }
 
+  if (url.includes('dzcdn.net')) {
+    return url.replace(DEEZER_SIZE_PATTERN, '/1000x1000-')
+  }
+
   return url
 }
 
 /**
- * Volta para a miniatura padrão (hqdefault) — usado no onError quando
- * maxresdefault.jpg não existe (retorna 404) para alguns vídeos.
+ * Volta para uma resolução segura — usado no onError quando a versão HD
+ * não existe (retorna 404).
  */
 export function getLowResCoverUrl(url: string, videoId?: string): string {
   if (url.includes('ytimg.com') && url.includes('maxresdefault')) {
     return url.replace('maxresdefault.jpg', 'hqdefault.jpg')
+  }
+  if (url.includes('dzcdn.net') && url.includes('1000x1000')) {
+    return url.replace(DEEZER_SIZE_PATTERN, '/500x500-')
   }
   if (!url && videoId) {
     return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`

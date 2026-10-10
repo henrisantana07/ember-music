@@ -493,7 +493,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 style={{ boxShadow: coverShadow }}
                 onError={() => {
                   const hd = getHighResCoverUrl(currentTrack.image, currentTrack.youtubeVideoId)
-                  if (hd.includes('maxresdefault')) {
+                  if (hd.includes('maxresdefault') || hd.includes('dzcdn.net')) {
                     setCoverFallback({
                       id: currentTrack.id,
                       src: getLowResCoverUrl(hd, currentTrack.youtubeVideoId),
