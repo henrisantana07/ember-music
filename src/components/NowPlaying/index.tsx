@@ -250,18 +250,18 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   }, [queue])
 
   useEffect(() => {
-    if (!currentTrack?.image && !currentTrack?.youtubeVideoId) {
+    if (!baseCover) {
       return
     }
     let cancelled = false
-    const colorSrc = getHighResCoverUrl(currentTrack?.image, currentTrack?.youtubeVideoId)
-    extractDominantColor(colorSrc).then((color) => {
+    // Cor sempre da capa base (glow não precisa de HD; evita404 do maxresdefault)
+    extractDominantColor(baseCover).then((color) => {
       if (!cancelled && color) setDominantColor(color)
     })
     return () => {
       cancelled = true
     }
-  }, [currentTrack?.id, currentTrack?.image, currentTrack?.youtubeVideoId])
+  }, [baseCover, currentTrack?.id])
 
   // Só promove para a capa HD quando ela realmente carrega (evita404/flash quebrado)
   useEffect(() => {
