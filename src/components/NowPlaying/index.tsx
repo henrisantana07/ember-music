@@ -44,7 +44,7 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-1.5 px-2 py-2 rounded-lg group transition-colors ${
+      className={`flex items-center gap-1.5 ${minimized ? 'px-1' : 'px-2'} py-2 rounded-lg group transition-colors ${
         isCurrent ? 'bg-[var(--accent-muted)]' : 'hover:bg-[var(--bg-elevated)]'
       }`}
     >
@@ -397,7 +397,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
       <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-0 min-h-0 px-4 md:px-6 pb-4">
         <div className={`flex-1 md:flex-[3] flex flex-col items-center justify-center gap-3 md:gap-4 min-h-0 overflow-hidden pt-1 md:pt-2 pb-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
-          <div ref={coverRef} className="now-cover relative flex-shrink-0" style={{ aspectRatio: '1' }}>
+          <div ref={coverRef} className={`now-cover relative flex-shrink-0${queueMinimized ? ' now-cover-min' : ''}`} style={{ aspectRatio: '1' }}>
             {baseCover && baseFailed !== currentTrack.id ? (
               <img
                 key={currentTrack.id}
@@ -423,7 +423,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             )}
           </div>
 
-          <div className="w-full max-w-[560px] text-center space-y-0.5">
+          <div className={`w-full ${queueMinimized ? 'max-w-[720px]' : 'max-w-[560px]'} text-center space-y-0.5`}>
             <h1 className="text-[28px] md:text-[36px] leading-tight font-bold truncate" style={{ color: 'var(--text-primary)' }} title={currentTrack.name}>
               {currentTrack.name}
             </h1>
@@ -493,7 +493,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={queue.map((t, index) => `${index}::${t.id}`)} strategy={verticalListSortingStrategy}>
                 <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full">
-                  <div className="px-1 space-y-1">
+                  <div className={`${queueMinimized ? 'px-0' : 'px-1'} space-y-1`}>
                   {queue.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center px-4">
                       <Music className="w-10 h-10 mb-3" style={{ color: 'var(--text-disabled)' }} />

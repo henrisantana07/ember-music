@@ -441,7 +441,7 @@ export function Player() {
           </div>
         </div>
 
-        <div className="w-auto md:w-72 flex items-center justify-end gap-1">
+        <div className="w-auto md:w-72 flex items-center justify-end gap-2">
           <button
             onClick={() => {
               if (!isExpandedOpen) {
@@ -451,7 +451,7 @@ export function Player() {
                 setQueueMinimized(!queueMinimized)
               }
             }}
-            className={`h-11 w-11 hidden md:inline-flex items-center justify-center rounded-full transition-colors state-layer ${
+            className={`h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full transition-colors state-layer ${
               isExpandedOpen && queueMinimized ? 'text-[var(--accent-from)]' : ''
             }`}
             style={isExpandedOpen && queueMinimized ? undefined : { color: 'var(--text-secondary)' }}
@@ -482,7 +482,7 @@ export function Player() {
             </svg>
           </button>
 
-          <button onClick={openExpanded} className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors state-layer" style={{ color: 'var(--text-secondary)' }} title="Abrir player" aria-label="Abrir player expandido">
+          <button onClick={openExpanded} className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer" style={{ color: 'var(--text-secondary)' }} title="Abrir player" aria-label="Abrir player expandido">
             <ChevronUp className="w-5 h-5" />
           </button>
         </div>
@@ -518,7 +518,7 @@ function SleepTimerDropdown() {
   return (
     <div className="relative">
       <button onClick={() => setOpen(!open)}
-        className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors state-layer"
+        className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer"
         style={{ color: sleepTimerMinutes ? 'var(--accent-from)' : 'var(--text-secondary)' }}
         title="Sleep timer"
         aria-label="Sleep timer"
