@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import type { Album, Track } from '@/types/music'
 import type { User } from '@supabase/supabase-js'
 import type { Json } from '@/types/database'
 import { CoverImage } from '@/components/ui/CoverImage'
+import { CATALOG_GRID } from '@/components/ui/grid'
 
 interface AlbumResultGridProps {
   albums: Album[]
@@ -16,7 +16,6 @@ interface AlbumResultGridProps {
 }
 
 export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridProps) {
-  const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [savingId, setSavingId] = useState<string | null>(null)
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
@@ -97,7 +96,7 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
 
   if (loading) {
     return (
-      <div className="grid [grid-template-columns:repeat(auto-fill,minmax(180px,1fr))] gap-3">
+      <div className={CATALOG_GRID}>
         {Array.from({ length: maxItems ?? 4 }).map((_, i) => (
           <div key={i} className="space-y-2">
             <div className="aspect-square rounded-lg skeleton" />
@@ -113,54 +112,56 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
   if (displayAlbums.length === 0) return null
 
   return (
-    <><div className="grid [grid-template-columns:repeat(auto-fill,minmax(180px,1fr))] gap-4">
+    <><div className={CATALOG_GRID}>
       {displayAlbums.map((album) => {
         const isSaving = savingId === album.id
         const isSaved = savedIds.has(album.id)
 
         return (
-          <div key={album.id} className="group relative p-4 rounded-xl transition-colors hover:bg-state-hover">
-            <a href={`/albums/${album.id}`} className="block">
-              <div className="relative mb-3">
+          <div key={album.id} className="group relative p-4 rounded-[var(--shape-extra-large)] transition-colors hover:bg-state-hover">
+            <div className="relative mb-3">
+              <a href={`/albums/${album.id}`} className="block relative">
                 <CoverImage
                   src={album.image}
                   alt={album.name}
-                  className="w-full aspect-square rounded-lg object-cover"
+                  className="w-full aspect-square rounded-[var(--shape-large)] object-cover"
                 />
                 <div
-                  className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  className="absolute inset-0 rounded-[var(--shape-large)] opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                   style={{ background: 'var(--accent-overlay)' }}
                   aria-hidden="true"
                 />
-                <div className="absolute bottom-2 right-2 z-10">
-                  <button
-                    onClick={(e) => handleSaveAlbum(e, album)}
-                    disabled={!user || isSaving || isSaved}
-                    className="w-12 h-12 rounded-full flex items-center justify-center shadow-elevation-3 transition-transform duration-150 hover:scale-105 disabled:opacity-70"
-                    style={{
-                      background: isSaved
-                        ? 'var(--accent-solid)'
-                        : 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
-                      color: 'white',
-                    }}
-                    aria-label={isSaved ? `${album.name} salvo` : `Salvar álbum ${album.name} como playlist`}
-                    title={isSaved ? 'Salvo' : 'Salvar álbum como playlist'}
-                  >
-                    {isSaving ? (
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : isSaved ? (
-                      <svg className="w-6 h-6" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5} fill="none" strokeLinecap="round">
-                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                      </svg>
-                    ) : (
-                      <svg className="w-6 h-6" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5} fill="none" strokeLinecap="round">
-                        <path d="M12 4v16m8-8H4" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
+              </a>
+              <div className="absolute bottom-3 right-3 z-10">
+                <button
+                  onClick={(e) => handleSaveAlbum(e, album)}
+                  disabled={!user || isSaving || isSaved}
+                  className="w-12 h-12 rounded-full flex items-center justify-center shadow-elevation-3 transition-transform duration-150 hover:scale-105 disabled:opacity-70"
+                  style={{
+                    background: isSaved
+                      ? 'var(--accent-solid)'
+                      : 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
+                    color: 'white',
+                  }}
+                  aria-label={isSaved ? `${album.name} salvo` : `Salvar álbum ${album.name} como playlist`}
+                  title={isSaved ? 'Salvo' : 'Salvar álbum como playlist'}
+                >
+                  {isSaving ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : isSaved ? (
+                    <svg className="w-6 h-6" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5} fill="none" strokeLinecap="round">
+                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-6 h-6" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5} fill="none" strokeLinecap="round">
+                      <path d="M12 4v16m8-8H4" />
+                    </svg>
+                  )}
+                </button>
               </div>
-              <p className="text-body-large font-semibold truncate">{album.name}</p>
+            </div>
+            <a href={`/albums/${album.id}`} className="block">
+              <p className="text-body-large font-semibold truncate" title={album.name}>{album.name}</p>
               <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{album.artist_name}</p>
               <p className="text-body-medium" style={{ color: 'var(--text-disabled)' }}>
                 {album.release_date ? album.release_date.split('-')[0] : ''}

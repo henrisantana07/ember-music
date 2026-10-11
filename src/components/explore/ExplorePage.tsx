@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import type { Track, Album, Artist } from '@/types/music'
 import { getGenreGradient } from '@/constants/genreColors'
 import { curateGenreCatalog } from '@/lib/genre-curation'
+import { CATALOG_GRID } from '@/components/ui/grid'
 import { useUser } from '@/hooks/use-user'
 import { ExploreEmptyState } from './ExploreEmptyState'
 import { ExploreResults } from './ExploreResults'
@@ -131,7 +132,7 @@ function GenrePage({ genero, genreId }: { genero: string; genreId: string }) {
           </div>
           <div className="space-y-3">
             <div className="h-5 w-28 rounded skeleton" />
-            <div className="grid [grid-template-columns:repeat(auto-fill,minmax(180px,1fr))] gap-3">
+            <div className={CATALOG_GRID}>
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="space-y-2">
                   <div className="aspect-square rounded-lg skeleton" />

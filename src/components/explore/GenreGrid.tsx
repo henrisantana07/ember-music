@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getGenreGradient } from '@/constants/genreColors'
 import { GenreCardSkeleton } from './skeletons/GenreCardSkeleton'
+import { CATALOG_GRID } from '@/components/ui/grid'
 import type { Genre } from '@/types/music'
 
 export function GenreGrid() {
@@ -23,7 +24,7 @@ export function GenreGrid() {
     return (
       <section>
         <h2 className="text-lg font-bold mb-4">Explorar gêneros</h2>
-        <div className="grid [grid-template-columns:repeat(auto-fill,minmax(220px,1fr))] gap-4">
+        <div className={CATALOG_GRID}>
           {Array.from({ length: 8 }).map((_, i) => <GenreCardSkeleton key={i} />)}
         </div>
       </section>
@@ -35,14 +36,14 @@ export function GenreGrid() {
   return (
     <section>
       <h2 className="text-lg font-bold mb-4">Explorar gêneros</h2>
-      <div className="grid [grid-template-columns:repeat(auto-fill,minmax(220px,1fr))] gap-4">
+      <div className={CATALOG_GRID}>
         {genres.map((genre) => {
           const gradient = getGenreGradient(genre.name)
           return (
             <button
               key={genre.id}
               onClick={() => router.push(`/buscar?genero=${encodeURIComponent(genre.name.toLowerCase())}&genreId=${genre.id}`)}
-              className="relative rounded-xl overflow-hidden border-0 text-left group"
+              className="relative rounded-[var(--shape-extra-large)] overflow-hidden border-0 text-left group"
               style={{ aspectRatio: '1.6 / 1', background: `linear-gradient(135deg, ${gradient.from}, ${gradient.to})` }}
             >
               <div className="absolute inset-0 transition-all duration-200 group-hover:bg-black/20 group-hover:scale-105" />

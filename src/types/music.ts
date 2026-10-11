@@ -42,7 +42,7 @@ export interface Artist {
 export interface Genre {
   id: string
   name: string
-  image: string
+  image?: string
 }
 
 export interface Playlist {

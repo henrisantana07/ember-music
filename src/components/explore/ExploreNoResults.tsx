@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import type { Track } from '@/types/music'
 import { TrackCard } from '@/components/TrackCard'
 import { useUser } from '@/hooks/use-user'
+import { CATALOG_GRID } from '@/components/ui/grid'
 
 interface ExploreNoResultsProps {
   query: string
@@ -50,7 +51,7 @@ export function ExploreNoResults({ query, activeFilterCount, onClearFilters }: E
       {trending.length > 0 && (
         <section>
           <h2 className="text-lg font-bold mb-4">Tendências enquanto isso</h2>
-          <div className="grid [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))] gap-4">
+          <div className={CATALOG_GRID}>
             {trending.map((track) => (
               <TrackCard key={track.id} track={track} tracks={trending} user={user} />
             ))}

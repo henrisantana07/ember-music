@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import type { Track, Album, Artist } from '@/types/music'
 import { filterByGenre, isRelevantToGenre, albumToCatalogItem, artistToCatalogItem, trackToCatalogItem } from '@/lib/genre-curation'
 import { CoverImage } from '@/components/ui/CoverImage'
+import { CATALOG_GRID } from '@/components/ui/grid'
 import { createClient } from '@/lib/supabase/client'
 import { useEnsureFavorites, useFavoritesSync } from '@/lib/favorites-store'
 import { TrackTable } from '@/components/TrackTable'
@@ -256,7 +257,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
         <section>
           <ArtistResultCarousel artists={filteredArtists} />
           {filteredArtists.length > 8 && (
-            <div className="grid [grid-template-columns:repeat(auto-fill,minmax(160px,1fr))] gap-4 mt-4">
+            <div className={`${CATALOG_GRID} mt-4`}>
               {filteredArtists.slice(8).map((artist) => (
                 <a
                   key={artist.id}

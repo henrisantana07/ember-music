@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/Skeleton'
 import { IconButton } from '@/components/ui/IconButton'
 import { EmptyState } from '@/components/ui/states'
 import { MenuPanel, MenuItem, useMenu } from '@/components/ui/Menu'
+import { cleanDisplayTitle } from '@/lib/clean-title'
 
 export type TrackSortKey = 'default' | 'title' | 'album' | 'duration' | 'date'
 
@@ -247,7 +248,7 @@ export function TrackTable({
                   <div className="flex items-center gap-4 min-w-0">
                     <img src={track.image} alt="" className="w-14 h-14 rounded-[var(--shape-small)] object-cover flex-shrink-0" loading="lazy" />
                     <div className="min-w-0">
-                      <p className={`truncate font-semibold text-body-large ${isActive ? 'text-[var(--accent-solid)]' : 'text-[var(--text-primary)]'}`}>{track.name}</p>
+                      <p className={`truncate font-semibold text-body-large ${isActive ? 'text-[var(--accent-solid)]' : 'text-[var(--text-primary)]'}`} title={track.name}>{cleanDisplayTitle(track.name, track.artist_name)}</p>
                       <p className="truncate text-body-medium" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
                     </div>
                   </div>

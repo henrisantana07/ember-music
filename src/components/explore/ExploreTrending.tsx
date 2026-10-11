@@ -10,6 +10,7 @@ import { formatDuration } from '@/lib/spotify'
 import { createClient } from '@/lib/supabase/client'
 import { PlaylistModal } from '@/components/PlaylistModal'
 import { IconButton } from '@/components/ui/IconButton'
+import { cleanDisplayTitle } from '@/lib/clean-title'
 
 interface ExploreTrendingProps {
   userLabel: string
@@ -57,7 +58,7 @@ function TrendingColumn({ tracks, label, subtitle }: { tracks: Track[]; label: s
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-body-large font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{track.name}</p>
+                <p className="text-body-large font-semibold truncate" style={{ color: 'var(--text-primary)' }} title={track.name}>{cleanDisplayTitle(track.name, track.artist_name)}</p>
                 <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
               </div>
               <span className="text-body-medium flex-shrink-0" style={{ color: 'var(--text-disabled)' }}>

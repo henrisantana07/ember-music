@@ -9,6 +9,7 @@ import type { User } from '@supabase/supabase-js'
 import { useEnsureFavorites, useFavoritesStore, useFavoritesSync, useIsFavorite } from '@/lib/favorites-store'
 import { PlaylistModal } from '@/components/PlaylistModal'
 import { CoverImage } from '@/components/ui/CoverImage'
+import { cleanDisplayTitle } from '@/lib/clean-title'
 
 interface TopResultCardProps {
   track: Track
@@ -48,7 +49,7 @@ export function TopResultCard({ track }: TopResultCardProps) {
           <p className="text-label-medium font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>
             Resultado principal
           </p>
-          <h3 className="text-xl font-bold truncate mb-1">{track.name}</h3>
+          <h3 className="text-xl font-bold truncate mb-1" title={track.name}>{cleanDisplayTitle(track.name, track.artist_name)}</h3>
           <p className="text-body-medium truncate mb-3" style={{ color: 'var(--text-secondary)' }}>
             {track.artist_name} · {track.album_name} · {formatDuration(track.duration)}
           </p>

@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
       }
 
       case 'genres': {
-        return json({ results: MUSIC_GENRES.map((g) => ({ ...g, image: '' })) })
+        return json({ results: MUSIC_GENRES })
       }
 
       case 'genre-tracks': {

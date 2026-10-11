@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { PlaylistModal } from '@/components/PlaylistModal'
 import { IconButton } from '@/components/ui/IconButton'
 import { CoverImage } from '@/components/ui/CoverImage'
+import { cleanDisplayTitle } from '@/lib/clean-title'
 
 interface TrackCardProps {
   track: Track
@@ -46,6 +47,7 @@ export function TrackCard({ track, tracks, user }: TrackCardProps) {
     <>
       <div
         className="card-hover group p-4 cursor-pointer flex flex-col"
+        style={{ borderRadius: 'var(--shape-extra-large)' }}
         onClick={handlePlay}
       >
         <div className="relative mb-3">
@@ -53,10 +55,10 @@ export function TrackCard({ track, tracks, user }: TrackCardProps) {
             src={track.image}
             videoId={track.youtubeVideoId}
             alt=""
-            className="w-full aspect-square rounded-[var(--shape-medium)] object-cover"
+            className="w-full aspect-square rounded-[var(--shape-large)] object-cover"
           />
           <div
-            className="absolute inset-0 rounded-[var(--shape-medium)] opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+            className="absolute inset-0 rounded-[var(--shape-large)] opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             style={{ background: 'var(--accent-overlay)' }}
             aria-hidden="true"
           />
@@ -66,7 +68,7 @@ export function TrackCard({ track, tracks, user }: TrackCardProps) {
             onClick={(e) => { e.stopPropagation(); handlePlay() }}
             aria-label={isPlayingThis ? `Pausar ${track.name}` : `Tocar ${track.name}`}
             aria-pressed={isPlayingThis}
-            className="absolute bottom-2 right-2 w-12 h-12 rounded-full flex items-center justify-center shadow-elevation-3 transition-transform duration-150 hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="absolute bottom-3 right-3 w-14 h-14 rounded-full flex items-center justify-center shadow-elevation-3 transition-transform duration-150 hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{
               background: isActive
                 ? 'linear-gradient(135deg, var(--accent-from), var(--accent-to))'
@@ -76,19 +78,22 @@ export function TrackCard({ track, tracks, user }: TrackCardProps) {
             }}
           >
             {isPlayingThis ? (
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M6 4h4v16H6zM14 4h4v16h-4z" />
               </svg>
             ) : (
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M8 5v14l11-7z" />
               </svg>
             )}
           </button>
         </div>
 
-        <h3 className={`font-semibold text-title-medium truncate ${isActive ? 'text-[var(--accent-solid)]' : ''}`}>
-          {track.name}
+        <h3
+          className={`font-semibold text-title-medium truncate ${isActive ? 'text-[var(--accent-solid)]' : ''}`}
+          title={track.name}
+        >
+          {cleanDisplayTitle(track.name, track.artist_name)}
         </h3>
         <p className="text-body-medium truncate mt-1" style={{ color: 'var(--text-secondary)' }}>
           {track.artist_name}
