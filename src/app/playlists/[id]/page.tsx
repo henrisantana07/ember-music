@@ -26,6 +26,7 @@ import { CSS } from '@dnd-kit/utilities'
 import type { Track } from '@/types/music'
 import type { Database } from '@/types/database'
 import { ErrorState } from '@/components/ui/states'
+import { useMenu, MenuPanel } from '@/components/ui/Menu'
 
 type PlaylistTrack = Database['public']['Tables']['playlist_tracks']['Row']
 
@@ -48,8 +49,7 @@ function PlaylistContent() {
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [coverModalOpen, setCoverModalOpen] = useState(false)
-  const [editMenuOpen, setEditMenuOpen] = useState(false)
-  const editMenuRef = useRef<HTMLDivElement>(null)
+  const menu = useMenu()
   const [deleting, setDeleting] = useState(false)
   const [duplicating, setDuplicating] = useState(false)
   const [toast, setToast] = useState<{ message: string; action?: { label: string; onClick: () => void } } | null>(null)
@@ -105,16 +105,6 @@ function PlaylistContent() {
   }
 
   useEffect(() => { load() }, [id, loadAttempt])
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (editMenuRef.current && !editMenuRef.current.contains(e.target as Node)) {
-        setEditMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   async function handleDeleteConfirm() {
     setDeleting(true)
@@ -480,27 +470,22 @@ function PlaylistContent() {
             )}
 
             {isOwner && (
-              <div ref={editMenuRef} className="relative">
+              <div className="relative">
                 <button
-                  onClick={() => setEditMenuOpen((v) => !v)}
+                  {...menu.triggerProps}
                   className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer"
                   style={{ color: 'var(--text-secondary)' }}
                   title="Editar"
                   aria-label="Editar playlist"
-                  aria-haspopup="menu"
-                  aria-expanded={editMenuOpen}
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </button>
-                {editMenuOpen && (
-                  <div
-                    className="absolute right-0 top-full mt-1 z-50 min-w-[220px] rounded-xl overflow-hidden shadow-elevation-2 border border-outline-variant"
-                    style={{ backgroundColor: 'var(--bg-elevated)' }}
-                  >
+                {menu.open && (
+                  <MenuPanel {...menu.panelProps} align="right">
                     <button
-                      onClick={() => { setCoverModalOpen(true); setEditMenuOpen(false) }}
+                      onClick={() => { setCoverModalOpen(true); menu.close() }}
                       className="w-full flex items-center gap-3 px-4 min-h-[48px] text-body-medium transition-colors hover:bg-state-hover text-left state-layer"
                       style={{ color: 'var(--text-primary)' }}
                     >
@@ -509,7 +494,7 @@ function PlaylistContent() {
                     </button>
                     <div style={{ height: 1, backgroundColor: 'var(--outline-variant)' }} />
                     <button
-                      onClick={() => { setEditModalOpen(true); setEditMenuOpen(false) }}
+                      onClick={() => { setEditModalOpen(true); menu.close() }}
                       className="w-full flex items-center gap-3 px-4 min-h-[48px] text-body-medium transition-colors hover:bg-state-hover text-left state-layer"
                       style={{ color: 'var(--text-primary)' }}
                     >
@@ -518,7 +503,7 @@ function PlaylistContent() {
                       </svg>
                       Editar informações
                     </button>
-                  </div>
+                  </MenuPanel>
                 )}
               </div>
             )}

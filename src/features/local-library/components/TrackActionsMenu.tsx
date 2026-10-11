@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   Play,
   Pause,
@@ -25,6 +25,7 @@ import { useFavoritesSync, useFavoritesStore, useEnsureFavorites, useIsFavorite 
 import { PlaylistModal } from '@/components/PlaylistModal'
 import { Modal } from '@/components/ui/Modal'
 import { Snackbar } from '@/components/ui/Snackbar'
+import { useMenu, MenuPanel } from '@/components/ui/Menu'
 import type { Track } from '@/types/music'
 import type { LocalMusicFile } from '@/features/local-library/types'
 
@@ -34,8 +35,7 @@ interface TrackActionsMenuProps {
 }
 
 export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
-  const menuRef = useRef<HTMLDivElement>(null)
-  const [isOpen, setIsOpen] = useState(false)
+  const menu = useMenu()
   const { playTrack } = useLocalPlayer()
   const { folders } = useLocalLibrary()
   const { currentTrack, isPlaying, queue, addToQueue: storeAddToQueue, togglePlay } = usePlayerStore()
@@ -52,16 +52,6 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
   const isFavorite = useIsFavorite(track.id)
   const toggleFavorite = useFavoritesStore((s) => s.toggle)
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
   const handlePlay = () => {
     const isActive = currentTrack?.id === track.id
     if (isActive) {
@@ -69,7 +59,7 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
     } else {
       playTrack(track, allTracks)
     }
-    setIsOpen(false)
+    menu.close()
   }
 
   const handlePlayNext = async () => {
@@ -82,17 +72,17 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
     } else {
       storeAddToQueue(playerTrack)
     }
-    setIsOpen(false)
+    menu.close()
   }
 
   const handleAddToQueue = async () => {
     const playerTrack = await localTrackToPlayerTrack(track, folders)
     storeAddToQueue(playerTrack)
-    setIsOpen(false)
+    menu.close()
   }
 
   const handleToggleFavorite = async () => {
-    setIsOpen(false)
+    menu.close()
     if (!user) {
       setSnack('Faça login para favoritar faixas')
       return
@@ -103,13 +93,13 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
   }
 
   const handleAddToPlaylist = async () => {
-    setIsOpen(false)
+    menu.close()
     const playerTrack = await localTrackToPlayerTrack(track, folders)
     setPlaylistTrack(playerTrack as Track)
   }
 
   const handleShowInfo = () => {
-    setIsOpen(false)
+    menu.close()
     setInfoOpen(true)
   }
 
@@ -117,11 +107,11 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
     navigator.clipboard.writeText(track.path)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
-    setIsOpen(false)
+    menu.close()
   }
 
   const handleRemoveFromLibrary = () => {
-    setIsOpen(false)
+    menu.close()
     setConfirmRemoveOpen(true)
   }
 
@@ -204,25 +194,21 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
   ]
 
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="relative">
       <button
-        onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen) }}
+        {...menu.triggerProps}
+        onClick={(e) => { e.stopPropagation(); menu.toggle() }}
         className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         title="Mais opções"
         aria-label={`Mais opções para ${track.title}`}
-        aria-haspopup="menu"
-        aria-expanded={isOpen}
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--text-disabled)' }}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v.01M12 12v.01M12 19v.01" />
         </svg>
       </button>
 
-      {isOpen && (
-        <div
-          className="absolute right-0 top-full mt-1 z-50 min-w-[220px] rounded-[var(--shape-large)] shadow-elevation-2 border border-outline-variant animate-fade-in"
-          style={{ backgroundColor: 'var(--bg-elevated)' }}
-        >
+      {menu.open && (
+        <MenuPanel {...menu.panelProps} align="right" className="min-w-[220px] animate-fade-in">
           <div className="px-4 py-2 border-b border-outline-variant text-label-medium font-medium uppercase tracking-wider" style={{ color: 'var(--text-disabled)' }}>
             {track.title}
           </div>
@@ -247,7 +233,7 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
               )
             })}
           </div>
-        </div>
+        </MenuPanel>
       )}
 
       {playlistTrack && (
