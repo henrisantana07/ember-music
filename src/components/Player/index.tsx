@@ -31,7 +31,7 @@ export function Player() {
     pause, resume, next, prev, togglePlay,
     setVolume, setProgress, setDuration,
     setRepeat, toggleShuffle, setSleepTimer, toggleMiniPlayer,
-    openExpanded,
+    openExpanded, isExpandedOpen, queueMinimized, setQueueMinimized,
   } = usePlayerStore()
 
   const isYouTubeTrack = currentTrack?.source === 'youtube' && !!currentTrack.youtubeVideoId
@@ -442,6 +442,28 @@ export function Player() {
         </div>
 
         <div className="w-auto md:w-72 flex items-center justify-end gap-1">
+          <button
+            onClick={() => {
+              if (!isExpandedOpen) {
+                setQueueMinimized(true)
+                openExpanded()
+              } else {
+                setQueueMinimized(!queueMinimized)
+              }
+            }}
+            className={`h-11 w-11 hidden md:inline-flex items-center justify-center rounded-full transition-colors state-layer ${
+              isExpandedOpen && queueMinimized ? 'text-[var(--accent-from)]' : ''
+            }`}
+            style={isExpandedOpen && queueMinimized ? undefined : { color: 'var(--text-secondary)' }}
+            title="Fila"
+            aria-label="Alternar fila"
+            aria-pressed={isExpandedOpen && queueMinimized}
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h10M4 18h13" />
+            </svg>
+          </button>
+
           <SleepTimerDropdown />
 
           <div className="items-center gap-1.5 flex">

@@ -25,9 +25,9 @@ function queueIndexFromItemKey(key: string | number): number {
   return Number.isFinite(parsed) ? parsed : -1
 }
 
-const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, index, isCurrent, isPlaying, onPlay, onRemove }: {
+const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, index, isCurrent, isPlaying, onPlay, onRemove, minimized }: {
   track: Track; sortableId: string; index: number; isCurrent: boolean; isPlaying: boolean;
-  onPlay: (index: number) => void; onRemove: (index: number) => void
+  onPlay: (index: number) => void; onRemove: (index: number) => void; minimized?: boolean
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: sortableId })
   const style = {
@@ -37,6 +37,8 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
     borderLeft: isCurrent ? '3px solid' : undefined,
     borderImage: isCurrent ? 'linear-gradient(180deg, var(--accent-from), var(--accent-to)) 1' : undefined,
   }
+  const words = track.name.split(/\s+/)
+  const displayName = minimized && words.length > 2 ? `${words.slice(0, 2).join(' ')}…` : track.name
 
   return (
     <div
@@ -73,7 +75,7 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
 
       <div className="min-w-0 flex-1">
         <p className={`text-body-medium truncate ${isCurrent ? 'font-semibold' : ''}`} style={{ color: isCurrent ? 'var(--accent-from)' : 'var(--text-primary)' }}>
-          {track.name}
+          {displayName}
         </p>
         <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
         <p className="text-label-medium" style={{ color: 'var(--text-disabled)' }}>{formatDuration(Math.floor(track.duration))}</p>
@@ -113,6 +115,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const isPlaying = usePlayerStore((s) => s.isPlaying)
   const queue = usePlayerStore((s) => s.queue)
   const isExpandedOpen = usePlayerStore((s) => s.isExpandedOpen)
+  const queueMinimized = usePlayerStore((s) => s.queueMinimized)
   const play = usePlayerStore((s) => s.play)
   const removeFromQueue = usePlayerStore((s) => s.removeFromQueue)
   const reorderQueue = usePlayerStore((s) => s.reorderQueue)
@@ -477,13 +480,15 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
           </button>
         </div>
 
-          <div className={`w-full md:w-auto md:flex-[2] flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none ${showQueueOnMobile ? '' : 'hidden md:flex'}`}>
-            <div className="flex-none px-3 py-3">
-              <h2 className="text-title-medium font-semibold" style={{ color: 'var(--text-primary)' }}>A seguir</h2>
-              {usePlayerStore.getState().currentPlaylistName && (
-                <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{usePlayerStore.getState().currentPlaylistName}</p>
-              )}
-            </div>
+          <div className={`w-full ${queueMinimized ? 'md:w-72' : 'md:w-auto md:flex-[2]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none ${showQueueOnMobile ? '' : 'hidden md:flex'}`}>
+            {!queueMinimized && (
+              <div className="flex-none px-3 py-3">
+                <h2 className="text-title-medium font-semibold" style={{ color: 'var(--text-primary)' }}>A seguir</h2>
+                {usePlayerStore.getState().currentPlaylistName && (
+                  <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{usePlayerStore.getState().currentPlaylistName}</p>
+                )}
+              </div>
+            )}
 
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={queue.map((t, index) => `${index}::${t.id}`)} strategy={verticalListSortingStrategy}>
@@ -532,10 +537,12 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                         isPlaying={isPlaying}
                         onPlay={playTrackAt}
                         onRemove={removeFromQueue}
+                        minimized={queueMinimized}
                       />
                     ))
                   )}
                 </div>
+                {!queueMinimized && (
                 <div className="sticky bottom-0 z-10 flex-none flex items-center gap-2 px-2 py-8 border-t border-outline-variant pointer-events-none" style={{ backgroundColor: 'rgba(49, 45, 41, 0.13)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
                   <button
                     onClick={() => { setIsSearchOpen(!isSearchOpen); if (!isSearchOpen) setSearchQuery('') }}
@@ -556,6 +563,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                     Limpar fila
                   </button>
                 </div>
+                )}
               </div>
             </SortableContext>
           </DndContext>
