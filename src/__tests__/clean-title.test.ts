@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cleanDisplayTitle } from '@/lib/clean-title'
+import { cleanArtistName, cleanDisplayTitle } from '@/lib/clean-title'
 
 describe('cleanDisplayTitle', () => {
   it('remove sufixos de ruído entre parênteses', () => {
@@ -45,5 +45,28 @@ describe('cleanDisplayTitle', () => {
 
   it('devolve o título original se a limpeza zerar tudo', () => {
     expect(cleanDisplayTitle('(Official Video)', 'Adele')).toBe('(Official Video)')
+  })
+})
+
+describe('cleanArtistName', () => {
+  it('remove o sufixo "- Topic" dos canais automáticos', () => {
+    expect(cleanArtistName('Clean Pop Songs - Topic')).toBe('Clean Pop Songs')
+    expect(cleanArtistName('Top Praise and Worship Songs - Topic')).toBe('Top Praise and Worship Songs')
+    expect(cleanArtistName('pop songs - topic')).toBe('pop songs')
+  })
+
+  it('remove handle "@..." no final', () => {
+    expect(cleanArtistName("80's 90's Music Video's Remastered @Videos80s")).toBe("80's 90's Music Video's Remastered")
+  })
+
+  it('mantém nomes normais intactos', () => {
+    expect(cleanArtistName('Adele')).toBe('Adele')
+    expect(cleanArtistName('Maroon 5')).toBe('Maroon 5')
+    expect(cleanArtistName('Artist @ Home Band')).toBe('Artist @ Home Band')
+  })
+
+  it('devolve o original se a limpeza zerar', () => {
+    expect(cleanArtistName('- Topic')).toBe('- Topic')
+    expect(cleanArtistName('')).toBe('')
   })
 })

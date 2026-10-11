@@ -272,7 +272,7 @@ function HomeContent() {
               <div key={artist.id} className="w-40 flex-shrink-0 p-4 rounded-xl text-center transition-colors hover:bg-state-hover flex flex-col items-center">
                 <a href={`/artists/${artist.id}`} className="w-full flex flex-col items-center">
                   <img src={artist.image || '/placeholder.svg'} alt={artist.name} className="w-full aspect-square rounded-full object-cover mb-3" loading="lazy" />
-                  <p className="text-body-large font-semibold truncate mb-3">{artist.name}</p>
+                  <p className="w-full text-body-large font-semibold truncate mb-3" title={artist.name}>{artist.name}</p>
                 </a>
                 <FollowButton artistId={artist.id} artistData={{ id: artist.id, name: artist.name, image: artist.image }} />
               </div>

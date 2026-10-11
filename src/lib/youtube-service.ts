@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { cleanArtistName } from '@/lib/clean-title'
 import type { Json } from '@/types/database'
 import type { Album, Artist, Track } from '@/types/music'
 
@@ -355,7 +356,7 @@ function pickThumb(thumbnails?: { high?: { url: string }; medium?: { url: string
 function mapChannelToArtist(item: YouTubeJson): Artist {
   return {
     id: item.id?.channelId ?? item.id ?? '',
-    name: item.snippet?.title ?? '',
+    name: cleanArtistName(item.snippet?.title ?? ''),
     image: pickThumb(item.snippet?.thumbnails),
     image_xl: pickThumb(item.snippet?.thumbnails),
     followers: 0,
@@ -371,7 +372,7 @@ function mapPlaylistToAlbum(item: YouTubeJson): Album {
     id: playlistId,
     name: item.snippet?.title ?? '',
     artist_id: item.snippet?.channelId ?? '',
-    artist_name: item.snippet?.channelTitle ?? '',
+    artist_name: cleanArtistName(item.snippet?.channelTitle ?? ''),
     image: pickThumb(item.snippet?.thumbnails),
     release_date: item.snippet?.publishedAt?.slice(0, 10) ?? '',
     total_tracks: item.contentDetails?.itemCount ?? 0,
@@ -386,7 +387,7 @@ function mapVideoItemToTrack(item: YouTubeJson, duration: number, albumId = '', 
     name: item.snippet?.title ?? '',
     duration,
     artist_id: item.snippet?.channelId ?? item.snippet?.videoOwnerChannelId ?? '',
-    artist_name: item.snippet?.channelTitle ?? item.snippet?.videoOwnerChannelTitle ?? '',
+    artist_name: cleanArtistName(item.snippet?.channelTitle ?? item.snippet?.videoOwnerChannelTitle ?? ''),
     album_id: albumId,
     album_name: albumName,
     image: pickThumb(item.snippet?.thumbnails),

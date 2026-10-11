@@ -20,3 +20,12 @@ export function cleanDisplayTitle(title: string, artistName?: string): string {
   out = out.replace(/\s*[-–—|]\s*$/, '').trim()
   return out || title
 }
+
+export function cleanArtistName(name: string): string {
+  const cleaned = name
+    .replace(/\s*-\s*Topic$/i, '')
+    .replace(/\s+@\S+$/, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+  return cleaned || name
+}
