@@ -15,21 +15,23 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import {
   ChevronDown, Play,
-  Music, Trash2, GripVertical,
+  Music, Trash2, GripVertical, MoreHorizontal,
 } from 'lucide-react'
 import { extractDominantColor } from '@/lib/color/extractDominantColor'
 import { getHighResCoverUrl } from '@/lib/image-utils'
+import { useMenu, MenuItem, MenuPanel } from '@/components/ui/Menu'
 
 function queueIndexFromItemKey(key: string | number): number {
   const parsed = Number(String(key).split('::')[0])
   return Number.isFinite(parsed) ? parsed : -1
 }
 
-const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, index, isCurrent, isPlaying, onPlay, onRemove, minimized }: {
+const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, index, isCurrent, isPlaying, onPlay, onRemove, onOpenAddSearch, minimized }: {
   track: Track; sortableId: string; index: number; isCurrent: boolean; isPlaying: boolean;
-  onPlay: (index: number) => void; onRemove: (index: number) => void; minimized?: boolean
+  onPlay: (index: number) => void; onRemove: (index: number) => void; onOpenAddSearch: () => void; minimized?: boolean
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: sortableId })
+  const { open: menuOpen, close: closeMenu, triggerProps, panelProps } = useMenu()
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -89,14 +91,30 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
         )}
       </div>
 
-      <button
-        onClick={() => onRemove(index)}
-        className="h-11 w-11 rounded-full z-10 relative inline-flex items-center justify-center transition-colors state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-        title="Remover da fila"
-        aria-label={`Remover ${track.name} da fila`}
-      >
-        <Trash2 className="w-5 h-5" />
-      </button>
+      <div className="relative flex-none z-10">
+        <button
+          {...triggerProps}
+          className="h-11 w-11 rounded-full inline-flex items-center justify-center transition-colors state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          title="Mais opções"
+          aria-label={`Mais opções para ${track.name}`}
+        >
+          <MoreHorizontal className="w-5 h-5" />
+        </button>
+        {menuOpen && (
+          <MenuPanel align="right" placement="bottom" {...panelProps}>
+            <MenuItem onClick={() => { closeMenu(); onOpenAddSearch() }}>
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Adicionar à fila
+            </MenuItem>
+            <MenuItem danger onClick={() => { closeMenu(); onRemove(index) }}>
+              <Trash2 className="w-5 h-5 flex-shrink-0" />
+              Remover da fila
+            </MenuItem>
+          </MenuPanel>
+        )}
+      </div>
     </div>
   )
 })
@@ -124,11 +142,18 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const queue = usePlayerStore((s) => s.queue)
   const isExpandedOpen = usePlayerStore((s) => s.isExpandedOpen)
   const queueMinimized = usePlayerStore((s) => s.queueMinimized)
+  const setQueueMinimized = usePlayerStore((s) => s.setQueueMinimized)
   const play = usePlayerStore((s) => s.play)
   const removeFromQueue = usePlayerStore((s) => s.removeFromQueue)
   const reorderQueue = usePlayerStore((s) => s.reorderQueue)
   const clearQueue = usePlayerStore((s) => s.clearQueue)
   const addToQueue = usePlayerStore((s) => s.addToQueue)
+
+  const openAddSearch = useCallback(() => {
+    setQueueMinimized(false)
+    setIsSearchOpen(true)
+    setSearchQuery('')
+  }, [setQueueMinimized])
 
   const isFav = useIsFavorite(currentTrack?.id ?? '')
   const toggleFavorite = useFavoritesStore((s) => s.toggle)
@@ -545,6 +570,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                         isPlaying={isPlaying}
                         onPlay={playTrackAt}
                         onRemove={removeFromQueue}
+                        onOpenAddSearch={openAddSearch}
                         minimized={queueMinimized}
                       />
                     ))
@@ -552,16 +578,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 </div>
                 {!queueMinimized && (
                 <div className="sticky bottom-0 z-10 flex-none flex items-center gap-2 px-2 py-8 border-t border-outline-variant pointer-events-none" style={{ backgroundColor: 'rgba(49, 45, 41, 0.13)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
-                  <button
-                    onClick={() => { setIsSearchOpen(!isSearchOpen); if (!isSearchOpen) setSearchQuery('') }}
-                    className="pointer-events-auto flex items-center gap-2 px-4 min-h-[48px] rounded-lg text-label-large transition-colors state-layer"
-                    style={{ color: isSearchOpen ? 'var(--accent-from)' : 'var(--text-secondary)', backgroundColor: 'var(--bg-surface)' }}
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                    {isSearchOpen ? 'Fechar busca' : 'Adicionar à fila'}
-                  </button>
                   <button
                     onClick={() => { clearQueue(); showToast('Fila limpa') }}
                     className="pointer-events-auto flex items-center gap-2 px-4 min-h-[48px] rounded-lg text-label-large transition-colors state-layer"
@@ -599,6 +615,17 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
                   )}
+                  <button
+                    onClick={() => setIsSearchOpen(false)}
+                    className="h-9 w-9 flex-none inline-flex items-center justify-center rounded-full transition-colors state-layer"
+                    style={{ color: 'var(--text-secondary)' }}
+                    title="Fechar busca"
+                    aria-label="Fechar busca"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar px-2 pb-2 space-y-0.5 queue-scroll">
