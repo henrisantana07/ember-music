@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef, useCallback, memo } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { usePlayerStore } from '@/lib/store'
@@ -19,7 +20,7 @@ import {
 } from 'lucide-react'
 import { extractDominantColor } from '@/lib/color/extractDominantColor'
 import { getHighResCoverUrl } from '@/lib/image-utils'
-import { useMenu, MenuItem, MenuPanel } from '@/components/ui/Menu'
+import { useMenu, MenuItem } from '@/components/ui/Menu'
 
 function queueIndexFromItemKey(key: string | number): number {
   const parsed = Number(String(key).split('::')[0])
@@ -32,6 +33,7 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: sortableId })
   const { open: menuOpen, close: closeMenu, triggerProps, panelProps } = useMenu()
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null)
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -94,14 +96,33 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
       <div className="relative flex-none z-10">
         <button
           {...triggerProps}
+          onClick={(e) => {
+            if (!menuOpen) {
+              const r = e.currentTarget.getBoundingClientRect()
+              const PANEL_H = 112
+              const flip = r.bottom + 4 + PANEL_H > window.innerHeight - 8
+              setMenuPos({
+                top: flip ? r.top - PANEL_H - 4 : r.bottom + 4,
+                right: window.innerWidth - r.right,
+              })
+            } else {
+              setMenuPos(null)
+            }
+            triggerProps.onClick()
+          }}
           className="h-11 w-11 rounded-full inline-flex items-center justify-center transition-colors state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           title="Mais opções"
           aria-label={`Mais opções para ${track.name}`}
         >
           <MoreHorizontal className="w-5 h-5" />
         </button>
-        {menuOpen && (
-          <MenuPanel align="right" placement="bottom" {...panelProps}>
+        {menuOpen && menuPos && createPortal(
+          <div
+            {...panelProps}
+            role="menu"
+            className="fixed z-[80] min-w-[200px] py-1 rounded-[var(--shape-large)] bg-[var(--bg-elevated)] border border-outline-variant shadow-elevation-2 overflow-hidden"
+            style={{ top: menuPos.top, right: menuPos.right }}
+          >
             <MenuItem onClick={() => { closeMenu(); onOpenAddSearch() }}>
               <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -112,7 +133,8 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
               <Trash2 className="w-5 h-5 flex-shrink-0" />
               Remover da fila
             </MenuItem>
-          </MenuPanel>
+          </div>,
+          document.body
         )}
       </div>
     </div>
