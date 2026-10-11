@@ -477,3 +477,88 @@ describe('getYouTubeChannel (degradação com quota de busca esgotada)', () => {
     await expect(getYouTubeChannel('UC1')).rejects.toThrow()
   })
 })
+
+describe('cache unificado por query (limits diferentes compartilham a mesma busca)', () => {
+  function mockBatch(videos: number, playlists: number, channels: number) {
+    fetchMock.mockImplementation(async (url: string) => {
+      const u = String(url)
+      if (u.includes('/youtube/v3/videos')) return okJson({ items: [] })
+      if (u.includes('/youtube/v3/channels')) return errResponse(404)
+      if (u.includes('/youtube/v3/search')) {
+        if (u.includes('type=playlist')) {
+          return okJson({
+            items: Array.from({ length: playlists }, (_, i) => ({
+              id: { playlistId: `PL${i}` },
+              snippet: { title: `Álbum ${i}`, channelId: 'ch1', channelTitle: 'Artista', thumbnails: {}, publishedAt: '2020-01-01T00:00:00Z' },
+            })),
+          })
+        }
+        if (u.includes('type=channel')) {
+          return okJson({
+            items: Array.from({ length: channels }, (_, i) => ({
+              id: { channelId: `UC${i}` },
+              snippet: { title: `Artista ${i}`, thumbnails: {} },
+            })),
+          })
+        }
+        return okJson({
+          items: Array.from({ length: videos }, (_, i) => ({
+            id: { videoId: `v${i}` },
+            snippet: { title: `Vídeo ${i}`, channelId: 'ch1', channelTitle: 'Artista', thumbnails: {}, publishedAt: '2020-01-01T00:00:00Z' },
+          })),
+        })
+      }
+      return errResponse(404)
+    })
+  }
+
+  it('tracks: sugestões (limit 4) e resultados (limit 50) do mesmo termo = 1 search.list', async () => {
+    const { searchYouTube } = await loadService()
+    mockBatch(8, 0, 0)
+
+    const sugestoes = await searchYouTube('mesmo termo', { limit: 4 })
+    const resultados = await searchYouTube('mesmo termo', { limit: 50 })
+
+    expect(sugestoes.tracks).toHaveLength(4)
+    expect(resultados.tracks).toHaveLength(8)
+    expect(searchCallCount()).toBe(1)
+  })
+
+  it('tracks: chamadas simultâneas com limits diferentes compartilham o request em voo', async () => {
+    const { searchYouTube } = await loadService()
+    mockBatch(8, 0, 0)
+
+    const [a, b] = await Promise.all([
+      searchYouTube('simultanea', { limit: 4 }),
+      searchYouTube('simultanea', { limit: 50 }),
+    ])
+
+    expect(a.tracks).toHaveLength(4)
+    expect(b.tracks).toHaveLength(8)
+    expect(searchCallCount()).toBe(1)
+  })
+
+  it('albums: mesma query com limits 3 e 20 = 1 search.list, fatiando por chamada', async () => {
+    const { searchYouTubePlaylists } = await loadService()
+    mockBatch(0, 5, 0)
+
+    const sugestoes = await searchYouTubePlaylists('album cache', 3)
+    const resultados = await searchYouTubePlaylists('album cache', 20)
+
+    expect(sugestoes.albums).toHaveLength(3)
+    expect(resultados.albums).toHaveLength(5)
+    expect(searchCallCount()).toBe(1)
+  })
+
+  it('artists: mesma query com limits 3 e 12 = 1 search.list, fatiando por chamada', async () => {
+    const { searchYouTubeChannels } = await loadService()
+    mockBatch(0, 0, 5)
+
+    const sugestoes = await searchYouTubeChannels('artist cache', 3)
+    const resultados = await searchYouTubeChannels('artist cache', 12)
+
+    expect(sugestoes.artists).toHaveLength(3)
+    expect(resultados.artists).toHaveLength(5)
+    expect(searchCallCount()).toBe(1)
+  })
+})

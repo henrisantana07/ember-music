@@ -101,7 +101,9 @@ export function SearchSuggestions({ query, onSelect, onClose, onSearch, inputRef
       } finally {
         if (!controller.signal.aborted) setLoading(false)
       }
-    }, 350)
+      // Espelha YOUTUBE_SEARCH_DEBOUNCE_MS (@/lib/youtube-service): mais tempo
+      // entre teclas = menos buscas intermediárias descartáveis na cota.
+    }, 600)
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)

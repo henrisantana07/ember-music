@@ -11,6 +11,12 @@ export const YOUTUBE_SEARCH_RATE_WINDOW = 60_000
 export const YOUTUBE_SEARCH_RATE_LIMIT_USER = 30
 export const YOUTUBE_SEARCH_MAX_RETRIES = 1
 
+// maxResults não muda o custo (1 search.list por chamada): sempre busca o teto
+// e fatia por chamada, para que sugestões e resultados dividam o mesmo cache.
+const SEARCH_FETCH_TRACKS = 50
+const SEARCH_FETCH_PLAYLISTS = 20
+const SEARCH_FETCH_CHANNELS = 12
+
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3'
 
 type CacheEntry = {
@@ -253,33 +259,33 @@ export async function searchYouTube(
   }
 
   const requestedLimit = options?.limit && options.limit > 0 ? Math.min(options.limit, 50) : YOUTUBE_SEARCH_MAX_RESULTS
-  const cacheKey =
-    getCacheKey(normalized) + (requestedLimit !== YOUTUBE_SEARCH_MAX_RESULTS ? `:${requestedLimit}` : '')
+  // Cache por query (sem o limit): busca o máximo uma vez e fatia por chamada.
+  const cacheKey = getCacheKey(normalized)
   const pageToken = options?.pageToken ?? null
 
   const memEntry = getFromMemoryCache(cacheKey)
   if (memEntry && !pageToken) {
     logEvent('cache_hit', { key: cacheKey, source: 'memory' })
-    return { tracks: memEntry.results, nextPageToken: memEntry.nextPageToken }
+    return { tracks: memEntry.results.slice(0, requestedLimit), nextPageToken: memEntry.nextPageToken }
   }
 
   const sbEntry = await fetchFromSupabaseCache(cacheKey)
   if (sbEntry && !pageToken) {
     setMemoryCache(cacheKey, sbEntry.results, sbEntry.nextPageToken)
-    return { tracks: sbEntry.results, nextPageToken: sbEntry.nextPageToken }
+    return { tracks: sbEntry.results.slice(0, requestedLimit), nextPageToken: sbEntry.nextPageToken }
   }
 
   const existingPromise = inFlight.get(cacheKey)
   if (existingPromise && !pageToken) {
     logEvent('dedup', { key: cacheKey })
-    return existingPromise
+    return existingPromise.then((entry) => ({ tracks: entry.tracks.slice(0, requestedLimit), nextPageToken: entry.nextPageToken }))
   }
 
   logEvent('api_request', { query: normalized })
 
   const promise = (async () => {
     try {
-      const { items, nextPageToken } = await fetchYouTubeSearch(normalized, pageToken, requestedLimit)
+      const { items, nextPageToken } = await fetchYouTubeSearch(normalized, pageToken, SEARCH_FETCH_TRACKS)
       const videoIds = items.map(i => i.id.videoId)
       const details = await fetchYouTubeVideoDetails(videoIds)
       const tracks = items.map(item => mapYouTubeTrack(item, details.get(item.id.videoId)?.duration ?? 0))
@@ -294,7 +300,7 @@ export async function searchYouTube(
   })()
 
   inFlight.set(cacheKey, promise)
-  return promise
+  return promise.then((entry) => ({ tracks: entry.tracks.slice(0, requestedLimit), nextPageToken: entry.nextPageToken }))
 }
 
 export function clearRateLimits(): void {
@@ -328,6 +334,17 @@ function detailCached<T>(key: string): T | null {
 function detailSet<T>(key: string, value: T): T {
   detailCache.set(key, { value, expiresAt: Date.now() + DETAIL_TTL_MS })
   return value
+}
+
+const detailInFlight = new Map<string, Promise<unknown>>()
+
+// Chamadas simultâneas com a mesma chave (sugestões + resultados) compartilham 1 request.
+function dedupe<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const existing = detailInFlight.get(key) as Promise<T> | undefined
+  if (existing) return existing
+  const promise = fn().finally(() => detailInFlight.delete(key))
+  detailInFlight.set(key, promise)
+  return promise
 }
 
 // ---------------------------------------------------------------------------
@@ -440,18 +457,21 @@ async function upgradeChannelAssets(artists: Artist[]): Promise<Artist[]> {
 export async function searchYouTubeChannels(query: string, limit = 12): Promise<{ artists: Artist[] }> {
   const normalized = normalizeQuery(query)
   if (!normalized) return { artists: [] }
-  const key = `channels:${normalizeQuery(normalized)}:${limit}`
+  const key = `channels:${normalizeQuery(normalized)}`
   const cached = detailCached<Artist[]>(key)
-  if (cached) return { artists: cached }
+  if (cached) return { artists: cached.slice(0, limit) }
 
-  const data = await yt('search', {
-    part: 'snippet',
-    q: normalized,
-    type: 'channel',
-    maxResults: String(limit),
+  const artists = await dedupe(key, async () => {
+    const data = await yt('search', {
+      part: 'snippet',
+      q: normalized,
+      type: 'channel',
+      maxResults: String(SEARCH_FETCH_CHANNELS),
+    })
+    const mapped = await upgradeChannelAssets((data.items ?? []).map(mapChannelToArtist))
+    return detailSet(key, mapped)
   })
-  const artists = await upgradeChannelAssets((data.items ?? []).map(mapChannelToArtist))
-  return { artists: detailSet(key, artists) }
+  return { artists: artists.slice(0, limit) }
 }
 
 // ---------------------------------------------------------------------------
@@ -461,18 +481,20 @@ export async function searchYouTubeChannels(query: string, limit = 12): Promise<
 export async function searchYouTubePlaylists(query: string, limit = 12): Promise<{ albums: Album[] }> {
   const normalized = normalizeQuery(query)
   if (!normalized) return { albums: [] }
-  const key = `playlists:${normalizeQuery(normalized)}:${limit}`
+  const key = `playlists:${normalizeQuery(normalized)}`
   const cached = detailCached<Album[]>(key)
-  if (cached) return { albums: cached }
+  if (cached) return { albums: cached.slice(0, limit) }
 
-  const data = await yt('search', {
-    part: 'snippet',
-    q: normalized,
-    type: 'playlist',
-    maxResults: String(limit),
+  const albums = await dedupe(key, async () => {
+    const data = await yt('search', {
+      part: 'snippet',
+      q: normalized,
+      type: 'playlist',
+      maxResults: String(SEARCH_FETCH_PLAYLISTS),
+    })
+    return detailSet(key, (data.items ?? []).map(mapPlaylistToAlbum))
   })
-  const albums = (data.items ?? []).map(mapPlaylistToAlbum)
-  return { albums: detailSet(key, albums) }
+  return { albums: albums.slice(0, limit) }
 }
 
 // ---------------------------------------------------------------------------
