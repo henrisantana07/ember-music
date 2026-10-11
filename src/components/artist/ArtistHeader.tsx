@@ -18,14 +18,15 @@ function formatFollowers(count: number): string {
 }
 
 export function ArtistHeader({ artist, onPlay }: ArtistHeaderProps) {
-  const imageUrl = artist.image_xl || artist.image
+  const backgroundUrl = artist.image_xl || artist.image
+  const photoUrl = artist.image || artist.image_xl
 
   return (
     <div className="relative overflow-hidden rounded-2xl" style={{ minHeight: 400 }}>
-      <ArtistHeaderBackground imageUrl={imageUrl} artistName={artist.name} />
+      <ArtistHeaderBackground imageUrl={backgroundUrl} artistName={artist.name} />
 
       <div className="relative z-10 flex flex-col items-center justify-center gap-5 px-6 py-10 text-center">
-        <ArtistPhoto imageUrl={imageUrl} name={artist.name} />
+        <ArtistPhoto imageUrl={photoUrl} name={artist.name} />
 
         <h1 className="text-4xl font-bold tracking-tight">{artist.name}</h1>
 

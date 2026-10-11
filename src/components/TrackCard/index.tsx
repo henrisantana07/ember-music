@@ -7,6 +7,7 @@ import { useEnsureFavorites, useFavoritesStore, useFavoritesSync, useIsFavorite 
 import { useState } from 'react'
 import { PlaylistModal } from '@/components/PlaylistModal'
 import { IconButton } from '@/components/ui/IconButton'
+import { CoverImage } from '@/components/ui/CoverImage'
 
 interface TrackCardProps {
   track: Track
@@ -48,11 +49,11 @@ export function TrackCard({ track, tracks, user }: TrackCardProps) {
         onClick={handlePlay}
       >
         <div className="relative mb-3">
-          <img
+          <CoverImage
             src={track.image}
+            videoId={track.youtubeVideoId}
             alt=""
             className="w-full aspect-square rounded-[var(--shape-medium)] object-cover"
-            loading="lazy"
           />
           <div
             className="absolute inset-0 rounded-[var(--shape-medium)] opacity-0 group-hover:opacity-100 transition-opacity duration-200"

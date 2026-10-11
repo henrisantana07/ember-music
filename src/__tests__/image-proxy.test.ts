@@ -64,6 +64,25 @@ describe('GET /api/image-proxy', () => {
     expect(supabase.status).toBe(200)
   })
 
+  it('aceita capas do YouTube Music (googleusercontent)', async () => {
+    stubFetch(async () => new Response(jpegBytes, { status: 200, headers: { 'content-type': 'image/jpeg' } }))
+    const res = await GET(makeRequest('https://lh3.googleusercontent.com/abc123=w1200-h1200-l90-rj'))
+    expect(res.status).toBe(200)
+  })
+
+  it('aceita avatares e banners de canal (ggpht)', async () => {
+    stubFetch(async () => new Response(jpegBytes, { status: 200, headers: { 'content-type': 'image/jpeg' } }))
+    const res = await GET(makeRequest('https://yt3.ggpht.com/ytc/avatar=s800-c-k-c0x00ffffff-no-rj'))
+    expect(res.status).toBe(200)
+  })
+
+  it('não aceita domínios que apenas terminam com o sufixo permitido', async () => {
+    const fetchMock = stubFetch(async () => new Response('ok'))
+    const res = await GET(makeRequest('https://googleusercontent.com.evil.example/x.jpg'))
+    expect(res.status).toBe(403)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it('rejeita hosts do Deezer (dzcdn)', async () => {
     const res = await GET(makeRequest('https://e-cdns-images.dzcdn.net/images/cover/x.jpg'))
     expect(res.status).toBe(403)

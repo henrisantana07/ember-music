@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { useEnsureFavorites, useFavoritesStore, useFavoritesSync, useIsFavorite } from '@/lib/favorites-store'
 import { PlaylistModal } from '@/components/PlaylistModal'
+import { CoverImage } from '@/components/ui/CoverImage'
 
 interface TopResultCardProps {
   track: Track
@@ -42,7 +43,7 @@ export function TopResultCard({ track }: TopResultCardProps) {
         style={{ backgroundColor: 'var(--bg-surface)', borderLeft: '4px solid', borderImage: 'linear-gradient(135deg, var(--accent-from), var(--accent-to)) 1' }}
         onClick={() => { if (isActive) togglePlay(); else play(track) }}
       >
-        <img src={track.image} alt={track.name} className="w-[120px] h-[120px] rounded-lg object-cover flex-shrink-0" loading="lazy" />
+        <CoverImage src={track.image} videoId={track.youtubeVideoId} alt={track.name} className="w-[120px] h-[120px] rounded-lg object-cover flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-label-medium font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>
             Resultado principal

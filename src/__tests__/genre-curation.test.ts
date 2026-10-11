@@ -110,10 +110,15 @@ describe('toCatalogItem adapters', () => {
     expect(item.metadata?.releaseYear).toBe('2020')
   })
 
-  it('maps an artist preferring the xl image', () => {
-    const item = artistToCatalogItem(makeArtist({ image_xl: 'https://xl.jpg' }))
+  it('maps an artist preferring the profile photo over the banner', () => {
+    const item = artistToCatalogItem(
+      makeArtist({ image: 'https://profile.jpg', image_xl: 'https://banner.jpg' })
+    )
     expect(item.type).toBe('artist')
-    expect(item.imageUrl).toBe('https://xl.jpg')
+    expect(item.imageUrl).toBe('https://profile.jpg')
+
+    const withoutProfile = artistToCatalogItem(makeArtist({ image: '', image_xl: 'https://banner.jpg' }))
+    expect(withoutProfile.imageUrl).toBe('https://banner.jpg')
   })
 })
 

@@ -3,6 +3,7 @@
 import type { Artist } from '@/types/music'
 import { ArtistCircleSkeleton } from './skeletons/ArtistCircleSkeleton'
 import { Carousel } from '@/components/Carousel'
+import { CoverImage } from '@/components/ui/CoverImage'
 
 interface ArtistResultCarouselProps {
   artists: Artist[]
@@ -31,7 +32,7 @@ export function ArtistResultCarousel({ artists, loading, maxItems }: ArtistResul
           className="flex flex-col items-center gap-2 w-32 flex-shrink-0 group"
         >
           <div className="w-[120px] h-[120px] rounded-full overflow-hidden border-2 transition-colors duration-200 group-hover:border-transparent" style={{ borderColor: 'var(--bg-elevated)' }}>
-            <img src={artist.image || '/placeholder.svg'} alt={artist.name} className="w-full h-full object-cover" loading="lazy" />
+            <CoverImage src={artist.image} alt={artist.name} className="w-full h-full object-cover" />
           </div>
           <p className="text-body-large font-semibold text-center truncate w-full">{artist.name}</p>
           <p className="text-body-medium text-center" style={{ color: 'var(--text-secondary)' }}>

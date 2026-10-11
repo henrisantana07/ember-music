@@ -403,6 +403,39 @@ function mapVideoItemToTrack(item: YouTubeJson, duration: number, albumId = '', 
 // Search: channels (artistas)
 // ---------------------------------------------------------------------------
 
+async function upgradeChannelAssets(artists: Artist[]): Promise<Artist[]> {
+  const ids = artists.map((a) => a.id).filter(Boolean)
+  if (ids.length === 0) return artists
+  try {
+    const data = await yt('channels', {
+      part: 'snippet,brandingSettings',
+      id: ids.join(','),
+      maxResults: String(ids.length),
+    })
+    const upgrades = new Map<string, { image: string; banner: string }>()
+    for (const item of data.items ?? []) {
+      const id = item?.id ?? ''
+      if (!id) continue
+      upgrades.set(id, {
+        image: pickThumb(item.snippet?.thumbnails),
+        banner: item.brandingSettings?.image?.bannerExternalUrl ?? '',
+      })
+    }
+    if (upgrades.size === 0) return artists
+    return artists.map((artist) => {
+      const upgrade = upgrades.get(artist.id)
+      if (!upgrade) return artist
+      return {
+        ...artist,
+        image: upgrade.image || artist.image,
+        image_xl: upgrade.banner || upgrade.image || artist.image_xl,
+      }
+    })
+  } catch {
+    return artists
+  }
+}
+
 export async function searchYouTubeChannels(query: string, limit = 12): Promise<{ artists: Artist[] }> {
   const normalized = normalizeQuery(query)
   if (!normalized) return { artists: [] }
@@ -416,7 +449,7 @@ export async function searchYouTubeChannels(query: string, limit = 12): Promise<
     type: 'channel',
     maxResults: String(limit),
   })
-  const artists = (data.items ?? []).map(mapChannelToArtist)
+  const artists = await upgradeChannelAssets((data.items ?? []).map(mapChannelToArtist))
   return { artists: detailSet(key, artists) }
 }
 
@@ -511,11 +544,16 @@ export async function getYouTubeChannel(
   const cached = detailCached<{ artist: Artist | null; top_tracks: Track[]; albums: Album[]; related: Artist[] }>(key)
   if (cached) return cached
 
-  const channelData = await yt('channels', { part: 'snippet,contentDetails', id: channelId })
+  const channelData = await yt('channels', {
+    part: 'snippet,contentDetails,brandingSettings',
+    id: channelId,
+  })
   const item = channelData.items?.[0]
   if (!item) return { artist: null, top_tracks: [], albums: [], related: [] }
 
-  const artist = mapChannelToArtist({ id: { channelId }, snippet: item.snippet })
+  const baseArtist = mapChannelToArtist({ id: { channelId }, snippet: item.snippet })
+  const banner = item.brandingSettings?.image?.bannerExternalUrl ?? ''
+  const artist = banner ? { ...baseArtist, image_xl: banner } : baseArtist
   const title = item.snippet?.title ?? ''
 
   const [videosData, playlistsData, relatedData] = await Promise.all([
@@ -530,9 +568,11 @@ export async function getYouTubeChannel(
   const top_tracks = videoItems.map((v) => mapVideoItemToTrack(v, durations.get(v.id.videoId)?.duration ?? 0))
 
   const albums = (playlistsData.items ?? []).map(mapPlaylistToAlbum)
-  const related = (relatedData.items ?? [])
-    .map(mapChannelToArtist)
-    .filter((a: Artist) => a.id !== channelId)
+  const related = await upgradeChannelAssets(
+    (relatedData.items ?? [])
+      .map(mapChannelToArtist)
+      .filter((a: Artist) => a.id !== channelId)
+  )
 
   return detailSet(key, { artist, top_tracks, albums, related })
 }

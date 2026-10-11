@@ -347,3 +347,73 @@ describe('searchYouTube', () => {
     expect(String(searchCall?.[0])).toContain('pageToken=PAGE_1')
   })
 })
+
+describe('searchYouTubeChannels (upgrade de imagens)', () => {
+  function mockChannelApis(options?: { banner?: boolean; failChannels?: boolean }) {
+    fetchMock.mockImplementation(async (url: string) => {
+      const u = String(url)
+      if (u.includes('/youtube/v3/search')) {
+        return okJson({
+          items: [
+            {
+              id: { channelId: 'UC1' },
+              snippet: {
+                title: 'Artist One',
+                thumbnails: { high: { url: 'https://yt3.ggpht.com/search-high' } },
+              },
+            },
+          ],
+        })
+      }
+      if (u.includes('/youtube/v3/channels')) {
+        if (options?.failChannels) return errResponse(500)
+        return okJson({
+          items: [
+            {
+              id: 'UC1',
+              snippet: {
+                thumbnails: { maxres: { url: 'https://yt3.ggpht.com/profile-maxres' } },
+              },
+              ...(options?.banner === false
+                ? {}
+                : { brandingSettings: { image: { bannerExternalUrl: 'https://yt3.ggpht.com/banner' } } }),
+            },
+          ],
+        })
+      }
+      return errResponse(404)
+    })
+  }
+
+  it('faz upgrade da foto de perfil e do banner via channels.list', async () => {
+    const { searchYouTubeChannels } = await loadService()
+    mockChannelApis()
+
+    const { artists } = await searchYouTubeChannels('artist one')
+
+    expect(artists).toHaveLength(1)
+    expect(artists[0].image).toBe('https://yt3.ggpht.com/profile-maxres')
+    expect(artists[0].image_xl).toBe('https://yt3.ggpht.com/banner')
+  })
+
+  it('sem banner, usa a foto de alta resolução como image_xl', async () => {
+    const { searchYouTubeChannels } = await loadService()
+    mockChannelApis({ banner: false })
+
+    const { artists } = await searchYouTubeChannels('artist two')
+
+    expect(artists[0].image).toBe('https://yt3.ggpht.com/profile-maxres')
+    expect(artists[0].image_xl).toBe('https://yt3.ggpht.com/profile-maxres')
+  })
+
+  it('mantém as thumbs da busca quando o channels.list falha', async () => {
+    const { searchYouTubeChannels } = await loadService()
+    mockChannelApis({ failChannels: true })
+
+    const { artists } = await searchYouTubeChannels('artist three')
+
+    expect(artists).toHaveLength(1)
+    expect(artists[0].image).toBe('https://yt3.ggpht.com/search-high')
+    expect(artists[0].image_xl).toBe('https://yt3.ggpht.com/search-high')
+  })
+})

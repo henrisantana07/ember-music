@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import type { Track, Album, Artist } from '@/types/music'
 import { filterByGenre, isRelevantToGenre, albumToCatalogItem, artistToCatalogItem, trackToCatalogItem } from '@/lib/genre-curation'
+import { CoverImage } from '@/components/ui/CoverImage'
 import { createClient } from '@/lib/supabase/client'
 import { useEnsureFavorites, useFavoritesSync } from '@/lib/favorites-store'
 import { TrackTable } from '@/components/TrackTable'
@@ -263,7 +264,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
                   className="flex flex-col items-center gap-2 p-3 rounded-xl transition-colors hover:bg-state-hover group"
                 >
                   <div className="w-[120px] h-[120px] rounded-full overflow-hidden border-2 transition-colors group-hover:border-transparent" style={{ borderColor: 'var(--bg-elevated)' }}>
-                    <img src={artist.image || '/placeholder.svg'} alt={artist.name} className="w-full h-full object-cover" loading="lazy" />
+                    <CoverImage src={artist.image} alt={artist.name} className="w-full h-full object-cover" />
                   </div>
                   <p className="text-body-large font-semibold text-center truncate w-full">{artist.name}</p>
                   <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>

@@ -67,7 +67,7 @@ export function artistToCatalogItem(artist: Artist, genre = ''): MusicCatalogIte
     genre,
     title: artist.name,
     subtitle: artist.genres?.[0] ?? '',
-    imageUrl: artist.image_xl || artist.image,
+    imageUrl: artist.image || artist.image_xl,
     metadata: {
       channelTitle: artist.name,
     },

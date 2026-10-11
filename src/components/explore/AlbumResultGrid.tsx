@@ -7,6 +7,7 @@ import { usePlaylistsStore } from '@/lib/playlists-store'
 import type { Album, Track } from '@/types/music'
 import type { User } from '@supabase/supabase-js'
 import type { Json } from '@/types/database'
+import { CoverImage } from '@/components/ui/CoverImage'
 
 interface AlbumResultGridProps {
   albums: Album[]
@@ -121,11 +122,10 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
           <div key={album.id} className="group relative p-4 rounded-xl transition-colors hover:bg-state-hover">
             <a href={`/albums/${album.id}`} className="block">
               <div className="relative mb-3">
-                <img
-                  src={album.image || '/placeholder.svg'}
+                <CoverImage
+                  src={album.image}
                   alt={album.name}
                   className="w-full aspect-square rounded-lg object-cover"
-                  loading="lazy"
                 />
                 <div
                   className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"
