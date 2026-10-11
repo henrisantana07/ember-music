@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react'
 import type { Track, Album, Artist } from '@/types/music'
+import { filterByGenre, isRelevantToGenre, albumToCatalogItem, artistToCatalogItem, trackToCatalogItem } from '@/lib/genre-curation'
 import { createClient } from '@/lib/supabase/client'
 import { useEnsureFavorites, useFavoritesSync } from '@/lib/favorites-store'
 import { TrackTable } from '@/components/TrackTable'
@@ -53,30 +54,32 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
   }, [])
 
-  const genreArtistNames = useMemo(() => {
-    if (!genreFilter) return null
-    const names = artists.filter(a => a.genres?.some(g => g.toLowerCase() === genreFilter)).map(a => a.name.toLowerCase())
-    if (names.length === 0) return null
-    return new Set(names)
-  }, [artists, genreFilter])
+  const genreMatchedTracks = useMemo(
+    () => filterByGenre(tracks, genreFilter, (t) => trackToCatalogItem(t)),
+    [tracks, genreFilter]
+  )
 
-  const filteredTracks = useMemo(() => tracks.filter(t => {
+  const genreMatchedArtistIds = useMemo(
+    () => new Set(genreMatchedTracks.map((t) => t.artist_id)),
+    [genreMatchedTracks]
+  )
+
+  const filteredTracks = useMemo(() => genreMatchedTracks.filter(t => {
     const artistOk = !artistFilter || t.artist_name.toLowerCase().includes(artistFilter.toLowerCase())
-    const genreOk = !genreArtistNames || genreArtistNames.has(t.artist_name.toLowerCase())
-    return artistOk && genreOk && matchesDuration(t, durationFilter)
-  }), [tracks, artistFilter, genreArtistNames, durationFilter])
+    return artistOk && matchesDuration(t, durationFilter)
+  }), [genreMatchedTracks, artistFilter, durationFilter])
 
   const filteredAlbums = useMemo(() => albums.filter(a => {
     if (artistFilter && !a.artist_name.toLowerCase().includes(artistFilter.toLowerCase())) return false
-    if (genreArtistNames && !genreArtistNames.has(a.artist_name.toLowerCase())) return false
+    if (genreFilter && !isRelevantToGenre(albumToCatalogItem(a), genreFilter) && !genreMatchedArtistIds.has(a.artist_id)) return false
     return true
-  }), [albums, artistFilter, genreArtistNames])
+  }), [albums, artistFilter, genreFilter, genreMatchedArtistIds])
 
   const filteredArtists = useMemo(() => artists.filter(a => {
     if (artistFilter && !a.name.toLowerCase().includes(artistFilter.toLowerCase())) return false
-    if (genreFilter && !a.genres?.some(g => g.toLowerCase() === genreFilter)) return false
+    if (genreFilter && !isRelevantToGenre(artistToCatalogItem(a), genreFilter) && !genreMatchedArtistIds.has(a.id)) return false
     return true
-  }), [artists, artistFilter, genreFilter])
+  }), [artists, artistFilter, genreFilter, genreMatchedArtistIds])
 
   const allTracks = useMemo(() => filteredTracks, [filteredTracks])
   useFavoritesSync(user?.id)

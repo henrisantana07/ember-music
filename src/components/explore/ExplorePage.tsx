@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import type { Track, Album, Artist } from '@/types/music'
 import { getGenreGradient } from '@/constants/genreColors'
+import { curateGenreCatalog } from '@/lib/genre-curation'
 import { useUser } from '@/hooks/use-user'
 import { ExploreEmptyState } from './ExploreEmptyState'
 import { ExploreResults } from './ExploreResults'
@@ -51,6 +52,9 @@ function GenrePage({ genero, genreId }: { genero: string; genreId: string }) {
         const mergedAlbums = [...(albumData.albums ?? [])]
         const mergedArtists = [...(artistData.artists ?? [])]
 
+        let finalAlbums = mergedAlbums
+        let finalArtists = mergedArtists
+
         if (mergedTracks.length > 0) {
           const albumMap = new Map<string, Album>()
           mergedAlbums.forEach(a => albumMap.set(a.id, a))
@@ -58,7 +62,7 @@ function GenrePage({ genero, genreId }: { genero: string; genreId: string }) {
           mergedArtists.forEach(a => artistMap.set(a.id, a))
 
           mergedTracks.forEach(t => {
-            if (!albumMap.has(t.album_id)) {
+            if (t.album_id && !albumMap.has(t.album_id)) {
               albumMap.set(t.album_id, {
                 id: t.album_id,
                 name: t.album_name,
@@ -70,7 +74,7 @@ function GenrePage({ genero, genreId }: { genero: string; genreId: string }) {
                 url: '',
               })
             }
-            if (!artistMap.has(t.artist_id)) {
+            if (t.artist_id && !artistMap.has(t.artist_id)) {
               artistMap.set(t.artist_id, {
                 id: t.artist_id,
                 name: t.artist_name,
@@ -84,14 +88,14 @@ function GenrePage({ genero, genreId }: { genero: string; genreId: string }) {
             }
           })
 
-          setAlbums(Array.from(albumMap.values()))
-          setArtists(Array.from(artistMap.values()))
-        } else {
-          setAlbums(mergedAlbums)
-          setArtists(mergedArtists)
+          finalAlbums = Array.from(albumMap.values())
+          finalArtists = Array.from(artistMap.values())
         }
 
-        setTracks(mergedTracks)
+        const curated = curateGenreCatalog(mergedTracks, finalAlbums, finalArtists, genero)
+        setTracks(curated.tracks)
+        setAlbums(curated.albums)
+        setArtists(curated.artists)
       })
       .catch(() => {
         setTracks([])

@@ -305,24 +305,7 @@ export function clearRateLimits(): void {
 // Genres (curated — a YouTube Data API não expõe gêneros musicais)
 // ---------------------------------------------------------------------------
 
-export const MUSIC_GENRES: { id: string; name: string }[] = [
-  { id: 'pop', name: 'Pop' },
-  { id: 'rock', name: 'Rock' },
-  { id: 'hip-hop', name: 'Hip-Hop' },
-  { id: 'eletronica', name: 'Eletrônica' },
-  { id: 'sertanejo', name: 'Sertanejo' },
-  { id: 'funk', name: 'Funk' },
-  { id: 'mpb', name: 'MPB' },
-  { id: 'rap', name: 'Rap' },
-  { id: 'indie', name: 'Indie' },
-  { id: 'classica', name: 'Clássica' },
-  { id: 'jazz', name: 'Jazz' },
-  { id: 'reggae', name: 'Reggae' },
-  { id: 'country', name: 'Country' },
-  { id: 'metal', name: 'Metal' },
-  { id: 'lofi', name: 'Lo-fi' },
-  { id: 'samba', name: 'Samba' },
-]
+export { MUSIC_GENRES } from '@/constants/genres'
 
 // ---------------------------------------------------------------------------
 // Detail/Discovery cache (memory only — protege a quota da YouTube Data API)
