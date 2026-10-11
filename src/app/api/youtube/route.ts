@@ -29,11 +29,14 @@ function checkRateLimit(ip: string): boolean {
   return true
 }
 
-function json(data: unknown, status = 200) {
-  const ttl = YOUTUBE_SEARCH_CACHE_TTL
+function json(data: unknown, status = 200, cacheSeconds = YOUTUBE_SEARCH_CACHE_TTL) {
   return NextResponse.json(data, {
     status,
-    headers: { 'Cache-Control': `public, s-maxage=${ttl}, stale-while-revalidate=${ttl * 2}` },
+    headers: {
+      'Cache-Control': cacheSeconds > 0
+        ? `public, s-maxage=${cacheSeconds}, stale-while-revalidate=${cacheSeconds * 2}`
+        : 'no-store',
+    },
   })
 }
 
@@ -104,13 +107,14 @@ export async function GET(request: NextRequest) {
       case 'artists': {
         if (!id) return json({ error: 'Missing id' }, 400)
         const { artist, top_tracks, albums, related } = await getYouTubeChannel(id, Math.min(limit, 50))
-        return json({
-          artist,
-          top_tracks,
-          albums,
-          related,
-          results: artist ? [artist] : [],
-        })
+        // Resultado degradado (quota de busca esgotada) não deve ir pro CDN:
+        // assim a página recarregada tenta a API de novo em vez de servir listas vazias por horas.
+        const degraded = !top_tracks.length && !albums.length && !related.length
+        return json(
+          { artist, top_tracks, albums, related, results: artist ? [artist] : [], degraded: degraded || undefined },
+          200,
+          degraded ? 0 : YOUTUBE_SEARCH_CACHE_TTL
+        )
       }
 
       case 'featured': {

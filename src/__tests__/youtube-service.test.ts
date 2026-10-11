@@ -396,7 +396,7 @@ describe('searchYouTubeChannels (upgrade de imagens)', () => {
     expect(artists[0].image_xl).toBe('https://yt3.ggpht.com/banner')
   })
 
-  it('sem banner, usa a foto de alta resolu��o como image_xl', async () => {
+  it('sem banner, usa a foto de alta resolu��o como image_xl', async () => {
     const { searchYouTubeChannels } = await loadService()
     mockChannelApis({ banner: false })
 
@@ -406,7 +406,7 @@ describe('searchYouTubeChannels (upgrade de imagens)', () => {
     expect(artists[0].image_xl).toBe('https://yt3.ggpht.com/profile-maxres')
   })
 
-  it('mant�m as thumbs da busca quando o channels.list falha', async () => {
+  it('mant�m as thumbs da busca quando o channels.list falha', async () => {
     const { searchYouTubeChannels } = await loadService()
     mockChannelApis({ failChannels: true })
 
@@ -415,5 +415,65 @@ describe('searchYouTubeChannels (upgrade de imagens)', () => {
     expect(artists).toHaveLength(1)
     expect(artists[0].image).toBe('https://yt3.ggpht.com/search-high')
     expect(artists[0].image_xl).toBe('https://yt3.ggpht.com/search-high')
+  })
+})
+
+describe('getYouTubeChannel (degradação com quota de busca esgotada)', () => {
+  function mockChannelOkSearchFailing() {
+    fetchMock.mockImplementation(async (url: string) => {
+      const u = String(url)
+      if (u.includes('/youtube/v3/channels')) {
+        return okJson({
+          items: [
+            {
+              id: 'UC1',
+              snippet: {
+                title: 'Clean Pop Songs - Topic',
+                thumbnails: { high: { url: 'https://yt3.ggpht.com/pic' } },
+              },
+              brandingSettings: { image: { bannerExternalUrl: 'https://yt3.ggpht.com/banner' } },
+            },
+          ],
+        })
+      }
+      if (u.includes('/youtube/v3/search')) {
+        return errResponse(403)
+      }
+      return errResponse(404)
+    })
+  }
+
+  it('não lança erro: retorna artist com listas vazias quando as buscas falham', async () => {
+    const { getYouTubeChannel } = await loadService()
+    mockChannelOkSearchFailing()
+
+    const { artist, top_tracks, albums, related } = await getYouTubeChannel('UC1')
+
+    expect(artist?.name).toBe('Clean Pop Songs')
+    expect(artist?.image_xl).toBe('https://yt3.ggpht.com/banner')
+    expect(top_tracks).toEqual([])
+    expect(albums).toEqual([])
+    expect(related).toEqual([])
+  })
+
+  it('não cacheia resultado degradado (a próxima visita tenta de novo)', async () => {
+    const { getYouTubeChannel } = await loadService()
+    mockChannelOkSearchFailing()
+
+    await getYouTubeChannel('UC1')
+    fetchMock.mockClear()
+    await getYouTubeChannel('UC1')
+
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/youtube/v3/channels'))).toBe(true)
+  })
+
+  it('ainda lança erro se o próprio channels.list falhar', async () => {
+    const { getYouTubeChannel } = await loadService()
+    fetchMock.mockImplementation(async (url: string) => {
+      if (String(url).includes('/youtube/v3/channels')) return errResponse(403)
+      return errResponse(404)
+    })
+
+    await expect(getYouTubeChannel('UC1')).rejects.toThrow()
   })
 })

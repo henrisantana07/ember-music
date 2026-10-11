@@ -557,15 +557,32 @@ export async function getYouTubeChannel(
   const artist = banner ? { ...baseArtist, image_xl: banner } : baseArtist
   const title = item.snippet?.title ?? ''
 
+  // Buscas secundárias são best-effort: se o bucket diário de search.list
+  // esgotar, a página do artista degrada (header + listas vazias) em vez de falhar.
+  const safeSearch = async (params: Record<string, string>): Promise<YouTubeJson> => {
+    try {
+      return await yt('search', params)
+    } catch {
+      return { items: [] }
+    }
+  }
+
   const [videosData, playlistsData, relatedData] = await Promise.all([
-    yt('search', { part: 'snippet', channelId, type: 'video', maxResults: String(limit), videoEmbeddable: 'true', videoSyndicated: 'true' }),
-    yt('search', { part: 'snippet', channelId, type: 'playlist', maxResults: String(limit) }),
-    yt('search', { part: 'snippet', q: title, type: 'channel', maxResults: String(limit) }),
+    safeSearch({ part: 'snippet', channelId, type: 'video', maxResults: String(limit), videoEmbeddable: 'true', videoSyndicated: 'true' }),
+    safeSearch({ part: 'snippet', channelId, type: 'playlist', maxResults: String(limit) }),
+    safeSearch({ part: 'snippet', q: title, type: 'channel', maxResults: String(limit) }),
   ])
 
   const videoItems: YouTubeJson[] = videosData.items ?? []
   const videoIds = videoItems.map((v) => v.id?.videoId).filter(Boolean)
-  const durations = videoIds.length ? await fetchYouTubeVideoDetails(videoIds) : new Map<string, YouTubeVideoDetails>()
+  let durations = new Map<string, YouTubeVideoDetails>()
+  if (videoIds.length) {
+    try {
+      durations = await fetchYouTubeVideoDetails(videoIds)
+    } catch {
+      // best-effort: durações vazias não impedem o playback
+    }
+  }
   const top_tracks = videoItems.map((v) => mapVideoItemToTrack(v, durations.get(v.id.videoId)?.duration ?? 0))
 
   const albums = (playlistsData.items ?? []).map(mapPlaylistToAlbum)
@@ -575,7 +592,10 @@ export async function getYouTubeChannel(
       .filter((a: Artist) => a.id !== channelId)
   )
 
-  return detailSet(key, { artist, top_tracks, albums, related })
+  // Resultado degradado (buscas falharam) não vai pro cache: permite retry automático.
+  const result = { artist, top_tracks, albums, related }
+  if (top_tracks.length === 0 && albums.length === 0 && related.length === 0) return result
+  return detailSet(key, result)
 }
 
 // ---------------------------------------------------------------------------
