@@ -4,7 +4,6 @@ import { useEffect, useState, useRef, useCallback, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { usePlayerStore } from '@/lib/store'
-import type { RepeatMode } from '@/lib/store'
 import { formatDuration } from '@/lib/spotify'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
@@ -15,17 +14,11 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from 
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  ChevronDown, Play, Pause, SkipBack, SkipForward,
-  Shuffle, Repeat, Repeat1, Volume2, Volume1, VolumeX,
+  ChevronDown, Play,
   Music, Trash2, GripVertical,
 } from 'lucide-react'
-import { useYouTube, useYouTubeTime } from '@/components/YouTubePlayer/context'
 import { extractDominantColor } from '@/lib/color/extractDominantColor'
 import { getHighResCoverUrl } from '@/lib/image-utils'
-
-function getAudioEl(): HTMLAudioElement | null {
-  return document.querySelector('audio')
-}
 
 function queueIndexFromItemKey(key: string | number): number {
   const parsed = Number(String(key).split('::')[0])
@@ -98,73 +91,12 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
   )
 })
 
-const ProgressSection = memo(function ProgressSection({ isYouTubeTrack, handleSeek, isDragging, setIsDragging }: {
-  isYouTubeTrack: boolean
-  handleSeek: (seconds: number) => void
-  isDragging: boolean
-  setIsDragging: (dragging: boolean) => void
-}) {
-  const progress = usePlayerStore((s) => s.progress)
-  const duration = usePlayerStore((s) => s.duration)
-  const { currentTime: ytCurrentTime, duration: ytDuration } = useYouTubeTime()
-  const progressRef = useRef<HTMLDivElement>(null)
-
-  const currentDuration = isYouTubeTrack ? ytDuration : duration
-  const currentProgress = isYouTubeTrack ? ytCurrentTime : progress
-  const progressPercent = currentDuration > 0 ? (currentProgress / currentDuration) * 100 : 0
-
-  function handleProgressClick(e: React.MouseEvent) {
-    const rect = progressRef.current?.getBoundingClientRect()
-    if (!rect) return
-    const x = (e.clientX - rect.left) / rect.width
-    handleSeek(x * currentDuration)
-  }
-
-  function handleProgressDrag(e: React.MouseEvent) {
-    if (!isDragging) return
-    const rect = progressRef.current?.getBoundingClientRect()
-    if (!rect) return
-    const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
-    handleSeek(x * currentDuration)
-  }
-
-  return (
-    <div className="w-full space-y-1">
-      <div
-        ref={progressRef}
-        className="w-full h-1 rounded-full cursor-pointer relative group hover:h-1.5 transition-all duration-200"
-        style={{ backgroundColor: 'var(--text-disabled)' }}
-        onClick={handleProgressClick}
-        onMouseDown={() => setIsDragging(true)}
-        onMouseMove={handleProgressDrag}
-        onMouseUp={() => setIsDragging(false)}
-        onMouseLeave={() => setIsDragging(false)}
-      >
-        <div
-          className="h-full rounded-full relative"
-          style={{ width: `${progressPercent}%`, background: 'linear-gradient(90deg, var(--accent-from), var(--accent-to))' }}
-        >
-          <div
-            className="absolute right-0 top-1/2 -translate-y-1/2 w-[14px] h-[14px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{ backgroundColor: 'var(--accent-to)' }}
-          />
-        </div>
-      </div>
-      <div className="flex justify-between text-label-medium" style={{ color: 'var(--text-secondary)' }}>
-        <span>{formatDuration(Math.floor(currentProgress))}</span>
-        <span>{formatDuration(Math.floor(currentDuration))}</span>
-      </div>
-    </div>
-  )
-})
-
 export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const router = useRouter()
   const [dominantColor, setDominantColor] = useState<string | null>(null)
   const [hdCover, setHdCover] = useState<{ id: string; src: string } | null>(null)
   const [hdFailed, setHdFailed] = useState<string | null>(null)
   const [baseFailed, setBaseFailed] = useState<string | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
   const [showQueueOnMobile, setShowQueueOnMobile] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [toast, setToast] = useState<string | null>(null)
@@ -179,20 +111,9 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
   const currentTrack = usePlayerStore((s) => s.currentTrack)
   const isPlaying = usePlayerStore((s) => s.isPlaying)
-  const volume = usePlayerStore((s) => s.volume)
   const queue = usePlayerStore((s) => s.queue)
-  const repeat = usePlayerStore((s) => s.repeat)
-  const shuffle = usePlayerStore((s) => s.shuffle)
   const isExpandedOpen = usePlayerStore((s) => s.isExpandedOpen)
   const play = usePlayerStore((s) => s.play)
-  const togglePlay = usePlayerStore((s) => s.togglePlay)
-  const next = usePlayerStore((s) => s.next)
-  const prev = usePlayerStore((s) => s.prev)
-  const setVolume = usePlayerStore((s) => s.setVolume)
-  const setProgress = usePlayerStore((s) => s.setProgress)
-  const setDuration = usePlayerStore((s) => s.setDuration)
-  const setRepeat = usePlayerStore((s) => s.setRepeat)
-  const toggleShuffle = usePlayerStore((s) => s.toggleShuffle)
   const removeFromQueue = usePlayerStore((s) => s.removeFromQueue)
   const reorderQueue = usePlayerStore((s) => s.reorderQueue)
   const clearQueue = usePlayerStore((s) => s.clearQueue)
@@ -212,35 +133,12 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       ? `https://i.ytimg.com/vi/${currentTrack.youtubeVideoId}/hqdefault.jpg`
       : ''
 
-  const yt = useYouTube()
-  const { seek: ytSeek, getCurrentTime: ytGetCurrentTime } = yt
   const coverRef = useRef<HTMLDivElement>(null)
 
   function requestClose() {
     if (onClose) onClose()
     else router.back()
   }
-
-  const handleSeek = useCallback((seconds: number) => {
-    if (isYouTubeTrack) {
-      ytSeek(seconds)
-    } else {
-      const audio = getAudioEl()
-      if (audio) {
-        audio.currentTime = seconds
-        setProgress(seconds)
-      }
-    }
-  }, [isYouTubeTrack, ytSeek])
-
-  const handlePrev = useCallback(() => {
-    const currentTime = isYouTubeTrack ? ytGetCurrentTime() : (getAudioEl()?.currentTime ?? 0)
-    if (currentTime > 3) {
-      handleSeek(0)
-    } else {
-      prev()
-    }
-  }, [isYouTubeTrack, ytGetCurrentTime, handleSeek, prev])
 
   const playTrackAt = useCallback((queueIndex: number) => {
     const track = queue[queueIndex]
@@ -292,25 +190,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       cancelled = true
     }
   }, [currentTrack?.id, currentTrack?.image, currentTrack?.youtubeVideoId, baseCover, hdFailed])
-
-  useEffect(() => {
-    if (isYouTubeTrack) return
-    const audio = getAudioEl()
-    if (!audio) return
-
-    const onTimeUpdate = () => {
-      if (!isDragging) setProgress(audio.currentTime)
-    }
-    const onLoadedMetadata = () => setDuration(audio.duration)
-
-    audio.addEventListener('timeupdate', onTimeUpdate)
-    audio.addEventListener('loadedmetadata', onLoadedMetadata)
-
-    return () => {
-      audio.removeEventListener('timeupdate', onTimeUpdate)
-      audio.removeEventListener('loadedmetadata', onLoadedMetadata)
-    }
-  }, [isDragging, setProgress, setDuration, isYouTubeTrack])
 
   useEffect(() => {
     const main = document.querySelector('main')
@@ -435,9 +314,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     toastTimer.current = setTimeout(() => setToast(null), 3000)
   }
 
-  const RepeatIcon = repeat === 'one' ? Repeat1 : repeat === 'all' ? Repeat : null
-  const repeatLabel: Record<RepeatMode, string> = { none: 'Sem repeat', one: 'Repeat 1', all: 'Repeat tudo' }
-
   function handleTouchStart(e: React.TouchEvent) {
     const target = e.target as HTMLElement
     if (target.closest('.queue-scroll')) return
@@ -482,7 +358,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
   return (
     <div
-      className={`h-full relative flex flex-col overflow-hidden ${onClose ? '' : 'animate-slide-up'}`}
+      className={`h-full relative flex flex-col overflow-hidden pb-20 ${onClose ? '' : 'animate-slide-up'}`}
       style={{
         background: bgGradient,
         transition: `background 800ms ease${swipeOffset > 0 ? '' : ', transform 300ms cubic-bezier(0.32, 0.72, 0, 1)'}`,
@@ -590,80 +466,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
               {toast}
             </div>
           )}
-
-          <ProgressSection
-            isYouTubeTrack={isYouTubeTrack}
-            handleSeek={handleSeek}
-            isDragging={isDragging}
-            setIsDragging={setIsDragging}
-          />
-
-          <div className="w-full flex flex-col md:flex-row items-center justify-center gap-3 md:gap-6">
-            <div className="flex items-center justify-center gap-2 md:gap-3">
-              <button onClick={handlePrev} className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer" style={{ color: 'var(--text-secondary)' }} title="Anterior" aria-label="Faixa anterior">
-                <SkipBack className="w-6 h-6" fill="currentColor" />
-              </button>
-
-              <button onClick={toggleShuffle} className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer" style={{ color: shuffle ? 'var(--accent-from)' : 'var(--text-secondary)' }} title={shuffle ? 'Desativar shuffle' : 'Ativar shuffle'} aria-label={shuffle ? 'Desativar shuffle' : 'Ativar shuffle'} aria-pressed={shuffle}>
-                <Shuffle className="w-5 h-5" />
-              </button>
-
-              <button
-                onClick={togglePlay}
-                className="rounded-full flex items-center justify-center transition-transform active:scale-95"
-                style={{ width: 48, height: 48, background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
-                title={isPlaying ? 'Pausar' : 'Tocar'}
-              >
-                {isPlaying ? (
-                  <Pause className="w-5 h-5 md:w-6 md:h-6" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
-                ) : (
-                  <Play className="w-5 h-5 md:w-6 md:h-6" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
-                )}
-              </button>
-
-              <button
-                onClick={() => {
-                  const modes: RepeatMode[] = ['none', 'all', 'one']
-                  const idx = modes.indexOf(repeat)
-                  setRepeat(modes[(idx + 1) % modes.length])
-                }}
-                className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors relative state-layer"
-                style={{ color: repeat !== 'none' ? 'var(--accent-from)' : 'var(--text-secondary)' }}
-                title={repeatLabel[repeat]}
-                aria-label={repeatLabel[repeat]}
-              >
-                {RepeatIcon ? (
-                  <RepeatIcon className="w-5 h-5" />
-                ) : (
-                  <Repeat className="w-5 h-5" />
-                )}
-              </button>
-
-              <button onClick={next} className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer" style={{ color: 'var(--text-secondary)' }} title="Próxima" aria-label="Próxima faixa">
-                <SkipForward className="w-6 h-6" fill="currentColor" />
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2 w-[180px]" style={{ color: 'var(--text-secondary)' }}>
-              {volume === 0 ? (
-                <VolumeX className="w-5 h-5 flex-none" />
-              ) : volume < 0.5 ? (
-                <Volume1 className="w-5 h-5 flex-none" />
-              ) : (
-                <Volume2 className="w-5 h-5 flex-none" />
-              )}
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={volume}
-                onChange={(e) => setVolume(parseFloat(e.target.value))}
-                aria-label="Volume"
-                className="w-full h-1 accent-[var(--accent-from)] cursor-pointer"
-              />
-            </div>
-          </div>
 
           <button
             onClick={() => setShowQueueOnMobile(true)}

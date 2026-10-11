@@ -1,7 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useState, useCallback, useMemo } from 'react'
-import { usePathname } from 'next/navigation'
+import { useRef, useEffect, useState, useCallback } from 'react'
 import { usePlayerStore } from '@/lib/store'
 import type { RepeatMode } from '@/lib/store'
 import type { Track } from '@/types/music'
@@ -14,7 +13,6 @@ import { useYouTube, useYouTubeTime } from '@/components/YouTubePlayer/context'
 import { ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause } from 'lucide-react'
 
 export function Player() {
-  const pathname = usePathname()
   const audioRef = useRef<HTMLAudioElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -29,7 +27,7 @@ export function Player() {
   const {
     currentTrack, isPlaying, volume, progress, duration, queue,
     currentPlaylistId, currentPlaylistName, repeat, shuffle,
-    crossfadeDuration, sleepTimerMinutes, miniPlayer, isExpandedOpen,
+    crossfadeDuration, sleepTimerMinutes, miniPlayer,
     pause, resume, next, prev, togglePlay,
     setVolume, setProgress, setDuration,
     setRepeat, toggleShuffle, setSleepTimer, toggleMiniPlayer,
@@ -272,10 +270,6 @@ export function Player() {
     }
   }, [crossfadeDuration, volume, next, isYouTubeTrack, pause])
 
-  if (pathname === '/reproducao') {
-    return <audio ref={audioRef} />
-  }
-
   if (!currentTrack) return null
 
   const currentDuration = isYouTubeTrack ? ytDuration : duration
@@ -296,7 +290,7 @@ export function Player() {
     return (
       <>
         <audio ref={audioRef} />
-        <footer className={`h-14 md:hidden flex-shrink-0 items-center px-3 gap-3 border-t border-outline-variant ${isExpandedOpen ? 'hidden' : 'flex'}`}
+        <footer className="h-14 md:hidden flex-shrink-0 relative z-[70] flex items-center px-3 gap-3 border-t border-outline-variant"
           style={{ backgroundColor: 'var(--bg-elevated)' }}
         >
           <button onClick={openExpanded} className="flex-shrink-0" aria-label="Abrir player expandido">
@@ -360,10 +354,10 @@ export function Player() {
       )}
 
       <footer
-        className={`h-20 flex-shrink-0 items-center px-4 border-t border-outline-variant ${isExpandedOpen ? 'hidden' : 'flex'}`}
+        className="h-20 flex-shrink-0 relative z-[70] flex items-center px-4 border-t border-outline-variant"
         style={{ backgroundColor: 'var(--bg-elevated)' }}
       >
-        <div className="flex items-center gap-3 w-72">
+        <div className="flex items-center gap-3 w-40 md:w-72">
           <button onClick={openExpanded} className="flex-shrink-0" aria-label="Abrir player expandido">
             <img src={currentTrack.image} alt={currentTrack.name} className="w-12 h-12 rounded object-cover flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer" />
           </button>
@@ -447,17 +441,17 @@ export function Player() {
           </div>
         </div>
 
-        <div className="w-72 flex items-center justify-end gap-1">
+        <div className="w-auto md:w-72 flex items-center justify-end gap-1">
           <SleepTimerDropdown />
 
-          <div className="items-center gap-1.5 hidden md:flex">
+          <div className="items-center gap-1.5 flex">
             <svg className="w-5 h-5" style={{ color: 'var(--text-secondary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
             </svg>
             <input type="range" min={0} max={1} step={0.01} value={volume}
               onChange={(e) => setVolume(parseFloat(e.target.value))}
               aria-label="Volume"
-              className="w-20 h-1 accent-[var(--accent-from)]" />
+              className="w-14 md:w-20 h-1 accent-[var(--accent-from)]" />
           </div>
 
           <button onClick={toggleMiniPlayer} className="md:hidden h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors state-layer" style={{ color: 'var(--text-secondary)' }} title="Mini player" aria-label="Ativar mini player">
