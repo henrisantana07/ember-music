@@ -77,8 +77,16 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
         <p className={`text-body-medium truncate ${isCurrent ? 'font-semibold' : ''}`} style={{ color: isCurrent ? 'var(--accent-from)' : 'var(--text-primary)' }}>
           {displayName}
         </p>
-        <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
-        <p className="text-label-medium" style={{ color: 'var(--text-disabled)' }}>{formatDuration(Math.floor(track.duration))}</p>
+        {minimized ? (
+          <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>
+            {track.artist_name} · {formatDuration(Math.floor(track.duration))}
+          </p>
+        ) : (
+          <>
+            <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
+            <p className="text-label-medium" style={{ color: 'var(--text-disabled)' }}>{formatDuration(Math.floor(track.duration))}</p>
+          </>
+        )}
       </div>
 
       <button
@@ -492,13 +500,13 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={queue.map((t, index) => `${index}::${t.id}`)} strategy={verticalListSortingStrategy}>
-                <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full">
+                <div className={`flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full${queueMinimized ? ' pb-4' : ''}`}>
                   <div className={`${queueMinimized ? 'px-0' : 'px-1'} space-y-1`}>
                   {queue.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center px-4">
                       <Music className="w-10 h-10 mb-3" style={{ color: 'var(--text-disabled)' }} />
                       <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>Nenhuma faixa na fila</p>
-                      {suggestions.length > 0 && (
+                      {!queueMinimized && suggestions.length > 0 && (
                         <div className="w-full mt-4 text-left">
                           <p className="text-label-medium font-semibold uppercase tracking-widest mb-1.5" style={{ color: 'var(--text-disabled)' }}>
                             Faixas relacionadas
