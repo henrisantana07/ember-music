@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import type { ButtonHTMLAttributes, ComponentPropsWithRef, KeyboardEvent as ReactKeyboardEvent, Ref } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import type { ButtonHTMLAttributes, ComponentPropsWithRef, CSSProperties, KeyboardEvent as ReactKeyboardEvent, Ref } from 'react'
 
 interface MenuTriggerProps {
   ref: Ref<HTMLButtonElement>
@@ -13,6 +14,7 @@ interface MenuTriggerProps {
 interface MenuPanelProps {
   ref: Ref<HTMLDivElement>
   onKeyDown: (e: ReactKeyboardEvent<HTMLDivElement>) => void
+  triggerRect: DOMRect | null
 }
 
 /**
@@ -21,6 +23,7 @@ interface MenuPanelProps {
  */
 export function useMenu() {
   const [open, setOpen] = useState(false)
+  const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
@@ -60,19 +63,25 @@ export function useMenu() {
     next.focus()
   }
 
+  const toggle = () => {
+    if (!open && triggerRef.current) setTriggerRect(triggerRef.current.getBoundingClientRect())
+    setOpen((v) => !v)
+  }
+
   return {
     open,
     close: () => setOpen(false),
-    toggle: () => setOpen((v) => !v),
+    toggle,
     triggerProps: {
       ref: triggerRef,
       'aria-expanded': open,
       'aria-haspopup': 'menu',
-      onClick: () => setOpen((v) => !v),
+      onClick: toggle,
     } satisfies MenuTriggerProps,
     panelProps: {
       ref: panelRef,
       onKeyDown: onPanelKeyDown,
+      triggerRect,
     } satisfies MenuPanelProps,
   }
 }
@@ -106,17 +115,78 @@ export function MenuItem({ selected, danger, className = '', children, ...rest }
 interface MenuPanelPropsArgs extends ComponentPropsWithRef<'div'> {
   align?: 'left' | 'right'
   placement?: 'top' | 'bottom'
+  triggerRect?: DOMRect | null
 }
 
-/** Surface that hosts MenuItem rows (elevation + shape tokens). */
-export function MenuPanel({ align = 'right', placement = 'bottom', className = '', children, ...rest }: MenuPanelPropsArgs) {
-  return (
+/**
+ * Surface that hosts MenuItem rows (elevation + shape tokens).
+ * Rendered in a portal with fixed positioning so it is never clipped by an
+ * `overflow` ancestor, and auto-flips up/left to stay inside the viewport.
+ */
+export function MenuPanel({ align = 'right', placement = 'bottom', className = '', children, triggerRect, ref, onKeyDown, ...rest }: MenuPanelPropsArgs) {
+  const localRef = useRef<HTMLDivElement | null>(null)
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
+
+  const setRefs = (node: HTMLDivElement | null) => {
+    localRef.current = node
+    if (typeof ref === 'function') ref(node)
+    else if (ref && typeof ref === 'object') ref.current = node
+  }
+
+  useLayoutEffect(() => {
+    const el = localRef.current
+    if (!el || !triggerRect) {
+      setPos(null)
+      return
+    }
+    const margin = 4
+    const h = el.offsetHeight
+    const w = el.offsetWidth
+    const vh = window.innerHeight
+    const vw = window.innerWidth
+
+    let top: number
+    if (placement === 'top') {
+      top = triggerRect.top - h - margin
+      if (top < 8) top = triggerRect.bottom + margin
+    } else {
+      top = triggerRect.bottom + margin
+      if (top + h > vh - 8) {
+        const above = triggerRect.top - h - margin
+        top = above >= 8 ? above : Math.max(8, vh - 8 - h)
+      }
+    }
+
+    let left: number
+    if (align === 'right') {
+      left = triggerRect.right - w
+      if (left < 8) left = Math.min(triggerRect.left, vw - w - 8)
+      left = Math.max(8, left)
+    } else {
+      left = triggerRect.left
+      if (left + w > vw - 8) left = Math.max(8, vw - w - 8)
+    }
+
+    setPos({ top, left })
+  }, [triggerRect, placement, align])
+
+  if (typeof document === 'undefined') return null
+
+  const style: CSSProperties = pos
+    ? { position: 'fixed', top: pos.top, left: pos.left, zIndex: 80 }
+    : { position: 'fixed', top: 0, left: 0, zIndex: 80, visibility: 'hidden' }
+
+  return createPortal(
     <div
+      ref={setRefs}
       role="menu"
-      className={`absolute ${placement === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'} min-w-[200px] py-1 rounded-[var(--shape-large)] bg-[var(--bg-elevated)] border border-outline-variant shadow-elevation-2 z-50 overflow-hidden ${align === 'right' ? 'right-0' : 'left-0'} ${className}`}
+      onKeyDown={onKeyDown}
+      className={`min-w-[200px] py-1 rounded-[var(--shape-large)] bg-[var(--bg-elevated)] border border-outline-variant shadow-elevation-2 overflow-hidden ${className}`}
+      style={style}
       {...rest}
     >
       {children}
-    </div>
+    </div>,
+    document.body
   )
 }
