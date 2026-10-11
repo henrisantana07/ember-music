@@ -89,7 +89,7 @@ export function ExploreTrending({ userLabel, userTracks }: ExploreTrendingProps)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/deezer?endpoint=featured&limit=10')
+    fetch('/api/youtube?endpoint=featured&limit=10')
       .then(res => res.json())
       .then(data => setGlobalTracks(data.results ?? []))
       .catch(() => setGlobalTracks([]))
@@ -106,7 +106,7 @@ export function ExploreTrending({ userLabel, userTracks }: ExploreTrendingProps)
           </>
         ) : (
           <>
-            <TrendingColumn tracks={globalTracks.slice(0, 5)} label="Tendências Globais" subtitle="Deezer chart global" />
+            <TrendingColumn tracks={globalTracks.slice(0, 5)} label="Tendências Globais" subtitle="Em alta no YouTube" />
             <TrendingColumn tracks={userTracks.slice(0, 5)} label="Para Você" subtitle={userLabel} />
           </>
         )}

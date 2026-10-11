@@ -58,12 +58,15 @@ describe('GET /api/image-proxy', () => {
     expect(new Uint8Array(await res.arrayBuffer())).toEqual(jpegBytes)
   })
 
-  it('aceita sufixos permitidos (dzcdn e supabase)', async () => {
+  it('aceita sufixos permitidos (supabase)', async () => {
     stubFetch(async () => new Response(jpegBytes, { status: 200, headers: { 'content-type': 'image/webp' } }))
-    const deezer = await GET(makeRequest('https://e-cdns-images.dzcdn.net/images/cover/x.jpg'))
-    expect(deezer.status).toBe(200)
     const supabase = await GET(makeRequest('https://proj.supabase.co/storage/v1/object/public/cover.png'))
     expect(supabase.status).toBe(200)
+  })
+
+  it('rejeita hosts do Deezer (dzcdn)', async () => {
+    const res = await GET(makeRequest('https://e-cdns-images.dzcdn.net/images/cover/x.jpg'))
+    expect(res.status).toBe(403)
   })
 
   it('retorna 415 quando o upstream não devolve imagem', async () => {

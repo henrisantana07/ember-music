@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import type { Json } from '@/types/database'
+import type { Album, Artist, Track } from '@/types/music'
 
 export const YOUTUBE_SEARCH_CACHE_TTL = 6 * 60 * 60
 export const YOUTUBE_SEARCH_DEBOUNCE_MS = 600
@@ -146,13 +147,13 @@ async function fetchWithRetry(url: string): Promise<Response> {
   return res
 }
 
-async function fetchYouTubeSearch(query: string, pageToken: string | null): Promise<{ items: YouTubeRawItem[]; nextPageToken: string | null }> {
+async function fetchYouTubeSearch(query: string, pageToken: string | null, maxResults: number): Promise<{ items: YouTubeRawItem[]; nextPageToken: string | null }> {
   const key = getApiKey()
   const params = new URLSearchParams({
     part: 'snippet',
     q: query,
     type: 'video',
-    maxResults: String(YOUTUBE_SEARCH_MAX_RESULTS),
+    maxResults: String(maxResults),
     videoEmbeddable: 'true',
     videoSyndicated: 'true',
     key,
@@ -236,7 +237,7 @@ function mapYouTubeTrack(item: YouTubeRawItem, duration: number): YouTubeTrack {
 
 export async function searchYouTube(
   query: string,
-  options?: { pageToken?: string; ip?: string; userId?: string }
+  options?: { pageToken?: string; ip?: string; userId?: string; limit?: number }
 ): Promise<{ tracks: YouTubeTrack[]; nextPageToken: string | null }> {
   const normalized = normalizeQuery(query)
   if (!normalized) return { tracks: [], nextPageToken: null }
@@ -250,7 +251,9 @@ export async function searchYouTube(
     throw new Error('RATE_LIMIT_USER')
   }
 
-  const cacheKey = getCacheKey(normalized)
+  const requestedLimit = options?.limit && options.limit > 0 ? Math.min(options.limit, 50) : YOUTUBE_SEARCH_MAX_RESULTS
+  const cacheKey =
+    getCacheKey(normalized) + (requestedLimit !== YOUTUBE_SEARCH_MAX_RESULTS ? `:${requestedLimit}` : '')
   const pageToken = options?.pageToken ?? null
 
   const memEntry = getFromMemoryCache(cacheKey)
@@ -275,7 +278,7 @@ export async function searchYouTube(
 
   const promise = (async () => {
     try {
-      const { items, nextPageToken } = await fetchYouTubeSearch(normalized, pageToken)
+      const { items, nextPageToken } = await fetchYouTubeSearch(normalized, pageToken, requestedLimit)
       const videoIds = items.map(i => i.id.videoId)
       const details = await fetchYouTubeVideoDetails(videoIds)
       const tracks = items.map(item => mapYouTubeTrack(item, details.get(item.id.videoId)?.duration ?? 0))
@@ -296,4 +299,328 @@ export async function searchYouTube(
 export function clearRateLimits(): void {
   rateLimitMap.clear()
   userRateLimitMap.clear()
+}
+
+// ---------------------------------------------------------------------------
+// Genres (curated — a YouTube Data API não expõe gêneros musicais)
+// ---------------------------------------------------------------------------
+
+export const MUSIC_GENRES: { id: string; name: string }[] = [
+  { id: 'pop', name: 'Pop' },
+  { id: 'rock', name: 'Rock' },
+  { id: 'hip-hop', name: 'Hip-Hop' },
+  { id: 'eletronica', name: 'Eletrônica' },
+  { id: 'sertanejo', name: 'Sertanejo' },
+  { id: 'funk', name: 'Funk' },
+  { id: 'mpb', name: 'MPB' },
+  { id: 'rap', name: 'Rap' },
+  { id: 'indie', name: 'Indie' },
+  { id: 'classica', name: 'Clássica' },
+  { id: 'jazz', name: 'Jazz' },
+  { id: 'reggae', name: 'Reggae' },
+  { id: 'country', name: 'Country' },
+  { id: 'metal', name: 'Metal' },
+  { id: 'lofi', name: 'Lo-fi' },
+  { id: 'samba', name: 'Samba' },
+]
+
+// ---------------------------------------------------------------------------
+// Detail/Discovery cache (memory only — protege a quota da YouTube Data API)
+// ---------------------------------------------------------------------------
+
+const detailCache = new Map<string, { value: unknown; expiresAt: number }>()
+const DETAIL_TTL_MS = 30 * 60 * 1000
+
+function detailCached<T>(key: string): T | null {
+  const entry = detailCache.get(key)
+  if (!entry) return null
+  if (entry.expiresAt < Date.now()) {
+    detailCache.delete(key)
+    return null
+  }
+  return entry.value as T
+}
+
+function detailSet<T>(key: string, value: T): T {
+  detailCache.set(key, { value, expiresAt: Date.now() + DETAIL_TTL_MS })
+  return value
+}
+
+// ---------------------------------------------------------------------------
+// HTTP helper
+// ---------------------------------------------------------------------------
+
+// Resposta JSON solta da YouTube Data API (shapes variam por endpoint).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type YouTubeJson = Record<string, any>
+
+async function yt(path: string, params: Record<string, string>): Promise<YouTubeJson> {
+  const key = getApiKey()
+  const sp = new URLSearchParams({ ...params, key })
+  const res = await fetchWithRetry(`${YOUTUBE_API_BASE}/${path}?${sp}`)
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`YouTube API error ${res.status}: ${body}`)
+  }
+  return res.json()
+}
+
+function pickThumb(thumbnails?: { high?: { url: string }; medium?: { url: string }; default?: { url: string }; maxres?: { url: string } }): string {
+  return thumbnails?.maxres?.url ?? thumbnails?.high?.url ?? thumbnails?.medium?.url ?? thumbnails?.default?.url ?? ''
+}
+
+function mapChannelToArtist(item: YouTubeJson): Artist {
+  return {
+    id: item.id?.channelId ?? item.id ?? '',
+    name: item.snippet?.title ?? '',
+    image: pickThumb(item.snippet?.thumbnails),
+    image_xl: pickThumb(item.snippet?.thumbnails),
+    followers: 0,
+    genres: [],
+    url: item.id?.channelId ? `https://www.youtube.com/channel/${item.id.channelId}` : '',
+    website: '',
+  }
+}
+
+function mapPlaylistToAlbum(item: YouTubeJson): Album {
+  const playlistId = item.id?.playlistId ?? item.id ?? ''
+  return {
+    id: playlistId,
+    name: item.snippet?.title ?? '',
+    artist_id: item.snippet?.channelId ?? '',
+    artist_name: item.snippet?.channelTitle ?? '',
+    image: pickThumb(item.snippet?.thumbnails),
+    release_date: item.snippet?.publishedAt?.slice(0, 10) ?? '',
+    total_tracks: item.contentDetails?.itemCount ?? 0,
+    url: playlistId ? `https://www.youtube.com/playlist?list=${playlistId}` : '',
+  }
+}
+
+function mapVideoItemToTrack(item: YouTubeJson, duration: number, albumId = '', albumName = ''): Track {
+  const videoId = item.id?.videoId ?? item.contentDetails?.videoId ?? ''
+  return {
+    id: getYouTubeTrackId(videoId),
+    name: item.snippet?.title ?? '',
+    duration,
+    artist_id: item.snippet?.channelId ?? item.snippet?.videoOwnerChannelId ?? '',
+    artist_name: item.snippet?.channelTitle ?? item.snippet?.videoOwnerChannelTitle ?? '',
+    album_id: albumId,
+    album_name: albumName,
+    image: pickThumb(item.snippet?.thumbnails),
+    audio: null,
+    url: videoId ? `https://www.youtube.com/watch?v=${videoId}` : '',
+    source: 'youtube',
+    youtubeVideoId: videoId,
+    youtubeChannelId: item.snippet?.channelId ?? item.snippet?.videoOwnerChannelId ?? '',
+    youtubeUrl: videoId ? `https://www.youtube.com/watch?v=${videoId}` : '',
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Search: channels (artistas)
+// ---------------------------------------------------------------------------
+
+export async function searchYouTubeChannels(query: string, limit = 12): Promise<{ artists: Artist[] }> {
+  const normalized = normalizeQuery(query)
+  if (!normalized) return { artists: [] }
+  const key = `channels:${normalizeQuery(normalized)}:${limit}`
+  const cached = detailCached<Artist[]>(key)
+  if (cached) return { artists: cached }
+
+  const data = await yt('search', {
+    part: 'snippet',
+    q: normalized,
+    type: 'channel',
+    maxResults: String(limit),
+  })
+  const artists = (data.items ?? []).map(mapChannelToArtist)
+  return { artists: detailSet(key, artists) }
+}
+
+// ---------------------------------------------------------------------------
+// Search: playlists (álbuns)
+// ---------------------------------------------------------------------------
+
+export async function searchYouTubePlaylists(query: string, limit = 12): Promise<{ albums: Album[] }> {
+  const normalized = normalizeQuery(query)
+  if (!normalized) return { albums: [] }
+  const key = `playlists:${normalizeQuery(normalized)}:${limit}`
+  const cached = detailCached<Album[]>(key)
+  if (cached) return { albums: cached }
+
+  const data = await yt('search', {
+    part: 'snippet',
+    q: normalized,
+    type: 'playlist',
+    maxResults: String(limit),
+  })
+  const albums = (data.items ?? []).map(mapPlaylistToAlbum)
+  return { albums: detailSet(key, albums) }
+}
+
+// ---------------------------------------------------------------------------
+// Search: vídeos por canal (faixas de um artista / "relacionadas")
+// ---------------------------------------------------------------------------
+
+export async function searchYouTubeChannelVideos(
+  channelId: string,
+  options?: { limit?: number; exclude?: string }
+): Promise<{ tracks: Track[] }> {
+  if (!channelId) return { tracks: [] }
+  const limit = options?.limit ?? 12
+  const exclude = options?.exclude ?? ''
+  const key = `channel-videos:${channelId}:${limit}:${exclude}`
+  const cached = detailCached<Track[]>(key)
+  if (cached) return { tracks: cached }
+
+  const data = await yt('search', {
+    part: 'snippet',
+    channelId,
+    type: 'video',
+    maxResults: String(Math.max(limit, 1)),
+    videoEmbeddable: 'true',
+    videoSyndicated: 'true',
+  })
+  const items: YouTubeJson[] = (data.items ?? []).filter(
+    (i: YouTubeJson) => i.id?.videoId && `youtube:${i.id.videoId}` !== exclude
+  )
+  const videoIds = items.map((i) => i.id.videoId)
+  const durations = videoIds.length ? await fetchYouTubeVideoDetails(videoIds) : new Map<string, YouTubeVideoDetails>()
+  const tracks = items.map((item) => mapVideoItemToTrack(item, durations.get(item.id.videoId)?.duration ?? 0))
+  return { tracks: detailSet(key, tracks) }
+}
+
+// ---------------------------------------------------------------------------
+// Detalhe: álbum (playlist)
+// ---------------------------------------------------------------------------
+
+export async function getYouTubeAlbum(playlistId: string, limit = 50): Promise<{ album: Album | null; tracks: Track[] }> {
+  if (!playlistId) return { album: null, tracks: [] }
+  const key = `album:${playlistId}:${limit}`
+  const cached = detailCached<{ album: Album | null; tracks: Track[] }>(key)
+  if (cached) return cached
+
+  const [meta, itemsData] = await Promise.all([
+    yt('playlists', { part: 'snippet,contentDetails', id: playlistId }),
+    yt('playlistItems', { part: 'snippet,contentDetails', playlistId, maxResults: String(Math.min(limit, 50)) }),
+  ])
+  const metaItem = meta.items?.[0]
+  const album = metaItem ? mapPlaylistToAlbum(metaItem) : null
+  const items: YouTubeJson[] = itemsData.items ?? []
+  const videoIds = items.map((i) => i.contentDetails?.videoId).filter(Boolean)
+  const durations = videoIds.length ? await fetchYouTubeVideoDetails(videoIds) : new Map<string, YouTubeVideoDetails>()
+  const tracks = items.map((item) =>
+    mapVideoItemToTrack(item, durations.get(item.contentDetails?.videoId)?.duration ?? 0, playlistId, album?.name ?? '')
+  )
+  return detailSet(key, { album, tracks })
+}
+
+// ---------------------------------------------------------------------------
+// Detalhe: canal (artista)
+// ---------------------------------------------------------------------------
+
+export async function getYouTubeChannel(
+  channelId: string,
+  limit = 12
+): Promise<{ artist: Artist | null; top_tracks: Track[]; albums: Album[]; related: Artist[] }> {
+  if (!channelId) return { artist: null, top_tracks: [], albums: [], related: [] }
+  const key = `channel:${channelId}:${limit}`
+  const cached = detailCached<{ artist: Artist | null; top_tracks: Track[]; albums: Album[]; related: Artist[] }>(key)
+  if (cached) return cached
+
+  const channelData = await yt('channels', { part: 'snippet,contentDetails', id: channelId })
+  const item = channelData.items?.[0]
+  if (!item) return { artist: null, top_tracks: [], albums: [], related: [] }
+
+  const artist = mapChannelToArtist({ id: { channelId }, snippet: item.snippet })
+  const title = item.snippet?.title ?? ''
+
+  const [videosData, playlistsData, relatedData] = await Promise.all([
+    yt('search', { part: 'snippet', channelId, type: 'video', maxResults: String(limit), videoEmbeddable: 'true', videoSyndicated: 'true' }),
+    yt('search', { part: 'snippet', channelId, type: 'playlist', maxResults: String(limit) }),
+    yt('search', { part: 'snippet', q: title, type: 'channel', maxResults: String(limit) }),
+  ])
+
+  const videoItems: YouTubeJson[] = videosData.items ?? []
+  const videoIds = videoItems.map((v) => v.id?.videoId).filter(Boolean)
+  const durations = videoIds.length ? await fetchYouTubeVideoDetails(videoIds) : new Map<string, YouTubeVideoDetails>()
+  const top_tracks = videoItems.map((v) => mapVideoItemToTrack(v, durations.get(v.id.videoId)?.duration ?? 0))
+
+  const albums = (playlistsData.items ?? []).map(mapPlaylistToAlbum)
+  const related = (relatedData.items ?? [])
+    .map(mapChannelToArtist)
+    .filter((a: Artist) => a.id !== channelId)
+
+  return detailSet(key, { artist, top_tracks, albums, related })
+}
+
+// ---------------------------------------------------------------------------
+// Detalhe: vídeo (faixa) por id
+// ---------------------------------------------------------------------------
+
+export async function getYouTubeVideoTrack(id: string): Promise<Track | null> {
+  const videoId = id.startsWith('youtube:') ? id.slice('youtube:'.length) : id
+  if (!videoId) return null
+  const key = `video:${videoId}`
+  const cached = detailCached<Track | null>(key)
+  if (cached !== null) return cached
+
+  const data = await yt('videos', { part: 'snippet,contentDetails', id: videoId })
+  const item = data.items?.[0]
+  if (!item) return detailSet<Track | null>(key, null)
+
+  const duration = parseISO8601Duration(item.contentDetails?.duration ?? 'PT0S')
+  const track = mapVideoItemToTrack({ id: { videoId }, snippet: item.snippet }, duration)
+  return detailSet<Track | null>(key, track)
+}
+
+// ---------------------------------------------------------------------------
+// Em alta (featured / charts)
+// ---------------------------------------------------------------------------
+
+export async function getYouTubeTrending(limit = 12): Promise<{ tracks: Track[] }> {
+  const key = `trending:${limit}`
+  const cached = detailCached<Track[]>(key)
+  if (cached) return { tracks: cached }
+
+  const data = await yt('videos', {
+    part: 'snippet,contentDetails',
+    chart: 'mostPopular',
+    maxResults: String(Math.min(limit, 50)),
+    videoCategoryId: '10', // Música
+  })
+  const items: YouTubeJson[] = data.items ?? []
+  const tracks = items.map((item) =>
+    mapVideoItemToTrack(
+      { id: { videoId: item.id }, snippet: item.snippet },
+      parseISO8601Duration(item.contentDetails?.duration ?? 'PT0S')
+    )
+  )
+  return { tracks: detailSet(key, tracks) }
+}
+
+// ---------------------------------------------------------------------------
+// Faixas por gênero (busca textual — a API do YouTube não tem gêneros)
+// ---------------------------------------------------------------------------
+
+export async function searchYouTubeGenre(genreName: string, limit = 12): Promise<{ tracks: Track[] }> {
+  const normalized = normalizeQuery(`${genreName} music`)
+  if (!normalized) return { tracks: [] }
+  const key = `genre-tracks:${normalizeQuery(genreName)}:${limit}`
+  const cached = detailCached<Track[]>(key)
+  if (cached) return { tracks: cached }
+
+  const data = await yt('search', {
+    part: 'snippet',
+    q: normalized,
+    type: 'video',
+    maxResults: String(limit),
+    videoEmbeddable: 'true',
+    videoSyndicated: 'true',
+  })
+  const items: YouTubeJson[] = data.items ?? []
+  const videoIds = items.map((i) => i.id?.videoId).filter(Boolean)
+  const durations = videoIds.length ? await fetchYouTubeVideoDetails(videoIds) : new Map<string, YouTubeVideoDetails>()
+  const tracks = items.map((item) => mapVideoItemToTrack(item, durations.get(item.id.videoId)?.duration ?? 0))
+  return { tracks: detailSet(key, tracks) }
 }

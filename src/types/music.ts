@@ -1,4 +1,4 @@
-export type TrackSource = 'deezer' | 'youtube'
+export type TrackSource = 'youtube'
 
 export interface Track {
   id: string

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import type { Track, Album, Artist } from '@/types/music'
 import { createClient } from '@/lib/supabase/client'
 import { useEnsureFavorites, useFavoritesSync } from '@/lib/favorites-store'
@@ -14,7 +14,6 @@ import { TrackResultGrid } from './TrackResultGrid'
 import { ArtistResultCarousel } from './ArtistResultCarousel'
 import { AlbumResultGrid } from './AlbumResultGrid'
 import { ExploreNoResults } from './ExploreNoResults'
-import { ExploreTrackSkeleton } from './skeletons/ExploreTrackSkeleton'
 
 type DurationFilter = '' | 'short' | 'medium' | 'long'
 
@@ -23,10 +22,6 @@ function matchesDuration(track: Track, duration: DurationFilter) {
   if (duration === 'short') return track.duration <= 120
   if (duration === 'medium') return track.duration > 120 && track.duration <= 300
   return track.duration > 300
-}
-
-function normalizeQuery(query: string): string {
-  return query.trim().replace(/\s+/g, ' ').toLowerCase()
 }
 
 interface ExploreResultsProps {
@@ -44,9 +39,6 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
   const [tracks, setTracks] = useState<Track[]>([])
   const [albums, setAlbums] = useState<Album[]>([])
   const [artists, setArtists] = useState<Artist[]>([])
-  const [youtubeTracks, setYoutubeTracks] = useState<Track[]>([])
-  const [youtubeLoading, setYoutubeLoading] = useState(false)
-  const visibleYoutubeTracks = useMemo(() => (query ? youtubeTracks : []), [query, youtubeTracks])
   const [loading, setLoading] = useState(true)
   const [searchError, setSearchError] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
@@ -55,8 +47,6 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
   const PAGE_SIZE = 20
   const supabase = createClient()
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const abortRef = useRef<AbortController | null>(null)
   const loadingRef = useRef(true)
 
   useEffect(() => {
@@ -88,7 +78,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
     return true
   }), [artists, artistFilter, genreFilter])
 
-  const allTracks = useMemo(() => [...filteredTracks, ...visibleYoutubeTracks], [filteredTracks, visibleYoutubeTracks])
+  const allTracks = useMemo(() => filteredTracks, [filteredTracks])
   useFavoritesSync(user?.id)
   useEnsureFavorites(allTracks.map(t => t.id))
 
@@ -108,9 +98,9 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
       try {
         const encoded = encodeURIComponent(query)
         const [trackRes, albumRes, artistRes] = await Promise.all([
-          fetch(`/api/deezer?endpoint=search&q=${encoded}&type=track&limit=50`, { signal: controller.signal }),
-          fetch(`/api/deezer?endpoint=search&q=${encoded}&type=album&limit=20`, { signal: controller.signal }),
-          fetch(`/api/deezer?endpoint=search&q=${encoded}&type=artist&limit=12`, { signal: controller.signal }),
+          fetch(`/api/youtube?endpoint=search&q=${encoded}&type=track&limit=50`, { signal: controller.signal }),
+          fetch(`/api/youtube?endpoint=search&q=${encoded}&type=album&limit=20`, { signal: controller.signal }),
+          fetch(`/api/youtube?endpoint=search&q=${encoded}&type=artist&limit=12`, { signal: controller.signal }),
         ])
         const [trackData, albumData, artistData] = await Promise.all([
           trackRes.ok ? trackRes.json() : { tracks: [] },
@@ -138,65 +128,21 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
     return () => controller.abort()
   }, [query, retryCount])
 
-  const fetchYouTube = useCallback(async (searchQuery: string) => {
-    abortRef.current?.abort()
-    const controller = new AbortController()
-    abortRef.current = controller
-
-    setYoutubeLoading(true)
-    try {
-      const res = await fetch(`/api/youtube/search?q=${encodeURIComponent(searchQuery)}&limit=10`, {
-        signal: controller.signal,
-      })
-      if (!res.ok) {
-        if (res.status === 429) {
-          console.warn('YouTube rate limited')
-        }
-        throw new Error(`YouTube search failed: ${res.status}`)
-      }
-      const data = await res.json()
-      if (!controller.signal.aborted) {
-        setYoutubeTracks(data.tracks ?? [])
-      }
-    } catch (e) {
-      if ((e as Error).name !== 'AbortError') {
-        console.error('YouTube search error:', e)
-        if (!controller.signal.aborted) setYoutubeTracks([])
-      }
-    } finally {
-      if (abortRef.current === controller) setYoutubeLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!query) return
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      fetchYouTube(normalizeQuery(query))
-    }, 600)
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-      abortRef.current?.abort()
-    }
-  }, [query, fetchYouTube])
-
   useEffect(() => { setPage(p => 0) }, [query, artistFilter, genreFilter, durationFilter])
 
   const activeFilterCount = Number(!!artistFilter) + Number(!!genreFilter) + Number(!!durationFilter)
 
   const counts = {
-    total: filteredTracks.length + filteredAlbums.length + filteredArtists.length + visibleYoutubeTracks.length,
+    total: filteredTracks.length + filteredAlbums.length + filteredArtists.length,
     tracks: filteredTracks.length,
     artists: filteredArtists.length,
     albums: filteredAlbums.length,
-    youtube: visibleYoutubeTracks.length,
   }
 
   const paginatedTracks = useMemo(() => allTracks.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [allTracks, page])
   const totalPages = Math.max(1, Math.ceil(allTracks.length / PAGE_SIZE))
 
-  const hasResults = filteredTracks.length > 0 || filteredArtists.length > 0 || filteredAlbums.length > 0 || visibleYoutubeTracks.length > 0
+  const hasResults = filteredTracks.length > 0 || filteredArtists.length > 0 || filteredAlbums.length > 0
 
   if (searchError && !loading && !hasResults) {
     return (
@@ -210,7 +156,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
     )
   }
 
-  if (!hasResults && !loading && !youtubeLoading) {
+  if (!hasResults && !loading) {
     return <ExploreNoResults query={query} activeFilterCount={activeFilterCount} onClearFilters={onClearFilters} />
   }
 
@@ -242,18 +188,6 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
               <TrackResultGrid tracks={filteredTracks.slice(1, 7)} />
             </section>
           )}
-          {visibleYoutubeTracks.length > 0 && (
-            <section>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold flex items-center gap-2">
-                  YouTube
-                  <span className="text-label-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-solid)' }}>YT</span>
-                </h2>
-                <button onClick={() => onTabChange('youtube')} className="text-label-medium font-semibold px-3 min-h-[44px] rounded-full state-layer" style={{ color: 'var(--accent-solid)' }}>Ver tudo →</button>
-              </div>
-              <TrackResultGrid tracks={visibleYoutubeTracks.slice(0, 6)} loading={youtubeLoading} />
-            </section>
-          )}
           {filteredArtists.length > 0 && (
             <section>
               <div className="flex items-center justify-between mb-4">
@@ -273,26 +207,6 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
             </section>
           )}
         </div>
-      )}
-
-      {activeTab === 'youtube' && (
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold flex items-center gap-2">
-              YouTube
-              <span className="text-label-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-solid)' }}>YT</span>
-            </h2>
-          </div>
-          {youtubeLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => <ExploreTrackSkeleton key={i} />)}
-            </div>
-          ) : visibleYoutubeTracks.length > 0 ? (
-            <TrackResultGrid tracks={visibleYoutubeTracks} />
-          ) : (
-            <p className="text-center py-8" style={{ color: 'var(--text-disabled)' }}>Nenhum resultado no YouTube</p>
-          )}
-        </section>
       )}
 
       {activeTab === 'faixas' && (

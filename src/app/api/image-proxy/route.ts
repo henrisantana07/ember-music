@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 const ALLOWED_HOSTS = new Set(['i.ytimg.com', 'img.youtube.com', 'www.youtube.com'])
-const ALLOWED_HOST_SUFFIXES = ['.ytimg.com', '.dzcdn.net', '.supabase.co', '.supabase.in']
+const ALLOWED_HOST_SUFFIXES = ['.ytimg.com', '.supabase.co', '.supabase.in']
 const MAX_BYTES = 10 * 1024 * 1024
 
 function resolveAllowedUrl(raw: string): URL | null {

@@ -12,7 +12,7 @@ export function GenreGrid() {
   const router = useRouter()
 
   useEffect(() => {
-    fetch('/api/deezer?endpoint=genres')
+    fetch('/api/youtube?endpoint=genres')
       .then(res => res.json())
       .then(data => setGenres((data.results ?? []).slice(0, 16)))
       .catch(() => setGenres([]))

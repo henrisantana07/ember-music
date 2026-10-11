@@ -245,7 +245,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     const timer = setTimeout(async () => {
       setSearchLoading(true)
       try {
-        const res = await fetch(`/api/deezer?endpoint=search&q=${encodeURIComponent(searchQuery.trim())}&type=track&limit=12`, { signal: controller.signal })
+        const res = await fetch(`/api/youtube?endpoint=search&q=${encodeURIComponent(searchQuery.trim())}&type=track&limit=12`, { signal: controller.signal })
         if (!res.ok) throw new Error('search failed')
         const data = await res.json()
         if (!controller.signal.aborted) setSearchResults(data.tracks ?? [])
@@ -262,7 +262,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   useEffect(() => {
     if (queue.length > 0 || !currentTrack?.artist_id) return
     const controller = new AbortController()
-    fetch(`/api/deezer?endpoint=related&id=${currentTrack.artist_id}&exclude=${currentTrack.id}`, { signal: controller.signal })
+    fetch(`/api/youtube?endpoint=related&id=${currentTrack.artist_id}&exclude=${currentTrack.id}`, { signal: controller.signal })
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error('related failed'))))
       .then((data) => {
         if (!controller.signal.aborted) setSuggestions(((data.results ?? []) as Track[]).slice(0, 6))

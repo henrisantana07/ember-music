@@ -23,12 +23,12 @@ function GenrePage({ genero, genreId }: { genero: string; genreId: string }) {
   useEffect(() => {
     const encoded = encodeURIComponent(genero)
     const promises: Promise<Response>[] = [
-      fetch(`/api/deezer?endpoint=search&q=${encoded}&type=track&limit=50`),
-      fetch(`/api/deezer?endpoint=search&q=${encoded}&type=album&limit=20`),
-      fetch(`/api/deezer?endpoint=search&q=${encoded}&type=artist&limit=12`),
+      fetch(`/api/youtube?endpoint=search&q=${encoded}&type=track&limit=50`),
+      fetch(`/api/youtube?endpoint=search&q=${encoded}&type=album&limit=20`),
+      fetch(`/api/youtube?endpoint=search&q=${encoded}&type=artist&limit=12`),
     ]
     if (genreId) {
-      promises.push(fetch(`/api/deezer?endpoint=genre-tracks&id=${genreId}&limit=50`))
+      promises.push(fetch(`/api/youtube?endpoint=genre-tracks&id=${genreId}&limit=50`))
     }
     Promise.all(promises.map(p => p.then(r => r.json())))
       .then((results) => {
@@ -184,7 +184,7 @@ export function ExplorePage() {
 
   useEffect(() => {
     if (!user || query) return
-    fetch('/api/deezer?endpoint=featured&limit=5')
+    fetch('/api/youtube?endpoint=featured&limit=5')
       .then(res => res.json())
       .then(data => {
         setUserTracks(data.results ?? [])

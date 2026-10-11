@@ -99,7 +99,7 @@ export function Player() {
         }
         retryingId.current = trackId
         try {
-          const res = await fetch(`/api/deezer?endpoint=tracks&id=${trackId}`)
+          const res = await fetch(`/api/youtube?endpoint=tracks&id=${trackId}`)
           if (!res.ok) throw new Error('fetch failed')
           const data = await res.json()
           const fresh = data.results?.[0] as Track | undefined
@@ -126,7 +126,7 @@ export function Player() {
         if (trackId) {
           ;(async () => {
             try {
-              const res = await fetch(`/api/deezer?endpoint=tracks&id=${trackId}`)
+              const res = await fetch(`/api/youtube?endpoint=tracks&id=${trackId}`)
               if (res.ok) {
                 const data = await res.json()
                 const fresh = data.results?.[0] as Track | undefined

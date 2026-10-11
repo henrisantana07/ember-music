@@ -8,6 +8,7 @@ import { FollowButton } from '@/components/FollowButton'
 import { Carousel } from '@/components/Carousel'
 import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
 import type { Track, Album, Artist, Genre } from '@/types/music'
+import { getGenreGradient } from '@/constants/genreColors'
 
 const GENRE_NAMES = ['pop', 'rock', 'electronic', 'jazz', 'hip hop', 'classical', 'reggae', 'blues', 'metal', 'folk', 'country', 'soul', 'punk', 'alternative', 'indie', 'r&b', 'latin', 'dance', 'ambient', 'funk']
 
@@ -34,9 +35,9 @@ function SearchResults({ query }: { query: string }) {
       setLoading(true)
       try {
         const [trackRes, albumRes, artistRes] = await Promise.all([
-          fetch(`/api/deezer?endpoint=search&q=${encodeURIComponent(query)}&type=track&limit=20`),
-          fetch(`/api/deezer?endpoint=search&q=${encodeURIComponent(query)}&type=album&limit=8`),
-          fetch(`/api/deezer?endpoint=search&q=${encodeURIComponent(query)}&type=artist&limit=8`),
+          fetch(`/api/youtube?endpoint=search&q=${encodeURIComponent(query)}&type=track&limit=20`),
+          fetch(`/api/youtube?endpoint=search&q=${encodeURIComponent(query)}&type=album&limit=8`),
+          fetch(`/api/youtube?endpoint=search&q=${encodeURIComponent(query)}&type=artist&limit=8`),
         ])
         if (trackRes.ok) {
           const data = await trackRes.json()
@@ -160,9 +161,9 @@ function HomeContent() {
     async function fetchHome() {
       try {
         const [trendingRes, genresRes, artistsRes] = await Promise.all([
-          fetch('/api/deezer?endpoint=featured&limit=12'),
-          fetch('/api/deezer?endpoint=genres'),
-          fetch('/api/deezer?endpoint=charts/artists&limit=12'),
+          fetch('/api/youtube?endpoint=featured&limit=12'),
+          fetch('/api/youtube?endpoint=genres'),
+          fetch('/api/youtube?endpoint=charts/artists&limit=12'),
         ])
         if (trendingRes.ok) {
           const data = await trendingRes.json()
@@ -171,7 +172,7 @@ function HomeContent() {
         if (genresRes.ok) {
           const data = await genresRes.json()
           const all = data.results ?? []
-          setGenres(all.filter((g: Genre) => g.name && g.image && !g.name.includes('undefined')).slice(0, 20))
+          setGenres(all.filter((g: Genre) => g.name && !g.name.includes('undefined')).slice(0, 20))
         }
         if (artistsRes.ok) {
           const data = await artistsRes.json()
@@ -196,7 +197,7 @@ function HomeContent() {
     const idx = available[Math.floor(Math.random() * available.length)]
     const genre = GENRE_NAMES[idx]
     try {
-      const res = await fetch(`/api/deezer?endpoint=search&q=${encodeURIComponent(genre)}&type=track&limit=12`)
+      const res = await fetch(`/api/youtube?endpoint=search&q=${encodeURIComponent(genre)}&type=track&limit=12`)
       if (res.ok) {
         const data = await res.json()
         const tracks = data.tracks ?? []
@@ -242,17 +243,23 @@ function HomeContent() {
         <section className="mb-12">
           <h2 className="text-xl font-bold mb-4">Gêneros musicais</h2>
           <Carousel>
-            {genres.map((genre) => (
-              <a
-                key={genre.id}
-                href={`/buscar?q=${encodeURIComponent(genre.name)}`}
-                className="w-36 flex-shrink-0 p-3 rounded-xl text-center transition-transform hover:scale-105"
-                style={{ backgroundColor: 'var(--bg-elevated)' }}
-              >
-                <img src={genre.image} alt={genre.name} className="w-full aspect-square rounded-lg object-cover mb-2" loading="lazy" />
-                <p className="text-body-medium font-semibold truncate">{genre.name}</p>
-              </a>
-            ))}
+            {genres.map((genre) => {
+              const gradient = getGenreGradient(genre.name)
+              return (
+                <a
+                  key={genre.id}
+                  href={`/buscar?q=${encodeURIComponent(genre.name)}`}
+                  className="relative w-36 flex-shrink-0 p-3 rounded-xl text-center transition-transform hover:scale-105 overflow-hidden"
+                  style={{ backgroundColor: 'var(--bg-elevated)' }}
+                >
+                  <div
+                    className="w-full aspect-square rounded-lg mb-2"
+                    style={{ background: `linear-gradient(135deg, ${gradient.from}, ${gradient.to})` }}
+                  />
+                  <p className="text-body-medium font-semibold truncate">{genre.name}</p>
+                </a>
+              )
+            })}
           </Carousel>
         </section>
       )}

@@ -5,7 +5,6 @@ interface TabCounts {
   tracks: number
   artists: number
   albums: number
-  youtube: number
 }
 
 interface ExploreTabsProps {
@@ -14,14 +13,13 @@ interface ExploreTabsProps {
   counts: TabCounts
 }
 
-const TABS = ['tudo', 'faixas', 'artistas', 'albuns', 'youtube'] as const
+const TABS = ['tudo', 'faixas', 'artistas', 'albuns'] as const
 
 const TAB_LABELS: Record<string, (count: number) => string> = {
   tudo: () => 'Tudo',
   faixas: (c) => `Faixas (${c})`,
   artistas: (c) => `Artistas (${c})`,
   albuns: (c) => `Álbuns (${c})`,
-  youtube: (c) => `YouTube (${c})`,
 }
 
 const TAB_COUNT_KEYS: Record<string, keyof TabCounts> = {
@@ -29,7 +27,6 @@ const TAB_COUNT_KEYS: Record<string, keyof TabCounts> = {
   faixas: 'tracks',
   artistas: 'artists',
   albuns: 'albums',
-  youtube: 'youtube',
 }
 
 export function ExploreTabs({ activeTab, onTabChange, counts }: ExploreTabsProps) {

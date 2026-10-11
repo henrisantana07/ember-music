@@ -3,7 +3,7 @@ import { usePlayerStore } from '@/lib/store'
 import type { Track } from '@/types/music'
 
 function makeTrack(id: string): Track {
-  return { id, name: id, artist_name: 'Artist', artist_id: '1', album_name: 'Album', duration: 100, image: '', audio: '', source: 'deezer' } as unknown as Track
+  return { id, name: id, artist_name: 'Artist', artist_id: '1', album_name: 'Album', duration: 100, image: '', audio: '', source: 'youtube' } as unknown as Track
 }
 
 function ids(list: Track[]): string[] {

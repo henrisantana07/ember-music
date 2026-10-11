@@ -32,7 +32,7 @@ export default function AlbumPage() {
 
   useEffect(() => {
     let cancelled = false
-    fetch(`/api/deezer?endpoint=albums&id=${albumId}`)
+    fetch(`/api/youtube?endpoint=albums&id=${albumId}`)
       .then((r) => r.json())
       .then((albumRes) => {
         if (cancelled) return
