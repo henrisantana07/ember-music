@@ -96,6 +96,7 @@ function BibliotecaContent() {
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [downloads, setDownloads] = useState<Track[]>([])
   const [confirmClear, setConfirmClear] = useState(false)
+  const [clearError, setClearError] = useState(false)
 
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -360,10 +361,15 @@ function BibliotecaContent() {
     play(track, list)
   }
 
-  async function handleClearHistory() {
-    if (!user) return
-    await supabase.from('listening_history').delete().eq('user_id', user.id)
+  async function handleClearHistory(): Promise<boolean> {
+    if (!user) return false
+    const { error } = await supabase.from('listening_history').delete().eq('user_id', user.id)
+    if (error) {
+      console.error('Erro ao limpar histórico:', error.message)
+      return false
+    }
     setHistory([])
+    return true
   }
 
   function renderSortDropdown() {
@@ -447,7 +453,11 @@ function BibliotecaContent() {
             <div className="flex items-center gap-2">
               <span className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>Limpar histórico?</span>
               <button
-                onClick={() => { handleClearHistory(); setConfirmClear(false) }}
+                onClick={async () => {
+                  const ok = await handleClearHistory()
+                  setConfirmClear(false)
+                  setClearError(!ok)
+                }}
                 className="text-label-large px-4 min-h-[48px] rounded-full font-bold state-layer"
                 style={{ background: 'var(--error)', color: 'white' }}
               >
@@ -462,13 +472,20 @@ function BibliotecaContent() {
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => setConfirmClear(true)}
-              className="text-label-large px-4 min-h-[48px] rounded-full transition-colors state-layer"
-              style={{ color: 'var(--text-secondary)', border: '1px solid var(--outline-variant)' }}
-            >
-              Limpar histórico
-            </button>
+            <div className="flex items-center gap-3">
+              {clearError && (
+                <span className="text-body-small" style={{ color: 'var(--error)' }}>
+                  Não foi possível limpar
+                </span>
+              )}
+              <button
+                onClick={() => { setClearError(false); setConfirmClear(true) }}
+                className="text-label-large px-4 min-h-[48px] rounded-full transition-colors state-layer"
+                style={{ color: 'var(--text-secondary)', border: '1px solid var(--outline-variant)' }}
+              >
+                Limpar histórico
+              </button>
+            </div>
           )
         )}
       </div>

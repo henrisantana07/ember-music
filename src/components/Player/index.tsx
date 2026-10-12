@@ -45,8 +45,19 @@ export function Player() {
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
   }, [])
 
+  const lastSavedTrackId = useRef<string | null | undefined>(undefined)
+
   useEffect(() => {
-    if (isPlaying && currentTrack && user) {
+    if (!user) return
+    if (lastSavedTrackId.current === undefined) {
+      // Primeira observação com usuário logado: semeia com a faixa restaurada
+      // do reload (ou null). Sem isso, recarregar com música tocando — ou
+      // retomar o play — re-inseriria a faixa e anularia o "Limpar histórico".
+      lastSavedTrackId.current = currentTrack?.id ?? null
+      return
+    }
+    if (isPlaying && currentTrack && lastSavedTrackId.current !== currentTrack.id) {
+      lastSavedTrackId.current = currentTrack.id
       void savePlaybackHistory(user, currentTrack)
     }
   }, [currentTrack?.id, isPlaying, user])
