@@ -48,26 +48,51 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     })();
   `
 
-  // Em dev, remove qualquer service worker antigo imediatamente (roda no HTML,
-  // que é sempre fresco — contorna o SW velho que ainda serve JS cacheado no F5).
-  const swDevCleanupScript = `
+  // Auto-cura do service worker: roda no HTML (sempre fresco, mesmo com SW velho
+  // servindo JS cacheado). Se detecta SW/cache de versão antiga, remove tudo e
+  // recarrega UMA vez — a partir daí o F5 comum já usa a versão nova.
+  const swHealScript = `
     (function() {
       try {
+        var CURRENT = 'ember-music-v2';
+        var GUARD = 'ember:sw-heal';
+        var GUARD_KEY = GUARD + ':' + CURRENT;
+        // limpa marcador de uma cura anterior (mantém a flag de resume intacta)
+        sessionStorage.removeItem(GUARD);
+        if (!('serviceWorker' in navigator)) return;
+        if (sessionStorage.getItem(GUARD_KEY)) return;
         var h = location.hostname;
         var isDev = h === 'localhost' || h === '127.0.0.1' || h === '[::1]';
-        if (!isDev) return;
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistrations().then(function(rs) {
-            rs.forEach(function(r) { r.unregister().catch(function() {}); });
-          }).catch(function() {});
-        }
-        if ('caches' in window) {
-          caches.keys().then(function(ks) {
-            ks.forEach(function(k) {
-              if (k.indexOf('ember-music') === 0) caches.delete(k);
-            });
-          }).catch(function() {});
-        }
+        var heal = function(regs) {
+          sessionStorage.setItem(GUARD, '1');
+          sessionStorage.setItem(GUARD_KEY, '1');
+          regs.forEach(function(r) { r.unregister().catch(function() {}); });
+          var reload = function() { location.reload(); };
+          if ('caches' in window) {
+            caches.keys().then(function(ks) {
+              return Promise.all(
+                ks.filter(function(k) { return k.indexOf('ember-music') === 0; })
+                  .map(function(k) { return caches.delete(k); })
+              );
+            }).catch(function() {}).then(reload);
+          } else {
+            reload();
+          }
+        };
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          if (isDev) {
+            if (regs.length > 0) heal(regs);
+            return;
+          }
+          if ('caches' in window) {
+            caches.keys().then(function(ks) {
+              var old = ks.some(function(k) {
+                return /^ember-music-v\\d+$/.test(k) && k !== CURRENT;
+              });
+              if (old) heal(regs);
+            }).catch(function() {});
+          }
+        }).catch(function() {});
       } catch(e) {}
     })();
   `
@@ -76,7 +101,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
       <body className="flex flex-col h-screen overflow-hidden">
         <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeScript }} />
-        <Script id="sw-dev-cleanup" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: swDevCleanupScript }} />
+        <Script id="sw-heal" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: swHealScript }} />
         <YouTubePlayerProvider>
           <KeyboardShortcuts />
           <div className="flex flex-1 overflow-hidden">
