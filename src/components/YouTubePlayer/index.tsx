@@ -111,24 +111,31 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
     }, 500)
   }, [])
 
+  const seekDoneRef = useRef(false)
+
   const onPlayerReady = useCallback((event: YTPlayerEvent) => {
     const player = event.target
     player.setVolume(100)
+    seekDoneRef.current = false
     setState(s => ({ ...s, player, isReady: true, duration: player.getDuration(), volume: 1 }))
     startPolling()
-
-    const savedProgress = usePlayerStore.getState().progress
-    const savedTrackId = usePlayerStore.getState().currentTrack?.youtubeVideoId
-    if (savedTrackId === videoId && savedProgress > 1) {
-      seekUntilRef.current = Date.now() + 600
-      player.seekTo(savedProgress, true)
-      setState(s => ({ ...s, currentTime: savedProgress }))
-    }
-  }, [startPolling, videoId])
+  }, [startPolling])
 
   const onPlayerStateChange = useCallback((event: YTPlayerEvent) => {
     const PlayerState = window.YT?.PlayerState
     if (!PlayerState) return
+
+    if (event.data === PlayerState.CUED && !seekDoneRef.current) {
+      seekDoneRef.current = true
+      const savedProgress = usePlayerStore.getState().progress
+      const savedTrackId = usePlayerStore.getState().currentTrack?.youtubeVideoId
+      if (savedTrackId === videoId && savedProgress > 1) {
+        seekUntilRef.current = Date.now() + 600
+        event.target.seekTo(savedProgress, true)
+        setState(s => ({ ...s, currentTime: savedProgress }))
+      }
+      return
+    }
 
     if (event.data === PlayerState.PLAYING) {
       setState(s => (s.isPlaying ? s : { ...s, isPlaying: true }))
@@ -181,7 +188,6 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
         iv_load_policy: 3,
         fs: 0,
         disablekb: 1,
-        origin: window.location.origin,
       },
       events: {
         onReady: onPlayerReady,
