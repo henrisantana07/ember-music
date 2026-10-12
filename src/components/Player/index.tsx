@@ -279,8 +279,8 @@ export function Player() {
 
   if (!currentTrack) return null
 
-  const currentDuration = isYouTubeTrack ? ytDuration : duration
-  const currentProgress = isYouTubeTrack ? ytCurrentTime : progress
+  const currentDuration = isYouTubeTrack ? (ytDuration || duration) : duration
+  const currentProgress = isYouTubeTrack ? (ytCurrentTime || progress) : progress
   const progressPercent = currentDuration > 0 ? (currentProgress / currentDuration) * 100 : 0
 
   const repeatLabel: Record<RepeatMode, string> = { none: 'Sem repeat', one: 'Repeat 1', all: 'Repeat tudo' }
