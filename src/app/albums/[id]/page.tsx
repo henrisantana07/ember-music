@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { ShareButton } from '@/components/ShareButton'
 import { SaveAlbumButton } from '@/components/SaveAlbumButton'
 import { TrackCard } from '@/components/TrackCard'
@@ -111,9 +112,9 @@ export default function AlbumPage() {
         <div className="flex-1 min-w-0 w-full md:w-auto text-center md:text-left">
           <p className="text-label-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-secondary)' }}>Álbum</p>
           <h1 className="text-2xl md:text-3xl font-bold mb-2 truncate">{album.name}</h1>
-          <a href={`/artists/${album.artist_id}`} className="text-body-large font-semibold hover:underline inline-block truncate max-w-full" style={{ color: 'var(--text-primary)' }}>
+          <Link href={`/artists/${album.artist_id}`} className="text-body-large font-semibold hover:underline inline-block truncate max-w-full" style={{ color: 'var(--text-primary)' }}>
             {album.artist_name}
-          </a>
+          </Link>
           <p className="text-body-medium mt-1" style={{ color: 'var(--text-secondary)' }}>
             {album.release_date?.slice(0, 4)} &middot; {album.tracks.length} músicas &middot; {minutes} min
           </p>

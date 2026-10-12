@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { ArtistHeader } from '@/components/artist/ArtistHeader'
 import { ArtistHeaderSkeleton } from '@/components/artist/ArtistHeaderSkeleton'
 import { TrackCard } from '@/components/TrackCard'
@@ -107,7 +108,7 @@ export default function ArtistPage() {
           <Carousel>
             {albums.slice(0, 10).map((album) => (
               <div key={album.id} className="flex-shrink-0 w-44 p-4 rounded-xl transition-colors hover:bg-state-hover group relative">
-                <a href={`/albums/${album.id}`} className="block">
+                <Link href={`/albums/${album.id}`} className="block">
                   <div className="relative mb-3">
                     <img src={album.image || '/placeholder.svg'} alt={album.name}
                       className="w-full aspect-square rounded-lg object-cover shadow-md" loading="lazy" />
@@ -122,7 +123,7 @@ export default function ArtistPage() {
                   <p className="text-body-medium text-center truncate" style={{ color: 'var(--text-disabled)' }}>
                     {album.release_date?.slice(0, 4) || ''}
                   </p>
-                </a>
+                </Link>
               </div>
             ))}
           </Carousel>
@@ -134,7 +135,7 @@ export default function ArtistPage() {
           <h2 className="text-xl font-bold mb-4">Artistas Relacionados</h2>
           <Carousel>
             {related.map((rel) => (
-              <a
+              <Link
                 key={rel.id}
                 href={`/artists/${rel.id}`}
                 className="flex-shrink-0 w-36 flex flex-col items-center gap-2 p-4 rounded-xl transition-colors hover:bg-state-hover"
@@ -149,7 +150,7 @@ export default function ArtistPage() {
                 <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>
                   {rel.followers.toLocaleString('pt-BR')} seguidores
                 </p>
-              </a>
+              </Link>
             ))}
           </Carousel>
         </section>

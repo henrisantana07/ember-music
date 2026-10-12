@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { TrackCard } from '@/components/TrackCard'
 import type { Track } from '@/types/music'
 import { getPlaybackHistory } from '@/lib/playback-history'
@@ -18,6 +19,7 @@ function groupByDate(items: { played_at: string; track_data: Track }[]) {
 }
 
 export default function HistoryPage() {
+  const router = useRouter()
   const { user, loading: userLoading } = useUser()
   const [items, setItems] = useState<{ played_at: string; track_data: Track }[]>([])
   const [loading, setLoading] = useState(true)
@@ -80,7 +82,7 @@ export default function HistoryPage() {
         <EmptyState
           title="Entre para ver seu histórico"
           description="Faça login para acompanhar as músicas que você ouviu."
-          action={{ label: 'Ir para o login', onClick: () => { window.location.href = '/login' } }}
+          action={{ label: 'Ir para o login', onClick: () => router.push('/login') }}
         />
       </div>
     )
@@ -97,7 +99,7 @@ export default function HistoryPage() {
         <EmptyState
           title="Nenhuma música tocada ainda"
           description="Comece a ouvir e seu histórico aparecerá aqui."
-          action={{ label: 'Explorar músicas', onClick: () => { window.location.href = '/buscar' } }}
+          action={{ label: 'Explorar músicas', onClick: () => router.push('/buscar') }}
         />
       ) : (
         Object.entries(grouped).map(([date, group]) => (

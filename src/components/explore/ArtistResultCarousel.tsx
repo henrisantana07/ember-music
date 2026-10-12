@@ -4,6 +4,7 @@ import type { Artist } from '@/types/music'
 import { ArtistCircleSkeleton } from './skeletons/ArtistCircleSkeleton'
 import { Carousel } from '@/components/Carousel'
 import { CoverImage } from '@/components/ui/CoverImage'
+import Link from 'next/link'
 
 interface ArtistResultCarouselProps {
   artists: Artist[]
@@ -26,7 +27,7 @@ export function ArtistResultCarousel({ artists, loading, maxItems }: ArtistResul
   return (
     <Carousel>
       {displayArtists.map((artist) => (
-        <a
+        <Link
           key={artist.id}
           href={`/artists/${artist.id}`}
           className="flex flex-col items-center gap-2 w-32 flex-shrink-0 group"
@@ -38,7 +39,7 @@ export function ArtistResultCarousel({ artists, loading, maxItems }: ArtistResul
           <p className="text-body-medium text-center" style={{ color: 'var(--text-secondary)' }}>
             {artist.followers > 0 ? `${(artist.followers / 1000).toFixed(0)}K fãs` : 'Artista'}
           </p>
-        </a>
+        </Link>
       ))}
     </Carousel>
   )

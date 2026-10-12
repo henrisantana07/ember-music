@@ -10,6 +10,7 @@ import type { User } from '@supabase/supabase-js'
 import { savePlaybackHistory } from '@/lib/playback-history'
 import { ExpandedPlayerModal } from '@/components/ExpandedPlayerModal'
 import { useYouTube, useYouTubeTime } from '@/components/YouTubePlayer/context'
+import Link from 'next/link'
 import { ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause } from 'lucide-react'
 
 export function Player() {
@@ -368,12 +369,12 @@ export function Player() {
             </div>
             <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{currentTrack.artist_name}</p>
             {currentPlaylistId && (
-              <a href={`/playlists/${currentPlaylistId}`}
+              <Link href={`/playlists/${currentPlaylistId}`}
                 className="text-label-medium truncate hover:underline"
                 style={{ color: 'var(--accent-from)' }}
                 onClick={(e) => e.stopPropagation()}>
                 {currentPlaylistName}
-              </a>
+              </Link>
             )}
           </div>
         </div>

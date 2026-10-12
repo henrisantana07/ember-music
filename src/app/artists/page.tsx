@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { FollowButton } from '@/components/FollowButton'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 
 interface FollowedArtist {
   artist_id: string
@@ -60,7 +61,7 @@ export default function ArtistsPage() {
             <div key={a.artist_id}
               className="flex items-center gap-4 p-4 rounded-xl transition-colors hover:bg-state-hover"
               style={{ background: 'var(--bg-elevated)' }}>
-              <a href={`/artists/${a.artist_id}`} className="flex items-center gap-4 flex-1 min-w-0">
+              <Link href={`/artists/${a.artist_id}`} className="flex items-center gap-4 flex-1 min-w-0">
                 <img
                   src={a.artist_data?.image || '/placeholder.svg'}
                   alt={a.artist_data?.name ?? a.artist_id}
@@ -72,7 +73,7 @@ export default function ArtistsPage() {
                     Seguindo desde {new Date(a.followed_at).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
-              </a>
+              </Link>
               <FollowButton artistId={a.artist_id} artistData={a.artist_data ?? undefined} />
             </div>
           ))}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { SectionRow } from '@/components/SectionRow'
 import { TrackCardSkeleton } from '@/components/Skeleton'
 import { FollowButton } from '@/components/FollowButton'
@@ -88,7 +89,7 @@ function SearchResults({ query }: { query: string }) {
               <h2 className="text-xl font-bold mb-4">Artistas</h2>
               <div className="flex gap-4 overflow-x-auto hide-scrollbar">
                 {artists.map((artist) => (
-                  <a
+                  <Link
                     key={artist.id}
                     href={`/artists/${artist.id}`}
                     className="flex flex-col items-center gap-2 w-32 flex-shrink-0 group"
@@ -108,7 +109,7 @@ function SearchResults({ query }: { query: string }) {
                         {(artist.followers / 1000).toFixed(0)}K fãs
                       </p>
                     )}
-                  </a>
+                  </Link>
                 ))}
               </div>
             </section>
@@ -119,7 +120,7 @@ function SearchResults({ query }: { query: string }) {
               <h2 className="text-xl font-bold mb-4">Álbuns</h2>
               <div className="flex gap-4 overflow-x-auto hide-scrollbar">
                 {albums.map((album) => (
-                  <a
+                  <Link
                     key={album.id}
                     href={`/albums/${album.id}`}
                     className="flex-shrink-0 w-44 p-4 rounded-xl transition-colors hover:bg-state-hover group relative"
@@ -137,7 +138,7 @@ function SearchResults({ query }: { query: string }) {
                     {album.release_date && (
                       <p className="text-body-medium" style={{ color: 'var(--text-disabled)' }}>{album.release_date.slice(0, 4)}</p>
                     )}
-                  </a>
+                  </Link>
                 ))}
               </div>
             </section>
@@ -246,7 +247,7 @@ function HomeContent() {
             {genres.map((genre) => {
               const gradient = getGenreGradient(genre.name)
               return (
-                <a
+                <Link
                   key={genre.id}
                   href={`/buscar?q=${encodeURIComponent(genre.name)}`}
                   className="relative w-36 flex-shrink-0 p-3 rounded-xl text-center transition-transform hover:scale-105 overflow-hidden"
@@ -257,7 +258,7 @@ function HomeContent() {
                     style={{ background: `linear-gradient(135deg, ${gradient.from}, ${gradient.to})` }}
                   />
                   <p className="text-body-medium font-semibold truncate">{genre.name}</p>
-                </a>
+                </Link>
               )
             })}
           </Carousel>
@@ -270,10 +271,10 @@ function HomeContent() {
           <Carousel>
             {artists.map((artist) => (
               <div key={artist.id} className="w-40 flex-shrink-0 p-4 rounded-xl text-center transition-colors hover:bg-state-hover flex flex-col items-center">
-                <a href={`/artists/${artist.id}`} className="w-full flex flex-col items-center">
+                <Link href={`/artists/${artist.id}`} className="w-full flex flex-col items-center">
                   <img src={artist.image || '/placeholder.svg'} alt={artist.name} className="w-full aspect-square rounded-full object-cover mb-3" loading="lazy" />
                   <p className="w-full text-body-large font-semibold truncate mb-3" title={artist.name}>{artist.name}</p>
-                </a>
+                </Link>
                 <FollowButton artistId={artist.id} artistData={{ id: artist.id, name: artist.name, image: artist.image }} />
               </div>
             ))}

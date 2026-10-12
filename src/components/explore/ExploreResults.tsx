@@ -5,6 +5,7 @@ import type { Track, Album, Artist } from '@/types/music'
 import { filterByGenre, isRelevantToGenre, albumToCatalogItem, artistToCatalogItem, trackToCatalogItem } from '@/lib/genre-curation'
 import { CoverImage } from '@/components/ui/CoverImage'
 import { CATALOG_GRID } from '@/components/ui/grid'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useEnsureFavorites, useFavoritesSync } from '@/lib/favorites-store'
 import { TrackTable } from '@/components/TrackTable'
@@ -259,7 +260,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
           {filteredArtists.length > 8 && (
             <div className={`${CATALOG_GRID} mt-4`}>
               {filteredArtists.slice(8).map((artist) => (
-                <a
+                <Link
                   key={artist.id}
                   href={`/artists/${artist.id}`}
                   className="flex flex-col items-center gap-2 p-3 rounded-xl transition-colors hover:bg-state-hover group"
@@ -271,7 +272,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
                   <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>
                     {artist.followers > 0 ? `${(artist.followers / 1000).toFixed(0)}K fãs` : ''}
                   </p>
-                </a>
+                </Link>
               ))}
             </div>
           )}

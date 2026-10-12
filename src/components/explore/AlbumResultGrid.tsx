@@ -8,6 +8,7 @@ import type { User } from '@supabase/supabase-js'
 import type { Json } from '@/types/database'
 import { CoverImage } from '@/components/ui/CoverImage'
 import { CATALOG_GRID } from '@/components/ui/grid'
+import Link from 'next/link'
 
 interface AlbumResultGridProps {
   albums: Album[]
@@ -120,7 +121,7 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
         return (
           <div key={album.id} className="group relative p-4 rounded-[var(--shape-extra-large)] transition-colors hover:bg-state-hover">
             <div className="relative mb-3">
-              <a href={`/albums/${album.id}`} className="block relative">
+              <Link href={`/albums/${album.id}`} className="block relative">
                 <CoverImage
                   src={album.image}
                   alt={album.name}
@@ -131,7 +132,7 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
                   style={{ background: 'var(--accent-overlay)' }}
                   aria-hidden="true"
                 />
-              </a>
+              </Link>
               <div className="absolute bottom-3 right-3 z-10">
                 <button
                   onClick={(e) => handleSaveAlbum(e, album)}
@@ -160,13 +161,13 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
                 </button>
               </div>
             </div>
-            <a href={`/albums/${album.id}`} className="block">
+            <Link href={`/albums/${album.id}`} className="block">
               <p className="text-body-large font-semibold truncate" title={album.name}>{album.name}</p>
               <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{album.artist_name}</p>
               <p className="text-body-medium" style={{ color: 'var(--text-disabled)' }}>
                 {album.release_date ? album.release_date.split('-')[0] : ''}
               </p>
-            </a>
+            </Link>
           </div>
         )
       })}
