@@ -8,7 +8,26 @@ export function PwaRegister() {
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {})
+      const isDev =
+        location.hostname === 'localhost' ||
+        location.hostname === '127.0.0.1' ||
+        location.hostname === '[::1]'
+      if (isDev) {
+        // Em dev o SW só causa código stale no F5 — remove registros órfãos.
+        navigator.serviceWorker
+          .getRegistrations()
+          .then((rs) => rs.forEach((r) => r.unregister().catch(() => {})))
+          .catch(() => {})
+        caches
+          .keys()
+          .then((keys) => Promise.all(keys.filter((k) => k.startsWith('ember-music')).map((k) => caches.delete(k))))
+          .catch(() => {})
+      } else {
+        navigator.serviceWorker
+          .register('/sw.js')
+          .then((reg) => reg.update().catch(() => {}))
+          .catch(() => {})
+      }
     }
 
     const handler = (e: Event) => {

@@ -98,21 +98,30 @@ export function YouTubePlayerProvider({ children }: { children: ReactNode }) {
   const getCurrentTime = useCallback(() => timeRef.current.currentTime, [])
   const getDuration = useCallback(() => timeRef.current.duration, [])
 
-  // Auto-resume: grava se a sessão terminou tocando antes do reload/fechamento.
-  // Lido no evento CUED do player — se estava tocando, volta a tocar sozinho
-  // (padrão YouTube Music/Spotify).
+  // Auto-resume: grava se a sessão está/terminou tocando. Escrito nas transições
+  // play/pause (não só no unload — cobre crash/kill da aba) e confirmado no
+  // pagehide/visibilitychange. Lido no evento CUED do player.
   useEffect(() => {
-    const save = () => {
+    const write = () => {
       try {
         const s = usePlayerStore.getState()
         localStorage.setItem(RESUME_KEY, s.isPlaying && s.currentTrack ? String(Date.now()) : '0')
       } catch { /* storage indisponível */ }
     }
-    window.addEventListener('pagehide', save)
-    window.addEventListener('beforeunload', save)
+    const unsub = usePlayerStore.subscribe((s, prev) => {
+      if (s.isPlaying !== prev.isPlaying) write()
+    })
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') write()
+    }
+    window.addEventListener('pagehide', write)
+    window.addEventListener('beforeunload', write)
+    document.addEventListener('visibilitychange', onVisibility)
     return () => {
-      window.removeEventListener('pagehide', save)
-      window.removeEventListener('beforeunload', save)
+      unsub()
+      window.removeEventListener('pagehide', write)
+      window.removeEventListener('beforeunload', write)
+      document.removeEventListener('visibilitychange', onVisibility)
     }
   }, [])
 
