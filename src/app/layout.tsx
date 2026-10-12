@@ -48,10 +48,35 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     })();
   `
 
+  // Em dev, remove qualquer service worker antigo imediatamente (roda no HTML,
+  // que é sempre fresco — contorna o SW velho que ainda serve JS cacheado no F5).
+  const swDevCleanupScript = `
+    (function() {
+      try {
+        var h = location.hostname;
+        var isDev = h === 'localhost' || h === '127.0.0.1' || h === '[::1]';
+        if (!isDev) return;
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(rs) {
+            rs.forEach(function(r) { r.unregister().catch(function() {}); });
+          }).catch(function() {});
+        }
+        if ('caches' in window) {
+          caches.keys().then(function(ks) {
+            ks.forEach(function(k) {
+              if (k.indexOf('ember-music') === 0) caches.delete(k);
+            });
+          }).catch(function() {});
+        }
+      } catch(e) {}
+    })();
+  `
+
   return (
     <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
       <body className="flex flex-col h-screen overflow-hidden">
         <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <Script id="sw-dev-cleanup" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: swDevCleanupScript }} />
         <YouTubePlayerProvider>
           <KeyboardShortcuts />
           <div className="flex flex-1 overflow-hidden">
