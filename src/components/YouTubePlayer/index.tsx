@@ -30,6 +30,7 @@ interface YTPlayer {
   setVolume: (volume: number) => void
   getCurrentTime: () => number
   getDuration: () => number
+  getPlayerState: () => number
   destroy: () => void
 }
 
@@ -57,6 +58,9 @@ declare global {
 }
 
 const YT_API_LOADED = 'yt_api_loaded'
+
+/** Flag gravada no pagehide: timestamp da última sessão que terminou tocando ('0' = pausado). */
+export const RESUME_KEY = 'ember:resume'
 
 export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn {
   const playerRef = useRef<YTPlayer | null>(null)
@@ -126,12 +130,36 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
 
     if (event.data === PlayerState.CUED && !seekDoneRef.current) {
       seekDoneRef.current = true
-      const savedProgress = usePlayerStore.getState().progress
-      const savedTrackId = usePlayerStore.getState().currentTrack?.youtubeVideoId
-      if (savedTrackId === videoId && savedProgress > 1) {
+      const store = usePlayerStore.getState()
+      const savedProgress = store.progress
+      const sameTrack = store.currentTrack?.youtubeVideoId === videoId
+      if (sameTrack && savedProgress > 1) {
         seekUntilRef.current = Date.now() + 600
         event.target.seekTo(savedProgress, true)
         setState(s => ({ ...s, currentTime: savedProgress }))
+      }
+
+      // Auto-resume (padrão YouTube Music/Spotify): se a última sessão terminou
+      // tocando, volta a tocar sozinho na posição salva. Se o navegador bloquear
+      // o autoplay, volta ao estado pausado em 3s (1 clique para continuar).
+      let shouldResume = false
+      try {
+        const raw = localStorage.getItem(RESUME_KEY)
+        const ts = raw ? Number(raw) : 0
+        shouldResume = !!sameTrack && ts > 0 && Date.now() - ts < 24 * 60 * 60 * 1000
+        localStorage.setItem(RESUME_KEY, '0')
+      } catch { /* storage indisponível */ }
+
+      if (shouldResume) {
+        usePlayerStore.getState().resume()
+        event.target.playVideo()
+        setTimeout(() => {
+          const p = playerRef.current
+          if (!p) return
+          const st = p.getPlayerState()
+          // 1 = PLAYING, 3 = BUFFERING — se não começou, autoplay foi bloqueado
+          if (st !== 1 && st !== 3) usePlayerStore.getState().pause()
+        }, 3000)
       }
       return
     }

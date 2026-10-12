@@ -5,7 +5,8 @@ import {
   type ReactNode,
 } from 'react'
 import { usePlayerStore } from '@/lib/store'
-import { useYouTubePlayer } from './index'
+import { useYouTubePlayer, RESUME_KEY } from './index'
+import { useMediaSession } from './useMediaSession'
 
 interface OverlayRect {
   left: number
@@ -97,6 +98,24 @@ export function YouTubePlayerProvider({ children }: { children: ReactNode }) {
   const getCurrentTime = useCallback(() => timeRef.current.currentTime, [])
   const getDuration = useCallback(() => timeRef.current.duration, [])
 
+  // Auto-resume: grava se a sessão terminou tocando antes do reload/fechamento.
+  // Lido no evento CUED do player — se estava tocando, volta a tocar sozinho
+  // (padrão YouTube Music/Spotify).
+  useEffect(() => {
+    const save = () => {
+      try {
+        const s = usePlayerStore.getState()
+        localStorage.setItem(RESUME_KEY, s.isPlaying && s.currentTrack ? String(Date.now()) : '0')
+      } catch { /* storage indisponível */ }
+    }
+    window.addEventListener('pagehide', save)
+    window.addEventListener('beforeunload', save)
+    return () => {
+      window.removeEventListener('pagehide', save)
+      window.removeEventListener('beforeunload', save)
+    }
+  }, [])
+
   useEffect(() => {
     const stage = stageRef.current
     if (!stage) return
@@ -167,6 +186,9 @@ export function YouTubePlayerProvider({ children }: { children: ReactNode }) {
     },
     [ytIsReady, ytSeek]
   )
+
+  // Painel de controle de mídia do SO/navegador (capa, play/pause, barra)
+  useMediaSession({ seek, getCurrentTime, getDuration })
 
   const stableValue = useMemo<YouTubeContextValue>(
     () => ({
