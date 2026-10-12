@@ -147,19 +147,6 @@ export function YouTubePlayerProvider({ children }: { children: ReactNode }) {
     ytSetVolume(volume)
   }, [volume, ytIsReady, ytSetVolume])
 
-  const restoredTrackRef = useRef<string | null>(null)
-
-  useEffect(() => {
-    if (!videoId || !ytIsReady) {
-      restoredTrackRef.current = null
-      return
-    }
-    if (restoredTrackRef.current === videoId) return
-    restoredTrackRef.current = videoId
-    const savedProgress = usePlayerStore.getState().progress
-    if (savedProgress > 0) ytSeek(savedProgress)
-  }, [videoId, ytIsReady, ytSeek])
-
   useEffect(() => {
     if (!videoId || !ytIsReady) return
     const interval = setInterval(() => {

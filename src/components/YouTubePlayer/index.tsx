@@ -161,6 +161,9 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
     await loadAPI()
     if (token !== createTokenRef.current || !containerRef.current) return
 
+    const savedProgress = usePlayerStore.getState().progress
+    const isSameTrack = usePlayerStore.getState().currentTrack?.youtubeVideoId === videoId
+
     playerRef.current = new window.YT.Player(containerRef.current, {
       videoId,
       playerVars: {
@@ -173,6 +176,7 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
         fs: 0,
         disablekb: 1,
         origin: window.location.origin,
+        start: isSameTrack && savedProgress > 1 ? Math.floor(savedProgress) : undefined,
       },
       events: {
         onReady: onPlayerReady,
