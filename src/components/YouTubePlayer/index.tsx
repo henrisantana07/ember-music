@@ -123,13 +123,11 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
 
     if (event.data === PlayerState.PLAYING) {
       setState(s => (s.isPlaying ? s : { ...s, isPlaying: true }))
-      if (!usePlayerStore.getState().isPlaying) usePlayerStore.getState().resume()
       return
     }
 
     if (event.data === PlayerState.PAUSED) {
       setState(s => (s.isPlaying ? { ...s, isPlaying: false } : s))
-      if (usePlayerStore.getState().isPlaying) usePlayerStore.getState().pause()
       return
     }
 
