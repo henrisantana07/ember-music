@@ -104,9 +104,6 @@ export function YouTubePlayerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const write = () => {
       try {
-        // Durante a "cura" do service worker (reload extra) não mexe na flag,
-        // senão o auto-resume da sessão seria apagado pelo próprio reload.
-        if (sessionStorage.getItem('ember:sw-heal')) return
         const s = usePlayerStore.getState()
         localStorage.setItem(RESUME_KEY, s.isPlaying && s.currentTrack ? String(Date.now()) : '0')
       } catch { /* storage indisponível */ }
