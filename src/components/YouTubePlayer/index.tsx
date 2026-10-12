@@ -26,6 +26,7 @@ interface YTPlayer {
   playVideo: () => void
   pauseVideo: () => void
   seekTo: (seconds: number, allowSeekAhead: boolean) => void
+  cueVideoById: (options: { videoId: string; startSeconds?: number; endSeconds?: number }) => void
   setVolume: (volume: number) => void
   getCurrentTime: () => number
   getDuration: () => number
@@ -113,9 +114,16 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
   const onPlayerReady = useCallback((event: YTPlayerEvent) => {
     const player = event.target
     player.setVolume(100)
+
+    const savedProgress = usePlayerStore.getState().progress
+    const savedTrackId = usePlayerStore.getState().currentTrack?.youtubeVideoId
+    if (savedTrackId === videoId && savedProgress > 1) {
+      player.cueVideoById({ videoId, startSeconds: savedProgress })
+    }
+
     setState(s => ({ ...s, player, isReady: true, duration: player.getDuration(), volume: 1 }))
     startPolling()
-  }, [startPolling])
+  }, [startPolling, videoId])
 
   const onPlayerStateChange = useCallback((event: YTPlayerEvent) => {
     const PlayerState = window.YT?.PlayerState
@@ -161,9 +169,6 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
     await loadAPI()
     if (token !== createTokenRef.current || !containerRef.current) return
 
-    const savedProgress = usePlayerStore.getState().progress
-    const isSameTrack = usePlayerStore.getState().currentTrack?.youtubeVideoId === videoId
-
     playerRef.current = new window.YT.Player(containerRef.current, {
       videoId,
       playerVars: {
@@ -176,7 +181,6 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
         fs: 0,
         disablekb: 1,
         origin: window.location.origin,
-        start: isSameTrack && savedProgress > 1 ? Math.floor(savedProgress) : undefined,
       },
       events: {
         onReady: onPlayerReady,
