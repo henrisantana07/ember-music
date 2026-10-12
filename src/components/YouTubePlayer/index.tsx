@@ -114,15 +114,16 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
   const onPlayerReady = useCallback((event: YTPlayerEvent) => {
     const player = event.target
     player.setVolume(100)
+    setState(s => ({ ...s, player, isReady: true, duration: player.getDuration(), volume: 1 }))
+    startPolling()
 
     const savedProgress = usePlayerStore.getState().progress
     const savedTrackId = usePlayerStore.getState().currentTrack?.youtubeVideoId
     if (savedTrackId === videoId && savedProgress > 1) {
-      player.cueVideoById({ videoId, startSeconds: savedProgress })
+      seekUntilRef.current = Date.now() + 600
+      player.seekTo(savedProgress, true)
+      setState(s => ({ ...s, currentTime: savedProgress }))
     }
-
-    setState(s => ({ ...s, player, isReady: true, duration: player.getDuration(), volume: 1 }))
-    startPolling()
   }, [startPolling, videoId])
 
   const onPlayerStateChange = useCallback((event: YTPlayerEvent) => {
