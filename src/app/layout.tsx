@@ -48,10 +48,39 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     })();
   `
 
+  // F5 / Ctrl+R com o mesmo efeito do Shift+F5 (hard reload): limpa os caches
+  // de assets (service worker) e recarrega. Shift+F5 e Ctrl+Shift+R seguem com
+  // o comportamento nativo do navegador (não são interceptados).
+  const f5HardReloadScript = `
+    (function() {
+      try {
+        window.addEventListener('keydown', function(e) {
+          if (e.shiftKey || e.altKey) return;
+          var isF5 = e.key === 'F5';
+          var isReloadKey = (e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R');
+          if (!isF5 && !isReloadKey) return;
+          e.preventDefault();
+          var go = function() { location.reload(); };
+          if ('caches' in window) {
+            caches.keys().then(function(ks) {
+              return Promise.all(
+                ks.filter(function(k) { return k.indexOf('ember-music') === 0; })
+                  .map(function(k) { return caches.delete(k); })
+              );
+            }).catch(function() {}).then(go);
+          } else {
+            go();
+          }
+        });
+      } catch(e) {}
+    })();
+  `
+
   return (
     <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
       <body className="flex flex-col h-screen overflow-hidden">
         <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <Script id="f5-hard-reload" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: f5HardReloadScript }} />
         <YouTubePlayerProvider>
           <KeyboardShortcuts />
           <div className="flex flex-1 overflow-hidden">
