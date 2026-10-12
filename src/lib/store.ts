@@ -98,11 +98,13 @@ export const usePlayerStore = create<PlayerState>()(
 
     const shuffle = get().shuffle
     const currentIndex = tracks.findIndex((t) => t.id === track.id)
+    // Re-clicar na faixa atual NÃO deve zerar a posição (senão o footer vira 0:00/0:00)
+    const isSameTrack = prev.currentTrack?.id === track.id
     set({
       currentTrack: track,
       isPlaying: true,
-      progress: 0,
-      duration: 0,
+      progress: isSameTrack ? prev.progress : 0,
+      duration: isSameTrack ? prev.duration : 0,
       queue: tracks,
       originalQueue: tracks,
       currentPlaylistId: playlistId ?? null,

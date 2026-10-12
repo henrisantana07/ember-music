@@ -180,6 +180,11 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     const track = queue[queueIndex]
     if (!track) return
     const store = usePlayerStore.getState()
+    // Faixa atual na fila: alterna play/pause (nunca reinicia/zerar a posição)
+    if (store.currentTrack?.id === track.id) {
+      store.togglePlay()
+      return
+    }
     store.play(track, store.originalQueue, store.currentPlaylistId ?? undefined, store.currentPlaylistName ?? undefined)
   }, [queue])
 

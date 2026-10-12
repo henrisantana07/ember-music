@@ -116,7 +116,6 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
   const onPlayerReady = useCallback((event: YTPlayerEvent) => {
     const player = event.target
     player.setVolume(100)
-    seekDoneRef.current = false
     setState(s => ({ ...s, player, isReady: true, duration: player.getDuration(), volume: 1 }))
     startPolling()
   }, [startPolling])
@@ -177,6 +176,8 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
     await loadAPI()
     if (token !== createTokenRef.current || !containerRef.current) return
 
+    seekDoneRef.current = false
+
     playerRef.current = new window.YT.Player(containerRef.current, {
       videoId,
       playerVars: {
@@ -205,8 +206,20 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
   }, [])
 
   const play = useCallback(() => {
-    playerRef.current?.playVideo()
-  }, [])
+    const player = playerRef.current
+    if (!player) return
+    // Fallback de restore: se o evento CUED nunca positionou o vídeo (reload),
+    // busca a posição salva ANTES do primeiro play para não tocar do zero.
+    if (!seekDoneRef.current) {
+      seekDoneRef.current = true
+      const s = usePlayerStore.getState()
+      if (videoId && s.currentTrack?.youtubeVideoId === videoId && s.progress > 1) {
+        seekUntilRef.current = Date.now() + 600
+        player.seekTo(s.progress, true)
+      }
+    }
+    player.playVideo()
+  }, [videoId])
 
   const pause = useCallback(() => {
     playerRef.current?.pauseVideo()
