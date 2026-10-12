@@ -35,26 +35,13 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (event.request.mode === 'navigate') {
-    // Reload/navegação com o mesmo efeito do Shift+F5: limpa os assets
-    // (/_next/static) do cache antes de servir o HTML — sempre a versão nova.
+    // Network-first: o HTML sempre é o mais novo; cache só como fallback offline.
     event.respondWith(
-      caches.open(CACHE)
-        .then((cache) => cache.keys())
-        .then((requests) =>
-          Promise.all(
-            requests
-              .filter((r) => r.url.includes('/_next/static/'))
-              .map((r) => cache.delete(r))
-          )
-        )
-        .catch(() => {})
-        .then(() =>
-          fetch(event.request).then((response) => {
-            const clone = response.clone()
-            caches.open(CACHE).then((cache) => cache.put(event.request, clone))
-            return response
-          }).catch(() => caches.match(event.request))
-        )
+      fetch(event.request).then((response) => {
+        const clone = response.clone()
+        caches.open(CACHE).then((cache) => cache.put(event.request, clone))
+        return response
+      }).catch(() => caches.match(event.request))
     )
     return
   }
