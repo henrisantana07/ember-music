@@ -275,13 +275,13 @@ export const usePlayerStore = create<PlayerState>()(
         sleepTimerMinutes: state.sleepTimerMinutes,
         miniPlayer: state.miniPlayer,
         queueMinimized: state.queueMinimized,
+        progress: state.progress,
+        duration: state.duration,
       }),
       merge: (persisted, current) => ({
         ...current,
         ...(persisted as Partial<PlayerState>),
         isPlaying: false,
-        progress: 0,
-        duration: 0,
       }),
     }
   )

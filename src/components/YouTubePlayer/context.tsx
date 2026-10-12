@@ -147,6 +147,32 @@ export function YouTubePlayerProvider({ children }: { children: ReactNode }) {
     ytSetVolume(volume)
   }, [volume, ytIsReady, ytSetVolume])
 
+  const restoredTrackRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!videoId || !ytIsReady) {
+      restoredTrackRef.current = null
+      return
+    }
+    if (restoredTrackRef.current === videoId) return
+    restoredTrackRef.current = videoId
+    const savedProgress = usePlayerStore.getState().progress
+    if (savedProgress > 0) ytSeek(savedProgress)
+  }, [videoId, ytIsReady, ytSeek])
+
+  useEffect(() => {
+    if (!videoId || !ytIsReady) return
+    const interval = setInterval(() => {
+      const s = usePlayerStore.getState()
+      if (s.currentTrack?.youtubeVideoId !== videoId) return
+      const t = timeRef.current.currentTime
+      const d = timeRef.current.duration
+      if (t > 0 && Math.abs(s.progress - t) > 0.5) s.setProgress(t)
+      if (d > 0 && s.duration !== d) s.setDuration(d)
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [videoId, ytIsReady])
+
   const seek = useCallback(
     (seconds: number) => {
       if (!ytIsReady) return

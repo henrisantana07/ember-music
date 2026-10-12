@@ -120,7 +120,13 @@ export function Player() {
         if (!isDragging) setProgress(audio.currentTime)
       }
 
-      const onLoadedMetadata = () => setDuration(audio.duration)
+      const onLoadedMetadata = () => {
+        setDuration(audio.duration)
+        const saved = usePlayerStore.getState().progress
+        if (saved > 0 && saved < audio.duration - 1) {
+          audio.currentTime = saved
+        }
+      }
 
       if (!currentTrack.audio) {
         const trackId = usePlayerStore.getState().currentTrack?.id
