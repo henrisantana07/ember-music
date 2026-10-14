@@ -474,6 +474,16 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 </svg>
               </button>
             )}
+            <button
+              onClick={() => visitArtist(currentTrack.artist_id)}
+              className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors hover:text-[var(--text-primary)] state-layer"
+              aria-label={`Ver artista ${currentTrack.artist_name}`}
+              title="Ver mais do artista"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </button>
           </div>
 
           {toast && (
