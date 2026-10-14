@@ -55,7 +55,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <YouTubePlayerProvider>
           <KeyboardShortcuts />
           <div className="flex flex-1 overflow-hidden">
-            <Sidebar />
+            <Suspense fallback={<div className="hidden md:block w-[240px] flex-shrink-0 bg-[var(--bg-surface)] border-r border-outline-variant" />}>
+              <Sidebar />
+            </Suspense>
             <div className="flex-1 flex flex-col overflow-hidden">
               <Suspense fallback={<div className="h-16 flex-shrink-0" />}><Topbar /></Suspense>
               <MainContainer>
