@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { SectionRow } from '@/components/SectionRow'
 import { TrackCardSkeleton } from '@/components/Skeleton'
 import { FollowButton } from '@/components/FollowButton'
-import { Carousel } from '@/components/Carousel'
+import { Carousel, CarouselItem } from '@/components/Carousel'
 import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
 import type { Track, Album, Artist, Genre } from '@/types/music'
 import { getGenreGradient } from '@/constants/genreColors'
@@ -244,21 +244,22 @@ function HomeContent() {
         <section className="mb-12">
           <h2 className="text-xl font-bold mb-4">Gêneros musicais</h2>
           <Carousel>
-            {genres.map((genre) => {
+            {genres.map((genre, index) => {
               const gradient = getGenreGradient(genre.name)
               return (
-                <Link
-                  key={genre.id}
-                  href={`/buscar?q=${encodeURIComponent(genre.name)}`}
-                  className="relative w-36 flex-shrink-0 p-3 rounded-xl text-center transition-transform hover:scale-105 overflow-hidden"
-                  style={{ backgroundColor: 'var(--bg-elevated)' }}
-                >
-                  <div
-                    className="w-full aspect-square rounded-lg mb-2"
-                    style={{ background: `linear-gradient(135deg, ${gradient.from}, ${gradient.to})` }}
-                  />
-                  <p className="text-body-medium font-semibold truncate">{genre.name}</p>
-                </Link>
+                <CarouselItem key={genre.id} index={index} className="w-36 flex-shrink-0">
+                  <Link
+                    href={`/buscar?q=${encodeURIComponent(genre.name)}`}
+                    className="relative block p-3 rounded-xl text-center transition-transform hover:scale-105 overflow-hidden"
+                    style={{ backgroundColor: 'var(--bg-elevated)' }}
+                  >
+                    <div
+                      className="w-full aspect-square rounded-lg mb-2"
+                      style={{ background: `linear-gradient(135deg, ${gradient.from}, ${gradient.to})` }}
+                    />
+                    <p className="text-body-medium font-semibold truncate">{genre.name}</p>
+                  </Link>
+                </CarouselItem>
               )
             })}
           </Carousel>
@@ -269,14 +270,18 @@ function HomeContent() {
         <section className="mb-12">
           <h2 className="text-xl font-bold mb-4">Artistas do momento</h2>
           <Carousel>
-            {artists.map((artist) => (
-              <div key={artist.id} className="w-40 flex-shrink-0 p-4 rounded-xl text-center transition-colors hover:bg-state-hover flex flex-col items-center">
+            {artists.map((artist, index) => (
+              <CarouselItem
+                key={artist.id}
+                index={index}
+                className="w-40 flex-shrink-0 p-4 rounded-xl text-center transition-colors hover:bg-state-hover flex flex-col items-center"
+              >
                 <Link href={`/artists/${artist.id}`} className="w-full flex flex-col items-center">
                   <img src={artist.image || '/placeholder.svg'} alt={artist.name} className="w-full aspect-square rounded-full object-cover mb-3" loading="lazy" />
                   <p className="w-full text-body-large font-semibold truncate mb-3" title={artist.name}>{artist.name}</p>
                 </Link>
                 <FollowButton artistId={artist.id} artistData={{ id: artist.id, name: artist.name, image: artist.image }} />
-              </div>
+              </CarouselItem>
             ))}
           </Carousel>
         </section>

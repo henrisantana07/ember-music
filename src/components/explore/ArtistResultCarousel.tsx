@@ -2,7 +2,7 @@
 
 import type { Artist } from '@/types/music'
 import { ArtistCircleSkeleton } from './skeletons/ArtistCircleSkeleton'
-import { Carousel } from '@/components/Carousel'
+import { Carousel, CarouselItem } from '@/components/Carousel'
 import { CoverImage } from '@/components/ui/CoverImage'
 import Link from 'next/link'
 
@@ -26,20 +26,21 @@ export function ArtistResultCarousel({ artists, loading, maxItems }: ArtistResul
 
   return (
     <Carousel>
-      {displayArtists.map((artist) => (
-        <Link
-          key={artist.id}
-          href={`/artists/${artist.id}`}
-          className="flex flex-col items-center gap-2 w-32 flex-shrink-0 group"
-        >
-          <div className="w-[120px] h-[120px] rounded-full overflow-hidden border-2 transition-colors duration-200 group-hover:border-transparent" style={{ borderColor: 'var(--bg-elevated)' }}>
-            <CoverImage src={artist.image} alt={artist.name} className="w-full h-full object-cover" />
-          </div>
-          <p className="text-body-large font-semibold text-center truncate w-full">{artist.name}</p>
-          <p className="text-body-medium text-center" style={{ color: 'var(--text-secondary)' }}>
-            {artist.followers > 0 ? `${(artist.followers / 1000).toFixed(0)}K fãs` : 'Artista'}
-          </p>
-        </Link>
+      {displayArtists.map((artist, index) => (
+        <CarouselItem key={artist.id} index={index} className="w-32 flex-shrink-0">
+          <Link
+            href={`/artists/${artist.id}`}
+            className="flex flex-col items-center gap-2 group"
+          >
+            <div className="w-[120px] h-[120px] rounded-full overflow-hidden border-2 transition-colors duration-200 group-hover:border-transparent" style={{ borderColor: 'var(--bg-elevated)' }}>
+              <CoverImage src={artist.image} alt={artist.name} className="w-full h-full object-cover" />
+            </div>
+            <p className="text-body-large font-semibold text-center truncate w-full">{artist.name}</p>
+            <p className="text-body-medium text-center" style={{ color: 'var(--text-secondary)' }}>
+              {artist.followers > 0 ? `${(artist.followers / 1000).toFixed(0)}K fãs` : 'Artista'}
+            </p>
+          </Link>
+        </CarouselItem>
       ))}
     </Carousel>
   )

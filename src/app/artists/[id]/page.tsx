@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { ArtistHeader } from '@/components/artist/ArtistHeader'
 import { ArtistHeaderSkeleton } from '@/components/artist/ArtistHeaderSkeleton'
 import { TrackCard } from '@/components/TrackCard'
-import { Carousel } from '@/components/Carousel'
+import { Carousel, CarouselItem } from '@/components/Carousel'
 import { SaveAlbumButton } from '@/components/SaveAlbumButton'
 import { usePlayerStore } from '@/lib/store'
 import { useUser } from '@/hooks/use-user'
@@ -106,8 +106,12 @@ export default function ArtistPage() {
         <section className="mt-10">
           <h2 className="text-xl font-bold mb-4">Álbuns</h2>
           <Carousel>
-            {albums.slice(0, 10).map((album) => (
-              <div key={album.id} className="flex-shrink-0 w-44 p-4 rounded-xl transition-colors hover:bg-state-hover group relative">
+            {albums.slice(0, 10).map((album, index) => (
+              <CarouselItem
+                key={album.id}
+                index={index}
+                className="flex-shrink-0 w-44 p-4 rounded-xl transition-colors hover:bg-state-hover group relative"
+              >
                 <Link href={`/albums/${album.id}`} className="block">
                   <div className="relative mb-3">
                     <img src={album.image || '/placeholder.svg'} alt={album.name}
@@ -124,7 +128,7 @@ export default function ArtistPage() {
                     {album.release_date?.slice(0, 4) || ''}
                   </p>
                 </Link>
-              </div>
+              </CarouselItem>
             ))}
           </Carousel>
         </section>
@@ -134,23 +138,24 @@ export default function ArtistPage() {
         <section className="mt-10 mb-10">
           <h2 className="text-xl font-bold mb-4">Artistas Relacionados</h2>
           <Carousel>
-            {related.map((rel) => (
-              <Link
-                key={rel.id}
-                href={`/artists/${rel.id}`}
-                className="flex-shrink-0 w-36 flex flex-col items-center gap-2 p-4 rounded-xl transition-colors hover:bg-state-hover"
-              >
-                <img
-                  src={rel.image || '/placeholder.svg'}
-                  alt={rel.name}
-                  className="w-28 h-28 rounded-full object-cover shadow-md"
-                  loading="lazy"
-                />
-                <p className="text-body-medium font-medium text-center truncate w-full">{rel.name}</p>
-                <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>
-                  {rel.followers.toLocaleString('pt-BR')} seguidores
-                </p>
-              </Link>
+            {related.map((rel, index) => (
+              <CarouselItem key={rel.id} index={index} className="flex-shrink-0 w-36">
+                <Link
+                  href={`/artists/${rel.id}`}
+                  className="flex flex-col items-center gap-2 p-4 rounded-xl transition-colors hover:bg-state-hover"
+                >
+                  <img
+                    src={rel.image || '/placeholder.svg'}
+                    alt={rel.name}
+                    className="w-28 h-28 rounded-full object-cover shadow-md"
+                    loading="lazy"
+                  />
+                  <p className="text-body-medium font-medium text-center truncate w-full">{rel.name}</p>
+                  <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>
+                    {rel.followers.toLocaleString('pt-BR')} seguidores
+                  </p>
+                </Link>
+              </CarouselItem>
             ))}
           </Carousel>
         </section>
