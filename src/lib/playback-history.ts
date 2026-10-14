@@ -15,19 +15,30 @@ export async function getPlaybackHistory(user: User | null): Promise<PlaybackHis
   if (!user) return []
   
   const supabase = createClient()
-  const { data, error } = await supabase
-    .from('listening_history')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('played_at', { ascending: false })
-    .limit(50)
-  
-  if (error) {
-    console.error('Error fetching playback history:', error)
-    return []
+  const pageSize = 500
+  const all: PlaybackHistoryItem[] = []
+  let from = 0
+
+  // Percorre todas as páginas até buscar o histórico completo
+  for (;;) {
+    const { data, error } = await supabase
+      .from('listening_history')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('played_at', { ascending: false })
+      .range(from, from + pageSize - 1)
+
+    if (error) {
+      console.error('Error fetching playback history:', error)
+      return all
+    }
+
+    all.push(...(data as unknown as PlaybackHistoryItem[]))
+    if (!data || data.length < pageSize) break
+    from += pageSize
   }
-  
-  return data as unknown as PlaybackHistoryItem[]
+
+  return all
 }
 
 export async function savePlaybackHistory(user: User | null, track: Track): Promise<void> {

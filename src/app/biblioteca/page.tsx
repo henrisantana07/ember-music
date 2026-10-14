@@ -8,7 +8,6 @@ import { PlaylistCover } from '@/components/playlist/PlaylistCover'
 import { resolveCover, type CoverSource } from '@/lib/playlist/resolveCover'
 import { extractDominantColor } from '@/lib/color/extractDominantColor'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
-import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { usePlayerStore } from '@/lib/store'
 import { FollowButton } from '@/components/FollowButton'
@@ -54,7 +53,9 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'baixadas', label: 'Baixadas' },
 ]
 
-const PAGE_SIZE = 24
+// Tamanho de página interno usado apenas para percorrer todas as linhas
+// (o Supabase limita cada requisição a 1000 linhas; com loop buscamos TODAS)
+const FETCH_PAGE_SIZE = 500
 
 function relativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -99,11 +100,8 @@ function BibliotecaContent() {
   const [clearError, setClearError] = useState(false)
 
   const [loading, setLoading] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const [loadAttempt, setLoadAttempt] = useState(0)
-  const [hasMore, setHasMore] = useState(false)
-  const [trackOffset, setTrackOffset] = useState(0)
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
   const { play } = usePlayerStore()
@@ -161,39 +159,37 @@ function BibliotecaContent() {
     if (!userLoading && !user) router.push('/login')
   }, [user, userLoading])
 
-  const fetchTracks = useCallback(async (append = false) => {
+  const fetchTracks = useCallback(async () => {
     if (!user) return
-    const offset = append ? trackOffset : 0
-    setLoading(!append)
-    if (append) setLoadingMore(true)
+    setLoading(true)
 
     try {
-      const { data, error } = await supabase
-        .from('favorites')
-        .select('track_data, created_at')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + PAGE_SIZE - 1)
+      // Busca TODOS os favoritos, percorrendo todas as páginas até o fim
+      const all: Track[] = []
+      let from = 0
+      for (;;) {
+        const { data, error } = await supabase
+          .from('favorites')
+          .select('track_data, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .range(from, from + FETCH_PAGE_SIZE - 1)
 
-      if (error) throw error
-      if (data) {
-        const parsed = data.map((f) => f.track_data as unknown as Track).filter(Boolean)
-        if (append) {
-          setTracks((prev) => [...prev, ...parsed])
-        } else {
-          setTracks(parsed)
-        }
-        setHasMore(parsed.length === PAGE_SIZE)
-        if (append) setTrackOffset((prev) => prev + PAGE_SIZE)
+        if (error) throw error
+        const parsed = (data ?? []).map((f) => f.track_data as unknown as Track).filter(Boolean)
+        all.push(...parsed)
+        if (!data || data.length < FETCH_PAGE_SIZE) break
+        from += FETCH_PAGE_SIZE
       }
+
+      setTracks(all)
       setLoadError(false)
     } catch {
-      if (!append) setLoadError(true)
+      setLoadError(true)
     } finally {
       setLoading(false)
-      setLoadingMore(false)
     }
-  }, [user, trackOffset])
+  }, [user])
 
   const fetchArtists = useCallback(async () => {
     if (!user) return
@@ -218,14 +214,23 @@ function BibliotecaContent() {
     if (!user) return
     setLoading(true)
     try {
-      const { data, error } = await supabase
-        .from('listening_history')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('played_at', { ascending: false })
-        .limit(50)
-      if (error) throw error
-      if (data) setHistory(data as unknown as HistoryItem[])
+      // Busca TODO o histórico, percorrendo todas as páginas até o fim
+      const all: HistoryItem[] = []
+      let from = 0
+      for (;;) {
+        const { data, error } = await supabase
+          .from('listening_history')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('played_at', { ascending: false })
+          .range(from, from + FETCH_PAGE_SIZE - 1)
+
+        if (error) throw error
+        all.push(...((data ?? []) as unknown as HistoryItem[]))
+        if (!data || data.length < FETCH_PAGE_SIZE) break
+        from += FETCH_PAGE_SIZE
+      }
+      setHistory(all)
       setLoadError(false)
     } catch {
       setLoadError(true)
@@ -277,7 +282,6 @@ function BibliotecaContent() {
 
   useEffect(() => {
     if (!user) return
-    setTrackOffset(0)
     setTracks([])
     setArtists([])
     setPlaylists([])
@@ -302,16 +306,6 @@ function BibliotecaContent() {
         break
     }
   }, [user, activeTab, loadAttempt])
-
-  const loadMoreTracks = useCallback(() => {
-    if (activeTab === 'favoritos') fetchTracks(true)
-  }, [activeTab, fetchTracks])
-
-  const { sentinelRef } = useInfiniteScroll({
-    onLoadMore: loadMoreTracks,
-    hasMore: activeTab === 'favoritos' && hasMore,
-    loading: loadingMore,
-  })
 
   function setTab(tab: TabId) {
     const params = new URLSearchParams(searchParams.toString())
@@ -546,15 +540,7 @@ function BibliotecaContent() {
                 <button onClick={() => router.push('/buscar')} className="btn-primary text-label-large min-h-[48px] px-6">Descobrir músicas</button>
               </div>
             ) : (
-              <>
-                <TrackTable tracks={getSortedTracks()} user={user} />
-                {hasMore && <div ref={sentinelRef} className="h-10" />}
-                {loadingMore && (
-                  <div className="flex justify-center py-6">
-                    <div className="w-5 h-5 border-2 border-[var(--accent-from)] border-t-transparent rounded-full animate-spin" />
-                  </div>
-                )}
-              </>
+              <TrackTable tracks={getSortedTracks()} user={user} />
             )
           )}
 
