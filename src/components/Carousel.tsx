@@ -25,8 +25,13 @@ const CarouselContext = createContext<{ current: CarouselState }>({
   current: { direction: 'right', driven: false },
 })
 
-/** How far a card slides in from the edge it was revealed on. */
-const REVEAL_OFFSET = 32
+/**
+ * How far a card slides in from the edge it was revealed on.
+ *
+ * ~36% of a 176px card: enough that the eye has something to track, without
+ * the card arriving from off-stage.
+ */
+const REVEAL_OFFSET = 64
 
 interface CarouselProps {
   children: ReactNode
@@ -196,7 +201,7 @@ export function CarouselItem({ children, className = '', index = 0 }: CarouselIt
           x: [direction === 'right' ? REVEAL_OFFSET : -REVEAL_OFFSET, 0],
         },
         {
-          ...TRANSITION.enter,
+          ...TRANSITION.reveal,
           // The cascade belongs to the first paint only; a card revealed by a
           // scroll has already waited its turn.
           delay: driven ? 0 : rowStaggerDelay(index),

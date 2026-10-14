@@ -55,6 +55,13 @@ export const TRANSITION = {
    * land without overshoot, since the panel is the whole viewport.
    */
   surface: { duration: DURATION.medium, ease: EASE.sheet },
+  /**
+   * A carousel card arriving on an arrow press. Longer and softer than the
+   * `enter` used for a first paint, because here the card has real distance to
+   * cover while the row is still travelling — a shorter curve finishes before
+   * the eye has registered the movement.
+   */
+  reveal: { duration: DURATION.medium, ease: EASE.sheet },
 } as const satisfies Record<string, Transition>
 
 /* --- Shared surface variants ------------------------------------------------
