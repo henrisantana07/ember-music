@@ -1,11 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState, useRef } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { usePlaylistsStore } from '@/lib/playlists-store'
+import { useArtistsStore } from '@/lib/artists-store'
 import { useUser } from '@/hooks/use-user'
 import { useAvatar } from '@/hooks/use-avatar'
 
@@ -16,17 +17,12 @@ const NAV_SECTION1 = [
   { href: '/biblioteca/local', label: 'Biblioteca Local', outline: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z', fill: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z' },
 ]
 
-// Ícone de artista (pessoa) — aponta para a aba "Artistas" da biblioteca
-const ARTIST_ICON = {
-  outline: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
-  fill: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
-}
-
+// Quantidade máxima de itens exibidos em cada seção da sidebar
+const SIDEBAR_LIMIT = 5
 
 
 export default function Sidebar() {
   const pathname = usePathname()
-  const searchParams = useSearchParams()
   const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const supabase = createClient()
@@ -35,12 +31,9 @@ export default function Sidebar() {
   const desktopAsideRef = useRef<HTMLElement>(null)
   const [showDropdown, setShowDropdown] = useState(false)
   const { playlists, fetchPlaylists } = usePlaylistsStore()
+  const { artists, fetchArtists } = useArtistsStore()
   const { user, loading: userLoading } = useUser()
   const avatarUrl = useAvatar(user?.id)
-
-  // "Artistas" da sidebar aponta para a aba de artistas da biblioteca
-  const artistsHref = '/biblioteca?tab=artistas'
-  const isArtistsActive = pathname === '/biblioteca' && searchParams.get('tab') === 'artistas'
 
   useEffect(() => {
     const el = desktopAsideRef.current
@@ -61,6 +54,7 @@ export default function Sidebar() {
   useEffect(() => {
     if (user) {
       fetchPlaylists()
+      fetchArtists()
     }
   }, [user])
 
@@ -174,26 +168,45 @@ export default function Sidebar() {
 
       <hr className={`mx-4 my-2 border-outline-variant ${collapsed ? 'hidden' : ''}`} />
 
-      <nav className={`flex-none px-2 space-y-0.5 ${collapsed ? 'pt-1' : ''}`}>
-        <Link
-          href={artistsHref}
-          aria-current={isArtistsActive ? 'page' : undefined}
-          className={`flex items-center gap-3 px-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${
-            collapsed ? 'justify-center px-2' : ''
-          } ${
-            isArtistsActive
-              ? 'font-bold bg-state-hover text-[var(--text-primary)]'
-              : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
-          }`}
-          title={collapsed ? 'Artistas' : undefined}
-        >
-          <NavIcon icon={ARTIST_ICON} active={isArtistsActive} />
-          {!collapsed && <span>Artistas</span>}
-        </Link>
-      </nav>
-
       {!collapsed && (
-        <div className="flex-1" aria-hidden="true" />
+        <div className="flex-1 overflow-y-auto scrollbar-thin px-2 space-y-0.5 min-h-[150px] max-h-[calc(100vh-8rem)]">
+          {artists.length > 0 && (
+            <p className="px-3 pt-1 pb-1 text-label-medium font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
+              Artistas
+            </p>
+          )}
+          {artists.map(artist => {
+            const active = pathname === `/artists/${artist.artist_id}`
+            return (
+              <Link
+                key={artist.artist_id}
+                href={`/artists/${artist.artist_id}`}
+                aria-current={active ? 'page' : undefined}
+                className={`flex items-center gap-3 px-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${
+                  active
+                    ? 'font-bold bg-state-hover text-[var(--text-primary)]'
+                    : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
+                }`}
+              >
+                <div className="relative w-8 h-8 flex-shrink-0">
+                  {artist.artist_data?.image ? (
+                    <img src={artist.artist_data.image} alt="" className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-surface-container-highest flex items-center justify-center text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                      {artist.artist_data?.name?.[0] ?? '?'}
+                    </div>
+                  )}
+                </div>
+                <span className="truncate">{artist.artist_data?.name ?? 'Artista'}</span>
+              </Link>
+            )
+          })}
+          {artists.length === 0 && (
+            <div className="px-3 py-6 text-center text-body-medium" style={{ color: 'var(--text-disabled)' }}>
+              Siga artistas para vê-los aqui
+            </div>
+          )}
+        </div>
       )}
 
       {!collapsed && (
@@ -357,23 +370,40 @@ export default function Sidebar() {
 
             <hr className="mx-4 my-2 border-outline-variant flex-none" />
 
-            <nav className="flex-none px-2 space-y-0.5 py-1">
-              <Link
-                href={artistsHref}
-                onClick={() => setDrawerOpen(false)}
-                aria-current={isArtistsActive ? 'page' : undefined}
-                className={`flex items-center gap-3 px-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${
-                  isArtistsActive
-                    ? 'font-bold bg-state-hover text-[var(--text-primary)]'
-                    : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
-                }`}
-              >
-                <NavIcon icon={ARTIST_ICON} active={isArtistsActive} />
-                <span>Artistas</span>
-              </Link>
-            </nav>
-
-            <div className="flex-1" aria-hidden="true" />
+            <div className="flex-1 overflow-y-auto scrollbar-thin px-2 space-y-0.5 min-h-[150px] max-h-[calc(100dvh-8rem)]">
+              {artists.length > 0 && (
+                <p className="px-3 pt-1 pb-1 text-label-medium font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
+                  Artistas
+                </p>
+              )}
+              {artists.map(artist => {
+                const active = pathname === `/artists/${artist.artist_id}`
+                return (
+                  <Link
+                    key={artist.artist_data?.id ?? artist.artist_id}
+                    href={`/artists/${artist.artist_id}`}
+                    onClick={() => setDrawerOpen(false)}
+                    aria-current={active ? 'page' : undefined}
+                    className={`flex items-center gap-3 px-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${
+                      active
+                        ? 'font-bold bg-state-hover text-[var(--text-primary)]'
+                        : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    <div className="relative w-8 h-8 flex-shrink-0">
+                      {artist.artist_data?.image ? (
+                        <img src={artist.artist_data.image} alt="" className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full rounded-full bg-surface-container-highest flex items-center justify-center text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                          {artist.artist_data?.name?.[0] ?? '?'}
+                        </div>
+                      )}
+                    </div>
+                    <span className="truncate">{artist.artist_data?.name ?? 'Artista'}</span>
+                  </Link>
+                )
+              })}
+            </div>
 
             {user && (
               <div className="flex-none border-t border-outline-variant px-2 py-1">
