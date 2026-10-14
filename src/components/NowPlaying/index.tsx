@@ -26,9 +26,9 @@ function queueIndexFromItemKey(key: string | number): number {
   return Number.isFinite(parsed) ? parsed : -1
 }
 
-const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, index, isCurrent, isPlaying, onPlay, onRemove, onOpenAddSearch, minimized }: {
+const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, index, isCurrent, isPlaying, onPlay, onRemove, onVisitArtist, minimized }: {
   track: Track; sortableId: string; index: number; isCurrent: boolean; isPlaying: boolean;
-  onPlay: (index: number) => void; onRemove: (index: number) => void; onOpenAddSearch: () => void; minimized?: boolean
+  onPlay: (index: number) => void; onRemove: (index: number) => void; onVisitArtist: (artistId: string) => void; minimized?: boolean
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: sortableId })
   const { open: menuOpen, close: closeMenu, triggerProps, panelProps } = useMenu()
@@ -102,11 +102,11 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
         </button>
         {menuOpen && (
           <MenuPanel {...panelProps} align="right">
-            <MenuItem onClick={() => { closeMenu(); onOpenAddSearch() }}>
+            <MenuItem onClick={() => { closeMenu(); onVisitArtist(track.artist_id) }}>
               <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              Adicionar à fila
+              Ver artista
             </MenuItem>
             <MenuItem danger onClick={() => { closeMenu(); onRemove(index) }}>
               <Trash2 className="w-5 h-5 flex-shrink-0" />
@@ -129,11 +129,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const [user, setUser] = useState<User | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(null)
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<Track[]>([])
-  const [searchLoading, setSearchLoading] = useState(false)
-  const searchInputRef = useRef<HTMLInputElement>(null)
   const [suggestions, setSuggestions] = useState<Track[]>([])
   const supabase = createClient()
 
@@ -142,18 +137,17 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const queue = usePlayerStore((s) => s.queue)
   const isExpandedOpen = usePlayerStore((s) => s.isExpandedOpen)
   const queueMinimized = usePlayerStore((s) => s.queueMinimized)
-  const setQueueMinimized = usePlayerStore((s) => s.setQueueMinimized)
   const play = usePlayerStore((s) => s.play)
   const removeFromQueue = usePlayerStore((s) => s.removeFromQueue)
   const reorderQueue = usePlayerStore((s) => s.reorderQueue)
   const clearQueue = usePlayerStore((s) => s.clearQueue)
-  const addToQueue = usePlayerStore((s) => s.addToQueue)
 
-  const openAddSearch = useCallback(() => {
-    setQueueMinimized(false)
-    setIsSearchOpen(true)
-    setSearchQuery('')
-  }, [setQueueMinimized])
+  // Leva à página do artista da faixa, onde o usuário pode explorar novas faixas dele
+  const visitArtist = useCallback((artistId: string) => {
+    if (!artistId) return
+    if (onClose) onClose()
+    router.push(`/artists/${artistId}`)
+  }, [onClose, router])
 
   const isFav = useIsFavorite(currentTrack?.id ?? '')
   const toggleFavorite = useFavoritesStore((s) => s.toggle)
@@ -243,26 +237,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
   }, [])
-
-  useEffect(() => {
-    if (!isSearchOpen || !searchQuery.trim()) { setSearchResults([]); return }
-    const controller = new AbortController()
-    const timer = setTimeout(async () => {
-      setSearchLoading(true)
-      try {
-        const res = await fetch(`/api/youtube?endpoint=search&q=${encodeURIComponent(searchQuery.trim())}&type=track&limit=12`, { signal: controller.signal })
-        if (!res.ok) throw new Error('search failed')
-        const data = await res.json()
-        if (!controller.signal.aborted) setSearchResults(data.tracks ?? [])
-      } catch { if (!controller.signal.aborted) setSearchResults([]) }
-      finally { if (!controller.signal.aborted) setSearchLoading(false) }
-    }, 350)
-    return () => { clearTimeout(timer); controller.abort() }
-  }, [isSearchOpen, searchQuery])
-
-  useEffect(() => {
-    if (isSearchOpen) searchInputRef.current?.focus()
-  }, [isSearchOpen])
 
   useEffect(() => {
     if (queue.length > 0 || !currentTrack?.artist_id) return
@@ -575,7 +549,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                         isPlaying={isPlaying}
                         onPlay={playTrackAt}
                         onRemove={removeFromQueue}
-                        onOpenAddSearch={openAddSearch}
+                        onVisitArtist={visitArtist}
                         minimized={queueMinimized}
                       />
                     ))
@@ -596,74 +570,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
               </div>
             </SortableContext>
           </DndContext>
-
-          {isSearchOpen && (
-            <div className="absolute inset-0 z-10 flex flex-col" style={{ backgroundColor: 'var(--bg-base)' }}>
-              <div className="flex-none px-3 pt-3 pb-2">
-                <div className="flex items-center gap-3 rounded-full px-4 min-h-[48px]" style={{ backgroundColor: 'var(--bg-elevated)' }}>
-                  <svg className="w-5 h-5 flex-none" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    placeholder="Buscar faixas..."
-                    aria-label="Buscar faixas para adicionar à fila"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 bg-transparent outline-none text-body-large min-h-[40px]"
-                    style={{ color: 'var(--text-primary)' }}
-                  />
-                  {searchLoading && (
-                    <svg className="w-4 h-4 animate-spin flex-none" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                  )}
-                  <button
-                    onClick={() => setIsSearchOpen(false)}
-                    className="h-9 w-9 flex-none inline-flex items-center justify-center rounded-full transition-colors state-layer"
-                    style={{ color: 'var(--text-secondary)' }}
-                    title="Fechar busca"
-                    aria-label="Fechar busca"
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar px-2 pb-2 space-y-0.5 queue-scroll">
-                {searchResults.length === 0 && searchQuery.trim() && !searchLoading && (
-                  <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-                    <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>Nenhum resultado</p>
-                  </div>
-                )}
-                {searchResults.map((track) => (
-                  <button
-                    key={track.id}
-                    onClick={() => { addToQueue(track); setSearchQuery(''); setSearchResults([]); searchInputRef.current?.focus() }}
-                    className="flex items-center gap-3 w-full px-3 min-h-[56px] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors text-left state-layer"
-                  >
-                    {track.image ? (
-                      <img src={track.image} alt="" className="w-10 h-10 rounded object-cover flex-none" />
-                    ) : (
-                      <div className="w-10 h-10 rounded flex items-center justify-center flex-none" style={{ backgroundColor: 'var(--bg-surface)' }}>
-                        <Music className="w-5 h-5" style={{ color: 'var(--text-disabled)' }} />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="text-body-medium truncate" style={{ color: 'var(--text-primary)' }}>{track.name}</p>
-                      <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
-                    </div>
-                    <svg className="w-5 h-5 flex-none" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
