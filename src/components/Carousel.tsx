@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { motion, useAnimationControls } from 'motion/react'
-import { DURATION, EASE, rowStaggerDelay } from '@/lib/motion'
+import { TRANSITION, rowStaggerDelay } from '@/lib/motion'
 
 interface CarouselState {
   /** Which edge freshly-revealed cards should arrive from. */
@@ -30,27 +30,52 @@ const REVEAL_OFFSET = 32
 
 interface CarouselProps {
   children: ReactNode
+  className?: string
   /** Card width — used to scroll by one card per arrow click. */
   cardWidth?: number
 }
 
-export function Carousel({ children, cardWidth = 176 }: CarouselProps) {
+export function Carousel({ children, className = '', cardWidth = 176 }: CarouselProps) {
   const ref = useRef<HTMLDivElement>(null)
   const state = useRef<CarouselState>({ direction: 'right', driven: false })
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(false)
+  const [showLeft, setShowLeft] = useState(false)
+  const [showRight, setShowRight] = useState(false)
 
-  function measure() {
+  // Everything the check needs is local to the row, so it lives in the effect
+  // rather than being rebuilt on every render — the row re-renders whenever a
+  // card loads, and `setShowLeft`/`setShowRight` only commit when a value
+  // actually flips.
+  useEffect(() => {
     const el = ref.current
     if (!el) return
-    setCanScrollLeft(el.scrollLeft > 0)
-    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
-  }
 
-  // The scroll position is already settled on first paint, so the arrows have
-  // to be measured here — a bare `onLoad` on a div never fires for content
-  // that arrives with the render.
-  useEffect(() => { measure() }, [])
+    const update = () => {
+      setShowLeft(el.scrollLeft > 4)
+      setShowRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4)
+    }
+
+    // Scroll fires once a frame at most, but a card whose image just resolved
+    // can change `scrollWidth` without any scroll event at all.
+    let frame = 0
+    const onScroll = () => {
+      if (frame) return
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        update()
+      })
+    }
+
+    update()
+    el.addEventListener('scroll', onScroll, { passive: true })
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+      ro.disconnect()
+      if (frame) cancelAnimationFrame(frame)
+    }
+  }, [children])
 
   function travel(direction: 'left' | 'right') {
     const el = ref.current
@@ -62,46 +87,69 @@ export function Carousel({ children, cardWidth = 176 }: CarouselProps) {
 
   return (
     <CarouselContext.Provider value={state}>
-      <div className="relative group/car">
+      <div className="relative group/carousel">
         <div
           ref={ref}
-          onScroll={measure}
-          className="flex gap-4 overflow-x-auto scrollbar-hide pb-2"
+          className={`flex gap-4 overflow-x-auto hide-scrollbar pb-2 ${className}`}
         >
           {children}
         </div>
 
-        {/* Left arrow, pinned to the left edge. Opacity stays in CSS: it is a
-            pseudo-class reveal (hidden until the row is hovered), and a motion
-            `initial` here would fight it. The scale is Tailwind's, which
-            composes with the `-translate-y-1/2` centring. */}
-        <button
-          onClick={() => travel('left')}
-          aria-label="Rolar para a esquerda"
-          className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-elevated shadow-elevation-2 inline-flex items-center justify-center transition-[opacity,transform] duration-200 hover:scale-105 active:scale-95 state-layer ${
-            canScrollLeft ? 'opacity-0 group-hover/car:opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-        >
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-
-        {/* Right arrow, on the right edge — it used to sit on top of the left
-            one, both at `left-0`, and keyed off `canScrollLeft`. */}
-        <button
-          onClick={() => travel('right')}
-          aria-label="Rolar para a direita"
-          className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-elevated shadow-elevation-2 inline-flex items-center justify-center transition-[opacity,transform] duration-200 hover:scale-105 active:scale-95 state-layer ${
-            canScrollRight ? 'opacity-0 group-hover/car:opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-        >
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+        {showLeft && <Edge direction="left" onTravel={() => travel('left')} />}
+        {showRight && <Edge direction="right" onTravel={() => travel('right')} />}
       </div>
     </CarouselContext.Provider>
+  )
+}
+
+interface EdgeProps {
+  direction: 'left' | 'right'
+  onTravel: () => void
+}
+
+/**
+ * The edge control: a scrim that fades the row out under a round button, so
+ * the arrow reads even over a bright cover.
+ *
+ * The scrim's reveal stays in CSS — it is a `:hover` on the whole row, and an
+ * inline opacity from motion would beat it permanently. Only the button
+ * moves, and it carries no transform of its own to fight.
+ *
+ * On press the button shrinks and the chevron leans into the direction it is
+ * about to travel: a press this frequent has to answer immediately, before the
+ * row has moved a single pixel.
+ */
+function Edge({ direction, onTravel }: EdgeProps) {
+  const left = direction === 'left'
+  return (
+    <button
+      onClick={onTravel}
+      aria-label={left ? 'Anterior' : 'Próximo'}
+      className={`absolute top-0 bottom-0 z-10 w-16 flex items-center opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300 ${
+        left ? 'left-0 justify-start pl-1' : 'right-0 justify-end pr-1'
+      }`}
+      style={{
+        background: left
+          ? 'linear-gradient(to right, var(--bg-base) 20%, transparent)'
+          : 'linear-gradient(to left, var(--bg-base) 20%, transparent)',
+      }}
+    >
+      <motion.span
+        className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg backdrop-blur-sm"
+        style={{ background: 'var(--bg-elevated)' }}
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.86, x: left ? -3 : 3 }}
+        transition={TRANSITION.press}
+      >
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d={left ? 'M15 19l-7-7 7-7' : 'M9 5l7 7-7 7'}
+          />
+        </svg>
+      </motion.span>
+    </button>
   )
 }
 
@@ -120,7 +168,7 @@ interface CarouselItemProps {
  * hover off for good (see the note in globals.css). The slot has no transform
  * of its own, so it is free to move.
  *
- * Plays once per card. Re-triggering every time a card crosses the edge would
+ * Plays once per card. Re-triggering every time a card crossed the edge would
  * make scrolling feel sticky.
  */
 export function CarouselItem({ children, className = '', index = 0 }: CarouselItemProps) {
@@ -137,10 +185,17 @@ export function CarouselItem({ children, className = '', index = 0 }: CarouselIt
       if (entered.current) return
       entered.current = true
       const { direction, driven } = state.current
-      const from = direction === 'right' ? REVEAL_OFFSET : -REVEAL_OFFSET
       void controls.start(
-        { opacity: [0, 1], x: [from, 0] },
-        { duration: DURATION.fast, ease: EASE.standard, delay: driven ? 0 : rowStaggerDelay(index) },
+        {
+          opacity: [0, 1],
+          x: [direction === 'right' ? REVEAL_OFFSET : -REVEAL_OFFSET, 0],
+        },
+        {
+          ...TRANSITION.enter,
+          // The cascade belongs to the first paint only; a card revealed by a
+          // scroll has already waited its turn.
+          delay: driven ? 0 : rowStaggerDelay(index),
+        },
       )
     }
 
