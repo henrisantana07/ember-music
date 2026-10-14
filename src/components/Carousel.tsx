@@ -168,25 +168,30 @@ interface CarouselItemProps {
  * hover off for good (see the note in globals.css). The slot has no transform
  * of its own, so it is free to move.
  *
- * Plays once per card. Re-triggering every time a card crossed the edge would
- * make scrolling feel sticky.
+ * The slot keeps watching itself for the life of the row, so the slide plays
+ * on *every* arrow press rather than only the first: it re-arms the moment it
+ * leaves the viewport. Nothing replays while it simply sits there, and it
+ * never blocks the scroll — it is a transform, so the row keeps moving under
+ * it. The direction is read at the instant it enters, never cached, which is
+ * what makes the same card come from the right on one press and the left on
+ * the next.
  */
 export function CarouselItem({ children, className = '', index = 0 }: CarouselItemProps) {
   const state = useContext(CarouselContext)
   const controls = useAnimationControls()
   const ref = useRef<HTMLDivElement>(null)
-  const entered = useRef(false)
+  const visible = useRef(false)
 
   useEffect(() => {
     const el = ref.current
-    if (!el || entered.current) return
+    if (!el) return
 
     const reveal = () => {
-      if (entered.current) return
-      entered.current = true
       const { direction, driven } = state.current
       void controls.start(
         {
+          // Keyframes, not plain values: the card may still be holding the end
+          // of the last slide, and this has to start from the edge regardless.
           opacity: [0, 1],
           x: [direction === 'right' ? REVEAL_OFFSET : -REVEAL_OFFSET, 0],
         },
@@ -207,8 +212,15 @@ export function CarouselItem({ children, className = '', index = 0 }: CarouselIt
     }
 
     const io = new IntersectionObserver(([entry]) => {
-      if (!entry?.isIntersecting) return
-      io.disconnect()
+      if (!entry?.isIntersecting) {
+        // Off the edge again, which is what arms it for the next press. The
+        // pixels it goes out on are already clipped, so there is nothing to
+        // fade — leaving the flag alone keeps the handoff invisible.
+        visible.current = false
+        return
+      }
+      if (visible.current) return
+      visible.current = true
       reveal()
     }, { threshold: 0.2 })
 
