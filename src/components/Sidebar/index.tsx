@@ -142,7 +142,7 @@ export default function Sidebar() {
             Sua Biblioteca
           </p>
           <div className="space-y-0.5">
-            {playlists.map(pl => {
+            {playlists.slice(0, SIDEBAR_LIMIT).map(pl => {
               const active = pathname === `/playlists/${pl.id}`
               return (
                 <Link
@@ -175,7 +175,7 @@ export default function Sidebar() {
               Artistas
             </p>
           )}
-          {artists.map(artist => {
+          {artists.slice(0, SIDEBAR_LIMIT).map(artist => {
             const active = pathname === `/artists/${artist.artist_id}`
             return (
               <Link
@@ -343,7 +343,7 @@ export default function Sidebar() {
                 Sua Biblioteca
               </p>
                 <div className="space-y-0.5">
-                  {playlists.map(pl => {
+                  {playlists.slice(0, SIDEBAR_LIMIT).map(pl => {
                     const active = pathname === `/playlists/${pl.id}`
                     return (
                       <Link
@@ -376,7 +376,7 @@ export default function Sidebar() {
                   Artistas
                 </p>
               )}
-              {artists.map(artist => {
+              {artists.slice(0, SIDEBAR_LIMIT).map(artist => {
                 const active = pathname === `/artists/${artist.artist_id}`
                 return (
                   <Link
