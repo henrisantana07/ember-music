@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { fadeVariants } from '@/lib/motion'
 import { Button } from './Button'
+import { Lottie } from './LottieLazy'
 
 interface StateProps {
   icon?: ReactNode
@@ -50,4 +51,23 @@ export function EmptyState(props: StateProps) {
 /** Standard error state: explains the failure and always offers a retry. */
 export function ErrorState({ title = 'Algo deu errado', description = 'Não foi possível carregar o conteúdo.', ...rest }: StateProps) {
   return <StateBlock title={title} description={description} {...rest} />
+}
+
+/**
+ * Standard loading block: an animated spinner where the skeleton row used to
+ * be, so waiting reads as one thing rather than as a page of stand-ins.
+ *
+ * It announces itself to assistive tech as a status region — the spinner is
+ * decorative and hidden from it, so the copy is what carries the meaning.
+ */
+export function LoadingState({ title = 'Carregando…', className = '' }: { title?: string; className?: string }) {
+  return (
+    <div
+      role="status"
+      className={`flex flex-col items-center justify-center gap-3 py-14 ${className}`}
+    >
+      <Lottie name="spinner" loop className="h-10 w-10" />
+      <p className="text-body-medium text-[var(--text-secondary)]">{title}</p>
+    </div>
+  )
 }

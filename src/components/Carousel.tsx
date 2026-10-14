@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { ReactNode } from 'react'
 import { motion, useAnimationControls } from 'motion/react'
 import { TRANSITION, rowStaggerDelay } from '@/lib/motion'
+import { Lottie } from '@/components/ui/LottieLazy'
 
 interface CarouselState {
   /** Which edge freshly-revealed cards should arrive from. */
@@ -162,13 +163,26 @@ interface EdgeProps {
  *
  * On press the button shrinks and the chevron leans into the direction it is
  * about to travel: a press this frequent has to answer immediately, before the
- * row has moved a single pixel.
+ * row has moved a single pixel. The lean itself is a Lottie — a motion graphic
+ * the button could not draw on its own — and it replays on every press, so the
+ * row feels driven rather than merely scrolled.
  */
 function Edge({ direction, onTravel }: EdgeProps) {
   const left = direction === 'left'
+  // Bumped on every press so the chevron leans the way the row is about to
+  // move each time, not only the first time it appears.
+  const [press, setPress] = useState(0)
+  // The plain SVG stands in until the engine's chunk has arrived and drawn —
+  // the animation opens on that same drawing, so the handover has nothing to
+  // show for itself.
+  const [drawn, setDrawn] = useState(false)
+
   return (
     <button
-      onClick={onTravel}
+      onClick={() => {
+        setPress((n) => n + 1)
+        onTravel()
+      }}
       aria-label={left ? 'Anterior' : 'Próximo'}
       className={`absolute top-0 bottom-0 z-10 w-16 flex items-center opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300 ${
         left ? 'left-0 justify-start pl-1' : 'right-0 justify-end pr-1'
@@ -186,13 +200,34 @@ function Edge({ direction, onTravel }: EdgeProps) {
         whileTap={{ scale: 0.86, x: left ? -3 : 3 }}
         transition={TRANSITION.press}
       >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d={left ? 'M15 19l-7-7 7-7' : 'M9 5l7 7-7 7'}
+        <span className="relative block h-5 w-5">
+          {!drawn && (
+            <svg
+              className="absolute inset-0 h-full w-full"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d={left ? 'M15 19l-7-7 7-7' : 'M9 5l7 7-7 7'}
+              />
+            </svg>
+          )}
+          {/* The animation is authored pointing left; the right-hand arrow is
+              that same file mirrored, which also mirrors the direction it
+              lunges in — one file, both arrows, no pair to keep in step. */}
+          <Lottie
+            name="chevron"
+            loop={false}
+            playKey={press}
+            onReady={() => setDrawn(true)}
+            className="h-5 w-5"
+            style={left ? undefined : { transform: 'scaleX(-1)' }}
           />
-        </svg>
+        </span>
       </motion.span>
     </button>
   )

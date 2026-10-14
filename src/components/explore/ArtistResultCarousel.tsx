@@ -1,9 +1,10 @@
 'use client'
 
 import type { Artist } from '@/types/music'
-import { ArtistCircleSkeleton } from './skeletons/ArtistCircleSkeleton'
 import { Carousel, CarouselItem } from '@/components/Carousel'
 import { CoverImage } from '@/components/ui/CoverImage'
+import { EmptyState, LoadingState } from '@/components/ui/states'
+import { Lottie } from '@/components/ui/LottieLazy'
 import Link from 'next/link'
 
 interface ArtistResultCarouselProps {
@@ -14,15 +15,22 @@ interface ArtistResultCarouselProps {
 
 export function ArtistResultCarousel({ artists, loading, maxItems }: ArtistResultCarouselProps) {
   if (loading) {
-    return (
-      <Carousel>
-        {Array.from({ length: 6 }).map((_, i) => <ArtistCircleSkeleton key={i} />)}
-      </Carousel>
-    )
+    return <LoadingState title="Carregando artistas…" />
   }
 
   const displayArtists = maxItems ? artists.slice(0, maxItems) : artists
-  if (displayArtists.length === 0) return null
+  if (displayArtists.length === 0) {
+    // The one place an empty result still renders rather than stepping aside:
+    // every other call site guards on length, so this is the artist tab after
+    // a search that matched nobody. Nothing there to scroll is worth saying.
+    return (
+      <EmptyState
+        icon={<Lottie name="record" loop className="h-full w-full" />}
+        title="Nenhum artista encontrado"
+        description="Tente outro termo ou explore as outras abas."
+      />
+    )
+  }
 
   return (
     <Carousel>

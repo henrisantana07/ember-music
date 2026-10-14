@@ -7,6 +7,8 @@ import { SectionRow } from '@/components/SectionRow'
 import { TrackCardSkeleton } from '@/components/Skeleton'
 import { FollowButton } from '@/components/FollowButton'
 import { Carousel, CarouselItem } from '@/components/Carousel'
+import { EmptyState, LoadingState } from '@/components/ui/states'
+import { Lottie } from '@/components/ui/LottieLazy'
 import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
 import type { Track, Album, Artist, Genre } from '@/types/music'
 import { getGenreGradient } from '@/constants/genreColors'
@@ -62,7 +64,13 @@ function SearchResults({ query }: { query: string }) {
   }, [query])
 
   if (!loading && tracks.length === 0 && albums.length === 0 && artists.length === 0) {
-    return <p className="text-center py-10" style={{ color: 'var(--text-disabled)' }}>Nenhum resultado encontrado para &ldquo;{query}&rdquo;</p>
+    return (
+      <EmptyState
+        icon={<Lottie name="record" loop className="h-full w-full" />}
+        title={`Nenhum resultado encontrado para \u201C${query}\u201D`}
+        description="Confira a grafia ou tente outro termo."
+      />
+    )
   }
 
   return (
@@ -72,14 +80,7 @@ function SearchResults({ query }: { query: string }) {
       </p>
 
       {loading ? (
-        <>
-          <div className="mb-8">
-            <div className="w-36 h-5 rounded mb-3" style={{ background: 'var(--bg-elevated)', animation: 'shimmer 1.5s infinite' }} />
-            <div className="flex gap-3 overflow-hidden">
-              {Array.from({ length: 6 }).map((_, i) => <TrackCardSkeleton key={i} />)}
-            </div>
-          </div>
-        </>
+        <LoadingState title="Buscando resultados…" />
       ) : (
         <>
           {tracks.length > 0 && <SectionRow title="Músicas" tracks={tracks} />}
@@ -215,18 +216,7 @@ function HomeContent() {
   const { sentinelRef } = useInfiniteScroll({ onLoadMore: loadMore, hasMore, loading: moreLoading })
 
   if (initialLoading) {
-    return (
-      <div className="space-y-6">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i}>
-            <div className="w-48 h-5 rounded mb-3" style={{ background: 'var(--bg-elevated)', animation: 'shimmer 1.5s infinite' }} />
-            <div className="flex gap-3 overflow-hidden">
-              {Array.from({ length: 6 }).map((_, j) => <TrackCardSkeleton key={j} />)}
-            </div>
-          </div>
-        ))}
-      </div>
-    )
+    return <LoadingState title="Carregando sua seleção…" />
   }
 
   return (
