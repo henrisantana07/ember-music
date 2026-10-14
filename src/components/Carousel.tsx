@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { motion, useAnimationControls } from 'motion/react'
 import { TRANSITION, rowStaggerDelay } from '@/lib/motion'
@@ -16,14 +16,23 @@ interface CarouselState {
   driven: boolean
 }
 
-/**
- * Held as a ref, not state, so an item reads the value *at the moment it comes
- * into view* rather than the one its props were last rendered with. After three
- * presses to the right, the next card has to slide in from the right.
- */
-const CarouselContext = createContext<{ current: CarouselState }>({
-  current: { direction: 'right', driven: false },
-})
+/** A slot in the row, handed back to the row so an arrow press can reach it. */
+interface CarouselItemHandle {
+  el: HTMLElement
+  reveal: (direction: 'left' | 'right') => void
+}
+
+interface CarouselApi {
+  register: (handle: CarouselItemHandle) => () => void
+  /**
+   * Held as a ref, not state, so a slot reads the value *at the moment it
+   * arrives* rather than the one its props were last rendered with. After
+   * three presses to the right, the next card comes in from the right.
+   */
+  state: { current: CarouselState }
+}
+
+const CarouselContext = createContext<CarouselApi | null>(null)
 
 /**
  * How far a card slides in from the edge it was revealed on.
@@ -43,8 +52,17 @@ interface CarouselProps {
 export function Carousel({ children, className = '', cardWidth = 176 }: CarouselProps) {
   const ref = useRef<HTMLDivElement>(null)
   const state = useRef<CarouselState>({ direction: 'right', driven: false })
+  const items = useRef(new Set<CarouselItemHandle>())
   const [showLeft, setShowLeft] = useState(false)
   const [showRight, setShowRight] = useState(false)
+
+  const api = useMemo<CarouselApi>(() => ({
+    register: (handle) => {
+      items.current.add(handle)
+      return () => { items.current.delete(handle) }
+    },
+    state,
+  }), [])
 
   // Everything the check needs is local to the row, so it lives in the effect
   // rather than being rebuilt on every render — the row re-renders whenever a
@@ -85,13 +103,35 @@ export function Carousel({ children, className = '', cardWidth = 176 }: Carousel
   function travel(direction: 'left' | 'right') {
     const el = ref.current
     if (!el) return
+
     state.current.direction = direction
     state.current.driven = true
-    el.scrollBy({ left: direction === 'left' ? -cardWidth : cardWidth, behavior: 'smooth' })
+
+    const delta = direction === 'left' ? -cardWidth : cardWidth
+
+    // Which cards does this click actually carry in? Decided here, from real
+    // geometry, instead of waiting to see whether an observer happens to catch
+    // the transition — a smooth scroll can deliver its callback with the card
+    // already settled, and then there is nothing left to animate.
+    const box = el.getBoundingClientRect()
+    const width = box.width
+
+    for (const item of items.current) {
+      const rect = item.el.getBoundingClientRect()
+      const left = rect.left - box.left
+      const right = left + rect.width
+      const wasIn = right > 0 && left < width
+      const willBeIn = right - delta > 0 && left - delta < width
+      // A card already hanging off the edge settled the last time it arrived,
+      // so it keeps its place rather than replaying the slide.
+      if (!wasIn && willBeIn) item.reveal(direction)
+    }
+
+    el.scrollBy({ left: delta, behavior: 'smooth' })
   }
 
   return (
-    <CarouselContext.Provider value={state}>
+    <CarouselContext.Provider value={api}>
       <div className="relative group/carousel">
         <div
           ref={ref}
@@ -173,43 +213,54 @@ interface CarouselItemProps {
  * hover off for good (see the note in globals.css). The slot has no transform
  * of its own, so it is free to move.
  *
- * The slot keeps watching itself for the life of the row, so the slide plays
- * on *every* arrow press rather than only the first: it re-arms the moment it
- * leaves the viewport. Nothing replays while it simply sits there, and it
- * never blocks the scroll — it is a transform, so the row keeps moving under
- * it. The direction is read at the instant it enters, never cached, which is
- * what makes the same card come from the right on one press and the left on
- * the next.
+ * Two things drive it, and they do not overlap:
+ *
+ * - The **arrow press** calls straight in, because the row has already worked
+ *   out from geometry that this card is the one arriving. That call also
+ *   marks the slot visible, so the observer below does not replay the same
+ *   slide a frame later.
+ * - The **observer** owns what the row cannot predict: the first paint, and
+ *   any drag or scrollbar the arrows never touched. It re-arms the moment the
+ *   slot leaves the row, which is what lets the slide play again on the next
+ *   pass.
  */
 export function CarouselItem({ children, className = '', index = 0 }: CarouselItemProps) {
-  const state = useContext(CarouselContext)
+  const api = useContext(CarouselContext)
   const controls = useAnimationControls()
   const ref = useRef<HTMLDivElement>(null)
   const visible = useRef(false)
 
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-
-    const reveal = () => {
-      const { direction, driven } = state.current
+  const play = useCallback(
+    (direction: 'left' | 'right', delay: number) =>
       void controls.start(
         {
-          // Keyframes, not plain values: the card may still be holding the end
+          // Keyframes, not plain values: the slot may still be holding the end
           // of the last slide, and this has to start from the edge regardless.
           opacity: [0, 1],
           x: [direction === 'right' ? REVEAL_OFFSET : -REVEAL_OFFSET, 0],
         },
-        {
-          ...TRANSITION.reveal,
-          // The cascade belongs to the first paint only; a card revealed by a
-          // scroll has already waited its turn.
-          delay: driven ? 0 : rowStaggerDelay(index),
-        },
-      )
-    }
+        { ...TRANSITION.reveal, delay },
+      ),
+    [controls],
+  )
 
-    // Without the observer there is no reveal to drive — let the card simply be
+  useEffect(() => {
+    const el = ref.current
+    if (!el || !api) return
+    return api.register({
+      el,
+      reveal: (direction) => {
+        visible.current = true
+        play(direction, 0)
+      },
+    })
+  }, [api, play])
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el || !api) return
+
+    // Without an observer there is no reveal to drive — let the card simply be
     // there rather than leave it stuck at opacity 0.
     if (typeof IntersectionObserver === 'undefined') {
       void controls.set({ opacity: 1, x: 0 })
@@ -218,7 +269,7 @@ export function CarouselItem({ children, className = '', index = 0 }: CarouselIt
 
     const io = new IntersectionObserver(([entry]) => {
       if (!entry?.isIntersecting) {
-        // Off the edge again, which is what arms it for the next press. The
+        // Off the edge again, which is what arms it for the next pass. The
         // pixels it goes out on are already clipped, so there is nothing to
         // fade — leaving the flag alone keeps the handoff invisible.
         visible.current = false
@@ -226,12 +277,17 @@ export function CarouselItem({ children, className = '', index = 0 }: CarouselIt
       }
       if (visible.current) return
       visible.current = true
-      reveal()
+      play(
+        api.state.current.direction,
+        // The cascade belongs to the first paint only; a card revealed by a
+        // scroll has already waited its turn.
+        api.state.current.driven ? 0 : rowStaggerDelay(index),
+      )
     }, { threshold: 0.2 })
 
     io.observe(el)
     return () => io.disconnect()
-  }, [controls, state, index])
+  }, [api, controls, index, play])
 
   return (
     <motion.div ref={ref} animate={controls} initial={{ opacity: 0 }} className={className}>
