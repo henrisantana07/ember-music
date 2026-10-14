@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { resolveCover } from '@/lib/playlist/resolveCover'
+import { useModalMotion } from '@/lib/motion-hooks'
 import { PlaylistCoverModal } from '@/components/playlist/PlaylistCoverModal'
 import type { Database } from '@/types/database'
 
@@ -39,7 +40,9 @@ export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModal
     return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
-  if (!open || !playlist) return null
+  const { visible, scrimClassName, panelClassName } = useModalMotion(open)
+
+  if (!visible || !playlist) return null
 
   async function handleSave() {
     if (!name.trim() || !playlist) return
@@ -69,7 +72,7 @@ export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModal
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${scrimClassName}`}
         style={{ backgroundColor: 'var(--scrim)' }}
         onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
       >
@@ -77,7 +80,7 @@ export function EditPlaylistModal({ open, playlist, onClose }: EditPlaylistModal
           role="dialog"
           aria-modal="true"
           aria-labelledby="edit-playlist-title"
-          className="w-full max-w-md rounded-xl p-6 shadow-xl overflow-y-auto max-h-[90vh]"
+          className={`w-full max-w-md rounded-xl p-6 shadow-xl overflow-y-auto max-h-[90vh] ${panelClassName}`}
           style={{ backgroundColor: 'var(--bg-elevated)' }}
         >
           <h2 id="edit-playlist-title" className="text-lg font-bold mb-4">Editar playlist</h2>

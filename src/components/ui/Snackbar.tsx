@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useModalMotion } from '@/lib/motion-hooks'
 
 interface SnackbarProps {
   open: boolean
@@ -14,19 +15,23 @@ interface SnackbarProps {
 
 /** M3 snackbar: announced via a polite live region so feedback is not visual-only. */
 export function Snackbar({ open, message, action, onDismiss, tone = 'default', durationMs = 4000, className = '' }: SnackbarProps) {
+  // Same enter/exit phases as dialogs: toasts used to pop in and vanish with
+  // a hard cut, while every other toast in the app slid in.
+  const { visible, scrimClassName } = useModalMotion(open)
+
   useEffect(() => {
     if (!open || !onDismiss) return
     const timer = setTimeout(onDismiss, durationMs)
     return () => clearTimeout(timer)
   }, [open, onDismiss, durationMs])
 
-  if (!open) return null
+  if (!visible) return null
 
   return (
     <div
       role="status"
       aria-live="polite"
-      className={`fixed left-1/2 -translate-x-1/2 bottom-28 z-[70] max-w-[calc(100vw-2rem)] px-4 py-3 rounded-[var(--shape-extra-small)] shadow-elevation-3 flex items-center gap-4 text-body-medium text-[var(--text-primary)] border border-outline-variant ${
+      className={`fixed left-1/2 -translate-x-1/2 bottom-28 z-[70] max-w-[calc(100vw-2rem)] px-4 py-3 rounded-[var(--shape-extra-small)] shadow-elevation-3 flex items-center gap-4 text-body-medium text-[var(--text-primary)] border border-outline-variant ${scrimClassName} ${
         tone === 'error'
           ? 'bg-[color-mix(in srgb, var(--error) 22%, var(--bg-elevated))]'
           : 'bg-[var(--bg-elevated)]'

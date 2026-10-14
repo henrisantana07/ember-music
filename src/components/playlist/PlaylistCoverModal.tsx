@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { usePlaylistsStore } from '@/lib/playlists-store'
+import { useModalMotion } from '@/lib/motion-hooks'
 import Cropper from 'cropperjs'
 import 'cropperjs/dist/cropper.css'
 import type { CoverSource } from '@/lib/playlist/resolveCover'
@@ -26,15 +27,19 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
   const cropperInstance = useRef<Cropper | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    if (!open) {
-      setCropImage(null)
-      setCoverFile(null)
-      cancelCrop()
-    }
-  }, [open])
+  const { visible, scrimClassName, panelClassName } = useModalMotion(open)
 
-  if (!open) return null
+  // Reset once the dialog has finished animating *out* (i.e. `visible` flips
+  // false), not when `open` flips: wiping the cropper straight away would
+  // blank the panel's contents in the middle of the fade.
+  useEffect(() => {
+    if (visible) return
+    setCropImage(null)
+    setCoverFile(null)
+    cancelCrop()
+  }, [visible])
+
+  if (!visible) return null
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -188,12 +193,12 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${scrimClassName}`}
       style={{ backgroundColor: 'var(--scrim)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
-        className="w-full max-w-sm rounded-xl p-6 shadow-xl"
+        className={`w-full max-w-sm rounded-xl p-6 shadow-xl ${panelClassName}`}
         style={{ backgroundColor: 'var(--bg-elevated)' }}
       >
         <h2 className="text-lg font-bold mb-4">Foto da playlist</h2>

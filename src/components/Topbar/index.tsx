@@ -178,8 +178,8 @@ export function Topbar() {
 
         {showDropdown && user && (
           <div
-            className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-elevation-2 border border-outline-variant py-1 z-50"
-            style={{ backgroundColor: 'var(--bg-elevated)' }}
+            className="popover-in absolute right-0 top-full mt-2 w-56 rounded-xl shadow-elevation-2 border border-outline-variant py-1 z-50"
+            style={{ backgroundColor: 'var(--bg-elevated)', transformOrigin: 'top right' }}
           >
             <div className="px-4 py-3 border-b border-outline-variant">
               <p className="text-body-medium font-medium truncate">{user.email}</p>

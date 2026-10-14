@@ -32,7 +32,7 @@ export function IconButton({ label, variant = 'standard', size = 'md', className
       type="button"
       aria-label={label}
       title={title ?? label}
-      className={`inline-flex items-center justify-center rounded-full transition-colors state-layer ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-full motion-press state-layer ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
       {...rest}
     >
       {children}

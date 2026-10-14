@@ -188,8 +188,8 @@ export function SearchSuggestions({ query, onSelect, onClose, onSearch, inputRef
   return (
     <div
       ref={panelRef}
-      className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-xl overflow-hidden z-50 border border-outline-variant"
-      style={{ backgroundColor: 'var(--bg-surface)' }}
+      className="popover-in absolute top-full left-0 right-0 mt-2 rounded-xl shadow-xl overflow-hidden z-50 border border-outline-variant"
+      style={{ backgroundColor: 'var(--bg-surface)', transformOrigin: 'top center' }}
     >
       {showHistory && (
         <>

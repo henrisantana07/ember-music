@@ -5,6 +5,7 @@ import { formatDuration } from '@/lib/spotify'
 import { usePlayerStore } from '@/lib/store'
 import { useEnsureFavorites, useFavoritesStore, useFavoritesSync, useIsFavorite } from '@/lib/favorites-store'
 import { useState } from 'react'
+import { useConfirmAnimation } from '@/lib/motion-hooks'
 import { PlaylistModal } from '@/components/PlaylistModal'
 import { IconButton } from '@/components/ui/IconButton'
 import { CoverImage } from '@/components/ui/CoverImage'
@@ -23,6 +24,7 @@ export function TrackCard({ track, tracks, user }: TrackCardProps) {
   const isFav = useIsFavorite(track.id)
   const toggleFavorite = useFavoritesStore((s) => s.toggle)
   const favId = `favTc${track.id.replace(/[^a-zA-Z0-9]/g, '')}`
+  const confirmFavorite = useConfirmAnimation()
 
   const isActive = currentTrack?.id === track.id
   const isPlayingThis = isActive && isPlaying
@@ -32,6 +34,9 @@ export function TrackCard({ track, tracks, user }: TrackCardProps) {
   async function handleFavorite(e: React.MouseEvent) {
     e.stopPropagation()
     if (!user) return
+    // Before the await: the pop has to start on the click, not when the
+    // round-trip to Supabase comes back.
+    if (!isFav) confirmFavorite.play()
     await toggleFavorite(track)
   }
 
@@ -68,7 +73,7 @@ export function TrackCard({ track, tracks, user }: TrackCardProps) {
             onClick={(e) => { e.stopPropagation(); handlePlay() }}
             aria-label={isPlayingThis ? `Pausar ${track.name}` : `Tocar ${track.name}`}
             aria-pressed={isPlayingThis}
-            className="absolute bottom-3 right-3 w-14 h-14 rounded-full flex items-center justify-center shadow-elevation-3 transition-transform duration-150 hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="absolute bottom-3 right-3 w-14 h-14 rounded-full flex items-center justify-center shadow-elevation-3 motion-press hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{
               background: isActive
                 ? 'linear-gradient(135deg, var(--accent-from), var(--accent-to))'
@@ -122,7 +127,8 @@ export function TrackCard({ track, tracks, user }: TrackCardProps) {
                 onClick={handleFavorite}
               >
                 <svg
-                  className="w-5 h-5"
+                  key={confirmFavorite.key}
+                  className={`w-5 h-5${confirmFavorite.key > 0 ? ' animate-confirm-pop' : ''}`}
                   fill={isFav ? `url(#${favId})` : 'none'}
                   viewBox="0 0 24 24"
                   stroke={isFav ? 'none' : 'currentColor'}

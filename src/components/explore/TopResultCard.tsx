@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { useEnsureFavorites, useFavoritesStore, useFavoritesSync, useIsFavorite } from '@/lib/favorites-store'
+import { useConfirmAnimation } from '@/lib/motion-hooks'
 import { PlaylistModal } from '@/components/PlaylistModal'
 import { CoverImage } from '@/components/ui/CoverImage'
 import { cleanDisplayTitle } from '@/lib/clean-title'
@@ -23,6 +24,7 @@ export function TopResultCard({ track }: TopResultCardProps) {
   const supabase = createClient()
   const isFav = useIsFavorite(track.id)
   const toggleFavorite = useFavoritesStore((s) => s.toggle)
+  const confirmFavorite = useConfirmAnimation()
 
   const isActive = currentTrack?.id === track.id
   useFavoritesSync(user?.id)
@@ -34,6 +36,8 @@ export function TopResultCard({ track }: TopResultCardProps) {
 
   async function handleFavorite() {
     if (!user) return
+    // Before the await, so the pop is tied to the click rather than the reply.
+    if (!isFav) confirmFavorite.play()
     await toggleFavorite(track)
   }
 
@@ -73,7 +77,7 @@ export function TopResultCard({ track }: TopResultCardProps) {
                 aria-pressed={isFav}
                 className="h-12 w-12 inline-flex items-center justify-center rounded-full hover:bg-state-pressed transition-colors state-layer"
               >
-                <svg className="w-6 h-6" fill={isFav ? 'url(#favGradientTop)' : 'none'} viewBox="0 0 24 24" stroke={isFav ? 'none' : 'currentColor'} strokeWidth={2} style={{ color: 'var(--text-disabled)' }}>
+                <svg key={confirmFavorite.key} className={`w-6 h-6${confirmFavorite.key > 0 ? ' animate-confirm-pop' : ''}`} fill={isFav ? 'url(#favGradientTop)' : 'none'} viewBox="0 0 24 24" stroke={isFav ? 'none' : 'currentColor'} strokeWidth={2} style={{ color: 'var(--text-disabled)' }}>
                   <defs><linearGradient id="favGradientTop" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="var(--accent-from)" /><stop offset="100%" stopColor="var(--accent-to)" /></linearGradient></defs>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>

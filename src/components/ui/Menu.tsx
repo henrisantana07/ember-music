@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { EXIT_ANIMATION_MS } from '@/lib/motion-hooks'
 import type { ButtonHTMLAttributes, ComponentPropsWithRef, CSSProperties, KeyboardEvent as ReactKeyboardEvent, Ref } from 'react'
 
 interface MenuTriggerProps {
@@ -15,6 +16,8 @@ interface MenuPanelProps {
   ref: Ref<HTMLDivElement>
   onKeyDown: (e: ReactKeyboardEvent<HTMLDivElement>) => void
   triggerRect: DOMRect | null
+  /** True while the panel is playing its exit before unmounting. */
+  closing: boolean
 }
 
 /**
@@ -23,9 +26,51 @@ interface MenuPanelProps {
  */
 export function useMenu() {
   const [open, setOpen] = useState(false)
+  const [closing, setClosing] = useState(false)
   const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Mirrors of the two states above, so the event handlers and the toggle can
+  // read the current phase without re-binding on every change.
+  const mountedRef = useRef(false)
+  const closingRef = useRef(false)
+
+  /**
+   * Keeps the panel mounted for one more beat so it can animate out. Every
+   * close path goes through here (outside click, Escape, trigger, item
+   * action), so the exit never gets cut short.
+   */
+  const close = useCallback(() => {
+    if (timerRef.current || !mountedRef.current) return
+    closingRef.current = true
+    setClosing(true)
+    timerRef.current = setTimeout(() => {
+      mountedRef.current = false
+      closingRef.current = false
+      timerRef.current = null
+      setClosing(false)
+      setOpen(false)
+    }, EXIT_ANIMATION_MS)
+  }, [])
+
+  /** Opens, or interrupts an in-flight exit to re-open. */
+  const openMenu = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+    mountedRef.current = true
+    closingRef.current = false
+    setClosing(false)
+    setOpen(true)
+    if (triggerRef.current) setTriggerRect(triggerRef.current.getBoundingClientRect())
+  }, [])
+
+  // Safety net: never leave a pending unmount behind if we unmount first.
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+  }, [])
 
   useEffect(() => {
     if (!open) return
@@ -33,12 +78,12 @@ export function useMenu() {
     const onPointerDown = (e: PointerEvent) => {
       const target = e.target as Node
       if (panelRef.current?.contains(target) || triggerRef.current?.contains(target)) return
-      setOpen(false)
+      close()
     }
 
     const onDocKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setOpen(false)
+        close()
         triggerRef.current?.focus()
       }
     }
@@ -49,7 +94,7 @@ export function useMenu() {
       document.removeEventListener('pointerdown', onPointerDown)
       document.removeEventListener('keydown', onDocKeyDown)
     }
-  }, [open])
+  }, [open, close])
 
   const onPanelKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
     if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
@@ -64,17 +109,21 @@ export function useMenu() {
   }
 
   const toggle = () => {
-    if (!open && triggerRef.current) setTriggerRect(triggerRef.current.getBoundingClientRect())
-    setOpen((v) => !v)
+    // Re-opening while an exit is still playing has to cancel it. Flipping a
+    // boolean here would land on "closed" and the menu would get stuck shut.
+    if (closingRef.current || !mountedRef.current) openMenu()
+    else close()
   }
 
   return {
     open,
-    close: () => setOpen(false),
+    close,
     toggle,
     triggerProps: {
       ref: triggerRef,
-      'aria-expanded': open,
+      // Collapsed the moment the exit starts, so assistive tech never reads a
+      // panel that is on its way out.
+      'aria-expanded': open && !closing,
       'aria-haspopup': 'menu',
       onClick: toggle,
     } satisfies MenuTriggerProps,
@@ -82,6 +131,7 @@ export function useMenu() {
       ref: panelRef,
       onKeyDown: onPanelKeyDown,
       triggerRect,
+      closing,
     } satisfies MenuPanelProps,
   }
 }
@@ -116,6 +166,8 @@ interface MenuPanelPropsArgs extends ComponentPropsWithRef<'div'> {
   align?: 'left' | 'right'
   placement?: 'top' | 'bottom'
   triggerRect?: DOMRect | null
+  /** Plays the exit instead of the entrance (set by `useMenu`). */
+  closing?: boolean
 }
 
 /**
@@ -123,7 +175,7 @@ interface MenuPanelPropsArgs extends ComponentPropsWithRef<'div'> {
  * Rendered in a portal with fixed positioning so it is never clipped by an
  * `overflow` ancestor, and auto-flips up/left to stay inside the viewport.
  */
-export function MenuPanel({ align = 'right', placement = 'bottom', className = '', children, triggerRect, ref, onKeyDown, ...rest }: MenuPanelPropsArgs) {
+export function MenuPanel({ align = 'right', placement = 'bottom', className = '', children, triggerRect, closing = false, ref, onKeyDown, ...rest }: MenuPanelPropsArgs) {
   const localRef = useRef<HTMLDivElement | null>(null)
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
 
@@ -172,16 +224,20 @@ export function MenuPanel({ align = 'right', placement = 'bottom', className = '
 
   if (typeof document === 'undefined') return null
 
+  // Scale out of the corner the panel is anchored to, so it reads as growing
+  // from its trigger rather than from an arbitrary point.
+  const transformOrigin = `${placement === 'top' ? 'bottom' : 'top'} ${align === 'right' ? 'right' : 'left'}`
+
   const style: CSSProperties = pos
-    ? { position: 'fixed', top: pos.top, left: pos.left, zIndex: 80 }
-    : { position: 'fixed', top: 0, left: 0, zIndex: 80, visibility: 'hidden' }
+    ? { position: 'fixed', top: pos.top, left: pos.left, zIndex: 80, transformOrigin }
+    : { position: 'fixed', top: 0, left: 0, zIndex: 80, visibility: 'hidden', transformOrigin }
 
   return createPortal(
     <div
       ref={setRefs}
       role="menu"
       onKeyDown={onKeyDown}
-      className={`min-w-[200px] py-1 rounded-[var(--shape-large)] bg-[var(--bg-elevated)] border border-outline-variant shadow-elevation-2 overflow-hidden ${className}`}
+      className={`${closing ? 'popover-out' : 'popover-in'} min-w-[200px] py-1 rounded-[var(--shape-large)] bg-[var(--bg-elevated)] border border-outline-variant shadow-elevation-2 overflow-hidden ${className}`}
       style={style}
       {...rest}
     >

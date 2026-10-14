@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { useEffect, useRef } from 'react'
+import { useModalMotion } from '@/lib/motion-hooks'
 import { IconButton } from './IconButton'
 
 interface ModalProps {
@@ -17,6 +18,7 @@ interface ModalProps {
 export function Modal({ open, onClose, title, children, maxWidth = 'max-w-sm', labelledById }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const titleId = labelledById ?? `modal-title-${title.replace(/\s+/g, '-').toLowerCase()}`
+  const { visible, scrimClassName, panelClassName } = useModalMotion(open)
 
   useEffect(() => {
     if (!open) return
@@ -30,11 +32,11 @@ export function Modal({ open, onClose, title, children, maxWidth = 'max-w-sm', l
     }
   }, [open, onClose])
 
-  if (!open) return null
+  if (!visible) return null
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${scrimClassName}`}
       style={{ backgroundColor: 'var(--scrim)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
@@ -44,7 +46,7 @@ export function Modal({ open, onClose, title, children, maxWidth = 'max-w-sm', l
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`w-full ${maxWidth} rounded-xl p-6 shadow-elevation-3 animate-fade-in outline-none`}
+        className={`w-full ${maxWidth} rounded-xl p-6 shadow-elevation-3 ${panelClassName} outline-none`}
         style={{ backgroundColor: 'var(--bg-elevated)' }}
       >
         <div className="flex items-center justify-between mb-4">

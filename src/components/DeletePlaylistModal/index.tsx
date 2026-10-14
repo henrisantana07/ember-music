@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useModalMotion } from '@/lib/motion-hooks'
 
 interface DeletePlaylistModalProps {
   open: boolean
@@ -13,12 +14,22 @@ interface DeletePlaylistModalProps {
 export function DeletePlaylistModal({ open, playlistName, onClose, onConfirm, deleting }: DeletePlaylistModalProps) {
   const [typed, setTyped] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [wasOpen, setWasOpen] = useState(open)
+  const { visible, scrimClassName, panelClassName } = useModalMotion(open)
 
-  if (!open) return null
+  // Reset on the way in, not on the way out: clearing the field the moment the
+  // dialog starts closing would empty the input in the middle of the fade.
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (open) {
+      setTyped('')
+      setSubmitted(false)
+    }
+  }
+
+  if (!visible) return null
 
   function handleClose() {
-    setTyped('')
-    setSubmitted(false)
     onClose()
   }
 
@@ -31,12 +42,12 @@ export function DeletePlaylistModal({ open, playlistName, onClose, onConfirm, de
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${scrimClassName}`}
       style={{ backgroundColor: 'var(--scrim)' }}
       onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}
     >
       <div
-        className="w-full max-w-sm rounded-xl p-6 shadow-xl"
+        className={`w-full max-w-sm rounded-xl p-6 shadow-xl ${panelClassName}`}
         style={{ backgroundColor: 'var(--bg-elevated)' }}
       >
         <div className="flex items-center gap-3 mb-4">

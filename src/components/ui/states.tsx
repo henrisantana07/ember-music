@@ -14,7 +14,7 @@ interface StateProps {
 
 function StateBlock({ icon, title, description, action, secondaryAction, className = '' }: StateProps) {
   return (
-    <div className={`flex flex-col items-center justify-center text-center py-14 px-6 gap-2 ${className}`}>
+    <div className={`flex flex-col items-center justify-center text-center py-14 px-6 gap-2 animate-fade-in ${className}`}>
       {icon && (
         <span
           className="mb-1 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-container-highest)] text-[var(--text-secondary)]"

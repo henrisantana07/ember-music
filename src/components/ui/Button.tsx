@@ -28,7 +28,7 @@ export function Button({ variant = 'filled', size = 'md', className = '', childr
   return (
     <button
       type={type}
-      className={`inline-flex items-center justify-center font-semibold rounded-full transition-colors disabled:opacity-50 disabled:pointer-events-none ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
+      className={`inline-flex items-center justify-center font-semibold rounded-full motion-press disabled:opacity-50 disabled:pointer-events-none ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
       {...rest}
     >
       {children}

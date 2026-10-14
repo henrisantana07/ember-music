@@ -6,6 +6,7 @@ import type { Track } from '@/types/music'
 import { usePlayerStore } from '@/lib/store'
 import { formatDuration } from '@/lib/spotify'
 import { useEnsureFavorites, useFavoritesStore, useFavoritesSync, useIsFavorite } from '@/lib/favorites-store'
+import { useConfirmAnimation } from '@/lib/motion-hooks'
 import { PlaylistModal } from '@/components/PlaylistModal'
 import { Skeleton } from '@/components/Skeleton'
 import { IconButton } from '@/components/ui/IconButton'
@@ -35,6 +36,7 @@ export interface TrackTableProps {
 function FavoriteButton({ track, user }: { track: Track; user?: { id: string } | null }) {
   const isFav = useIsFavorite(track.id)
   const toggle = useFavoritesStore((s) => s.toggle)
+  const confirmFavorite = useConfirmAnimation()
   if (!user) return null
 
   return (
@@ -42,10 +44,15 @@ function FavoriteButton({ track, user }: { track: Track; user?: { id: string } |
       size="lg"
       label={isFav ? `Remover ${track.name} dos favoritos` : `Adicionar ${track.name} aos favoritos`}
       aria-pressed={isFav}
-      onClick={(e) => { e.stopPropagation(); void toggle(track) }}
+      onClick={(e) => {
+        e.stopPropagation()
+        if (!isFav) confirmFavorite.play()
+        void toggle(track)
+      }}
     >
       <svg
-        className="w-5 h-5"
+        key={confirmFavorite.key}
+        className={`w-5 h-5${confirmFavorite.key > 0 ? ' animate-confirm-pop' : ''}`}
         fill={isFav ? `url(#favTb${track.id.replace(/[^a-zA-Z0-9]/g, '')})` : 'none'}
         viewBox="0 0 24 24"
         stroke={isFav ? 'none' : 'currentColor'}

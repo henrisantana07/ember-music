@@ -208,7 +208,7 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
       </button>
 
       {menu.open && (
-        <MenuPanel {...menu.panelProps} align="right" className="min-w-[220px] animate-fade-in">
+        <MenuPanel {...menu.panelProps} align="right" className="min-w-[220px]">
           <div className="px-4 py-2 border-b border-outline-variant text-label-medium font-medium uppercase tracking-wider" style={{ color: 'var(--text-disabled)' }}>
             {track.title}
           </div>

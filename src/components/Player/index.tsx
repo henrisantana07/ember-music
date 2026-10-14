@@ -412,7 +412,7 @@ export function Player() {
             </button>
 
             <button onClick={togglePlay}
-              className="h-12 w-12 rounded-full flex items-center justify-center transition-transform hover:scale-105 state-layer"
+              className="h-12 w-12 rounded-full flex items-center justify-center motion-press hover:scale-105 state-layer"
               style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
               aria-label={isPlaying ? 'Pausar' : 'Tocar'}>
               {isPlaying ? (
@@ -550,8 +550,8 @@ function SleepTimerDropdown() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute bottom-full right-0 mb-2 z-50 rounded-xl p-2 shadow-elevation-3 border border-outline-variant min-w-[160px]"
-            style={{ backgroundColor: 'var(--bg-elevated)' }}>
+          <div className="popover-in absolute bottom-full right-0 mb-2 z-50 rounded-xl p-2 shadow-elevation-3 border border-outline-variant min-w-[160px]"
+            style={{ backgroundColor: 'var(--bg-elevated)', transformOrigin: 'bottom right' }}>
             {sleepTimerMinutes && (
               <button onClick={() => { setSleepTimer(null); setOpen(false) }}
                 className="w-full text-left px-4 min-h-[48px] rounded-lg text-body-medium transition-colors hover:bg-state-hover state-layer"

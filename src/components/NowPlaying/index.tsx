@@ -20,6 +20,7 @@ import {
 import { extractDominantColor } from '@/lib/color/extractDominantColor'
 import { getHighResCoverUrl } from '@/lib/image-utils'
 import { useMenu, MenuItem, MenuPanel } from '@/components/ui/Menu'
+import { useConfirmAnimation } from '@/lib/motion-hooks'
 
 function queueIndexFromItemKey(key: string | number): number {
   const parsed = Number(String(key).split('::')[0])
@@ -150,6 +151,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   }, [onClose, router])
 
   const isFav = useIsFavorite(currentTrack?.id ?? '')
+  const confirmFavorite = useConfirmAnimation()
   const toggleFavorite = useFavoritesStore((s) => s.toggle)
   useFavoritesSync(user?.id)
   useEnsureFavorites(currentTrack ? [currentTrack.id] : [])
@@ -290,6 +292,8 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
   async function handleFavorite() {
     if (!user || !currentTrack) return
+    // Fire before the await so the confirmation lands on the click.
+    if (!isFav) confirmFavorite.play()
     await toggleFavorite(currentTrack)
   }
 
@@ -457,7 +461,8 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             {user && (
               <button onClick={handleFavorite} className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors state-layer" aria-label="Favoritar" aria-pressed={isFav}>
                 <svg
-                  className="w-5 h-5 transition-colors duration-150"
+                  key={confirmFavorite.key}
+                  className={`w-5 h-5 transition-colors duration-150${confirmFavorite.key > 0 ? ' animate-confirm-pop' : ''}`}
                   fill={isFav ? 'url(#favGradientNow)' : 'none'}
                   viewBox="0 0 24 24"
                   stroke={isFav ? 'none' : 'currentColor'}

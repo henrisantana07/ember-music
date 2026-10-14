@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { usePlaylistsStore } from '@/lib/playlists-store'
+import { useModalMotion } from '@/lib/motion-hooks'
 import Cropper from 'cropperjs'
 import 'cropperjs/dist/cropper.css'
 
@@ -45,7 +46,9 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
     return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
-  if (!open) return null
+  const { visible, scrimClassName, panelClassName } = useModalMotion(open)
+
+  if (!visible) return null
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -155,7 +158,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${scrimClassName}`}
       style={{ backgroundColor: 'var(--scrim)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
@@ -163,7 +166,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
         role="dialog"
         aria-modal="true"
         aria-labelledby="create-playlist-title"
-        className="w-full max-w-md rounded-xl p-6 shadow-xl overflow-y-auto max-h-[90vh]"
+        className={`w-full max-w-md rounded-xl p-6 shadow-xl overflow-y-auto max-h-[90vh] ${panelClassName}`}
         style={{ backgroundColor: 'var(--bg-elevated)' }}
       >
         <h2 id="create-playlist-title" className="text-lg font-bold mb-4">Nova playlist</h2>
