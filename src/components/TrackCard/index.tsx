@@ -5,6 +5,8 @@ import { formatDuration } from '@/lib/spotify'
 import { usePlayerStore } from '@/lib/store'
 import { useEnsureFavorites, useFavoritesStore, useFavoritesSync, useIsFavorite } from '@/lib/favorites-store'
 import { useState } from 'react'
+import { motion } from 'motion/react'
+import { confirmPopProps, cardVariants, whileTap, TRANSITION } from '@/lib/motion'
 import { useConfirmAnimation } from '@/lib/motion-hooks'
 import { PlaylistModal } from '@/components/PlaylistModal'
 import { IconButton } from '@/components/ui/IconButton'
@@ -16,9 +18,11 @@ interface TrackCardProps {
   tracks?: Track[]
   /** Any object with an id is enough (Supabase User or a slim session user). */
   user?: { id: string } | null
+  /** Position in the list, for the cascade entry. 0 when omitted. */
+  index?: number
 }
 
-export function TrackCard({ track, tracks, user }: TrackCardProps) {
+export function TrackCard({ track, tracks, user, index = 0 }: TrackCardProps) {
   const { play, currentTrack, isPlaying, togglePlay } = usePlayerStore()
   const [playlistOpen, setPlaylistOpen] = useState(false)
   const isFav = useIsFavorite(track.id)
@@ -50,10 +54,14 @@ export function TrackCard({ track, tracks, user }: TrackCardProps) {
 
   return (
     <>
-      <div
+      <motion.div
         className="card-hover group p-4 cursor-pointer flex flex-col"
         style={{ borderRadius: 'var(--shape-extra-large)' }}
         onClick={handlePlay}
+        variants={cardVariants}
+        custom={index}
+        initial="hidden"
+        animate="visible"
       >
         <div className="relative mb-3">
           <CoverImage
@@ -68,12 +76,15 @@ export function TrackCard({ track, tracks, user }: TrackCardProps) {
             aria-hidden="true"
           />
           {/* Quick Play — always visible (M3 FAB), never hover-only */}
-          <button
+          <motion.button
             type="button"
             onClick={(e) => { e.stopPropagation(); handlePlay() }}
             aria-label={isPlayingThis ? `Pausar ${track.name}` : `Tocar ${track.name}`}
             aria-pressed={isPlayingThis}
-            className="absolute bottom-3 right-3 w-14 h-14 rounded-full flex items-center justify-center shadow-elevation-3 motion-press hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="absolute bottom-3 right-3 w-14 h-14 rounded-full flex items-center justify-center shadow-elevation-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            whileHover={{ scale: 1.05 }}
+            whileTap={whileTap}
+            transition={TRANSITION.press}
             style={{
               background: isActive
                 ? 'linear-gradient(135deg, var(--accent-from), var(--accent-to))'
@@ -91,7 +102,7 @@ export function TrackCard({ track, tracks, user }: TrackCardProps) {
                 <path d="M8 5v14l11-7z" />
               </svg>
             )}
-          </button>
+          </motion.button>
         </div>
 
         <h3
@@ -126,9 +137,9 @@ export function TrackCard({ track, tracks, user }: TrackCardProps) {
                 aria-pressed={isFav}
                 onClick={handleFavorite}
               >
-                <svg
-                  key={confirmFavorite.key}
-                  className={`w-5 h-5${confirmFavorite.key > 0 ? ' animate-confirm-pop' : ''}`}
+                <motion.svg
+                  {...confirmPopProps(confirmFavorite.controls)}
+                  className="w-5 h-5"
                   fill={isFav ? `url(#${favId})` : 'none'}
                   viewBox="0 0 24 24"
                   stroke={isFav ? 'none' : 'currentColor'}
@@ -142,12 +153,12 @@ export function TrackCard({ track, tracks, user }: TrackCardProps) {
                     </linearGradient>
                   </defs>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
+                </motion.svg>
               </IconButton>
             )}
           </div>
         </div>
-      </div>
+      </motion.div>
       <PlaylistModal open={playlistOpen} onClose={() => setPlaylistOpen(false)} track={track} />
     </>
   )

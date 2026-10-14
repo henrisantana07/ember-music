@@ -7,6 +7,8 @@ import { saveSearchHistory } from '@/lib/search-history'
 import { SearchSuggestions } from '@/components/SearchSuggestions'
 import { useUser } from '@/hooks/use-user'
 import { useAvatar } from '@/hooks/use-avatar'
+import { AnimatePresence, motion } from 'motion/react'
+import { popoverVariants } from '@/lib/motion'
 
 export function Topbar() {
   const [showDropdown, setShowDropdown] = useState(false)
@@ -176,30 +178,37 @@ export function Topbar() {
           </button>
         )}
 
-        {showDropdown && user && (
-          <div
-            className="popover-in absolute right-0 top-full mt-2 w-56 rounded-xl shadow-elevation-2 border border-outline-variant py-1 z-50"
-            style={{ backgroundColor: 'var(--bg-elevated)', transformOrigin: 'top right' }}
-          >
-            <div className="px-4 py-3 border-b border-outline-variant">
-              <p className="text-body-medium font-medium truncate">{user.email}</p>
-            </div>
-            <button
-              onClick={() => { router.push('/configuracoes'); setShowDropdown(false) }}
-              className="w-full text-left px-4 min-h-[48px] text-body-medium hover:bg-state-hover transition-colors state-layer"
-              style={{ color: 'var(--text-secondary)' }}
+        <AnimatePresence>
+          {showDropdown && user && (
+            <motion.div
+              key="user-menu"
+              className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-elevation-2 border border-outline-variant py-1 z-50"
+              style={{ backgroundColor: 'var(--bg-elevated)', transformOrigin: 'top right' }}
+              variants={popoverVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
             >
-              Configurações
-            </button>
-            <button
-              onClick={handleLogout}
-              className="w-full text-left px-4 min-h-[48px] text-body-medium hover:bg-state-hover transition-colors state-layer"
-              style={{ color: 'var(--error)' }}
-            >
-              Sair
-            </button>
-          </div>
-        )}
+              <div className="px-4 py-3 border-b border-outline-variant">
+                <p className="text-body-medium font-medium truncate">{user.email}</p>
+              </div>
+              <button
+                onClick={() => { router.push('/configuracoes'); setShowDropdown(false) }}
+                className="w-full text-left px-4 min-h-[48px] text-body-medium hover:bg-state-hover transition-colors state-layer"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Configurações
+              </button>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-4 min-h-[48px] text-body-medium hover:bg-state-hover transition-colors state-layer"
+                style={{ color: 'var(--error)' }}
+              >
+                Sair
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </header>
   )

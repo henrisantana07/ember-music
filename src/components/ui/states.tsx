@@ -1,6 +1,8 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { motion } from 'motion/react'
+import { fadeVariants } from '@/lib/motion'
 import { Button } from './Button'
 
 interface StateProps {
@@ -14,7 +16,12 @@ interface StateProps {
 
 function StateBlock({ icon, title, description, action, secondaryAction, className = '' }: StateProps) {
   return (
-    <div className={`flex flex-col items-center justify-center text-center py-14 px-6 gap-2 animate-fade-in ${className}`}>
+    <motion.div
+      className={`flex flex-col items-center justify-center text-center py-14 px-6 gap-2 ${className}`}
+      variants={fadeVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {icon && (
         <span
           className="mb-1 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-container-highest)] text-[var(--text-secondary)]"
@@ -31,7 +38,7 @@ function StateBlock({ icon, title, description, action, secondaryAction, classNa
           {secondaryAction && <Button variant="tonal" size="lg" onClick={secondaryAction.onClick}>{secondaryAction.label}</Button>}
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }
 

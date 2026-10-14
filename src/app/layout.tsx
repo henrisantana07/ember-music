@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import { MotionConfig } from 'motion/react'
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import Script from 'next/script'
@@ -52,21 +53,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
       <body className="flex flex-col h-screen overflow-hidden">
         <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeScript }} />
-        <YouTubePlayerProvider>
-          <KeyboardShortcuts />
-          <div className="flex flex-1 overflow-hidden">
-            <Sidebar />
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <Suspense fallback={<div className="h-16 flex-shrink-0" />}><Topbar /></Suspense>
-              <MainContainer>
-                <PageTransition>
-                  {children}
-                </PageTransition>
-              </MainContainer>
+        {/* `reducedMotion="user"` drops every transform/layout animation Motion
+            would otherwise run when the OS asks for reduced motion, while
+            keeping opacity fades — the level of movement the guideline asks
+            for. CSS-driven animation is zeroed separately in globals.css. */}
+        <MotionConfig reducedMotion="user">
+          <YouTubePlayerProvider>
+            <KeyboardShortcuts />
+            <div className="flex flex-1 overflow-hidden">
+              <Sidebar />
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <Suspense fallback={<div className="h-16 flex-shrink-0" />}><Topbar /></Suspense>
+                <MainContainer>
+                  <PageTransition>
+                    {children}
+                  </PageTransition>
+                </MainContainer>
+              </div>
             </div>
-          </div>
-          <Player />
-        </YouTubePlayerProvider>
+            <Player />
+          </YouTubePlayerProvider>
+        </MotionConfig>
         <PwaRegister />
       </body>
     </html>

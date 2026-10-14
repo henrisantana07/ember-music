@@ -19,7 +19,9 @@ import {
 } from 'lucide-react'
 import { extractDominantColor } from '@/lib/color/extractDominantColor'
 import { getHighResCoverUrl } from '@/lib/image-utils'
-import { useMenu, MenuItem, MenuPanel } from '@/components/ui/Menu'
+import { useMenu, MenuItem, MenuPanel, MenuPresence } from '@/components/ui/Menu'
+import { motion } from 'motion/react'
+import { confirmPopProps } from '@/lib/motion'
 import { useConfirmAnimation } from '@/lib/motion-hooks'
 
 function queueIndexFromItemKey(key: string | number): number {
@@ -101,7 +103,7 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
         >
           <MoreHorizontal className="w-5 h-5" />
         </button>
-        {menuOpen && (
+        <MenuPresence open={menuOpen}>
           <MenuPanel {...panelProps} align="right">
             <MenuItem onClick={() => { closeMenu(); onVisitArtist(track.artist_id) }}>
               <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -114,7 +116,7 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
               Remover da fila
             </MenuItem>
           </MenuPanel>
-        )}
+        </MenuPresence>
       </div>
     </div>
   )
@@ -460,14 +462,16 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             </button>
             {user && (
               <button onClick={handleFavorite} className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors state-layer" aria-label="Favoritar" aria-pressed={isFav}>
-                <svg
-                  key={confirmFavorite.key}
-                  className={`w-5 h-5 transition-colors duration-150${confirmFavorite.key > 0 ? ' animate-confirm-pop' : ''}`}
+                <motion.svg
+                  {...confirmPopProps(
+                    confirmFavorite.controls,
+                    isFav ? {} : { color: 'var(--text-secondary)' },
+                  )}
+                  className="w-5 h-5 transition-colors duration-150"
                   fill={isFav ? 'url(#favGradientNow)' : 'none'}
                   viewBox="0 0 24 24"
                   stroke={isFav ? 'none' : 'currentColor'}
                   strokeWidth={2}
-                  style={isFav ? {} : { color: 'var(--text-secondary)' }}
                 >
                   <defs>
                     <linearGradient id="favGradientNow" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -476,7 +480,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                     </linearGradient>
                   </defs>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
+                </motion.svg>
               </button>
             )}
             <button

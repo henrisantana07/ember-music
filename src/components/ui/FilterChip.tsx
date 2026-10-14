@@ -1,6 +1,8 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { motion } from 'motion/react'
+import { TRANSITION, whileTap } from '@/lib/motion'
 
 interface FilterChipProps {
   selected?: boolean
@@ -16,6 +18,28 @@ interface FilterChipProps {
   className?: string
 }
 
+/**
+ * Slot that holds the checkmark so it can grow from nothing instead of
+ * appearing at full width — the chip's own width then eases open rather than
+ * snapping. It stays mounted at width 0 purely so there is something to
+ * interpolate.
+ */
+function ChipCheck({ selected }: { selected: boolean }) {
+  return (
+    <motion.span
+      aria-hidden="true"
+      className="inline-flex items-center overflow-hidden flex-none"
+      initial={false}
+      animate={{ width: selected ? 14 : 0, marginRight: selected ? 6 : 0 }}
+      transition={TRANSITION.enter}
+    >
+      <svg className="w-3.5 h-3.5 flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+    </motion.span>
+  )
+}
+
 /** M3 filter chip: always visible toggle with explicit selected state. */
 export function FilterChip({
   selected,
@@ -29,60 +53,56 @@ export function FilterChip({
   className = '',
 }: FilterChipProps) {
   const chip = (
-    <button
+    <motion.button
       type="button"
       onClick={onClick}
       disabled={disabled}
       aria-pressed={selected}
       aria-label={ariaLabel}
-      className={`inline-flex items-center h-8 pl-3 pr-3 rounded-full text-label-medium font-medium motion-press state-layer border ${
+      className={`inline-flex items-center h-8 pl-3 pr-3 rounded-full text-label-medium font-medium state-layer border ${
         selected
           ? 'bg-[var(--accent-solid)] text-on-accent border-transparent state-layer-on-accent'
           : 'bg-transparent text-[var(--text-primary)] border-outline hover:bg-state-hover'
       } disabled:opacity-50 ${className}`}
+      whileTap={whileTap}
+      transition={TRANSITION.press}
     >
-      {showCheck && (
-        <span
-          aria-hidden="true"
-          className="chip-check-slot"
-          style={{ width: selected ? 14 : 0, marginRight: selected ? 6 : 0 }}
-        >
-          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-        </span>
-      )}
+      {showCheck && <ChipCheck selected={!!selected} />}
       {children}
-    </button>
+    </motion.button>
   )
 
   if (!onRemove) return chip
 
   return (
     <span className="inline-flex items-center h-8 rounded-full border border-outline bg-transparent">
-      <button
+      <motion.button
         type="button"
         onClick={onClick}
         disabled={disabled}
         aria-pressed={selected}
         aria-label={ariaLabel}
-        className={`inline-flex items-center gap-1.5 h-full pl-3 rounded-l-full text-label-medium font-medium motion-press state-layer ${
+        className={`inline-flex items-center gap-1.5 h-full pl-3 rounded-l-full text-label-medium font-medium state-layer ${
           selected ? 'text-on-accent bg-[var(--accent-solid)] state-layer-on-accent' : 'text-[var(--text-primary)]'
         }`}
+        whileTap={whileTap}
+        transition={TRANSITION.press}
       >
         {children}
-      </button>
+      </motion.button>
       <span className="w-px self-stretch bg-outline-variant" aria-hidden="true" />
-      <button
+      <motion.button
         type="button"
         onClick={onRemove}
         aria-label={removeLabel}
-        className="inline-flex items-center justify-center h-full px-2.5 rounded-r-full text-[var(--text-secondary)] motion-press state-layer hover:text-[var(--text-primary)]"
+        className="inline-flex items-center justify-center h-full px-2.5 rounded-r-full text-[var(--text-secondary)] state-layer hover:text-[var(--text-primary)]"
+        whileTap={whileTap}
+        transition={TRANSITION.press}
       >
         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
-      </button>
+      </motion.button>
     </span>
   )
 }

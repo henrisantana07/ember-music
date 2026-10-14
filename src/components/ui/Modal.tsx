@@ -2,7 +2,8 @@
 
 import type { ReactNode } from 'react'
 import { useEffect, useRef } from 'react'
-import { useModalMotion } from '@/lib/motion-hooks'
+import { AnimatePresence, motion } from 'motion/react'
+import { panelVariants, scrimVariants } from '@/lib/motion'
 import { IconButton } from './IconButton'
 
 interface ModalProps {
@@ -18,7 +19,6 @@ interface ModalProps {
 export function Modal({ open, onClose, title, children, maxWidth = 'max-w-sm', labelledById }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const titleId = labelledById ?? `modal-title-${title.replace(/\s+/g, '-').toLowerCase()}`
-  const { visible, scrimClassName, panelClassName } = useModalMotion(open)
 
   useEffect(() => {
     if (!open) return
@@ -32,37 +32,51 @@ export function Modal({ open, onClose, title, children, maxWidth = 'max-w-sm', l
     }
   }, [open, onClose])
 
-  if (!visible) return null
-
   return (
-    <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${scrimClassName}`}
-      style={{ backgroundColor: 'var(--scrim)' }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <div
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        tabIndex={-1}
-        className={`w-full ${maxWidth} rounded-xl p-6 shadow-elevation-3 ${panelClassName} outline-none`}
-        style={{ backgroundColor: 'var(--bg-elevated)' }}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h2 id={titleId} className="text-title-medium font-bold">{title}</h2>
-          <IconButton
-            size="lg"
-            label="Fechar"
-            onClick={onClose}
+    // AnimatePresence owns the exit: it keeps the scrim (and the panel, whose
+    // own `exit` it waits for) mounted until the animation lands, so the
+    // dialog never disappears in a single frame.
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="scrim"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: 'var(--scrim)' }}
+          variants={scrimVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+        >
+          <motion.div
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            tabIndex={-1}
+            className={`w-full ${maxWidth} rounded-xl p-6 shadow-elevation-3 outline-none`}
+            style={{ backgroundColor: 'var(--bg-elevated)' }}
+            variants={panelVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </IconButton>
-        </div>
-        {children}
-      </div>
-    </div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 id={titleId} className="text-title-medium font-bold">{title}</h2>
+              <IconButton
+                size="lg"
+                label="Fechar"
+                onClick={onClose}
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </IconButton>
+            </div>
+            {children}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }

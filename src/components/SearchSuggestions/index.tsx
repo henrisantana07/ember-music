@@ -5,6 +5,8 @@ import type { ReactNode, RefObject } from 'react'
 import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import { usePlayerStore } from '@/lib/store'
+import { motion } from 'motion/react'
+import { popoverVariants } from '@/lib/motion'
 import {
   clearSearchHistory,
   deleteSearchHistoryItem,
@@ -186,10 +188,13 @@ export function SearchSuggestions({ query, onSelect, onClose, onSearch, inputRef
   if (!visible || (!showHistory && cleanQuery.length < 2) || (!loading && cleanQuery.length >= 2 && !hasSuggestions)) return null
 
   return (
-    <div
+    <motion.div
       ref={panelRef}
-      className="popover-in absolute top-full left-0 right-0 mt-2 rounded-xl shadow-xl overflow-hidden z-50 border border-outline-variant"
+      className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-xl overflow-hidden z-50 border border-outline-variant"
       style={{ backgroundColor: 'var(--bg-surface)', transformOrigin: 'top center' }}
+      variants={popoverVariants}
+      initial="hidden"
+      animate="visible"
     >
       {showHistory && (
         <>
@@ -266,7 +271,7 @@ export function SearchSuggestions({ query, onSelect, onClose, onSearch, inputRef
           </div>
         </>
       )}
-    </div>
+    </motion.div>
   )
 }
 

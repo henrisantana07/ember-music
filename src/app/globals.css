@@ -481,150 +481,22 @@ button:disabled,
 
 /* ==========================================================================
  * Motion
- * Enter/exit pairs below are swapped from JS (class change), not toggled by
- * a pseudo-class, so panels can animate *out* before they unmount.
- * Exit animations always use `forwards` so the element stays invisible until
- * the mount timer removes it.
+ * ==========================================================================
+ * Every surface transition below is authored by `motion/react` (see
+ * `src/lib/motion.ts` for the tokens and shared variants); nothing here
+ * animates a panel, a menu or a toast any more.
+ *
+ * What is left in CSS is the small stuff where a pseudo-class is the right
+ * tool: the card hover lift and the state layer.
+ *
+ * Note on hover + Motion: they cannot share a node. Motion writes an inline
+ * `transform` for whatever it animates, and an inline transform beats any
+ * `:hover` rule — so a surface Motion moves cannot also lift in CSS, and
+ * vice versa. Surfaces that lift on hover (cards) therefore fade only under
+ * Motion; surfaces Motion moves (rows, dialogs) keep no CSS transform.
  * ========================================================================== */
 
-/* --- Page navigation -------------------------------------------------------
-   PageTransition restarts this keyframe on every route change; without the
-   restart React reuses the same DOM node and the animation never re-runs. */
-@keyframes page-enter {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
 
-.animate-page-enter {
-  animation: page-enter var(--motion-duration-standard) var(--motion-easing-enter);
-}
-
-/* --- Confirmation pop (favorites, toggles) ---------------------------------
-   Only fired from an explicit user action, never on server hydration. */
-@keyframes confirm-pop {
-  0% { transform: scale(0.85); }
-  55% { transform: scale(1.12); }
-  100% { transform: scale(1); }
-}
-
-.animate-confirm-pop {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: confirm-pop var(--motion-duration-standard) var(--motion-easing-standard);
-}
-
-/* --- Press feedback --------------------------------------------------------
-   Pairs with `.state-layer`, which already covers the *opacity* half of the
-   M3 pressed state; this adds the tactile half. Deliberately unlayered so it
-   wins over the `transition-colors` / `transition-transform` utilities it
-   replaces (it lists those properties explicitly). */
-.motion-press {
-  transition:
-    transform var(--motion-duration-fast) var(--motion-easing-standard),
-    color var(--motion-duration-fast) var(--motion-easing-standard),
-    background-color var(--motion-duration-fast) var(--motion-easing-standard),
-    border-color var(--motion-duration-fast) var(--motion-easing-standard);
-}
-
-.motion-press:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
-/* Filter/segmented chips: the selected checkmark eases open instead of
-   appearing at full width, so the chip's own width stops snapping. The slot
-   stays mounted (with width 0) purely so the browser has something to
-   interpolate. */
-.chip-check-slot {
-  display: inline-flex;
-  align-items: center;
-  overflow: hidden;
-  flex: none;
-  transition:
-    width var(--motion-duration-standard) var(--motion-easing-standard),
-    margin-right var(--motion-duration-standard) var(--motion-easing-standard);
-}
-
-/* --- Dialog scrim + panel -------------------------------------------------- */
-@keyframes scrim-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes scrim-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
-.modal-scrim-in {
-  animation: scrim-in var(--motion-duration-fast) var(--motion-easing-enter);
-}
-
-.modal-scrim-out {
-  animation: scrim-out var(--motion-duration-fast) var(--motion-easing-exit) forwards;
-}
-
-/* The panel lives inside the scrim element, so the scrim's own opacity
-   already fades the whole subtree. Animating opacity here as well would
-   multiply the two and make the exit look abrupt — scale only. */
-@keyframes panel-in {
-  from { transform: translateY(12px) scale(0.97); }
-  to { transform: translateY(0) scale(1); }
-}
-
-@keyframes panel-out {
-  from { transform: translateY(0) scale(1); }
-  to { transform: translateY(8px) scale(0.98); }
-}
-
-.modal-panel-in {
-  animation: panel-in var(--motion-duration-standard) var(--motion-easing-enter);
-}
-
-.modal-panel-out {
-  animation: panel-out var(--motion-duration-fast) var(--motion-easing-exit) forwards;
-}
-
-/* --- Menus, popovers, suggestion lists ------------------------------------- */
-@keyframes popover-in {
-  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes popover-out {
-  from { opacity: 1; transform: translateY(0) scale(1); }
-  to { opacity: 0; transform: translateY(-4px) scale(0.98); }
-}
-
-.popover-in {
-  transform-origin: var(--popover-origin-y, top) var(--popover-origin-x, left);
-  animation: popover-in var(--motion-duration-fast) var(--motion-easing-enter);
-}
-
-.popover-out {
-  transform-origin: var(--popover-origin-y, top) var(--popover-origin-x, left);
-  animation: popover-out var(--motion-duration-fast) var(--motion-easing-exit) forwards;
-}
-
-/* --- Mobile navigation drawer ---------------------------------------------- */
-@keyframes drawer-in {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
-}
-
-@keyframes drawer-out {
-  from { transform: translateX(0); }
-  to { transform: translateX(-100%); }
-}
-
-.drawer-in {
-  animation: drawer-in var(--motion-duration-standard) var(--motion-easing-enter);
-}
-
-.drawer-out {
-  animation: drawer-out var(--motion-duration-fast) var(--motion-easing-exit) forwards;
-}
-
-/* Toasts (`.animate-slide-up`, the Snackbar) are centred with
-   `left-1/2 -translate-x-1/2`. Anything that writes `transform` on them would
-   clobber that centring mid-animation, so their enter/exit uses opacity only —
-   which is what `modal-scrim-*` already does. */
+/* Toasts (the Snackbar) are centred with `left-1/2 -translate-x-1/2`. Anything
+   that writes `transform` on them would clobber that centring mid-animation,
+   so their Motion variants animate opacity only — see `fadeVariants`. */

@@ -108,12 +108,13 @@ export default function HistoryPage() {
               {date}
             </h2>
             <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
-              {group.map((item) => (
+              {group.map((item, index) => (
                 <TrackCard
                   key={`${item.track_data.id}-${item.played_at}`}
                   track={item.track_data}
                   tracks={flatTracks}
                   user={user}
+                  index={index}
                 />
               ))}
             </div>

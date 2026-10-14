@@ -137,8 +137,8 @@ export default function AlbumPage() {
       <div className="mt-8">
         <h2 className="text-xl font-bold mb-4">Faixas</h2>
         <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
-          {album.tracks.map((track) => (
-            <TrackCard key={track.id} track={track} tracks={album.tracks} user={user} />
+          {album.tracks.map((track, index) => (
+            <TrackCard key={track.id} track={track} tracks={album.tracks} user={user} index={index} />
           ))}
         </div>
       </div>

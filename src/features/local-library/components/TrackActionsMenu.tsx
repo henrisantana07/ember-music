@@ -25,7 +25,7 @@ import { useFavoritesSync, useFavoritesStore, useEnsureFavorites, useIsFavorite 
 import { PlaylistModal } from '@/components/PlaylistModal'
 import { Modal } from '@/components/ui/Modal'
 import { Snackbar } from '@/components/ui/Snackbar'
-import { useMenu, MenuPanel } from '@/components/ui/Menu'
+import { useMenu, MenuPanel, MenuPresence } from '@/components/ui/Menu'
 import type { Track } from '@/types/music'
 import type { LocalMusicFile } from '@/features/local-library/types'
 
@@ -207,7 +207,7 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
         </svg>
       </button>
 
-      {menu.open && (
+      <MenuPresence open={menu.open}>
         <MenuPanel {...menu.panelProps} align="right" className="min-w-[220px]">
           <div className="px-4 py-2 border-b border-outline-variant text-label-medium font-medium uppercase tracking-wider" style={{ color: 'var(--text-disabled)' }}>
             {track.title}
@@ -234,7 +234,7 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
             })}
           </div>
         </MenuPanel>
-      )}
+      </MenuPresence>
 
       {playlistTrack && (
         <PlaylistModal

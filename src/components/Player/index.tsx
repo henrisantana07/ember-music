@@ -2,6 +2,8 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { usePlayerStore } from '@/lib/store'
+import { AnimatePresence, motion } from 'motion/react'
+import { popoverVariants, whileTap, TRANSITION, fadeVariants } from '@/lib/motion'
 import type { RepeatMode } from '@/lib/store'
 import type { Track } from '@/types/music'
 import { formatDuration } from '@/lib/spotify'
@@ -350,10 +352,13 @@ export function Player() {
       <audio ref={audioRef} />
 
       {toast && (
-        <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-sm shadow-lg animate-fade-in"
-          style={{ backgroundColor: 'var(--success)', color: 'var(--text-on-accent)' }}>
+        <motion.div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-sm shadow-lg"
+          style={{ backgroundColor: 'var(--success)', color: 'var(--text-on-accent)' }}
+          variants={fadeVariants}
+          initial="hidden"
+          animate="visible">
           {toast}
-        </div>
+        </motion.div>
       )}
 
       {sleepRemaining && (
@@ -411,16 +416,19 @@ export function Player() {
               <SkipBack className="w-6 h-6" fill="currentColor" />
             </button>
 
-            <button onClick={togglePlay}
-              className="h-12 w-12 rounded-full flex items-center justify-center motion-press hover:scale-105 state-layer"
+            <motion.button onClick={togglePlay}
+              className="h-12 w-12 rounded-full flex items-center justify-center state-layer"
               style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
-              aria-label={isPlaying ? 'Pausar' : 'Tocar'}>
+              aria-label={isPlaying ? 'Pausar' : 'Tocar'}
+              whileHover={{ scale: 1.05 }}
+              whileTap={whileTap}
+              transition={TRANSITION.press}>
               {isPlaying ? (
                 <Pause className="w-6 h-6" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
               ) : (
                 <Play className="w-6 h-6" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
               )}
-            </button>
+            </motion.button>
 
             <button onClick={next} className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer" style={{ color: 'var(--text-secondary)' }} title="Próxima" aria-label="Próxima faixa">
               <SkipForward className="w-6 h-6" fill="currentColor" />
@@ -547,11 +555,17 @@ function SleepTimerDropdown() {
         </svg>
       </button>
 
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="popover-in absolute bottom-full right-0 mb-2 z-50 rounded-xl p-2 shadow-elevation-3 border border-outline-variant min-w-[160px]"
-            style={{ backgroundColor: 'var(--bg-elevated)', transformOrigin: 'bottom right' }}>
+      <AnimatePresence>
+        {open && (
+          <div key="sleep-backdrop" className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+        )}
+        {open && (
+          <motion.div key="sleep-menu" className="absolute bottom-full right-0 mb-2 z-50 rounded-xl p-2 shadow-elevation-3 border border-outline-variant min-w-[160px]"
+            style={{ backgroundColor: 'var(--bg-elevated)', transformOrigin: 'bottom right' }}
+            variants={popoverVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit">
             {sleepTimerMinutes && (
               <button onClick={() => { setSleepTimer(null); setOpen(false) }}
                 className="w-full text-left px-4 min-h-[48px] rounded-lg text-body-medium transition-colors hover:bg-state-hover state-layer"
@@ -567,9 +581,9 @@ function SleepTimerDropdown() {
                 {opt.label}
               </button>
             ))}
-          </div>
-        </>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

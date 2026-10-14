@@ -24,8 +24,8 @@ export function TrackResultGrid({ tracks, maxItems }: TrackResultGridProps) {
 
   return (
     <div className={CATALOG_GRID}>
-      {displayTracks.map((track) => (
-        <TrackCard key={track.id} track={track} tracks={tracks} user={user} />
+      {displayTracks.map((track, index) => (
+        <TrackCard key={track.id} track={track} tracks={tracks} user={user} index={index} />
       ))}
     </div>
   )

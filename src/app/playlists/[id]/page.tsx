@@ -26,7 +26,7 @@ import { CSS } from '@dnd-kit/utilities'
 import type { Track } from '@/types/music'
 import type { Database } from '@/types/database'
 import { ErrorState } from '@/components/ui/states'
-import { useMenu, MenuPanel } from '@/components/ui/Menu'
+import { useMenu, MenuPanel, MenuPresence } from '@/components/ui/Menu'
 
 type PlaylistTrack = Database['public']['Tables']['playlist_tracks']['Row']
 
@@ -482,7 +482,7 @@ function PlaylistContent() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </button>
-                {menu.open && (
+                <MenuPresence open={menu.open}>
                   <MenuPanel {...menu.panelProps} align="right">
                     <button
                       onClick={() => { setCoverModalOpen(true); menu.close() }}
@@ -504,7 +504,7 @@ function PlaylistContent() {
                       Editar informações
                     </button>
                   </MenuPanel>
-                )}
+                </MenuPresence>
               </div>
             )}
 

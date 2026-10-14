@@ -1,8 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { EXIT_ANIMATION_MS } from '@/lib/motion-hooks'
+import { AnimatePresence, motion } from 'motion/react'
+import { popoverVariants, type MotionDOMPropNames } from '@/lib/motion'
 import type { ButtonHTMLAttributes, ComponentPropsWithRef, CSSProperties, KeyboardEvent as ReactKeyboardEvent, Ref } from 'react'
 
 interface MenuTriggerProps {
@@ -16,61 +18,30 @@ interface MenuPanelProps {
   ref: Ref<HTMLDivElement>
   onKeyDown: (e: ReactKeyboardEvent<HTMLDivElement>) => void
   triggerRect: DOMRect | null
-  /** True while the panel is playing its exit before unmounting. */
-  closing: boolean
 }
 
 /**
  * Dropdown menu with the behaviour M3 menus require: outside-click close,
  * Escape to close (focus returns to the trigger), arrow-key traversal.
+ *
+ * `open` flips false the moment the menu is dismissed — the exit animation is
+ * the call site's problem, not this hook's. Wrapping the panel in
+ * `<AnimatePresence>` keeps it mounted for that beat, which is why there is no
+ * timer here: the old "hold the element for 160ms" machinery existed only to
+ * let the CSS class change land before unmounting.
  */
 export function useMenu() {
   const [open, setOpen] = useState(false)
-  const [closing, setClosing] = useState(false)
   const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // Mirrors of the two states above, so the event handlers and the toggle can
-  // read the current phase without re-binding on every change.
-  const mountedRef = useRef(false)
-  const closingRef = useRef(false)
 
-  /**
-   * Keeps the panel mounted for one more beat so it can animate out. Every
-   * close path goes through here (outside click, Escape, trigger, item
-   * action), so the exit never gets cut short.
-   */
-  const close = useCallback(() => {
-    if (timerRef.current || !mountedRef.current) return
-    closingRef.current = true
-    setClosing(true)
-    timerRef.current = setTimeout(() => {
-      mountedRef.current = false
-      closingRef.current = false
-      timerRef.current = null
-      setClosing(false)
-      setOpen(false)
-    }, EXIT_ANIMATION_MS)
-  }, [])
-
-  /** Opens, or interrupts an in-flight exit to re-open. */
   const openMenu = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current)
-      timerRef.current = null
-    }
-    mountedRef.current = true
-    closingRef.current = false
-    setClosing(false)
     setOpen(true)
     if (triggerRef.current) setTriggerRect(triggerRef.current.getBoundingClientRect())
   }, [])
 
-  // Safety net: never leave a pending unmount behind if we unmount first.
-  useEffect(() => () => {
-    if (timerRef.current) clearTimeout(timerRef.current)
-  }, [])
+  const close = useCallback(() => setOpen(false), [])
 
   useEffect(() => {
     if (!open) return
@@ -108,12 +79,7 @@ export function useMenu() {
     next.focus()
   }
 
-  const toggle = () => {
-    // Re-opening while an exit is still playing has to cancel it. Flipping a
-    // boolean here would land on "closed" and the menu would get stuck shut.
-    if (closingRef.current || !mountedRef.current) openMenu()
-    else close()
-  }
+  const toggle = () => (open ? close() : openMenu())
 
   return {
     open,
@@ -121,9 +87,7 @@ export function useMenu() {
     toggle,
     triggerProps: {
       ref: triggerRef,
-      // Collapsed the moment the exit starts, so assistive tech never reads a
-      // panel that is on its way out.
-      'aria-expanded': open && !closing,
+      'aria-expanded': open,
       'aria-haspopup': 'menu',
       onClick: toggle,
     } satisfies MenuTriggerProps,
@@ -131,7 +95,6 @@ export function useMenu() {
       ref: panelRef,
       onKeyDown: onPanelKeyDown,
       triggerRect,
-      closing,
     } satisfies MenuPanelProps,
   }
 }
@@ -139,6 +102,15 @@ export function useMenu() {
 interface MenuItemProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   selected?: boolean
   danger?: boolean
+}
+
+/**
+ * `AnimatePresence` + the presence condition, packaged so call sites read as a
+ * plain wrapper instead of nesting a second level (which would re-indent every
+ * menu they own). The panel's exit is what keeps it mounted after `open` flips.
+ */
+export function MenuPresence({ open, children }: { open: boolean; children: ReactNode }) {
+  return <AnimatePresence>{open ? children : null}</AnimatePresence>
 }
 
 /** Row inside a Menu panel: state layer + M3 list-item metrics. */
@@ -162,28 +134,38 @@ export function MenuItem({ selected, danger, className = '', children, ...rest }
   )
 }
 
-interface MenuPanelPropsArgs extends ComponentPropsWithRef<'div'> {
+/**
+ * `ComponentPropsWithRef<'div'>` minus the props Motion redefines with its own
+ * signatures (drag/animation callbacks), so spreading the leftovers onto a
+ * `motion.div` type-checks.
+ */
+type MenuPanelDOMProps = Omit<ComponentPropsWithRef<'div'>, MotionDOMPropNames>
+
+interface MenuPanelPropsArgs extends MenuPanelDOMProps {
   align?: 'left' | 'right'
   placement?: 'top' | 'bottom'
   triggerRect?: DOMRect | null
-  /** Plays the exit instead of the entrance (set by `useMenu`). */
-  closing?: boolean
 }
 
 /**
  * Surface that hosts MenuItem rows (elevation + shape tokens).
  * Rendered in a portal with fixed positioning so it is never clipped by an
  * `overflow` ancestor, and auto-flips up/left to stay inside the viewport.
+ *
+ * The entrance/exit variants are driven by an `AnimatePresence` that must
+ * wrap `<MenuPanel>` at the call site. Presence context survives the portal,
+ * so the panel here still learns it is leaving and plays `exit` before it is
+ * removed.
  */
-export function MenuPanel({ align = 'right', placement = 'bottom', className = '', children, triggerRect, closing = false, ref, onKeyDown, ...rest }: MenuPanelPropsArgs) {
+export function MenuPanel({ align = 'right', placement = 'bottom', className = '', children, triggerRect, ref, onKeyDown, ...rest }: MenuPanelPropsArgs) {
   const localRef = useRef<HTMLDivElement | null>(null)
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
 
-  const setRefs = (node: HTMLDivElement | null) => {
+  const setRefs = useCallback((node: HTMLDivElement | null) => {
     localRef.current = node
     if (typeof ref === 'function') ref(node)
     else if (ref && typeof ref === 'object') ref.current = node
-  }
+  }, [ref])
 
   useLayoutEffect(() => {
     const el = localRef.current
@@ -233,16 +215,20 @@ export function MenuPanel({ align = 'right', placement = 'bottom', className = '
     : { position: 'fixed', top: 0, left: 0, zIndex: 80, visibility: 'hidden', transformOrigin }
 
   return createPortal(
-    <div
+    <motion.div
       ref={setRefs}
       role="menu"
       onKeyDown={onKeyDown}
-      className={`${closing ? 'popover-out' : 'popover-in'} min-w-[200px] py-1 rounded-[var(--shape-large)] bg-[var(--bg-elevated)] border border-outline-variant shadow-elevation-2 overflow-hidden ${className}`}
+      className={`min-w-[200px] py-1 rounded-[var(--shape-large)] bg-[var(--bg-elevated)] border border-outline-variant shadow-elevation-2 overflow-hidden ${className}`}
       style={style}
+      variants={popoverVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
       {...rest}
     >
       {children}
-    </div>,
+    </motion.div>,
     document.body
   )
 }

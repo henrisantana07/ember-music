@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { useEnsureFavorites, useFavoritesStore, useFavoritesSync, useIsFavorite } from '@/lib/favorites-store'
+import { motion } from 'motion/react'
+import { confirmPopProps } from '@/lib/motion'
 import { useConfirmAnimation } from '@/lib/motion-hooks'
 import { PlaylistModal } from '@/components/PlaylistModal'
 import { CoverImage } from '@/components/ui/CoverImage'
@@ -77,10 +79,17 @@ export function TopResultCard({ track }: TopResultCardProps) {
                 aria-pressed={isFav}
                 className="h-12 w-12 inline-flex items-center justify-center rounded-full hover:bg-state-pressed transition-colors state-layer"
               >
-                <svg key={confirmFavorite.key} className={`w-6 h-6${confirmFavorite.key > 0 ? ' animate-confirm-pop' : ''}`} fill={isFav ? 'url(#favGradientTop)' : 'none'} viewBox="0 0 24 24" stroke={isFav ? 'none' : 'currentColor'} strokeWidth={2} style={{ color: 'var(--text-disabled)' }}>
+                <motion.svg
+                  {...confirmPopProps(confirmFavorite.controls, { color: 'var(--text-disabled)' })}
+                  className="w-6 h-6"
+                  fill={isFav ? 'url(#favGradientTop)' : 'none'}
+                  viewBox="0 0 24 24"
+                  stroke={isFav ? 'none' : 'currentColor'}
+                  strokeWidth={2}
+                >
                   <defs><linearGradient id="favGradientTop" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="var(--accent-from)" /><stop offset="100%" stopColor="var(--accent-to)" /></linearGradient></defs>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
+                </motion.svg>
               </button>
             )}
             <button

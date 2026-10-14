@@ -95,8 +95,8 @@ export default function ArtistPage() {
         <section className="mt-10">
           <h2 className="text-xl font-bold mb-4">Top Músicas</h2>
           <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
-            {tracks.map((track) => (
-              <TrackCard key={track.id} track={track} tracks={tracks} user={user} />
+            {tracks.map((track, index) => (
+              <TrackCard key={track.id} track={track} tracks={tracks} user={user} index={index} />
             ))}
           </div>
         </section>

@@ -1,10 +1,12 @@
 'use client'
 
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { motion } from 'motion/react'
+import { TRANSITION, whileTap, type MotionDOMPropNames } from '@/lib/motion'
 
 export type ButtonVariant = 'filled' | 'tonal' | 'outlined' | 'text'
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, MotionDOMPropNames> {
   variant?: ButtonVariant
   size?: 'sm' | 'md' | 'lg'
   children: ReactNode
@@ -26,12 +28,14 @@ const SIZES = {
 /** M3 button (filled / tonal / outlined / text) with state layer. */
 export function Button({ variant = 'filled', size = 'md', className = '', children, type = 'button', ...rest }: ButtonProps) {
   return (
-    <button
+    <motion.button
       type={type}
-      className={`inline-flex items-center justify-center font-semibold rounded-full motion-press disabled:opacity-50 disabled:pointer-events-none ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
+      className={`inline-flex items-center justify-center font-semibold rounded-full disabled:opacity-50 disabled:pointer-events-none ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
+      whileTap={whileTap}
+      transition={TRANSITION.press}
       {...rest}
     >
       {children}
-    </button>
+    </motion.button>
   )
 }

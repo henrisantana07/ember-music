@@ -17,9 +17,9 @@ export function SectionRow({ title, tracks }: SectionRowProps) {
     <section className="mb-12">
       <h2 className="text-xl font-bold mb-4">{title}</h2>
       <Carousel>
-        {tracks.map((track) => (
+        {tracks.map((track, index) => (
           <div key={track.id} className="w-44 flex-shrink-0">
-            <TrackCard track={track} tracks={tracks} user={user} />
+            <TrackCard track={track} tracks={tracks} user={user} index={index} />
           </div>
         ))}
       </Carousel>

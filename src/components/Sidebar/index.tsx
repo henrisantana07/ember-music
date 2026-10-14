@@ -9,7 +9,8 @@ import { usePlaylistsStore } from '@/lib/playlists-store'
 import { useArtistsStore } from '@/lib/artists-store'
 import { useUser } from '@/hooks/use-user'
 import { useAvatar } from '@/hooks/use-avatar'
-import { useModalMotion } from '@/lib/motion-hooks'
+import { AnimatePresence, motion } from 'motion/react'
+import { scrimVariants, drawerVariants } from '@/lib/motion'
 
 const NAV_SECTION1 = [
   { href: '/', label: 'Início', outline: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', fill: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -26,9 +27,6 @@ export default function Sidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  // Keeps the drawer mounted for one beat after close so it can slide back
-  // out instead of vanishing.
-  const { visible: drawerVisible, closing: drawerClosing, scrimClassName: drawerScrimClass } = useModalMotion(drawerOpen)
   const supabase = createClient()
   const router = useRouter()
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -302,10 +300,27 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {drawerVisible && (
-        <>
-          <div className={`fixed inset-0 bg-scrim backdrop-blur-sm z-40 md:hidden ${drawerScrimClass}`} onClick={() => setDrawerOpen(false)} />
-          <aside className={`fixed top-0 left-0 bottom-0 w-[85vw] max-w-[300px] bg-[var(--bg-surface)] z-50 flex flex-col md:hidden shadow-2xl ${drawerClosing ? 'drawer-out' : 'drawer-in'}`}>
+      <AnimatePresence>
+        {drawerOpen && (
+          <motion.div
+            key="drawer-scrim"
+            className="fixed inset-0 bg-scrim backdrop-blur-sm z-40 md:hidden"
+            variants={scrimVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            onClick={() => setDrawerOpen(false)}
+          />
+        )}
+        {drawerOpen && (
+          <motion.aside
+            key="drawer-panel"
+            className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-[300px] bg-[var(--bg-surface)] z-50 flex flex-col md:hidden shadow-2xl"
+            variants={drawerVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
             <div className="flex items-center justify-between h-14 px-4 flex-none">
               <Link href="/" className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
                 <span className="gradient-accent-text">Ember</span>
@@ -429,9 +444,9 @@ export default function Sidebar() {
                 </div>
               </div>
             )}
-          </aside>
-        </>
-      )}
+          </motion.aside>
+        )}
+      </AnimatePresence>
     </>
   ) 
 }

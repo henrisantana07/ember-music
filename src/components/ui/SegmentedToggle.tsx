@@ -1,6 +1,8 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { motion } from 'motion/react'
+import { POP, POP_TRANSITION, TRANSITION, whileTap } from '@/lib/motion'
 
 export interface SegmentedOption<T extends string> {
   value: T
@@ -38,24 +40,39 @@ export function SegmentedToggle<T extends string>({
       {options.map((option) => {
         const selected = option.value === value
         return (
-          <button
+          <motion.button
             key={option.value}
             type="button"
             aria-pressed={selected}
             aria-label={option.ariaLabel ?? option.label}
             onClick={() => onChange(option.value)}
-            className={`inline-flex items-center justify-center gap-1.5 px-5 min-w-[48px] text-label-large font-semibold motion-press state-layer border-r border-outline last:border-r-0 ${
+            className={`inline-flex items-center justify-center gap-1.5 px-5 min-w-[48px] text-label-large font-semibold state-layer border-r border-outline last:border-r-0 ${
               HEIGHTS[size]
             } ${selected ? 'bg-[var(--surface-container-highest)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+            whileTap={whileTap}
+            transition={TRANSITION.press}
           >
             {selected && (
-              <svg className="w-5 h-5 animate-confirm-pop" style={{ color: 'var(--accent-solid)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+              // Mounted fresh whenever this option becomes the selected one, so
+              // the keyframe pair plays on mount — no click wiring needed here.
+              <motion.svg
+                className="w-5 h-5"
+                style={{ color: 'var(--accent-solid)', transformBox: 'fill-box', transformOrigin: 'center' }}
+                initial={{ scale: POP[0] }}
+                animate={{ scale: [...POP] }}
+                transition={POP_TRANSITION}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.5}
+                aria-hidden="true"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
+              </motion.svg>
             )}
             {option.icon}
             {option.label}
-          </button>
+          </motion.button>
         )
       })}
     </div>

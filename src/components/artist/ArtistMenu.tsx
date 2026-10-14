@@ -1,6 +1,6 @@
 'use client'
 
-import { useMenu, MenuPanel } from '@/components/ui/Menu'
+import { useMenu, MenuPanel, MenuPresence } from '@/components/ui/Menu'
 
 interface ArtistMenuProps {
   artistName: string
@@ -34,7 +34,7 @@ export function ArtistMenu({ artistName, artistUrl }: ArtistMenuProps) {
         </svg>
       </button>
 
-      {menu.open && (
+      <MenuPresence open={menu.open}>
         <MenuPanel {...menu.panelProps} align="right">
           <button
             onClick={handleShare}
@@ -63,7 +63,7 @@ export function ArtistMenu({ artistName, artistUrl }: ArtistMenuProps) {
             </a>
           )}
         </MenuPanel>
-      )}
+      </MenuPresence>
     </div>
   )
 }

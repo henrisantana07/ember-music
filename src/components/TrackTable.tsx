@@ -6,12 +6,14 @@ import type { Track } from '@/types/music'
 import { usePlayerStore } from '@/lib/store'
 import { formatDuration } from '@/lib/spotify'
 import { useEnsureFavorites, useFavoritesStore, useFavoritesSync, useIsFavorite } from '@/lib/favorites-store'
+import { motion } from 'motion/react'
+import { confirmPopProps, rowVariants } from '@/lib/motion'
 import { useConfirmAnimation } from '@/lib/motion-hooks'
 import { PlaylistModal } from '@/components/PlaylistModal'
 import { Skeleton } from '@/components/Skeleton'
 import { IconButton } from '@/components/ui/IconButton'
 import { EmptyState } from '@/components/ui/states'
-import { MenuPanel, MenuItem, useMenu } from '@/components/ui/Menu'
+import { MenuPanel, MenuItem, MenuPresence, useMenu } from '@/components/ui/Menu'
 import { cleanDisplayTitle } from '@/lib/clean-title'
 
 export type TrackSortKey = 'default' | 'title' | 'album' | 'duration' | 'date'
@@ -50,9 +52,9 @@ function FavoriteButton({ track, user }: { track: Track; user?: { id: string } |
         void toggle(track)
       }}
     >
-      <svg
-        key={confirmFavorite.key}
-        className={`w-5 h-5${confirmFavorite.key > 0 ? ' animate-confirm-pop' : ''}`}
+      <motion.svg
+        {...confirmPopProps(confirmFavorite.controls)}
+        className="w-5 h-5"
         fill={isFav ? `url(#favTb${track.id.replace(/[^a-zA-Z0-9]/g, '')})` : 'none'}
         viewBox="0 0 24 24"
         stroke={isFav ? 'none' : 'currentColor'}
@@ -66,7 +68,7 @@ function FavoriteButton({ track, user }: { track: Track; user?: { id: string } |
           </linearGradient>
         </defs>
         <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-      </svg>
+      </motion.svg>
     </IconButton>
   )
 }
@@ -87,11 +89,11 @@ function RowMenu({ track, placement = 'bottom' }: { track: Track; placement?: 't
           <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
         </svg>
       </IconButton>
-      {menu.open && (
+      <MenuPresence open={menu.open}>
         <MenuPanel {...menu.panelProps} placement={placement} onClick={(e) => e.stopPropagation()}>
           <MenuItem onClick={() => { setPlaylistOpen(true); menu.close() }}>Adicionar à playlist</MenuItem>
         </MenuPanel>
-      )}
+      </MenuPresence>
       <PlaylistModal open={playlistOpen} onClose={() => setPlaylistOpen(false)} track={track} />
     </div>
   )
@@ -222,8 +224,12 @@ export function TrackTable({
             }
 
             return (
-              <tr
+              <motion.tr
                 key={`${track.id}-${index}`}
+                variants={rowVariants}
+                custom={index}
+                initial="hidden"
+                animate="visible"
                 aria-current={isActive ? 'true' : undefined}
                 onClick={() => playToggle()}
                 className={`group cursor-pointer transition-colors border-b border-outline-variant/40 ${
@@ -286,7 +292,7 @@ export function TrackTable({
                     {formatDuration(track.duration)}
                   </span>
                 </td>
-              </tr>
+              </motion.tr>
             )
           })}
         </tbody>

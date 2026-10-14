@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { usePlaylistsStore } from '@/lib/playlists-store'
-import { useModalMotion } from '@/lib/motion-hooks'
+import { AnimatePresence, motion } from 'motion/react'
+import { panelVariants, scrimVariants } from '@/lib/motion'
 import Cropper from 'cropperjs'
 import 'cropperjs/dist/cropper.css'
 
@@ -45,10 +46,6 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
-
-  const { visible, scrimClassName, panelClassName } = useModalMotion(open)
-
-  if (!visible) return null
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -157,69 +154,197 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
   const charsLeft = 80 - name.length
 
   return (
-    <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${scrimClassName}`}
-      style={{ backgroundColor: 'var(--scrim)' }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="create-playlist-title"
-        className={`w-full max-w-md rounded-xl p-6 shadow-xl overflow-y-auto max-h-[90vh] ${panelClassName}`}
-        style={{ backgroundColor: 'var(--bg-elevated)' }}
-      >
-        <h2 id="create-playlist-title" className="text-lg font-bold mb-4">Nova playlist</h2>
+    // The crop dialog is a sibling of the scrim, not a child of the panel: a
+    // panel carrying a transform is the containing block for fixed
+    // descendants, which would clip the dialog to the panel instead of the
+    // viewport. See the note on `panelVariants`.
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="scrim"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: 'var(--scrim)' }}
+          variants={scrimVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+        >
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="create-playlist-title"
+            className="w-full max-w-md rounded-xl p-6 shadow-xl overflow-y-auto max-h-[90vh]"
+            style={{ backgroundColor: 'var(--bg-elevated)' }}
+            variants={panelVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <h2 id="create-playlist-title" className="text-lg font-bold mb-4">Nova playlist</h2>
 
-        <div className="flex gap-4 mb-5">
-          <div className="flex-shrink-0">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-28 h-28 rounded-lg overflow-hidden relative group cursor-pointer"
-              style={{ background: coverPreview ? `url(${coverPreview}) center/cover` : 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
-            >
-              {!coverPreview && (
-                <svg className="w-10 h-10 absolute inset-0 m-auto opacity-60" fill="white" viewBox="0 0 24 24">
-                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-                </svg>
-              )}
-              <div className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-scrim py-1 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity">
-                <span className="text-label-small text-white">Escolher capa</span>
+            <div className="flex gap-4 mb-5">
+              <div className="flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-28 h-28 rounded-lg overflow-hidden relative group cursor-pointer"
+                  style={{ background: coverPreview ? `url(${coverPreview}) center/cover` : 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
+                >
+                  {!coverPreview && (
+                    <svg className="w-10 h-10 absolute inset-0 m-auto opacity-60" fill="white" viewBox="0 0 24 24">
+                      <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                    </svg>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-scrim py-1 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity">
+                    <span className="text-label-small text-white">Escolher capa</span>
+                  </div>
+                </button>
+                <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileSelect} />
               </div>
-            </button>
-            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileSelect} />
-          </div>
 
-          {error && (
-            <p className="text-xs mb-3" style={{ color: 'var(--error)' }}>{error}</p>
-          )}
+              {error && (
+                <p className="text-xs mb-3" style={{ color: 'var(--error)' }}>{error}</p>
+              )}
 
-          <div className="flex-1 min-w-0 self-center">
-            <p className="text-sm font-medium truncate">{name || 'Nova playlist'}</p>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-              {coverFile ? 'Capa personalizada' : 'Capa padrão'}
-            </p>
-            {coverFile && (
-              <button
-                type="button"
-                onClick={() => setCoverFile(null)}
-                className="text-xs mt-1 underline"
-                style={{ color: 'var(--accent-from)' }}
-              >
-                Remover capa
-              </button>
-            )}
-          </div>
-        </div>
+              <div className="flex-1 min-w-0 self-center">
+                <p className="text-sm font-medium truncate">{name || 'Nova playlist'}</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                  {coverFile ? 'Capa personalizada' : 'Capa padrão'}
+                </p>
+                {coverFile && (
+                  <button
+                    type="button"
+                    onClick={() => setCoverFile(null)}
+                    className="text-xs mt-1 underline"
+                    style={{ color: 'var(--accent-from)' }}
+                  >
+                    Remover capa
+                  </button>
+                )}
+              </div>
+            </div>
 
-        {cropImage && (
-          <div
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="text-xs font-medium mb-1 flex justify-between" style={{ color: 'var(--text-secondary)' }}>
+                  <span>Nome</span>
+                  <span style={{ color: charsLeft < 10 ? 'var(--error)' : 'var(--text-disabled)' }}>{charsLeft}</span>
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value.slice(0, 80))}
+                  placeholder="Minha playlist"
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none border transition-colors"
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    color: 'var(--text-primary)',
+                    borderColor: name ? 'var(--accent-from)' : 'var(--outline-variant)',
+                  }}
+                  autoFocus
+                  maxLength={80}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium mb-1 block" style={{ color: 'var(--text-secondary)' }}>
+                  Descrição
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Uma descrição opcional..."
+                  rows={2}
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none border resize-none"
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    color: 'var(--text-primary)',
+                    borderColor: 'var(--outline-variant)',
+                  }}
+                  maxLength={300}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium mb-2 block" style={{ color: 'var(--text-secondary)' }}>
+                  Visibilidade
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsPublic(false)}
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-xl text-center transition-all"
+                    style={{
+                      border: isPublic ? '2px solid var(--outline-variant)' : '2px solid transparent',
+                      background: !isPublic ? 'linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box, linear-gradient(135deg, var(--accent-from), var(--accent-to)) border-box' : 'var(--bg-surface)',
+                    }}
+                  >
+                    <span className="text-lg">🔒</span>
+                    <span className="text-sm font-medium">Privada</span>
+                    <span className="text-xs" style={{ color: 'var(--text-disabled)' }}>Só você pode ver e ouvir</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsPublic(true)}
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-xl text-center transition-all"
+                    style={{
+                      border: isPublic ? '2px solid transparent' : '2px solid var(--outline-variant)',
+                      background: isPublic ? 'linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box, linear-gradient(135deg, var(--accent-from), var(--accent-to)) border-box' : 'var(--bg-surface)',
+                    }}
+                  >
+                    <span className="text-lg">🌐</span>
+                    <span className="text-sm font-medium">Pública</span>
+                    <span className="text-xs" style={{ color: 'var(--text-disabled)' }}>Qualquer pessoa pode encontrar e ouvir</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={!name.trim() || saving || uploading}
+                  className="px-5 py-2 rounded-lg text-sm font-bold transition-opacity disabled:opacity-50"
+                  style={{
+                    background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
+                    color: 'var(--bg-base)',
+                  }}
+                >
+                  {uploading ? 'Enviando capa...' : saving ? 'Criando...' : 'Criar'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {open && cropImage && (
+          <motion.div
+            key="crop-scrim"
             className="fixed inset-0 z-[60] flex items-center justify-center p-4"
             style={{ backgroundColor: 'var(--scrim)' }}
+            variants={scrimVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             onClick={(e) => { if (e.target === e.currentTarget) cancelCrop() }}
           >
-            <div className="w-full max-w-sm rounded-xl p-6 shadow-xl" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+            <motion.div
+              className="w-full max-w-sm rounded-xl p-6 shadow-xl"
+              style={{ backgroundColor: 'var(--bg-elevated)' }}
+              variants={panelVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
               <h3 className="text-lg font-bold mb-4">Ajustar capa</h3>
               <div className="w-full max-h-80 flex items-center justify-center overflow-hidden rounded-lg">
                 <img ref={cropperRef} src={cropImage} alt="Cortar" className="max-w-full" style={{ maxHeight: '320px' }} />
@@ -240,108 +365,9 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
                   Cancelar
                 </button>
               </div>
-            </div>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-xs font-medium mb-1 flex justify-between" style={{ color: 'var(--text-secondary)' }}>
-              <span>Nome</span>
-              <span style={{ color: charsLeft < 10 ? 'var(--error)' : 'var(--text-disabled)' }}>{charsLeft}</span>
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value.slice(0, 80))}
-              placeholder="Minha playlist"
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none border transition-colors"
-              style={{
-                backgroundColor: 'var(--bg-surface)',
-                color: 'var(--text-primary)',
-                borderColor: name ? 'var(--accent-from)' : 'var(--outline-variant)',
-              }}
-              autoFocus
-              maxLength={80}
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-medium mb-1 block" style={{ color: 'var(--text-secondary)' }}>
-              Descrição
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Uma descrição opcional..."
-              rows={2}
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none border resize-none"
-              style={{
-                backgroundColor: 'var(--bg-surface)',
-                color: 'var(--text-primary)',
-                borderColor: 'var(--outline-variant)',
-              }}
-              maxLength={300}
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-medium mb-2 block" style={{ color: 'var(--text-secondary)' }}>
-              Visibilidade
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setIsPublic(false)}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl text-center transition-all"
-                style={{
-                  border: isPublic ? '2px solid var(--outline-variant)' : '2px solid transparent',
-                  background: !isPublic ? 'linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box, linear-gradient(135deg, var(--accent-from), var(--accent-to)) border-box' : 'var(--bg-surface)',
-                }}
-              >
-                <span className="text-lg">🔒</span>
-                <span className="text-sm font-medium">Privada</span>
-                <span className="text-xs" style={{ color: 'var(--text-disabled)' }}>Só você pode ver e ouvir</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsPublic(true)}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl text-center transition-all"
-                style={{
-                  border: isPublic ? '2px solid transparent' : '2px solid var(--outline-variant)',
-                  background: isPublic ? 'linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box, linear-gradient(135deg, var(--accent-from), var(--accent-to)) border-box' : 'var(--bg-surface)',
-                }}
-              >
-                <span className="text-lg">🌐</span>
-                <span className="text-sm font-medium">Pública</span>
-                <span className="text-xs" style={{ color: 'var(--text-disabled)' }}>Qualquer pessoa pode encontrar e ouvir</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={!name.trim() || saving || uploading}
-              className="px-5 py-2 rounded-lg text-sm font-bold transition-opacity disabled:opacity-50"
-              style={{
-                background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
-                color: 'var(--bg-base)',
-              }}
-            >
-              {uploading ? 'Enviando capa...' : saving ? 'Criando...' : 'Criar'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+            </motion.div>
+          </motion.div>
+      )}
+    </AnimatePresence>
   )
 }

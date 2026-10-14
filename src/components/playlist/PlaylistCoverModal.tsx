@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { usePlaylistsStore } from '@/lib/playlists-store'
-import { useModalMotion } from '@/lib/motion-hooks'
+import { AnimatePresence, motion } from 'motion/react'
+import { panelVariants, scrimVariants } from '@/lib/motion'
 import Cropper from 'cropperjs'
 import 'cropperjs/dist/cropper.css'
 import type { CoverSource } from '@/lib/playlist/resolveCover'
@@ -21,25 +22,34 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
   const [coverFile, setCoverFile] = useState<Blob | null>(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [wasOpen, setWasOpen] = useState(open)
   const { updatePlaylistCover } = usePlaylistsStore()
   const supabase = createClient()
   const cropperRef = useRef<HTMLImageElement>(null)
   const cropperInstance = useRef<Cropper | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const { visible, scrimClassName, panelClassName } = useModalMotion(open)
+  // Reset on the way in: AnimatePresence keeps this component mounted through
+  // the exit, so "mount" is no longer the moment to clear the form — and
+  // clearing it when `open` flips would blank the panel mid-fade.
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (open) {
+      setCropImage(null)
+      setCoverFile(null)
+      setError(null)
+    }
+  }
 
-  // Reset once the dialog has finished animating *out* (i.e. `visible` flips
-  // false), not when `open` flips: wiping the cropper straight away would
-  // blank the panel's contents in the middle of the fade.
+  // Release the cropper as soon as the dialog closes. Deliberately touches no
+  // state, so it stays in an effect without tripping the set-state-in-effect
+  // rule; the brief exit beat where the cropper's wrapper is removed is not
+  // noticeable under the scrim fade.
   useEffect(() => {
-    if (visible) return
-    setCropImage(null)
-    setCoverFile(null)
-    cancelCrop()
-  }, [visible])
-
-  if (!visible) return null
+    if (open) return
+    cropperInstance.current?.destroy()
+    cropperInstance.current = null
+  }, [open])
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -192,124 +202,137 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
         : null
 
   return (
-    <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${scrimClassName}`}
-      style={{ backgroundColor: 'var(--scrim)' }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <div
-        className={`w-full max-w-sm rounded-xl p-6 shadow-xl ${panelClassName}`}
-        style={{ backgroundColor: 'var(--bg-elevated)' }}
-      >
-        <h2 className="text-lg font-bold mb-4">Foto da playlist</h2>
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="scrim"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: 'var(--scrim)' }}
+          variants={scrimVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+        >
+          <motion.div
+            className="w-full max-w-sm rounded-xl p-6 shadow-xl"
+            style={{ backgroundColor: 'var(--bg-elevated)' }}
+            variants={panelVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <h2 className="text-lg font-bold mb-4">Foto da playlist</h2>
 
-        {cropImage ? (
-          <div className="mb-4">
-            <div className="w-full max-h-80 flex items-center justify-center overflow-hidden rounded-lg">
-              <img ref={cropperRef} src={cropImage} alt="Cortar" className="max-w-full" style={{ maxHeight: '320px' }} />
-            </div>
-            <div className="flex gap-2 mt-3">
-              <button
-                onClick={confirmCrop}
-                className="flex-1 px-4 py-2 rounded-lg text-sm font-bold"
-                style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
-              >
-                Aplicar
-              </button>
-              <button
-                onClick={cancelCrop}
-                className="px-4 py-2 rounded-lg text-sm"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            {error && (
-              <p className="text-xs mb-3 text-center" style={{ color: 'var(--error)' }}>{error}</p>
-            )}
-            <div
-              className="w-28 h-28 mx-auto rounded-lg overflow-hidden mb-4"
-              style={{
-                background: previewUrl
-                  ? `url(${previewUrl}) center/cover`
-                  : 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
-              }}
-            >
-              {!previewUrl && (
-                <div className="w-full h-full flex items-center justify-center">
-                  <svg className="w-10 h-10 opacity-50" fill="white" viewBox="0 0 24 24">
-                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-                  </svg>
+            {cropImage ? (
+              <div className="mb-4">
+                <div className="w-full max-h-80 flex items-center justify-center overflow-hidden rounded-lg">
+                  <img ref={cropperRef} src={cropImage} alt="Cortar" className="max-w-full" style={{ maxHeight: '320px' }} />
                 </div>
-              )}
-            </div>
-
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full px-4 py-2 rounded-lg text-sm font-bold mb-3"
-              style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
-            >
-              {currentCoverSource === 'custom' ? 'Trocar imagem' : 'Selecionar imagem'}
-            </button>
-
-            {currentCoverSource === 'custom' && (
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={confirmCrop}
+                    className="flex-1 px-4 py-2 rounded-lg text-sm font-bold"
+                    style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
+                  >
+                    Aplicar
+                  </button>
+                  <button
+                    onClick={cancelCrop}
+                    className="px-4 py-2 rounded-lg text-sm"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
               <>
-                <div className="border-t mb-3" style={{ borderColor: 'var(--outline-variant)' }} />
-                <button
-                  onClick={handleRemove}
-                  className="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                  style={{ color: 'var(--text-secondary)' }}
+                {error && (
+                  <p className="text-xs mb-3 text-center" style={{ color: 'var(--error)' }}>{error}</p>
+                )}
+                <div
+                  className="w-28 h-28 mx-auto rounded-lg overflow-hidden mb-4"
+                  style={{
+                    background: previewUrl
+                      ? `url(${previewUrl}) center/cover`
+                      : 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
+                  }}
                 >
-                  Remover capa personalizada
+                  {!previewUrl && (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <svg className="w-10 h-10 opacity-50" fill="white" viewBox="0 0 24 24">
+                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full px-4 py-2 rounded-lg text-sm font-bold mb-3"
+                  style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
+                >
+                  {currentCoverSource === 'custom' ? 'Trocar imagem' : 'Selecionar imagem'}
                 </button>
+
+                {currentCoverSource === 'custom' && (
+                  <>
+                    <div className="border-t mb-3" style={{ borderColor: 'var(--outline-variant)' }} />
+                    <button
+                      onClick={handleRemove}
+                      className="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      Remover capa personalizada
+                    </button>
+                  </>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
               </>
             )}
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              onChange={handleFileSelect}
-            />
-          </>
-        )}
+            {coverFile && !cropImage && (
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={handleUpload}
+                  disabled={uploading}
+                  className="flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-opacity disabled:opacity-50"
+                  style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
+                >
+                  {uploading ? 'Enviando...' : 'Confirmar'}
+                </button>
+                <button
+                  onClick={() => setCoverFile(null)}
+                  className="px-4 py-2 rounded-lg text-sm"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            )}
 
-        {coverFile && !cropImage && (
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={handleUpload}
-              disabled={uploading}
-              className="flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-opacity disabled:opacity-50"
-              style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
-            >
-              {uploading ? 'Enviando...' : 'Confirmar'}
-            </button>
-            <button
-              onClick={() => setCoverFile(null)}
-              className="px-4 py-2 rounded-lg text-sm"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              Cancelar
-            </button>
-          </div>
-        )}
-
-        {!cropImage && !coverFile && (
-          <div className="flex justify-end mt-3">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg text-sm font-medium"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              Fechar
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
+            {!cropImage && !coverFile && (
+              <div className="flex justify-end mt-3">
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 rounded-lg text-sm font-medium"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  Fechar
+                </button>
+              </div>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }

@@ -52,8 +52,8 @@ export function ExploreNoResults({ query, activeFilterCount, onClearFilters }: E
         <section>
           <h2 className="text-lg font-bold mb-4">Tendências enquanto isso</h2>
           <div className={CATALOG_GRID}>
-            {trending.map((track) => (
-              <TrackCard key={track.id} track={track} tracks={trending} user={user} />
+            {trending.map((track, index) => (
+              <TrackCard key={track.id} track={track} tracks={trending} user={user} index={index} />
             ))}
           </div>
         </section>

@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from './Button'
-import { MenuPanel, MenuItem, useMenu } from './Menu'
+import { MenuPanel, MenuItem, MenuPresence, useMenu } from './Menu'
 
 export interface SortOption<T extends string> {
   value: T
@@ -39,7 +39,7 @@ export function SortMenu<T extends string>({ options, value, onChange, label = '
         </svg>
       </Button>
 
-      {menu.open && (
+      <MenuPresence open={menu.open}>
         <MenuPanel {...menu.panelProps} align="right">
           {options.map((option) => (
             <MenuItem
@@ -54,7 +54,7 @@ export function SortMenu<T extends string>({ options, value, onChange, label = '
             </MenuItem>
           ))}
         </MenuPanel>
-      )}
+      </MenuPresence>
     </div>
   )
 }

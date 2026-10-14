@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { motion } from 'motion/react'
+import { fadeVariants } from '@/lib/motion'
 
 export function PwaRegister() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
@@ -56,8 +58,11 @@ export function PwaRegister() {
   if (!showInstall) return null
 
   return (
-    <div className="fixed bottom-28 left-4 right-4 md:left-auto md:right-4 md:w-80 z-50 rounded-xl p-4 shadow-xl border border-outline-variant animate-fade-in"
-      style={{ backgroundColor: 'var(--bg-elevated)' }}>
+    <motion.div className="fixed bottom-28 left-4 right-4 md:left-auto md:right-4 md:w-80 z-50 rounded-xl p-4 shadow-xl border border-outline-variant"
+      style={{ backgroundColor: 'var(--bg-elevated)' }}
+      variants={fadeVariants}
+      initial="hidden"
+      animate="visible">
       <p className="text-sm font-semibold mb-1">Instale o Ember Music</p>
       <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
         Adicione à tela inicial para uma experiência completa.
@@ -72,6 +77,6 @@ export function PwaRegister() {
           Agora não
         </button>
       </div>
-    </div>
+    </motion.div>
   )
 }
