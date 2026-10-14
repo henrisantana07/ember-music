@@ -18,11 +18,15 @@ interface TrackCardProps {
   tracks?: Track[]
   /** Any object with an id is enough (Supabase User or a slim session user). */
   user?: { id: string } | null
-  /** Position in the list, for the cascade entry. 0 when omitted. */
+  /**
+   * Position in the list, for the cascade entry. Leave it out when an ancestor
+   * already owns the entrance — a carousel slot, say — since two fades on the
+   * same pixels would multiply into one.
+   */
   index?: number
 }
 
-export function TrackCard({ track, tracks, user, index = 0 }: TrackCardProps) {
+export function TrackCard({ track, tracks, user, index }: TrackCardProps) {
   const { play, currentTrack, isPlaying, togglePlay } = usePlayerStore()
   const [playlistOpen, setPlaylistOpen] = useState(false)
   const isFav = useIsFavorite(track.id)
@@ -60,8 +64,8 @@ export function TrackCard({ track, tracks, user, index = 0 }: TrackCardProps) {
         onClick={handlePlay}
         variants={cardVariants}
         custom={index}
-        initial="hidden"
-        animate="visible"
+        initial={index === undefined ? false : 'hidden'}
+        animate={index === undefined ? undefined : 'visible'}
       >
         <div className="relative mb-3">
           <CoverImage

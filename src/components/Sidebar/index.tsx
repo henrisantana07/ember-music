@@ -4,13 +4,14 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState, useRef } from 'react'
+import type { ReactNode } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { useArtistsStore } from '@/lib/artists-store'
 import { useUser } from '@/hooks/use-user'
 import { useAvatar } from '@/hooks/use-avatar'
 import { AnimatePresence, motion } from 'motion/react'
-import { scrimVariants, drawerVariants } from '@/lib/motion'
+import { scrimVariants, drawerVariants, TRANSITION } from '@/lib/motion'
 
 const NAV_SECTION1 = [
   { href: '/', label: 'Início', outline: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', fill: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -22,6 +23,36 @@ const NAV_SECTION1 = [
 // Quantidade máxima de itens exibidos em cada seção da sidebar
 const SIDEBAR_LIMIT = 5
 
+
+/**
+ * Anything in the rail that has no room once it is minimised.
+ *
+ * The rail hugs the left edge, so content can only leave and arrive from that
+ * side — a card sliding in from the right would clip straight through the
+ * icons. Direction is therefore fixed, not derived from anything.
+ *
+ * No cascade here, unlike lists: a sidebar is not a list, and every row
+ * arriving on its own timer reads as lag rather than as order.
+ *
+ * `initial={false}` keeps the first paint still — the rail should animate in
+ * response to the toggle, never on page load.
+ */
+function RailItem({ show, children, className = '' }: { show: boolean; children: ReactNode; className?: string }) {
+  return (
+    <AnimatePresence initial={false}>
+      {show && (
+        <motion.div
+          className={className}
+          initial={{ opacity: 0, x: -12 }}
+          animate={{ opacity: 1, x: 0, transition: TRANSITION.enter }}
+          exit={{ opacity: 0, x: -12, transition: TRANSITION.exit }}
+        >
+          {children}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
 
 export default function Sidebar() {
   const pathname = usePathname()
@@ -105,7 +136,9 @@ export default function Sidebar() {
         title={collapsed ? label : undefined}
       >
         <NavIcon icon={icon} active={active} />
-        {!collapsed && <span>{label}</span>}
+        <RailItem show={!collapsed}>
+          <span>{label}</span>
+        </RailItem>
       </Link>
     )
   }
@@ -122,12 +155,12 @@ export default function Sidebar() {
             <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
           </svg>
         </button>
-        {!collapsed && (
+        <RailItem show={!collapsed}>
           <Link href="/" className="text-lg font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             <span className="gradient-accent-text">Ember</span>
             <span> Music</span>
           </Link>
-        )}
+        </RailItem>
       </div>
 
       <nav className="flex-none px-2 space-y-0.5">
@@ -138,7 +171,7 @@ export default function Sidebar() {
 
       <hr className="mx-4 my-2 border-outline-variant" />
 
-      {!collapsed && playlists.length > 0 && (
+      <RailItem show={!collapsed && playlists.length > 0} className="flex-none">
         <div className="flex-none px-2 space-y-0.5 max-h-[40vh] overflow-y-auto scrollbar-thin">
           <p className="px-3 pt-1 pb-1 text-label-medium font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
             Sua Biblioteca
@@ -166,11 +199,13 @@ export default function Sidebar() {
             })}
           </div>
         </div>
-      )}
+      </RailItem>
 
-      <hr className={`mx-4 my-2 border-outline-variant ${collapsed ? 'hidden' : ''}`} />
+      <RailItem show={!collapsed}>
+        <hr className="mx-4 my-2 border-outline-variant" />
+      </RailItem>
 
-      {!collapsed && (
+      <RailItem show={!collapsed} className="flex-1">
         <div className="flex-1 overflow-y-auto scrollbar-thin px-2 space-y-0.5 min-h-[150px] max-h-[calc(100vh-8rem)]">
           {artists.length > 0 && (
             <p className="px-3 pt-1 pb-1 text-label-medium font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
@@ -209,9 +244,9 @@ export default function Sidebar() {
             </div>
           )}
         </div>
-      )}
+      </RailItem>
 
-      {!collapsed && (
+      <RailItem show={!collapsed} className="flex-none">
         <div className="flex-none border-t border-outline-variant px-2 py-1">
           {user && (
             <div className="relative" ref={dropdownRef}>
@@ -263,7 +298,7 @@ export default function Sidebar() {
             </div>
           )}
         </div>
-      )}
+      </RailItem>
     </>
   )
 

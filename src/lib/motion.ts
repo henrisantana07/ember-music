@@ -28,7 +28,7 @@ export const DURATION = {
   fast: 0.16,
   /** 240ms — dialogs, confirmations, content entrance. */
   standard: 0.24,
-  /** 320ms — the navigation drawer. */
+  /** 320ms — full-height surfaces: the drawer, the expanded player. */
   medium: 0.32,
 } as const
 
@@ -40,6 +40,8 @@ export const EASE = {
   enter: [0, 0, 0, 1] as [number, number, number, number],
   exit: [0.3, 0, 1, 1] as [number, number, number, number],
   standard: [0.2, 0, 0, 1] as [number, number, number, number],
+  /** Sheets and full-height panels — slides in, settles, never bounces. */
+  sheet: [0.32, 0.72, 0, 1] as [number, number, number, number],
 } as const
 
 export const TRANSITION = {
@@ -48,6 +50,11 @@ export const TRANSITION = {
   fast: { duration: DURATION.fast, ease: EASE.standard },
   /** Press feedback has to feel instant — anything slower reads as lag. */
   press: { duration: DURATION.short, ease: EASE.standard },
+  /**
+   * A surface travelling its own width: slower than a popover, and it has to
+   * land without overshoot, since the panel is the whole viewport.
+   */
+  surface: { duration: DURATION.medium, ease: EASE.sheet },
 } as const satisfies Record<string, Transition>
 
 /* --- Shared surface variants ------------------------------------------------

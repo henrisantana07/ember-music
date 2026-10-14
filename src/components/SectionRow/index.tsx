@@ -2,7 +2,7 @@
 
 import type { Track } from '@/types/music'
 import { TrackCard } from '@/components/TrackCard'
-import { Carousel } from '@/components/Carousel'
+import { Carousel, CarouselItem } from '@/components/Carousel'
 import { useUser } from '@/hooks/use-user'
 
 interface SectionRowProps {
@@ -18,9 +18,11 @@ export function SectionRow({ title, tracks }: SectionRowProps) {
       <h2 className="text-xl font-bold mb-4">{title}</h2>
       <Carousel>
         {tracks.map((track, index) => (
-          <div key={track.id} className="w-44 flex-shrink-0">
-            <TrackCard track={track} tracks={tracks} user={user} index={index} />
-          </div>
+          <CarouselItem key={track.id} className="w-44 flex-shrink-0" index={index}>
+            {/* The slot owns the entrance, so the card is left out of it —
+                two fades on the same pixels would multiply into one. */}
+            <TrackCard track={track} tracks={tracks} user={user} />
+          </CarouselItem>
         ))}
       </Carousel>
     </section>
