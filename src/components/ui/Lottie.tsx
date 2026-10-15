@@ -36,6 +36,14 @@ interface LottieGraphicProps {
   /** Set off by default once the animation has drawn its first frame. */
   autoplay?: boolean
   /**
+   * Movement that carries state instead of decorating it.
+   *
+   * A parked spinner is indistinguishable from a hung app, so this graphic
+   * keeps travelling even when the system asks for reduced motion — the one
+   * exemption in the set, and the reason the park below is not unconditional.
+   */
+  essential?: boolean
+  /**
    * Paint every shape with `currentColor` so one JSON serves both themes.
    * lottie-web writes the authored colour as a `fill`/`stroke` attribute on
    * the first frame, so this has to watch for that write rather than run once.
@@ -61,6 +69,7 @@ export default function LottieGraphic({
   playKey = 0,
   loop = false,
   autoplay = true,
+  essential = false,
   inheritColor = true,
   ariaLabel,
   onReady,
@@ -68,7 +77,7 @@ export default function LottieGraphic({
   const reduced = useReducedMotion()
   // A load-time option, so it has to already be right when the engine starts.
   // Nothing loads during SSR (`ssr: false`), which is what makes that safe.
-  const active = autoplay && !reduced
+  const active = autoplay && (!reduced || essential)
 
   const host = useRef<HTMLElement>(null)
   const handle = useRef<LottieHandle>(null)

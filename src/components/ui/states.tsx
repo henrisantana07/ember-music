@@ -66,7 +66,21 @@ export function LoadingState({ title = 'Carregando…', className = '' }: { titl
       role="status"
       className={`flex flex-col items-center justify-center gap-3 py-14 ${className}`}
     >
-      <Lottie name="spinner" loop className="h-10 w-10" />
+      {/*
+       * A fixed 40px box around the animation rather than a size class on it.
+       * `lottie-react` styles its own host `width/height: 100%`, so the size
+       * only holds if the wrapper is the one that is sized — `100%` of a 40px
+       * box is 40px either way. This is the same shape the carousel chevron
+       * already sits in, where the bug never showed.
+       *
+       * `text-[var(--accent-from)]` is what the graphic actually paints: the
+       * recolour pass turns every path into `currentColor`, so the site's
+       * orange arrives from CSS rather than from the JSON, which was authored
+       * in slate (`rgb(73,80,87)`).
+       */}
+      <span className="inline-flex h-10 w-10 shrink-0 text-[var(--accent-from)]">
+        <Lottie name="spinner" loop essential className="h-full w-full" />
+      </span>
       <p className="text-body-medium text-[var(--text-secondary)]">{title}</p>
     </div>
   )

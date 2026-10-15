@@ -1,3 +1,13 @@
+/*
+ * `lottie-react` ships its element defaults inside a cascade layer of its own.
+ * Layer order is decided by first declaration, so this statement has to come
+ * before Tailwind's `@layer theme, base, components, utilities` — otherwise the
+ * library's layer is created last and `.lottie-display{width:100%;height:100%}`
+ * outranks `h-10 w-10`, blowing the animation out to fill its column.
+ * The library documents this as the consumer's half of the contract.
+ */
+@layer lottie-react;
+
 @import "tailwindcss";
 
 /*
@@ -313,11 +323,27 @@ body {
     --motion-duration-long: 0ms;
   }
 
+  /*
+   * Every animation collapses except a loading spinner, which is the one case
+   * where movement is information rather than decoration: a spinner parked by
+   * this preference reads as a hung app, and "hung" is the opposite of what it
+   * is saying. `.animate-spin` is the app's marker for exactly that role —
+   * every use of it is a waiting state — so it is left out of the animation
+   * rules below and keeps Tailwind's own `spin 1s linear infinite` untouched.
+   *
+   * Only the animation is exempted. Transitions and scrolling still freeze on
+   * those same elements, because nothing about waiting requires either.
+   */
+  :not(.animate-spin),
+  :not(.animate-spin)::before,
+  :not(.animate-spin)::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
