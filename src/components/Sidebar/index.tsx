@@ -161,12 +161,7 @@ export default function Sidebar() {
           aria-label={collapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
           aria-expanded={!collapsed}
         >
-          <svg
-            className="w-5 h-5 transition-transform duration-[var(--motion-duration-standard)] ease-[var(--motion-easing-standard)]"
-            style={{ color: 'var(--text-primary)', transform: collapsed ? 'rotate(90deg)' : 'rotate(0deg)' }}
-            viewBox="0 0 24 24"
-            fill="currentColor"
-          >
+          <svg className="w-5 h-5" style={{ color: 'var(--text-primary)' }} viewBox="0 0 24 24" fill="currentColor">
             <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
           </svg>
         </button>
