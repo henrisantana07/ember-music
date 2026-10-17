@@ -4,12 +4,22 @@ import { useEffect, useState, Suspense, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { SectionRow } from '@/components/SectionRow'
+import { ArtistRow } from '@/components/ArtistRow'
+import { AlbumRow } from '@/components/AlbumRow'
 import { TrackCardSkeleton } from '@/components/Skeleton'
-import { FollowButton } from '@/components/FollowButton'
 import { Carousel, CarouselItem } from '@/components/Carousel'
 import { EmptyState, LoadingState } from '@/components/ui/states'
 import { Lottie } from '@/components/ui/LottieLazy'
 import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
+import { useUser } from '@/hooks/use-user'
+import { getPlaybackHistory } from '@/lib/playback-history'
+import {
+  rankArtistsFromHistory,
+  tracksFromHistory,
+  albumsFromHistory,
+  interleave,
+  dedupe,
+} from '@/lib/personalized-rows'
 import type { Track, Album, Artist, Genre } from '@/types/music'
 import { getGenreGradient } from '@/constants/genreColors'
 
@@ -159,6 +169,15 @@ function HomeContent() {
   const [loadedGenres, setLoadedGenres] = useState<Set<number>>(new Set())
   const [initialLoading, setInitialLoading] = useState(true)
 
+  // Fileiras personalizadas. O histórico responde rápido e pinta na hora;
+  // o detalhamento dos5 canais custa uma chamada por artista e chega depois,
+  // agrupado num único estado para não empurrar o conteúdo embaixo repetido.
+  const { user } = useUser()
+  const [topArtists, setTopArtists] = useState<Artist[]>([])
+  const [topTracks, setTopTracks] = useState<Track[]>([])
+  const [heardAlbums, setHeardAlbums] = useState<Album[]>([])
+  const [picks, setPicks] = useState<{ tracks: Track[]; albums: Album[]; artists: Artist[] } | null>(null)
+
   useEffect(() => {
     async function fetchHome() {
       try {
@@ -188,6 +207,50 @@ function HomeContent() {
     }
     fetchHome()
   }, [])
+
+  useEffect(() => {
+    const currentUser = user
+    if (!currentUser) return
+    let cancelled = false
+
+    async function loadPersonalized() {
+      const history = await getPlaybackHistory(currentUser, 300)
+      if (cancelled) return
+
+      const artists = rankArtistsFromHistory(history)
+      setTopArtists(artists)
+      setTopTracks(tracksFromHistory(history))
+      setHeardAlbums(albumsFromHistory(history))
+
+      const top5 = artists.slice(0, 5)
+      if (top5.length === 0) return
+
+      try {
+        const responses = await Promise.all(
+          top5.map((artist) =>
+            fetch(`/api/youtube?endpoint=artists&id=${encodeURIComponent(artist.id)}&limit=50`),
+          ),
+        )
+        const payloads = await Promise.all(responses.map((res) => (res.ok ? res.json() : null)))
+        if (cancelled) return
+
+        // Um único setState: as três fileiras da API aparecem juntas e o
+        // conteúdo editorial embaixo desloca só uma vez.
+        setPicks({
+          tracks: dedupe(interleave(payloads.map((p) => (p?.top_tracks ?? []) as Track[]))),
+          albums: dedupe(interleave(payloads.map((p) => (p?.albums ?? []) as Album[]))),
+          artists: dedupe(interleave(payloads.map((p) => (p?.related ?? []) as Artist[]))),
+        })
+      } catch (e) {
+        console.error('Erro ao montar fileiras personalizadas:', e)
+      }
+    }
+
+    loadPersonalized()
+    return () => {
+      cancelled = true
+    }
+  }, [user])
 
   const hasMore = loadedGenres.size < GENRE_NAMES.length
 
@@ -226,6 +289,16 @@ function HomeContent() {
         <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>Descubra música com Ember Music!</p>
       </div>
 
+      {/* Personalizadas do histórico — chegam junto com o primeiro paint */}
+      {topArtists.length > 0 && <ArtistRow title="Artistas mais ouvidos" artists={topArtists} />}
+      {topTracks.length > 0 && <SectionRow title="Faixas mais tocadas" tracks={topTracks} />}
+      {heardAlbums.length > 0 && <AlbumRow title="Álbuns que você ouviu" albums={heardAlbums} />}
+
+      {/* Personalizadas dos5 mais ouvidos — resolvem juntas num lote só */}
+      {picks && picks.tracks.length > 0 && <SectionRow title="Faixas dos seus mais ouvidos" tracks={picks.tracks} />}
+      {picks && picks.albums.length > 0 && <AlbumRow title="Álbuns dos seus mais ouvidos" albums={picks.albums} />}
+      {picks && picks.artists.length > 0 && <ArtistRow title="Artistas parecidos com seus mais ouvidos" artists={picks.artists} />}
+
       {trending.length > 0 && (
         <SectionRow title="Em alta" tracks={trending} />
       )}
@@ -256,26 +329,7 @@ function HomeContent() {
         </section>
       )}
 
-      {artists.length > 0 && (
-        <section className="mb-12">
-          <h2 className="text-xl font-bold mb-4">Artistas do momento</h2>
-          <Carousel>
-            {artists.map((artist, index) => (
-              <CarouselItem
-                key={artist.id}
-                index={index}
-                className="w-52 flex-shrink-0 p-4 rounded-xl text-center transition-colors hover:bg-state-hover flex flex-col items-center"
-              >
-                <Link href={`/artists/${artist.id}`} className="w-full flex flex-col items-center">
-                  <img src={artist.image || '/placeholder.svg'} alt={artist.name} className="w-full aspect-square rounded-full object-cover mb-3" loading="lazy" />
-                  <p className="w-full text-body-large font-semibold truncate mb-3" title={artist.name}>{artist.name}</p>
-                </Link>
-                <FollowButton artistId={artist.id} artistData={{ id: artist.id, name: artist.name, image: artist.image }} />
-              </CarouselItem>
-            ))}
-          </Carousel>
-        </section>
-      )}
+      {artists.length > 0 && <ArtistRow title="Artistas do momento" artists={artists} />}
 
       {moreTracks.length > 0 && (
         <SectionRow title="Descubra mais" tracks={moreTracks} />

@@ -11,11 +11,14 @@ export interface PlaybackHistoryItem {
   played_at: string
 }
 
-export async function getPlaybackHistory(user: User | null): Promise<PlaybackHistoryItem[]> {
+// `maxRows` limita quantas linhas são buscadas. A home precisa só das mais
+// recentes e a página de histórico continua sem limite (padrão 0 = tudo,
+// comportamento original preservado para os callers atuais).
+export async function getPlaybackHistory(user: User | null, maxRows = 0): Promise<PlaybackHistoryItem[]> {
   if (!user) return []
   
   const supabase = createClient()
-  const pageSize = 500
+  const pageSize = maxRows > 0 ? Math.min(500, maxRows) : 500
   const all: PlaybackHistoryItem[] = []
   let from = 0
 
@@ -35,10 +38,11 @@ export async function getPlaybackHistory(user: User | null): Promise<PlaybackHis
 
     all.push(...(data as unknown as PlaybackHistoryItem[]))
     if (!data || data.length < pageSize) break
+    if (maxRows > 0 && all.length >= maxRows) return all.slice(0, maxRows)
     from += pageSize
   }
 
-  return all
+  return maxRows > 0 ? all.slice(0, maxRows) : all
 }
 
 export async function savePlaybackHistory(user: User | null, track: Track): Promise<void> {
