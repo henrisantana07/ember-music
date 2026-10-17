@@ -18,7 +18,14 @@ import { ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause
 export function Player() {
   const audioRef = useRef<HTMLAudioElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
+  // `isDragging` trava o timeupdate para a música não puxar a barra de volta
+  // no meio do arraste. O listener é registrado uma única vez no efeito do
+  // áudio, então lê o ref: o estado sozinho ficaria preso no valor do closure.
   const [isDragging, setIsDragging] = useState(false)
+  const isDraggingRef = useRef(false)
+  // Posição do cursor enquanto arrasta. A barra desenha o destino antes do
+  // seek acontecer, em vez de esperar o soltar.
+  const [seekPreview, setSeekPreview] = useState<number | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [sleepRemaining, setSleepRemaining] = useState<string | null>(null)
@@ -130,7 +137,7 @@ export function Player() {
       }
 
       const onTimeUpdate = () => {
-        if (!isDragging) setProgress(audio.currentTime)
+        if (!isDraggingRef.current) setProgress(audio.currentTime)
       }
 
       const onLoadedMetadata = () => {
@@ -293,17 +300,74 @@ export function Player() {
   if (!currentTrack) return null
 
   const currentDuration = isYouTubeTrack ? (ytDuration || duration) : duration
-  const currentProgress = isYouTubeTrack ? (ytCurrentTime || progress) : progress
+  const liveProgress = isYouTubeTrack ? (ytCurrentTime || progress) : progress
+  // Durante o arraste a barra segue o cursor, não a posição real da música.
+  const currentProgress = isDragging && seekPreview !== null ? seekPreview : liveProgress
   const progressPercent = currentDuration > 0 ? (currentProgress / currentDuration) * 100 : 0
 
   const repeatLabel: Record<RepeatMode, string> = { none: 'Sem repeat', one: 'Repeat 1', all: 'Repeat tudo' }
 
-  function handleProgressClick(e: React.MouseEvent) {
+  function progressTimeFromClientX(clientX: number) {
     const rect = progressRef.current?.getBoundingClientRect()
-    if (!rect) return
-    const x = (e.clientX - rect.left) / rect.width
-    const newTime = x * currentDuration
-    handleSeek(newTime)
+    if (!rect || rect.width === 0) return 0
+    const ratio = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1)
+    return ratio * currentDuration
+  }
+
+  function beginProgressDrag(clientX: number) {
+    isDraggingRef.current = true
+    setIsDragging(true)
+    setSeekPreview(progressTimeFromClientX(clientX))
+  }
+
+  // `clientX === null` significa gesto interrompido (pointercancel): solta sem
+  // buscar, para não pular a faixa quando o sistema roubar o toque.
+  function endProgressDrag(clientX: number | null) {
+    isDraggingRef.current = false
+    setIsDragging(false)
+    setSeekPreview(null)
+    if (clientX !== null) handleSeek(progressTimeFromClientX(clientX))
+  }
+
+  function handleProgressPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+    // Captura o ponteiro: a barra continua acompanhando o cursor mesmo quando
+    // ele sai da faixa, e a rolagem não intercepta o gesto no toque.
+    progressRef.current?.setPointerCapture(e.pointerId)
+    beginProgressDrag(e.clientX)
+  }
+
+  function handleProgressPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isDraggingRef.current) return
+    setSeekPreview(progressTimeFromClientX(e.clientX))
+  }
+
+  function handleProgressPointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isDraggingRef.current) return
+    if (progressRef.current?.hasPointerCapture(e.pointerId)) {
+      progressRef.current.releasePointerCapture(e.pointerId)
+    }
+    endProgressDrag(e.clientX)
+  }
+
+  function handleProgressPointerCancel(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isDraggingRef.current) return
+    if (progressRef.current?.hasPointerCapture(e.pointerId)) {
+      progressRef.current.releasePointerCapture(e.pointerId)
+    }
+    endProgressDrag(null)
+  }
+
+  function handleProgressKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    const step = e.shiftKey ? 15 : 5
+    let target: number
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') target = currentProgress + step
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') target = currentProgress - step
+    else if (e.key === 'Home') target = 0
+    else if (e.key === 'End') target = currentDuration
+    else return
+    e.preventDefault()
+    handleSeek(Math.min(Math.max(target, 0), currentDuration))
   }
 
   if (miniPlayer) {
@@ -454,14 +518,30 @@ export function Player() {
           <div className="w-full flex items-center gap-2 text-label-medium" style={{ color: 'var(--text-disabled)' }}>
             <span className="w-8 text-right">{formatDuration(Math.floor(currentProgress))}</span>
             <div ref={progressRef}
-              className="flex-1 h-1 rounded-full cursor-pointer relative"
-              style={{ backgroundColor: 'var(--text-disabled)' }}
-              onClick={handleProgressClick}>
-              <div className="h-full rounded-full relative group"
-                style={{ width: `${progressPercent}%`, background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}>
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ backgroundColor: 'var(--accent-from)' }} />
+              role="slider"
+              tabIndex={0}
+              aria-label="Progresso da faixa"
+              aria-valuemin={0}
+              aria-valuemax={Math.max(1, Math.round(currentDuration))}
+              aria-valuenow={Math.round(currentProgress)}
+              aria-valuetext={`${formatDuration(Math.floor(currentProgress))} de ${formatDuration(Math.floor(currentDuration))}`}
+              onPointerDown={handleProgressPointerDown}
+              onPointerMove={handleProgressPointerMove}
+              onPointerUp={handleProgressPointerUp}
+              onPointerCancel={handleProgressPointerCancel}
+              onKeyDown={handleProgressKeyDown}
+              className={`group relative flex h-3 flex-1 touch-none items-center ${isDragging ? 'cursor-grabbing' : 'cursor-pointer'}`}>
+              {/* Trilha fixa de 12px: é o alvo de clique e não muda de tamanho,
+                  então crescer a faixa não desloca nada ao redor. */}
+              <div className={`h-1 w-full rounded-full transition-[height] duration-[var(--motion-duration-fast)] ease-[var(--motion-easing-standard)] ${isDragging ? 'h-2' : 'group-hover:h-2'}`}
+                style={{ backgroundColor: 'var(--text-disabled)' }}>
+                <div className="h-full rounded-full"
+                  style={{ width: `${progressPercent}%`, background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }} />
               </div>
+              {/* Thumb fora da faixa, senão ele sobe e desce quando ela cresce. */}
+              <div aria-hidden="true"
+                className={`pointer-events-none absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full transition-[opacity,translate,scale] duration-[var(--motion-duration-fast)] ease-[var(--motion-easing-standard)] ${isDragging ? 'scale-100 opacity-100' : 'scale-50 opacity-0 group-hover:scale-100 group-hover:opacity-100 group-focus-visible:scale-100 group-focus-visible:opacity-100'}`}
+                style={{ left: `calc(${progressPercent}% - 6px)`, backgroundColor: 'var(--accent-from)' }} />
             </div>
             <span className="w-8 text-left">{formatDuration(Math.floor(currentDuration))}</span>
           </div>
