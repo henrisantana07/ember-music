@@ -18,7 +18,7 @@ export function SectionRow({ title, tracks }: SectionRowProps) {
       <h2 className="text-xl font-bold mb-4">{title}</h2>
       <Carousel>
         {tracks.map((track, index) => (
-          <CarouselItem key={track.id} className="w-44 flex-shrink-0" index={index}>
+          <CarouselItem key={track.id} className="w-52 flex-shrink-0" index={index}>
             {/* The slot owns the entrance, so the card is left out of it —
                 two fades on the same pixels would multiply into one. */}
             <TrackCard track={track} tracks={tracks} user={user} />

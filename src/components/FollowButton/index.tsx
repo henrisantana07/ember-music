@@ -61,7 +61,7 @@ export function FollowButton({ artistId, artistData }: FollowButtonProps) {
     <button
       onClick={handleClick}
       disabled={loading}
-      className="px-4 py-1.5 rounded-full text-sm font-semibold border transition-all disabled:opacity-50"
+      className="relative px-4 py-1.5 rounded-full text-sm font-semibold border transition-all disabled:opacity-50 after:absolute after:-inset-2 after:content-['']"
       style={{
         borderColor: following ? 'var(--accent-from)' : 'var(--text-disabled)',
         color: following ? 'var(--accent-from)' : 'var(--text-secondary)',

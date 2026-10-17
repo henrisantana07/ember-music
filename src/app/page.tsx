@@ -237,7 +237,7 @@ function HomeContent() {
             {genres.map((genre, index) => {
               const gradient = getGenreGradient(genre.name)
               return (
-                <CarouselItem key={genre.id} index={index} className="w-36 flex-shrink-0">
+                <CarouselItem key={genre.id} index={index} className="w-52 flex-shrink-0">
                   <Link
                     href={`/buscar?q=${encodeURIComponent(genre.name)}`}
                     className="relative block p-3 rounded-xl text-center transition-transform hover:scale-105 overflow-hidden"
@@ -264,7 +264,7 @@ function HomeContent() {
               <CarouselItem
                 key={artist.id}
                 index={index}
-                className="w-40 flex-shrink-0 p-4 rounded-xl text-center transition-colors hover:bg-state-hover flex flex-col items-center"
+                className="w-52 flex-shrink-0 p-4 rounded-xl text-center transition-colors hover:bg-state-hover flex flex-col items-center"
               >
                 <Link href={`/artists/${artist.id}`} className="w-full flex flex-col items-center">
                   <img src={artist.image || '/placeholder.svg'} alt={artist.name} className="w-full aspect-square rounded-full object-cover mb-3" loading="lazy" />
