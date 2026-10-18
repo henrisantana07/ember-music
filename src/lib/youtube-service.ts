@@ -319,7 +319,11 @@ export { MUSIC_GENRES } from '@/constants/genres'
 // ---------------------------------------------------------------------------
 
 const detailCache = new Map<string, { value: unknown; expiresAt: number }>()
-const DETAIL_TTL_MS = 30 * 60 * 1000
+// Detalhe de canal/playlist/vídeo muda devagar, e cada `getYouTubeChannel`
+// gasta ~300 unidades de cota do YouTube (3 buscas de 100). Alinhamos ao TTL
+// do cache de busca (6h, `YOUTUBE_SEARCH_CACHE_TTL`) em vez de refazer a
+// chamada a cada 30 min. Contrapartida: "Em alta" pode ficar até 6h defasada.
+const DETAIL_TTL_MS = 6 * 60 * 60 * 1000
 
 function detailCached<T>(key: string): T | null {
   const entry = detailCache.get(key)

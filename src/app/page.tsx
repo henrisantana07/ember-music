@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, Suspense, useCallback } from 'react'
+import { useEffect, useMemo, useRef, useState, Suspense, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { SectionRow } from '@/components/SectionRow'
@@ -179,6 +179,12 @@ function HomeContent() {
   const [topTracks, setTopTracks] = useState<Track[]>([])
   const [heardAlbums, setHeardAlbums] = useState<Album[]>([])
   const [picks, setPicks] = useState<{ tracks: Track[]; albums: Album[]; artists: Artist[] } | null>(null)
+  // Fileiras da API: o fetch fica adiado até o usuário chegar perto, porque
+  // cada artista custa ~300 unidades de cota do YouTube (3 buscas de 100).
+  const [topChannels, setTopChannels] = useState<Artist[]>([])
+  const [picksNearViewport, setPicksNearViewport] = useState(false)
+  const picksRequestedRef = useRef(false)
+  const picksSentinelRef = useRef<HTMLDivElement | null>(null)
 
   // O Sidebar (presente no layout) já popula o store de artistas seguidos.
   // Assinamos aqui em vez de consultar de novo: a foto de perfil prevalece
@@ -223,12 +229,13 @@ function HomeContent() {
     fetchHome()
   }, [])
 
+  // 1) Histórico — barato (uma consulta ao Supabase) e pinta na hora.
   useEffect(() => {
     const currentUser = user
     if (!currentUser) return
     let cancelled = false
 
-    async function loadPersonalized() {
+    async function loadHistory() {
       const history = await getPlaybackHistory(currentUser, 300)
       if (cancelled) return
 
@@ -236,18 +243,52 @@ function HomeContent() {
       setTopArtists(artists)
       setTopTracks(tracksFromHistory(history))
       setHeardAlbums(albumsFromHistory(history))
+      setTopChannels(artists.slice(0, 5))
+    }
 
-      const top5 = artists.slice(0, 5)
-      if (top5.length === 0) return
+    loadHistory()
+    return () => {
+      cancelled = true
+    }
+  }, [user])
 
+  // 2) Sentinel — sinaliza quando o usuário chega perto das fileiras da API.
+  //    O rootMargin de 400px dá folga para o fetch terminar antes delas
+  //    aparecerem, sem disparar para quem nunca rola até lá.
+  useEffect(() => {
+    const node = picksSentinelRef.current
+    if (typeof IntersectionObserver === 'undefined' || !node) {
+      // Sem IO disponível, não adiamos: o pior caso é carregar junto, que já
+      // era o comportamento anterior.
+      setPicksNearViewport(true)
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setPicksNearViewport(true)
+      },
+      { rootMargin: '400px' },
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
+
+  // 3) Fetch das fileiras da API — uma única vez, e só com histórico e
+  //    viewport prontos. `picksRequestedRef` impede duplicar a chamada.
+  useEffect(() => {
+    if (!user || topChannels.length === 0 || !picksNearViewport) return
+    if (picksRequestedRef.current) return
+    picksRequestedRef.current = true
+
+    ;(async () => {
       try {
         const responses = await Promise.all(
-          top5.map((artist) =>
+          topChannels.map((artist) =>
             fetch(`/api/youtube?endpoint=artists&id=${encodeURIComponent(artist.id)}&limit=50`),
           ),
         )
         const payloads = await Promise.all(responses.map((res) => (res.ok ? res.json() : null)))
-        if (cancelled) return
 
         // Um único setState: as três fileiras da API aparecem juntas e o
         // conteúdo editorial embaixo desloca só uma vez.
@@ -259,13 +300,8 @@ function HomeContent() {
       } catch (e) {
         console.error('Erro ao montar fileiras personalizadas:', e)
       }
-    }
-
-    loadPersonalized()
-    return () => {
-      cancelled = true
-    }
-  }, [user])
+    })()
+  }, [user, topChannels, picksNearViewport])
 
   const hasMore = loadedGenres.size < GENRE_NAMES.length
 
@@ -308,6 +344,10 @@ function HomeContent() {
       {displayTopArtists.length > 0 && <ArtistRow title="Artistas mais ouvidos" artists={displayTopArtists} />}
       {topTracks.length > 0 && <SectionRow title="Faixas mais tocadas" tracks={topTracks} />}
       {heardAlbums.length > 0 && <AlbumRow title="Álbuns que você ouviu" albums={heardAlbums} />}
+
+      {/* Dispara o fetch das fileiras abaixo só quando o usuário chega perto
+          delas — cada artista custa ~300 unidades de cota do YouTube. */}
+      <div ref={picksSentinelRef} aria-hidden className="h-px" />
 
       {/* Personalizadas dos5 mais ouvidos — resolvem juntas num lote só.
           Só a escolha do artista vem do histórico: o conteúdo é o que o canal
