@@ -25,6 +25,10 @@ import { getGenreGradient } from '@/constants/genreColors'
 
 const GENRE_NAMES = ['pop', 'rock', 'electronic', 'jazz', 'hip hop', 'classical', 'reggae', 'blues', 'metal', 'folk', 'country', 'soul', 'punk', 'alternative', 'indie', 'r&b', 'latin', 'dance', 'ambient', 'funk']
 
+// O endpoint `artists` devolve até 50 itens por artista. Sem cortar, a fileira
+// agregada montaria ~250 TrackCards — os 12 são o mesmo padrão da "Em alta".
+const PERSONALIZED_ROW_LIMIT = 12
+
 function HomePageInner() {
   const searchParams = useSearchParams()
   const query = searchParams.get('q')
@@ -177,6 +181,8 @@ function HomeContent() {
   const [topTracks, setTopTracks] = useState<Track[]>([])
   const [heardAlbums, setHeardAlbums] = useState<Album[]>([])
   const [picks, setPicks] = useState<{ tracks: Track[]; albums: Album[]; artists: Artist[] } | null>(null)
+  // Uma fileira por artista do pódio, com as faixas mais tocadas de cada um.
+  const [topArtistTracks, setTopArtistTracks] = useState<Array<{ artist: Artist; tracks: Track[] }>>([])
 
   useEffect(() => {
     async function fetchHome() {
@@ -234,12 +240,22 @@ function HomeContent() {
         const payloads = await Promise.all(responses.map((res) => (res.ok ? res.json() : null)))
         if (cancelled) return
 
-        // Um único setState: as três fileiras da API aparecem juntas e o
-        // conteúdo editorial embaixo desloca só uma vez.
+        // Os dois setState do mesmo tick são agrupados pelo React 18, então as
+        // fileiras da API aparecem juntas e o editorial embaixo desloca uma vez só.
+        setTopArtistTracks(
+          top5
+            .slice(0, 3)
+            .map((artist, index) => ({
+              artist,
+              tracks: ((payloads[index]?.top_tracks ?? []) as Track[]).slice(0, PERSONALIZED_ROW_LIMIT),
+            }))
+            .filter((row) => row.tracks.length > 0),
+        )
+
         setPicks({
-          tracks: dedupe(interleave(payloads.map((p) => (p?.top_tracks ?? []) as Track[]))),
-          albums: dedupe(interleave(payloads.map((p) => (p?.albums ?? []) as Album[]))),
-          artists: dedupe(interleave(payloads.map((p) => (p?.related ?? []) as Artist[]))),
+          tracks: dedupe(interleave(payloads.map((p) => (p?.top_tracks ?? []) as Track[]))).slice(0, PERSONALIZED_ROW_LIMIT),
+          albums: dedupe(interleave(payloads.map((p) => (p?.albums ?? []) as Album[]))).slice(0, PERSONALIZED_ROW_LIMIT),
+          artists: dedupe(interleave(payloads.map((p) => (p?.related ?? []) as Artist[]))).slice(0, PERSONALIZED_ROW_LIMIT),
         })
       } catch (e) {
         console.error('Erro ao montar fileiras personalizadas:', e)
@@ -295,6 +311,9 @@ function HomeContent() {
       {heardAlbums.length > 0 && <AlbumRow title="Álbuns que você ouviu" albums={heardAlbums} />}
 
       {/* Personalizadas dos5 mais ouvidos — resolvem juntas num lote só */}
+      {topArtistTracks.map(({ artist, tracks }) => (
+        <SectionRow key={artist.id} title={`Faixas mais tocadas de ${artist.name}`} tracks={tracks} />
+      ))}
       {picks && picks.tracks.length > 0 && <SectionRow title="Faixas dos seus mais ouvidos" tracks={picks.tracks} />}
       {picks && picks.albums.length > 0 && <AlbumRow title="Álbuns dos seus mais ouvidos" albums={picks.albums} />}
       {picks && picks.artists.length > 0 && <ArtistRow title="Artistas parecidos com seus mais ouvidos" artists={picks.artists} />}
