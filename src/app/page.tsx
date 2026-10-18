@@ -294,9 +294,13 @@ function HomeContent() {
       {topTracks.length > 0 && <SectionRow title="Faixas mais tocadas" tracks={topTracks} />}
       {heardAlbums.length > 0 && <AlbumRow title="Álbuns que você ouviu" albums={heardAlbums} />}
 
-      {/* Personalizadas dos5 mais ouvidos — resolvem juntas num lote só */}
-      {picks && picks.tracks.length > 0 && <SectionRow title="Faixas dos seus mais ouvidos" tracks={picks.tracks} />}
-      {picks && picks.albums.length > 0 && <AlbumRow title="Álbuns dos seus mais ouvidos" albums={picks.albums} />}
+      {/* Personalizadas dos5 mais ouvidos — resolvem juntas num lote só.
+          Só a escolha do artista vem do histórico: o conteúdo é o que o canal
+          entrega (search.list sem `order` = relevância/recentidade), não as
+          faixas que você tocou — por isso "de quem você ouve" e não
+          "seus mais tocados". */}
+      {picks && picks.tracks.length > 0 && <SectionRow title="Faixas de quem você ouve" tracks={picks.tracks} />}
+      {picks && picks.albums.length > 0 && <AlbumRow title="Álbuns de quem você ouve" albums={picks.albums} />}
       {picks && picks.artists.length > 0 && <ArtistRow title="Artistas parecidos com seus mais ouvidos" artists={picks.artists} />}
 
       {trending.length > 0 && (
