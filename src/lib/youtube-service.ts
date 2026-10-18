@@ -590,9 +590,7 @@ export async function getYouTubeChannel(
   }
 
   const [videosData, playlistsData, relatedData] = await Promise.all([
-    // order=viewCount entrega as faixas mais tocadas do canal, não as mais
-    // recentes — é o que a página do artista rotula como "Top Músicas".
-    safeSearch({ part: 'snippet', channelId, type: 'video', maxResults: String(limit), order: 'viewCount', videoEmbeddable: 'true', videoSyndicated: 'true' }),
+    safeSearch({ part: 'snippet', channelId, type: 'video', maxResults: String(limit), videoEmbeddable: 'true', videoSyndicated: 'true' }),
     safeSearch({ part: 'snippet', channelId, type: 'playlist', maxResults: String(limit) }),
     safeSearch({ part: 'snippet', q: title, type: 'channel', maxResults: String(limit) }),
   ])
