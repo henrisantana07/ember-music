@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense, useCallback } from 'react'
+import { useEffect, useMemo, useState, Suspense, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { SectionRow } from '@/components/SectionRow'
@@ -12,11 +12,13 @@ import { EmptyState, LoadingState } from '@/components/ui/states'
 import { Lottie } from '@/components/ui/LottieLazy'
 import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
 import { useUser } from '@/hooks/use-user'
+import { useArtistsStore } from '@/lib/artists-store'
 import { getPlaybackHistory } from '@/lib/playback-history'
 import {
   rankArtistsFromHistory,
   tracksFromHistory,
   albumsFromHistory,
+  applyFollowedArtistImages,
   interleave,
   dedupe,
 } from '@/lib/personalized-rows'
@@ -178,6 +180,19 @@ function HomeContent() {
   const [heardAlbums, setHeardAlbums] = useState<Album[]>([])
   const [picks, setPicks] = useState<{ tracks: Track[]; albums: Album[]; artists: Artist[] } | null>(null)
 
+  // O Sidebar (presente no layout) já popula o store de artistas seguidos.
+  // Assinamos aqui em vez de consultar de novo: a foto de perfil prevalece
+  // sobre a capa do álbum e se atualiza na hora se você seguir alguém.
+  const followedArtists = useArtistsStore((s) => s.artists)
+  const followedImages = useMemo(
+    () => new Map(followedArtists.map((a) => [a.artist_id, a.artist_data?.image ?? ''])),
+    [followedArtists],
+  )
+  const displayTopArtists = useMemo(
+    () => applyFollowedArtistImages(topArtists, followedImages),
+    [topArtists, followedImages],
+  )
+
   useEffect(() => {
     async function fetchHome() {
       try {
@@ -290,7 +305,7 @@ function HomeContent() {
       </div>
 
       {/* Personalizadas do histórico — chegam junto com o primeiro paint */}
-      {topArtists.length > 0 && <ArtistRow title="Artistas mais ouvidos" artists={topArtists} />}
+      {displayTopArtists.length > 0 && <ArtistRow title="Artistas mais ouvidos" artists={displayTopArtists} />}
       {topTracks.length > 0 && <SectionRow title="Faixas mais tocadas" tracks={topTracks} />}
       {heardAlbums.length > 0 && <AlbumRow title="Álbuns que você ouviu" albums={heardAlbums} />}
 

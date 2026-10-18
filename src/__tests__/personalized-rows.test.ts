@@ -3,6 +3,7 @@ import {
   rankArtistsFromHistory,
   tracksFromHistory,
   albumsFromHistory,
+  applyFollowedArtistImages,
   interleave,
   dedupe,
 } from '@/lib/personalized-rows'
@@ -91,6 +92,50 @@ describe('rankArtistsFromHistory', () => {
     const ranked = rankArtistsFromHistory(history([alpha, 'data-invalida']))
 
     expect(ranked.map((a) => a.id)).toEqual(['c-alpha'])
+  })
+})
+
+describe('applyFollowedArtistImages', () => {
+  it('substitui a capa do track pela foto de perfil salva em followed_artists', () => {
+    const artists = rankArtistsFromHistory(
+      history([makeTrack({ artist_id: 'c1', artist_name: 'Alpha', image: 'capa-do-album.jpg' }), '2026-10-17T10:00:00Z']),
+    )
+    expect(artists[0].image).toBe('capa-do-album.jpg')
+
+    const withPhoto = applyFollowedArtistImages(artists, new Map([['c1', 'foto-perfil.jpg']]))
+
+    expect(withPhoto[0].image).toBe('foto-perfil.jpg')
+    expect(withPhoto[0].image_xl).toBe('foto-perfil.jpg')
+    expect(withPhoto[0].id).toBe('c1')
+    expect(withPhoto[0].name).toBe('Alpha')
+  })
+
+  it('mantém a capa para quem não está seguido', () => {
+    const artists = rankArtistsFromHistory(
+      history([makeTrack({ artist_id: 'c1', artist_name: 'Alpha', image: 'capa.jpg' }), '2026-10-17T10:00:00Z']),
+    )
+
+    const result = applyFollowedArtistImages(artists, new Map([['outro-canal', 'foto.jpg']]))
+
+    expect(result[0].image).toBe('capa.jpg')
+  })
+
+  it('ignora registro seguido que não tem imagem salva', () => {
+    const artists = rankArtistsFromHistory(
+      history([makeTrack({ artist_id: 'c1', image: 'capa.jpg' }), '2026-10-17T10:00:00Z']),
+    )
+
+    const result = applyFollowedArtistImages(artists, new Map([['c1', '']]))
+
+    expect(result[0].image).toBe('capa.jpg')
+  })
+
+  it('mapa vazio devolve a mesma lista', () => {
+    const artists = rankArtistsFromHistory(
+      history([makeTrack({ artist_id: 'c1', image: 'capa.jpg' }), '2026-10-17T10:00:00Z']),
+    )
+
+    expect(applyFollowedArtistImages(artists, new Map())).toEqual(artists)
   })
 })
 

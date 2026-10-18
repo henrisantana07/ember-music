@@ -46,6 +46,22 @@ export function rankArtistsFromHistory(history: PlaybackHistoryItem[]): Artist[]
     }))
 }
 
+// A imagem dentro de `track_data` é a capa do álbum/playlist que tocou — não a
+// foto do artista. Para quem o usuário segue, prevalece a imagem salva em
+// `followed_artists.artist_data`, que carrega o avatar real do canal. Quem não
+// está seguido mantém a capa como fallback.
+export function applyFollowedArtistImages(
+  artists: Artist[],
+  followedById: Map<string, string>,
+): Artist[] {
+  if (followedById.size === 0) return artists
+  return artists.map((artist) => {
+    const saved = followedById.get(artist.id)
+    if (!saved) return artist
+    return { ...artist, image: saved, image_xl: saved }
+  })
+}
+
 export function tracksFromHistory(history: PlaybackHistoryItem[]): Track[] {
   const seen = new Set<string>()
   const tracks: Track[] = []
