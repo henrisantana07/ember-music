@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, Suspense, useCallback } from 'react'
+import { useEffect, useMemo, useState, Suspense, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { SectionRow } from '@/components/SectionRow'
@@ -179,12 +179,10 @@ function HomeContent() {
   const [topTracks, setTopTracks] = useState<Track[]>([])
   const [heardAlbums, setHeardAlbums] = useState<Album[]>([])
   const [picks, setPicks] = useState<{ tracks: Track[]; albums: Album[]; artists: Artist[] } | null>(null)
-  // Fileiras da API: o fetch fica adiado até o usuário chegar perto, porque
-  // cada artista custa ~300 unidades de cota do YouTube (3 buscas de 100).
+  // Fileiras da API: o fetch roda só num clique explícito — cada artista custa
+  // ~300 unidades de cota do YouTube (3 buscas de 100).
   const [topChannels, setTopChannels] = useState<Artist[]>([])
-  const [picksNearViewport, setPicksNearViewport] = useState(false)
-  const picksRequestedRef = useRef(false)
-  const picksSentinelRef = useRef<HTMLDivElement | null>(null)
+  const [picksLoading, setPicksLoading] = useState(false)
 
   // O Sidebar (presente no layout) já popula o store de artistas seguidos.
   // Assinamos aqui em vez de consultar de novo: a foto de perfil prevalece
@@ -243,7 +241,7 @@ function HomeContent() {
       setTopArtists(artists)
       setTopTracks(tracksFromHistory(history))
       setHeardAlbums(albumsFromHistory(history))
-      setTopChannels(artists.slice(0, 5))
+      setTopChannels(artists.slice(0, 3))
     }
 
     loadHistory()
@@ -252,56 +250,33 @@ function HomeContent() {
     }
   }, [user])
 
-  // 2) Sentinel — sinaliza quando o usuário chega perto das fileiras da API.
-  //    O rootMargin de 400px dá folga para o fetch terminar antes delas
-  //    aparecerem, sem disparar para quem nunca rola até lá.
-  useEffect(() => {
-    const node = picksSentinelRef.current
-    if (typeof IntersectionObserver === 'undefined' || !node) {
-      // Sem IO disponível, não adiamos: o pior caso é carregar junto, que já
-      // era o comportamento anterior.
-      setPicksNearViewport(true)
-      return
+  // 2) Fileiras da API — nada roda em segundo plano: o fetch só acontece quando
+  //    o usuário pedir. Se falhar, `picks` continua nulo e o botão reaparece,
+  //    permitindo tentar de novo.
+  async function loadPicks() {
+    if (picksLoading || topChannels.length === 0) return
+    setPicksLoading(true)
+    try {
+      const responses = await Promise.all(
+        topChannels.map((artist) =>
+          fetch(`/api/youtube?endpoint=artists&id=${encodeURIComponent(artist.id)}&limit=50`),
+        ),
+      )
+      const payloads = await Promise.all(responses.map((res) => (res.ok ? res.json() : null)))
+
+      // Um único setState: as três fileiras aparecem juntas e o conteúdo
+      // editorial embaixo desloca só uma vez.
+      setPicks({
+        tracks: dedupe(interleave(payloads.map((p) => (p?.top_tracks ?? []) as Track[]))),
+        albums: dedupe(interleave(payloads.map((p) => (p?.albums ?? []) as Album[]))),
+        artists: dedupe(interleave(payloads.map((p) => (p?.related ?? []) as Artist[]))),
+      })
+    } catch (e) {
+      console.error('Erro ao montar fileiras personalizadas:', e)
+    } finally {
+      setPicksLoading(false)
     }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) setPicksNearViewport(true)
-      },
-      { rootMargin: '400px' },
-    )
-    observer.observe(node)
-    return () => observer.disconnect()
-  }, [])
-
-  // 3) Fetch das fileiras da API — uma única vez, e só com histórico e
-  //    viewport prontos. `picksRequestedRef` impede duplicar a chamada.
-  useEffect(() => {
-    if (!user || topChannels.length === 0 || !picksNearViewport) return
-    if (picksRequestedRef.current) return
-    picksRequestedRef.current = true
-
-    ;(async () => {
-      try {
-        const responses = await Promise.all(
-          topChannels.map((artist) =>
-            fetch(`/api/youtube?endpoint=artists&id=${encodeURIComponent(artist.id)}&limit=50`),
-          ),
-        )
-        const payloads = await Promise.all(responses.map((res) => (res.ok ? res.json() : null)))
-
-        // Um único setState: as três fileiras da API aparecem juntas e o
-        // conteúdo editorial embaixo desloca só uma vez.
-        setPicks({
-          tracks: dedupe(interleave(payloads.map((p) => (p?.top_tracks ?? []) as Track[]))),
-          albums: dedupe(interleave(payloads.map((p) => (p?.albums ?? []) as Album[]))),
-          artists: dedupe(interleave(payloads.map((p) => (p?.related ?? []) as Artist[]))),
-        })
-      } catch (e) {
-        console.error('Erro ao montar fileiras personalizadas:', e)
-      }
-    })()
-  }, [user, topChannels, picksNearViewport])
+  }
 
   const hasMore = loadedGenres.size < GENRE_NAMES.length
 
@@ -345,11 +320,18 @@ function HomeContent() {
       {topTracks.length > 0 && <SectionRow title="Faixas mais tocadas" tracks={topTracks} />}
       {heardAlbums.length > 0 && <AlbumRow title="Álbuns que você ouviu" albums={heardAlbums} />}
 
-      {/* Dispara o fetch das fileiras abaixo só quando o usuário chega perto
-          delas — cada artista custa ~300 unidades de cota do YouTube. */}
-      <div ref={picksSentinelRef} aria-hidden className="h-px" />
+      {/* Recomendações da API: nada roda em segundo plano. O bloco some quando
+          não há histórico — mesma regra das outras fileiras personalizadas. */}
+      {topChannels.length > 0 && !picks && !picksLoading && (
+        <EmptyState
+          title="Recomendações para você"
+          description={`Baseadas nos ${topChannels.length} artistas que você mais ouviu.`}
+          action={{ label: 'Carregar recomendações', onClick: loadPicks }}
+        />
+      )}
+      {picksLoading && <LoadingState title="Buscando recomendações…" />}
 
-      {/* Personalizadas dos5 mais ouvidos — resolvem juntas num lote só.
+      {/* Personalizadas dos seus mais ouvidos — chegam juntas num lote só.
           Só a escolha do artista vem do histórico: o conteúdo é o que o canal
           entrega (search.list sem `order` = relevância/recentidade), não as
           faixas que você tocou — por isso "de quem você ouve" e não
