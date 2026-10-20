@@ -68,7 +68,7 @@ export function Topbar() {
   }
 
   return (
-    <header className="h-16 flex items-center justify-center px-6 flex-shrink-0 relative" style={{ backgroundColor: 'var(--bg-base)' }}>
+    <header className="h-16 flex items-center justify-center px-6 flex-shrink-0 relative border-b border-outline-variant" style={{ backgroundColor: 'var(--bg-base)' }}>
       <img
         src="/branding/icon.svg"
         alt=""

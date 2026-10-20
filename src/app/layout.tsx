@@ -63,7 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="flex flex-1 overflow-hidden">
               <Sidebar />
               <div className="flex-1 flex flex-col overflow-hidden">
-                <Suspense fallback={<div className="h-16 flex-shrink-0" />}><Topbar /></Suspense>
+                <Suspense fallback={<div className="h-16 flex-shrink-0 border-b border-outline-variant" />}><Topbar /></Suspense>
                 <MainContainer>
                   <PageTransition>
                     {children}
