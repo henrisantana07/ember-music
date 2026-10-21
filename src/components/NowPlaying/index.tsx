@@ -14,8 +14,8 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from 
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  Play,
-  Music, Trash2, GripVertical, MoreHorizontal, Share2,
+  Play, Pause,
+  Music, Trash2, MoreHorizontal, Share2,
 } from 'lucide-react'
 import { extractDominantColor } from '@/lib/color/extractDominantColor'
 import { getHighResCoverUrl } from '@/lib/image-utils'
@@ -49,8 +49,8 @@ function QueueSection({ label }: { label: string }) {
   )
 }
 
-const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, index, isCurrent, isPlaying, onPlay, onRemove, onVisitArtist, minimized }: {
-  track: Track; sortableId: string; index: number; isCurrent: boolean; isPlaying: boolean;
+const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, index, displayNumber, isCurrent, isPlaying, onPlay, onRemove, onVisitArtist, minimized }: {
+  track: Track; sortableId: string; index: number; displayNumber: number; isCurrent: boolean; isPlaying: boolean;
   onPlay: (index: number) => void; onRemove: (index: number) => void; onVisitArtist: (artistId: string) => void; minimized?: boolean
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: sortableId })
@@ -73,55 +73,89 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-1.5 ${minimized ? 'px-1' : 'px-2'} py-2 rounded-lg group transition-colors ${
+      /* Linha inteira como área de arraste (padrão Spotify). O sensor já exige
+         `distance: 8`, então clique e hover seguem normais — só um arraste acima
+         de 8px reordena. `md:touch-none` libera o gesto só no desktop: em telas
+         de toque ele disputaria com o scroll vertical da lista. */
+      {...attributes}
+      {...listeners}
+      /* `attributes` do dnd-kit vem com `role="button"` + `tabIndex={0}` — feitos
+         para o elemento ser o próprio botão de arrastar. Aqui a linha é um
+         contêiner com botões dentro, e o projeto só tem `PointerSensor` (sem
+         arraste por teclado), então sobrariam N paradas de tab inúteis e uma
+         semântica errada. */
+      role="listitem"
+      tabIndex={undefined}
+      className={`flex items-center ${minimized ? 'gap-1.5 px-1' : 'gap-3 px-2'} py-2 rounded-lg group transition-colors md:touch-none ${
         isCurrent ? 'bg-[var(--accent-muted)]' : 'hover:bg-[var(--bg-elevated)]'
       }`}
     >
-      <button {...attributes} {...listeners} className="h-9 w-9 -ml-1 inline-flex items-center justify-center cursor-grab active:cursor-grabbing touch-none rounded-full state-layer" style={{ color: 'var(--text-disabled)' }} aria-label="Arrastar">
-        <GripVertical className="w-5 h-5" />
-      </button>
-
-      {isCurrent && isPlaying ? (
-        <div className="w-10 h-10 rounded flex-shrink-0 overflow-hidden relative flex items-center justify-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
-          <div className="animate-waveform">
-            <span /><span /><span />
-          </div>
-        </div>
-      ) : (
-        <button onClick={() => onPlay(index)} className="w-10 h-10 rounded flex-shrink-0 overflow-hidden relative">
-          {track.image ? (
-            <img src={track.image} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
-              <Music className="w-4 h-4" style={{ color: 'var(--text-disabled)' }} />
+      {/* Coluna do número: equalizador na faixa atual, play no hover nas demais.
+          Substitui o GripVertical de 36px, que ficava abaixo do mínimo M3 de 48px. */}
+      <div className="w-6 flex-none flex items-center justify-center">
+        {isCurrent ? (
+          isPlaying ? (
+            <div className="animate-waveform" aria-hidden>
+              <span /><span /><span />
             </div>
-          )}
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <Play className="w-4 h-4 text-white" fill="white" />
+          ) : (
+            <Pause className="w-3.5 h-3.5" fill="currentColor" style={{ color: 'var(--accent-from)' }} />
+          )
+        ) : (
+          <>
+            <span className="group-hover:hidden text-label-medium tabular-nums" style={{ color: 'var(--text-disabled)' }}>
+              {displayNumber}
+            </span>
+            <button
+              onClick={() => onPlay(index)}
+              className="hidden group-hover:inline-flex w-6 h-12 items-center justify-center"
+              style={{ color: 'var(--text-primary)' }}
+              aria-label={`Tocar ${track.name}`}
+            >
+              <Play className="w-4 h-4" fill="currentColor" />
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* A capa nunca some mais: antes o waveform a substituía enquanto tocava,
+          escondendo a arte da faixa atual. */}
+      <button onClick={() => onPlay(index)} className="w-10 h-10 rounded flex-shrink-0 overflow-hidden relative">
+        {track.image ? (
+          <img src={track.image} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
+            <Music className="w-4 h-4" style={{ color: 'var(--text-disabled)' }} />
           </div>
-        </button>
-      )}
+        )}
+        {!isCurrent && (
+          <span className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden>
+            <Play className="w-4 h-4 text-white" fill="white" />
+          </span>
+        )}
+      </button>
 
       <div className="min-w-0 flex-1">
         <p className={`text-body-medium truncate ${isCurrent ? 'font-semibold' : ''}`} style={{ color: isCurrent ? 'var(--accent-from)' : 'var(--text-primary)' }}>
           {displayName}
         </p>
-        {minimized ? (
-          <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>
-            {track.artist_name} · {formatDuration(Math.floor(track.duration))}
-          </p>
-        ) : (
-          <>
-            <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
-            <p className="text-label-medium" style={{ color: 'var(--text-disabled)' }}>{formatDuration(Math.floor(track.duration))}</p>
-          </>
-        )}
+        <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>
+          {minimized ? `${track.artist_name} · ${formatDuration(Math.floor(track.duration))}` : track.artist_name}
+        </p>
       </div>
+
+      {/* Duração em coluna própria à direita (Spotify). Antes era uma terceira
+          linha de texto sob o artista, alongando a linha sem necessidade. */}
+      {!minimized && (
+        <span className="flex-none text-label-medium tabular-nums" style={{ color: 'var(--text-disabled)' }}>
+          {formatDuration(Math.floor(track.duration))}
+        </span>
+      )}
 
       <div className="relative flex-none z-10">
         <button
           {...triggerProps}
-          className="h-11 w-11 rounded-full inline-flex items-center justify-center transition-colors state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          className="h-12 w-12 rounded-full inline-flex items-center justify-center transition-colors state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           title="Mais opções"
           aria-label={`Mais opções para ${track.name}`}
         >
@@ -654,6 +688,9 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                           track={track}
                           sortableId={`${index}::${track.id}`}
                           index={index}
+                          /* "Próximas" recomeça em 1 logo abaixo da atual, como no
+                             Spotify, em vez de seguir a posição absoluta (2, 3, 4…). */
+                          displayNumber={index > currentIndex ? index - currentIndex : index + 1}
                           isCurrent={track.id === currentTrack.id}
                           isPlaying={isPlaying}
                           onPlay={playTrackAt}
