@@ -1,24 +1,41 @@
 'use client'
 
-interface ShareButtonProps {
+export interface ShareContent {
   title: string
   text?: string
   url?: string
+}
+
+interface ShareButtonProps extends ShareContent {
   variant?: 'icon' | 'full'
+}
+
+/**
+ * Caminho único de compartilhamento do app: Web Share API quando existe, com
+ * fallback para copiar o link.
+ *
+ * Fica fora do componente porque o menu "Mais opções" da fila precisa da mesma
+ * lógica — e um `<button>` dentro de um `MenuItem` seria HTML inválido, então o
+ * menu chama a ação em vez de renderizar o botão.
+ */
+export async function shareContent({ title, text, url }: ShareContent) {
+  const shareUrl = url ?? window.location.href
+  const shareText = text ?? `Ouça "${title}" no Ember Music`
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, text: shareText, url: shareUrl })
+      return
+    } catch {}
+  }
+  await navigator.clipboard.writeText(shareUrl)
 }
 
 export function ShareButton({ title, text, url, variant = 'icon' }: ShareButtonProps) {
   const shareUrl = url ?? window.location.href
   const shareText = text ?? `Ouça "${title}" no Ember Music`
 
-  async function handleShare() {
-    if (navigator.share) {
-      try {
-        await navigator.share({ title, text: shareText, url: shareUrl })
-        return
-      } catch {}
-    }
-    await navigator.clipboard.writeText(shareUrl)
+  function handleShare() {
+    void shareContent({ title, text, url })
   }
 
   function handleWhatsApp(e: React.MouseEvent) {
