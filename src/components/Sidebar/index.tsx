@@ -155,16 +155,7 @@ export default function Sidebar() {
 
   const sidebarContent = (
     <>
-      <div className="flex-none flex items-center h-14 px-4 gap-3">
-        <RailItem show={!collapsed}>
-          <Link href="/" className="block truncate text-lg font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-            <span className="gradient-accent-text">Ember</span>
-            <span> Music</span>
-          </Link>
-        </RailItem>
-      </div>
-
-      <nav className="flex-none px-2 space-y-0.5">
+      <nav className="flex-none px-2 pt-2 space-y-0.5">
         {NAV_SECTION1.map(item => (
           <NavLink key={item.href} href={item.href} label={item.label} icon={{ outline: item.outline, fill: item.fill }} />
         ))}

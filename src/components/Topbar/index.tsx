@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { saveSearchHistory } from '@/lib/search-history'
@@ -93,28 +94,14 @@ export function Topbar() {
           className="w-24 h-20 object-cover pointer-events-none"
           style={{ filter: 'drop-shadow(0 0 8px rgba(255,106,0,0.4))' }}
         />
-        <button
-          onClick={() => router.back()}
-          className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer"
-          style={{ color: 'var(--text-secondary)' }}
-          title="Voltar"
-          aria-label="Voltar"
+        <Link
+          href="/"
+          className="whitespace-nowrap text-lg font-bold tracking-tight"
+          style={{ color: 'var(--text-primary)' }}
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <button
-          onClick={() => window.history.forward()}
-          className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer"
-          style={{ color: 'var(--text-secondary)' }}
-          title="Avançar"
-          aria-label="Avançar"
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+          <span className="gradient-accent-text">Ember</span>
+          <span> Music</span>
+        </Link>
       </div>
       <form onSubmit={handleSearch} className="w-full max-w-xl relative">
         <div className="relative">
@@ -169,7 +156,30 @@ export function Topbar() {
 
 
 
-      <div className="absolute right-6 top-1/2 -translate-y-1/2" ref={dropdownRef}>
+      <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-1">
+        <button
+          onClick={() => router.back()}
+          className="hidden md:inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer"
+          style={{ color: 'var(--text-secondary)' }}
+          title="Voltar"
+          aria-label="Voltar"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <button
+          onClick={() => window.history.forward()}
+          className="hidden md:inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer"
+          style={{ color: 'var(--text-secondary)' }}
+          title="Avançar"
+          aria-label="Avançar"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+        <div className="relative" ref={dropdownRef}>
         {user ? (
           <button
             onClick={() => setShowDropdown(!showDropdown)}
@@ -226,6 +236,7 @@ export function Topbar() {
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
       </div>
     </header>
   )
