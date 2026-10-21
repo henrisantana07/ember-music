@@ -240,9 +240,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const immersive = useSidebarStore((s) => s.immersive)
   const toggleImmersive = useSidebarStore((s) => s.toggleImmersive)
 
-  // Crédito "A seguir" do card: só leitura do store local — zero rede, zero quota.
-  const nextTrack = currentIndex >= 0 ? queue[currentIndex + 1] : undefined
-
   // Espelha o modo no `<html>` para o CSS conseguir dar a faixa do Topbar
   // liberada (64px) de volta pra capa. Sai junto com o componente, que só
   // existe enquanto a hero está aberta.
@@ -631,50 +628,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             >
               {immersive ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
             </button>
-          </div>
-
-          {/* Card "Créditos" do spec. Tudo de dentro do store local (`track_data`
-              e a fila) — nenhuma chamada de rede, nenhuma quota. `dl/dt/dd` para
-              o par label↔valor ficar acessível de verdade, e `truncate` porque a
-              regra do projeto proíbe `overflow: hidden` cego cortando nome. */}
-          <div className="w-full max-w-[560px] rounded-2xl px-5 py-4 text-left" style={{ backgroundColor: 'var(--bg-elevated)' }}>
-            <h2 className="text-label-medium font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--text-secondary)' }}>
-              Créditos
-            </h2>
-            <dl className="space-y-2">
-              <div className="flex items-baseline gap-3 min-h-[24px]">
-                <dt className="w-16 flex-none text-label-medium" style={{ color: 'var(--text-accent)' }}>Artista</dt>
-                <dd className="min-w-0 flex-1 text-body-medium font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                  {currentTrack.artist_name}
-                </dd>
-              </div>
-              <div className="flex items-baseline gap-3 min-h-[24px]">
-                <dt className="w-16 flex-none text-label-medium" style={{ color: 'var(--text-accent)' }}>Álbum</dt>
-                <dd className="min-w-0 flex-1 text-body-medium font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                  {currentTrack.album_name || '—'}
-                </dd>
-              </div>
-              <div className="flex items-baseline gap-3 min-h-[24px]">
-                <dt className="w-16 flex-none text-label-medium" style={{ color: 'var(--text-secondary)' }}>Duração</dt>
-                <dd className="min-w-0 flex-1 text-body-medium font-medium" style={{ color: 'var(--text-primary)' }}>
-                  {formatDuration(Math.floor(currentTrack.duration))}
-                </dd>
-              </div>
-              <div className="flex items-baseline gap-3 min-h-[24px]">
-                <dt className="w-16 flex-none text-label-medium" style={{ color: 'var(--text-secondary)' }}>Fonte</dt>
-                <dd className="min-w-0 flex-1 text-body-medium font-medium" style={{ color: 'var(--text-primary)' }}>
-                  {currentTrack.youtubeVideoId ? 'YouTube' : 'Biblioteca local'}
-                </dd>
-              </div>
-              {/* `title` porque `truncate` corta com reticências: o texto completo
-                  continua acessível sem usar `overflow: hidden` às cegas. */}
-              <div className="flex items-baseline gap-3 min-h-[24px]">
-                <dt className="w-16 flex-none text-label-medium" style={{ color: 'var(--text-secondary)' }}>A seguir</dt>
-                <dd className="min-w-0 flex-1 text-body-medium font-medium truncate" style={{ color: 'var(--text-primary)' }} title={nextTrack ? `${nextTrack.name} — ${nextTrack.artist_name}` : undefined}>
-                  {nextTrack ? `${nextTrack.name} — ${nextTrack.artist_name}` : 'Fim da fila'}
-                </dd>
-              </div>
-            </dl>
           </div>
 
           {toast && (

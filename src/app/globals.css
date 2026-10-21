@@ -413,14 +413,15 @@ body {
   animation: cover-in 300ms ease-out;
 }
 
-/* Reserva vertical: pb-20 80 + main 16 + coluna 24 + (título 60 + ações 48 +
-   card Créditos ~190 com o crédito "A seguir" + 3 gaps de 16) ≈ 466px.
+/* Reserva vertical: pb-20 80 + main 16 + coluna 24 + (pt-2 8 + título 70 +
+   ações 48 + 2 gaps de 16 + pb-4 16) ≈ 300px de conteúdo real.
 
-   O cabeçalho de 64px que existia aqui foi removido junto com o título
-   duplicado da faixa, mas a reserva continuou em 520px de propósito: a capa
-   só cresce em tela cheia (decisão de layout), então esses 64px viram
-   respiro — a coluna se centraliza com `safe center` em vez de espremer o
-   conteúdo contra a capa.
+   Os 520px da fórmula não são essa soma: sobraram do cabeçalho de 64px e do
+   card de Créditos, ambos removidos. A reserva ficou em 520 de propósito —
+   a capa só cresce em tela cheia (decisão de layout), então a diferença vira
+   respiro e a coluna se centraliza com `safe center`. É esse alinhamento
+   central no eixo y que mantém a capa na posição que ela tinha antes do card
+   existir.
 
    A coluna ainda rola se o viewport for menor que isso — rolagem é a rede de
    segurança, nunca corte. */
