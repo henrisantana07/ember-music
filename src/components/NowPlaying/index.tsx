@@ -704,12 +704,12 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             className={`w-full -ml-4 -mr-4 -mb-4 md:ml-0 md:-mr-6 ${queueMinimized ? 'md:w-72' : 'md:w-auto md:flex-[2]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none ${showQueueOnMobile ? '' : 'hidden md:flex'}`}
             style={{ backgroundColor: 'var(--bg-elevated)' }}
           >
-            {/* Tela cheia na divisa entre a capa e a fila: `-left-12` (−48px)
-                é a largura inteira do botão, então ele fica totalmente fora do
-                painel — a borda direita encosta na borda esquerda do #121212 e
-                os 24px que sobram tomam o gap inteiro e mordem a coluna da
-                capa. É esse equilíbrio pendurado na fronteira que o faz ler
-                como puxador, não como um ícone do painel. Continua fora da
+            {/* Tela cheia na divisa entre a capa e a fila: `-left-14` (−56px)
+                passa da largura do botão (48px), então ele fica inteiramente
+                fora do painel com 8px de respiro da borda do #121212 — 16px
+                dentro do gap e os outros 32px mordendo a coluna da capa.
+                Quanto mais pra esquerda, mais ele lê como puxador da
+                fronteira e menos como ícone do painel. Continua fora da
                 condição do cabeçalho, então existe também com a fila
                 recolhida.
 
@@ -723,7 +723,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 eles some em qualquer uma delas. */}
             <button
               onClick={toggleImmersive}
-              className={`absolute -left-12 top-1 z-10 h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full border border-outline-variant transition-colors state-layer ${
+              className={`absolute -left-14 top-1 z-10 h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full border border-outline-variant transition-colors state-layer ${
                 immersive ? 'text-[var(--accent-from)]' : 'text-[var(--text-secondary)]'
               }`}
               style={{ backgroundColor: 'var(--bg-surface)' }}
@@ -734,8 +734,8 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
               {immersive ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
             </button>
 
-            {/* Sem inset extra: com `-left-12` o botão ficou inteiramente fora
-                do painel, então o cabeçalho volta ao `px-3` original — o
+            {/* Sem inset extra: com `-left-14` o botão está inteiramente fora
+                do painel, então o cabeçalho mantém o `px-3` original — o
                 mesmo alinhamento das linhas da lista (`px-1` + `px-2` = 12px).
                 Empurrar o texto pra direita em vez de pra baixo foi o que
                 devolveu altura às faixas: sem faixa vazia, o cabeçalho inteiro
