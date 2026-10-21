@@ -15,11 +15,13 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import {
   Play,
-  Music, Trash2, GripVertical, MoreHorizontal,
+  Music, Trash2, GripVertical, MoreHorizontal, MoreVertical,
 } from 'lucide-react'
 import { extractDominantColor } from '@/lib/color/extractDominantColor'
 import { getHighResCoverUrl } from '@/lib/image-utils'
 import { useMenu, MenuItem, MenuPanel, MenuPresence } from '@/components/ui/Menu'
+import { PlaylistModal } from '@/components/PlaylistModal'
+import { ShareButton } from '@/components/ShareButton'
 import { motion } from 'motion/react'
 import { confirmPopProps } from '@/lib/motion'
 import { useConfirmAnimation } from '@/lib/motion-hooks'
@@ -39,7 +41,10 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    borderLeft: isCurrent ? '3px solid' : undefined,
+    /* `border-left` ocupa espaço no box: só a faixa atual recebeu 3px, então o
+       conteúdo dela ficava deslocado 3px à direita das vizinhas. Todas passam
+       a ter os 3px — transparentes nas demais — e só a atual é pintada. */
+    borderLeft: isCurrent ? '3px solid' : '3px solid transparent',
     borderImage: isCurrent ? 'linear-gradient(180deg, var(--accent-from), var(--accent-to)) 1' : undefined,
   }
   const words = track.name.split(/\s+/)
@@ -144,6 +149,13 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const removeFromQueue = usePlayerStore((s) => s.removeFromQueue)
   const reorderQueue = usePlayerStore((s) => s.reorderQueue)
   const clearQueue = usePlayerStore((s) => s.clearQueue)
+  // O rodapé padrão tem h-20 (80px); em mini-mode é h-14 só no mobile e
+  // `md:hidden` no desktop (sem rodapé). O respiro da hero acompanha isso
+  // para não abrir uma banda vazia no fim.
+  const miniPlayer = usePlayerStore((s) => s.miniPlayer)
+
+  const menu = useMenu()
+  const [playlistOpen, setPlaylistOpen] = useState(false)
 
   // Leva à página do artista da faixa, onde o usuário pode explorar novas faixas dele
   const visitArtist = useCallback((artistId: string) => {
@@ -374,7 +386,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
   return (
     <div
-      className={`h-full relative flex flex-col overflow-hidden pb-20 ${onClose ? '' : 'animate-slide-up'}`}
+      className={`h-full relative flex flex-col overflow-hidden ${miniPlayer ? 'pb-14 md:pb-0' : 'pb-20'} ${onClose ? '' : 'animate-slide-up'}`}
       style={{
         background: bgGradient,
         transition: `background 800ms ease${swipeOffset > 0 ? '' : ', transform 300ms cubic-bezier(0.32, 0.72, 0, 1)'}`,
@@ -393,7 +405,49 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
         }}
       />
 
-      <header className="relative flex items-center justify-end px-4 md:px-6 h-14 flex-none">
+      <header className="relative flex items-center gap-1 px-4 md:px-6 h-16 flex-none border-b border-outline-variant">
+        <button
+          {...menu.triggerProps}
+          className="h-12 w-12 inline-flex items-center justify-center rounded-full hover:bg-state-hover transition-colors state-layer"
+          style={{ color: 'var(--text-secondary)' }}
+          title="Mais opções da faixa"
+          aria-label="Mais opções da faixa atual"
+        >
+          <MoreVertical className="w-5 h-5" />
+        </button>
+
+        <ShareButton
+          title={currentTrack.name}
+          text={`Ouça "${currentTrack.name}" de ${currentTrack.artist_name} no Ember Music`}
+        />
+
+        <MenuPresence open={menu.open}>
+          <MenuPanel {...menu.panelProps} align="left">
+            <MenuItem onClick={() => { setPlaylistOpen(true); menu.close() }}>
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Adicionar à playlist
+            </MenuItem>
+            <MenuItem onClick={() => { menu.close(); visitArtist(currentTrack.artist_id) }}>
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Ver artista
+            </MenuItem>
+            <MenuItem onClick={() => { menu.close(); handleDownload() }}>
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Baixar música
+            </MenuItem>
+          </MenuPanel>
+        </MenuPresence>
+
+        <PlaylistModal open={playlistOpen} onClose={() => setPlaylistOpen(false)} track={currentTrack} />
+
+        <div className="flex-1" />
+
         <button
           onClick={() => setShowQueueOnMobile(!showQueueOnMobile)}
           className="md:hidden h-12 w-12 inline-flex items-center justify-center rounded-full hover:bg-state-hover transition-colors state-layer"
@@ -404,7 +458,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
         </button>
       </header>
 
-      <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-0 min-h-0 px-4 md:px-6 pb-4">
+      <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-6 min-h-0 px-4 md:px-6 pb-4">
         <div className={`flex-1 md:flex-[3] flex flex-col items-center justify-center gap-3 md:gap-4 min-h-0 overflow-hidden pt-1 md:pt-2 pb-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
           <div ref={coverRef} className={`now-cover relative flex-shrink-0${queueMinimized ? ' now-cover-min' : ''}`} style={{ aspectRatio: '1' }}>
             {baseCover && baseFailed !== currentTrack.id ? (
@@ -446,13 +500,13 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
           </div>
 
           <div className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
-            <button onClick={handleDownload} className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors hover:text-[var(--text-primary)] state-layer" aria-label="Download" title="Baixar música">
+            <button onClick={handleDownload} className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors hover:text-[var(--text-primary)] state-layer" aria-label="Download" title="Baixar música">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </button>
             {user && (
-              <button onClick={handleFavorite} className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors state-layer" aria-label="Favoritar" aria-pressed={isFav}>
+              <button onClick={handleFavorite} className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer" aria-label="Favoritar" aria-pressed={isFav}>
                 <motion.svg
                   {...confirmPopProps(
                     confirmFavorite.controls,
@@ -476,7 +530,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             )}
             <button
               onClick={() => visitArtist(currentTrack.artist_id)}
-              className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors hover:text-[var(--text-primary)] state-layer"
+              className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors hover:text-[var(--text-primary)] state-layer"
               aria-label={`Ver artista ${currentTrack.artist_name}`}
               title="Ver mais do artista"
             >
@@ -566,7 +620,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                   )}
                 </div>
                 {!queueMinimized && (
-                <div className="sticky bottom-0 z-10 flex-none flex items-center gap-2 px-2 py-8 border-t border-outline-variant pointer-events-none" style={{ backgroundColor: 'rgba(49, 45, 41, 0.13)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
+                <div className="sticky bottom-0 z-10 flex-none flex items-center gap-2 px-2 py-4 pointer-events-none" style={{ backgroundColor: 'rgba(49, 45, 41, 0.13)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
                   <button
                     onClick={() => { clearQueue(); showToast('Fila limpa') }}
                     className="pointer-events-auto flex items-center gap-2 px-4 min-h-[48px] rounded-lg text-label-large transition-colors state-layer"
