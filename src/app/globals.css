@@ -516,8 +516,14 @@ body {
 }
 
 /* Mesma composição de antes, só que com as cores vindo das props registradas:
-   glow chapado por cima, radial de três paradas embaixo, terminando em
-   `--bg-base` opaco aos 78% (a faixa onde o h1/artista se apoiam).
+   glow chapado por cima, radial embaixo terminando em `--bg-base` opaco aos
+   78% (a faixa onde o h1/artista se apoiam).
+
+   A ordem das paradas não segue mais c1→c2→c3: `--hero-c2` é a base do
+   radial, a 0%, carregando a cor predominante da capa a 95% de alpha. As
+   outras duas descem dela — c1 na faixa média e c3 na borda — até o fundo.
+   A nomeação ficou deliberadamente assim pra não renomear as props registradas
+   e arriscar quebrar a transição de quem já as referencia.
 
    A curva é ease-in-out em 900ms — simétrica, sem arranco no início, que é o
    que uma transição de cor precisa pra ler como "suave" e não como "atraso". */
@@ -526,8 +532,8 @@ body {
     linear-gradient(var(--hero-glow), var(--hero-glow)),
     radial-gradient(
       ellipse at 28% 18%,
-      var(--hero-c1) 0%,
-      var(--hero-c2) 30%,
+      var(--hero-c2) 0%,
+      var(--hero-c1) 30%,
       var(--hero-c3) 50%,
       var(--bg-base) 78%
     );
