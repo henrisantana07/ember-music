@@ -62,6 +62,7 @@ function RailItem({ show, children, className = '' }: { show: boolean; children:
 export default function Sidebar() {
   const pathname = usePathname()
   const collapsed = useSidebarStore((s) => s.collapsed)
+  const immersive = useSidebarStore((s) => s.immersive)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const supabase = createClient()
   const router = useRouter()
@@ -294,10 +295,15 @@ export default function Sidebar() {
     </>
   )
 
+  // `display: none` inline nos dois ramos (coluna e navegação inferior) em vez
+  // de `return null`: há hooks/effects depois deste ponto e sair cedo violaria
+  // as Rules of Hooks. O `aside` ainda tem ResizeObserver — ao sumir, ele
+  // reporta largura 0 e zera `--sidebar-w`, então o modal acompanha sozinho.
   return (
     <>
       <aside
         ref={desktopAsideRef}
+        style={{ display: immersive ? 'none' : undefined }}
         className={`hidden md:flex flex-col h-full overflow-hidden bg-[var(--bg-surface)] transition-[width] duration-[var(--motion-duration-standard)] ease-[var(--motion-easing-standard)] flex-shrink-0 ${
           collapsed ? 'w-[72px]' : 'w-[240px]'
         }`}
@@ -305,7 +311,7 @@ export default function Sidebar() {
         {sidebarContent}
       </aside>
 
-<nav className="fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around bg-[var(--bg-base)] border-t border-outline-variant z-50 md:hidden safe-area-bottom">
+<nav className="fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around bg-[var(--bg-base)] border-t border-outline-variant z-50 md:hidden safe-area-bottom" style={{ display: immersive ? 'none' : undefined }}>
   {NAV_SECTION1.map(item => {
           const active = isActive(item.href)
           const isLibrary = item.href === '/biblioteca' || item.href === '/biblioteca/local'

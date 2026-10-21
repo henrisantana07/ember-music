@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from 'motion/react'
 import { usePlayerStore } from '@/lib/store'
+import { useSidebarStore } from '@/lib/sidebar-store'
 import NowPlaying from '@/components/NowPlaying'
 import { TRANSITION } from '@/lib/motion'
 
@@ -19,12 +20,15 @@ import { TRANSITION } from '@/lib/motion'
 export function ExpandedPlayerModal() {
   const isExpandedOpen = usePlayerStore((s) => s.isExpandedOpen)
   const closeExpanded = usePlayerStore((s) => s.closeExpanded)
+  const immersive = useSidebarStore((s) => s.immersive)
 
   return (
     // No desktop a hero entra abaixo do Topbar em vez de cobri-lo: a busca e o
     // avatar continuam à mão e a linha do `border-b` de cima é real, não uma
     // reimpressão. No mobile ela segue full-bleed, com header próprio — única
     // marca de branding em tela pequena e o botão da fila.
+    // Em tela cheia os dois deslocamentos somem: sem Topbar não há `top-16`,
+    // e sem coluna o `--sidebar-w` volta a 0 — daí as classes caírem por completo.
     <AnimatePresence>
       {isExpandedOpen && (
         <motion.div
@@ -32,7 +36,7 @@ export function ExpandedPlayerModal() {
           role="dialog"
           aria-modal="true"
           aria-label="Player expandido"
-          className="fixed top-0 md:top-16 right-0 bottom-0 left-0 md:left-[var(--sidebar-w,0px)] z-[60] overflow-hidden"
+          className={`fixed top-0 ${immersive ? '' : 'md:top-16'} right-0 bottom-0 left-0 ${immersive ? '' : 'md:left-[var(--sidebar-w,0px)]'} z-[60] overflow-hidden`}
           style={{ backgroundColor: 'var(--bg-base)' }}
           initial={{ y: '100%' }}
           animate={{ y: 0, transition: TRANSITION.surface }}

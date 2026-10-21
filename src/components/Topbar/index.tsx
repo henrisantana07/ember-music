@@ -27,6 +27,7 @@ export function Topbar() {
   const avatarUrl = useAvatar(user?.id)
   const sidebarCollapsed = useSidebarStore((s) => s.collapsed)
   const toggleSidebar = useSidebarStore((s) => s.toggle)
+  const immersive = useSidebarStore((s) => s.immersive)
 
   useEffect(() => {
     const q = searchParams.get('q')
@@ -71,8 +72,11 @@ export function Topbar() {
     void submitSearch()
   }
 
+  // `display: none` inline, não `return null`: o componente tem hooks e
+  // effects — sair cedo violaria as Rules of Hooks. Assim o `h-16` sai do
+  // fluxo e a hero recupera os 64px de uma vez.
   return (
-    <header className="h-16 flex items-center justify-center px-6 flex-shrink-0 relative border-b border-outline-variant" style={{ backgroundColor: 'var(--bg-base)' }}>
+    <header className="h-16 flex items-center justify-center px-6 flex-shrink-0 relative border-b border-outline-variant" style={{ backgroundColor: 'var(--bg-base)', display: immersive ? 'none' : undefined }}>
       <div
         className={`absolute top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 transition-[left] duration-[var(--motion-duration-standard)] ease-[var(--motion-easing-standard)] ${sidebarCollapsed ? 'left-[14px]' : 'left-2'}`}
       >

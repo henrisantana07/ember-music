@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback, memo, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { usePlayerStore } from '@/lib/store'
+import { useSidebarStore } from '@/lib/sidebar-store'
 import { formatDuration } from '@/lib/spotify'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
@@ -15,7 +16,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import {
   Play, Pause,
-  Music, Trash2, MoreHorizontal, Share2,
+  Music, Trash2, MoreHorizontal, Share2, Maximize2, Minimize2,
 } from 'lucide-react'
 import { extractDominantColor } from '@/lib/color/extractDominantColor'
 import { getHighResCoverUrl } from '@/lib/image-utils'
@@ -235,6 +236,21 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   // array da fila de propósito: a numeração do dnd e os handlers não mudam.
   const currentIndex = queue.findIndex((t) => t.id === currentTrack?.id)
 
+  // Tela cheia: esconde Topbar, coluna lateral e navegação inferior.
+  const immersive = useSidebarStore((s) => s.immersive)
+  const toggleImmersive = useSidebarStore((s) => s.toggleImmersive)
+
+  // Crédito "A seguir" do card: só leitura do store local — zero rede, zero quota.
+  const nextTrack = currentIndex >= 0 ? queue[currentIndex + 1] : undefined
+
+  // Espelha o modo no `<html>` para o CSS conseguir dar a faixa do Topbar
+  // liberada (64px) de volta pra capa. Sai junto com o componente, que só
+  // existe enquanto a hero está aberta.
+  useEffect(() => {
+    document.documentElement.classList.toggle('immersive', immersive)
+    return () => document.documentElement.classList.remove('immersive')
+  }, [immersive])
+
   // Leva à página do artista da faixa, onde o usuário pode explorar novas faixas dele
   const visitArtist = useCallback((artistId: string) => {
     if (!artistId) return
@@ -344,6 +360,13 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
+      // Esc desfaz a tela cheia antes de fechar a hero: uma tecla, dois níveis,
+      // como nos apps de vídeo. `getState()` de propósito — o handler não
+      // precisa se re-inscrever toda vez que o modo muda.
+      if (useSidebarStore.getState().immersive) {
+        useSidebarStore.getState().setImmersive(false)
+        return
+      }
       if (onClose) onClose()
       else if (!isExpandedOpen) router.back()
     }
@@ -499,6 +522,20 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
         >
           <Music className="w-5 h-5" />
         </button>
+        {/* Tela cheia: some com Topbar, coluna lateral e navegação inferior pra
+            hero não disputar espaço com a chrome. Visível em todos os
+            breakpoints — no mobile é o único jeito de desfazer, já que não há
+            Esc. */}
+        <button
+          onClick={toggleImmersive}
+          className="h-12 w-12 inline-flex items-center justify-center rounded-full hover:bg-state-hover transition-colors state-layer"
+          style={{ color: immersive ? 'var(--accent-from)' : 'var(--text-secondary)' }}
+          aria-label={immersive ? 'Sair da tela cheia' : 'Tela cheia'}
+          aria-pressed={immersive}
+          title={immersive ? 'Sair da tela cheia (Esc)' : 'Tela cheia'}
+        >
+          {immersive ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+        </button>
       </header>
 
       <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-6 min-h-0 px-4 md:px-6 pb-4">
@@ -589,10 +626,10 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             </button>
           </div>
 
-          {/* Card "Créditos" do spec. Só o que já está em `track_data` — nenhuma
-              chamada de rede, nenhuma quota. `dl/dt/dd` para o par label↔valor
-              ficar acessível de verdade, e `truncate` porque a regra do projeto
-              proíbe `overflow: hidden` cego cortando nome. */}
+          {/* Card "Créditos" do spec. Tudo de dentro do store local (`track_data`
+              e a fila) — nenhuma chamada de rede, nenhuma quota. `dl/dt/dd` para
+              o par label↔valor ficar acessível de verdade, e `truncate` porque a
+              regra do projeto proíbe `overflow: hidden` cego cortando nome. */}
           <div className="w-full max-w-[560px] rounded-2xl px-5 py-4 text-left" style={{ backgroundColor: 'var(--bg-elevated)' }}>
             <h2 className="text-label-medium font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--text-secondary)' }}>
               Créditos
@@ -620,6 +657,14 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 <dt className="w-16 flex-none text-label-medium" style={{ color: 'var(--text-secondary)' }}>Fonte</dt>
                 <dd className="min-w-0 flex-1 text-body-medium font-medium" style={{ color: 'var(--text-primary)' }}>
                   {currentTrack.youtubeVideoId ? 'YouTube' : 'Biblioteca local'}
+                </dd>
+              </div>
+              {/* `title` porque `truncate` corta com reticências: o texto completo
+                  continua acessível sem usar `overflow: hidden` às cegas. */}
+              <div className="flex items-baseline gap-3 min-h-[24px]">
+                <dt className="w-16 flex-none text-label-medium" style={{ color: 'var(--text-secondary)' }}>A seguir</dt>
+                <dd className="min-w-0 flex-1 text-body-medium font-medium truncate" style={{ color: 'var(--text-primary)' }} title={nextTrack ? `${nextTrack.name} — ${nextTrack.artist_name}` : undefined}>
+                  {nextTrack ? `${nextTrack.name} — ${nextTrack.artist_name}` : 'Fim da fila'}
                 </dd>
               </div>
             </dl>

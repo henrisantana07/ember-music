@@ -414,8 +414,9 @@ body {
 }
 
 /* Reserva vertical: header 64 + pb-20 80 + main 16 + coluna 24 + (título 60 +
-   ações 48 + card Créditos ~160 + 3 gaps de 16) ≈ 500px. A coluna ainda rola
-   com `safe center` se o viewport for menor que isso. */
+   ações 48 + card Créditos ~190 com o crédito "A seguir" + 3 gaps de 16)
+   ≈ 530px. A coluna ainda rola com `safe center` se o viewport for menor que
+   isso — rolagem é a rede de segurança, nunca corte. */
 .now-cover {
   width: min(560px, 100%, calc(100vh - 520px));
 }
@@ -423,6 +424,21 @@ body {
 @media (min-width: 768px) {
   .now-cover-min {
     width: min(720px, 100%, calc(100vh - 520px));
+  }
+
+  /* Tela cheia: o `html` recebe a classe `.immersive` e o Topbar de 64px deixa
+     de existir — a hero começa mais acima e devolve essa faixa inteira pra
+     capa. Os limites de 560/720 sobem junto, senão eles travariam o ganho
+     (520 → 488 = +32px de capa, mas o teto antigo manteria tudo em 560).
+
+     Só em md de propósito: abaixo de 768px a capa é `min(200px, 60vw)` por
+     decisão de layout, e não há budget medido pra ela crescer. */
+  .immersive .now-cover {
+    width: min(680px, 100%, calc(100vh - 488px));
+  }
+
+  .immersive .now-cover-min {
+    width: min(900px, 100%, calc(100vh - 488px));
   }
 }
 
