@@ -163,9 +163,25 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
       )}
 
       <div className="relative flex-none z-10">
+        {/* "Mais opções" some no desktop até o mouse entrar na linha — o pedido
+             é que ele só apareça e só acione em cima das faixas. `opacity` +
+             `pointer-events` e não `hidden`: esconder por display encolheria a
+             linha a cada hover e empurraria duração e texto pra direita.
+
+             No mobile ele continua sempre visível, e não é capricho: não existe
+             hover em tela de toque, e este botão é o único acesso ao menu
+             (adicionar à playlist, compartilhar, ver artista, remover). Sem ele
+             visível a fila mobile perderia as quatro ações.
+
+             `menuOpen` mantém o gatilho pintado com o menu aberto, senão ele
+             sumiria quando o mouse saísse da linha pra entrar no painel. */}
         <button
           {...triggerProps}
-          className="h-12 w-12 rounded-full inline-flex items-center justify-center transition-colors state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          className={`h-12 w-12 rounded-full inline-flex items-center justify-center transition state-layer text-[var(--text-secondary)] hover:text-[var(--text-primary)] ${
+            menuOpen
+              ? 'md:opacity-100'
+              : 'md:opacity-0 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:pointer-events-auto md:focus-visible:opacity-100 md:focus-visible:pointer-events-auto'
+          }`}
           title="Mais opções"
           aria-label={`Mais opções para ${track.name}`}
         >
@@ -727,26 +743,36 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 mesmo alinhamento das linhas da lista (`px-1` + `px-2` = 12px).
                 Empurrar o texto pra direita em vez de pra baixo foi o que
                 devolveu altura às faixas: sem faixa vazia, o cabeçalho inteiro
-                cabe na altura do botão. */}
-            {!queueMinimized && (
-              <div className="flex-none px-3 py-3">
-                <h2 className="text-title-medium font-semibold" style={{ color: 'var(--text-primary)' }}>Fila</h2>
-                {usePlayerStore.getState().currentPlaylistName && (
-                  <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{usePlayerStore.getState().currentPlaylistName}</p>
-                )}
-              </div>
-            )}
+                cabe na altura do botão.
+
+                O cabeçalho existe nos dois modos agora, e o `<h2>` "Fila" é o
+                rótulo da coluna — some daqui e a coluna recolhida vira uma
+                pilha de faixas sem nome. Só o nome da playlist fica de fora do
+                modo enxuto: a 20% de largura ele truncaria antes da segunda
+                sílaba e não diria nada.
+
+                O `px` acompanha o modo porque o alvo é a mesma linha das
+                faixas: expandido são `px-1` + `px-2` = 12px, recolhido são
+                `px-0` + `px-1` = 4px. Fixar os 12px nos dois deixaria o
+                título 8px à direita da lista quando a coluna encolhe. */}
+            <div className={`flex-none ${queueMinimized ? 'px-1' : 'px-3'} py-3`}>
+              <h2 className="text-title-medium font-semibold" style={{ color: 'var(--text-primary)' }}>Fila</h2>
+              {!queueMinimized && usePlayerStore.getState().currentPlaylistName && (
+                <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{usePlayerStore.getState().currentPlaylistName}</p>
+              )}
+            </div>
 
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={queue.map((t, index) => `${index}::${t.id}`)} strategy={verticalListSortingStrategy}>
-                {/* Com a fila recolhida não há cabeçalho pra absorver o botão
-                    de tela cheia, então a faixa continua aqui — sem ela as
-                    primeiras linhas passariam por baixo dele. `mt-16` porque o
-                    botão agora começa em `top-3` e termina em 64px: 48px
-                    deixariam as linhas dentro dele. `mt` e não `pt`: padding
-                    dentro do scroller rola junto e as linhas subiriam por cima
-                    do botão; margem desloca o scroller inteiro. */}
-                <div className={`flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full${queueMinimized ? ' mt-16 pb-4' : ''}`}>
+                {/* O `mt-16` sumiu junto com o cabeçalho recolhido: ele existia
+                    porque a fila enxuta não tinha título que absorvesse o topo,
+                    e a lista encostava no botão de tela cheia. Com o `<h2>` de
+                    volta nos dois modos, o cabeçalho ocupa esse lugar e a
+                    margem viraria 64px de vão morto entre "Fila" e a primeira
+                    faixa. O botão segue inteiramente fora do painel (`-left-14`
+                    o joga no gap e na coluna da capa), então nada encosta nele
+                    por dentro. */}
+                <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full pb-4">
                   <div className={`${queueMinimized ? 'px-0' : 'px-1'} space-y-1`}>
                   {queue.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center px-4">
