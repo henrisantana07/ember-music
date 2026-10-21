@@ -18,7 +18,7 @@ import {
   Play, Pause,
   Music, Trash2, MoreHorizontal, Share2, Maximize2, Minimize2,
 } from 'lucide-react'
-import { extractDominantColor } from '@/lib/color/extractDominantColor'
+import { extractCoverPalette, type CoverPalette } from '@/lib/color/extractCoverPalette'
 import { getHighResCoverUrl } from '@/lib/image-utils'
 import { useMenu, MenuItem, MenuPanel, MenuPresence } from '@/components/ui/Menu'
 import { PlaylistModal } from '@/components/PlaylistModal'
@@ -224,7 +224,10 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
 
 export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const router = useRouter()
-  const [dominantColor, setDominantColor] = useState<string | null>(null)
+  /* Paleta extraída da capa (3 cores predominantes). A `primary` vira a
+     `dominantColor` que já era usada por borda/sombra/glow — o resto da hero
+     não muda de comportamento por causa disso. */
+  const [palette, setPalette] = useState<CoverPalette | null>(null)
   const [hdCover, setHdCover] = useState<{ id: string; src: string } | null>(null)
   const [hdFailed, setHdFailed] = useState<string | null>(null)
   const [baseFailed, setBaseFailed] = useState<string | null>(null)
@@ -305,9 +308,11 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       return
     }
     let cancelled = false
-    // Cor sempre da capa base (glow não precisa de HD; evita404 do maxresdefault)
-    extractDominantColor(baseCover).then((color) => {
-      if (!cancelled && color) setDominantColor(color)
+    // Paleta sempre da capa base (o glow não precisa de HD; evita 404 do
+    // maxresdefault). A paleta já cai no extractDominantColor de sempre quando
+    // a imagem não pode ser lida (CORS/404), então não há segundo fallback aqui.
+    extractCoverPalette(baseCover).then((next) => {
+      if (!cancelled && next) setPalette(next)
     })
     return () => {
       cancelled = true
@@ -403,11 +408,29 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     )
   }
 
-  const bgGradient = dominantColor
-    ? `radial-gradient(ellipse at 30% 20%, ${dominantColor}66 0%, var(--bg-base) 60%)`
+  const dominantColor = palette?.primary ?? null
+  const secondaryColor = palette?.secondary ?? null
+  const tertiaryColor = palette?.tertiary ?? null
+
+  /* Gradiente da hero em três cores da paleta da capa, na ordem em que elas
+     aparecem na arte: a `primary` puxa o canto superior esquerdo bem opaca
+     (90%), a `secondary` segura o meio (60%) e a `tertiary` dissolva em
+     35% até o fundo. Antes era uma cor só a 40% morrendo aos 60% — dava um
+     borrão chapado, sem variação de matiz.
+
+     Os stops param em 78% de propósito: a área do painel entre 67% e 78% do
+     raio é onde o h1/artista ficam centrados, e ela cai em `var(--bg-base)`
+     puro. Dá pra empurrar a intensidade sem tocar no contraste do texto.
+
+     `--bg-nowplaying-fallback` quando não há paleta (faixa sem capa). */
+  const bgGradient = dominantColor && secondaryColor && tertiaryColor
+    ? `radial-gradient(ellipse at 28% 18%, ${dominantColor}E6 0%, ${secondaryColor}99 30%, ${tertiaryColor}59 50%, var(--bg-base) 78%)`
     : 'var(--bg-nowplaying-fallback)'
 
-  const glowTint = dominantColor ? `${dominantColor}1A` : 'transparent'
+  /* Tint uniforme por cima do radial (a camada `linear-gradient` chapada que
+     empilha nele). 15% — sobe junto com a intensidade do radial para o canto
+     inferior direito não ficar preto morto contra o miolo saturado. */
+  const glowTint = dominantColor ? `${dominantColor}26` : 'transparent'
 
   const coverShadow = dominantColor
     ? `0 32px 64px ${dominantColor}4D`
@@ -535,10 +558,10 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
              `gap-6` de 24px antes do `#121212`.
 
              Empilhamento via `background-image`, lista de cima pra baixo: o
-             `linear-gradient` chapado é o glow (10% da cor da capa) e o radial
-             é o gradiente. Nessa ordem porque o radial termina em
-             `var(--bg-base)` opaco aos 60% — se o glow ficasse por baixo, ele
-             nunca apareceria. Com `dominantColor` nulo os dois viram o fallback
+             `linear-gradient` chapado é o glow (15% da cor primária) e o radial
+             é o gradiente de três cores. Nessa ordem porque o radial termina em
+             `var(--bg-base)` opaco aos 78% — se o glow ficasse por baixo, ele
+             nunca apareceria. Com a paleta vazia os dois viram o fallback
              de sempre (`transparent` e `--bg-nowplaying-fallback`).
 
              `rounded-2xl` dá o canto, mesma escala de forma da capa; a borda de
