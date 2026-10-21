@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { usePlayerStore } from '@/lib/store'
+import { useSidebarStore } from '@/lib/sidebar-store'
 import { AnimatePresence, motion } from 'motion/react'
 import { popoverVariants, whileTap, TRANSITION, fadeVariants } from '@/lib/motion'
 import type { RepeatMode } from '@/lib/store'
@@ -14,7 +15,7 @@ import { ExpandedPlayerModal } from '@/components/ExpandedPlayerModal'
 import { PlaylistModal } from '@/components/PlaylistModal'
 import { useYouTube, useYouTubeTime } from '@/components/YouTubePlayer/context'
 import Link from 'next/link'
-import { ChevronDown, ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause } from 'lucide-react'
+import { ChevronDown, ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause, Maximize2, Minimize2 } from 'lucide-react'
 
 export function Player() {
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -47,6 +48,12 @@ export function Player() {
     setRepeat, toggleShuffle, setSleepTimer, toggleMiniPlayer,
     openExpanded, closeExpanded, isExpandedOpen, queueMinimized, setQueueMinimized,
   } = usePlayerStore()
+
+  // Tela cheia: mesma store da sidebar/topbar (irmãos no layout, sem props).
+  // A cópia do rodapé existe porque a hero só está no DOM quando aberta — aqui
+  // o controle fica sempre à mão.
+  const immersive = useSidebarStore((s) => s.immersive)
+  const toggleImmersive = useSidebarStore((s) => s.toggleImmersive)
 
   /**
    * Um único botão no rodapé abre e fecha a hero.
@@ -545,7 +552,13 @@ export function Player() {
             </button>
           </div>
 
-          <div className="w-full flex items-center gap-2 text-label-medium" style={{ color: 'var(--text-disabled)' }}>
+          {/* `max-w` porque a row era `w-full` dentro de um cluster `flex-1`:
+              as extremidades (o label de tempo de cada lado) corriam do fim do
+              cluster esquerdo ao início do direito, ocupando a largura inteira
+              do rodapé. O cluster pai é `items-center`, então o recuo vira
+              simétrico dos dois lados sem `mx-auto`. O `getBoundingClientRect`
+              do seek continua válido — ele mede o próprio elemento. */}
+          <div className="w-full max-w-[560px] flex items-center gap-2 text-label-medium" style={{ color: 'var(--text-disabled)' }}>
             <span className="w-8 text-right">{formatDuration(Math.floor(currentProgress))}</span>
             <div ref={progressRef}
               role="slider"
@@ -598,6 +611,23 @@ export function Player() {
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h10M4 18h13" />
             </svg>
+          </button>
+
+          {/* Cópia do ícone que também está no cabeçalho da hero, colada no
+              botão de expandir/minimizar a fila. Mesmo `hidden md:inline-flex`
+              dele: no mobile a cópia da hero já cobre o acesso, e aqui a fila
+              também não existe. O estado ativo pinta de accent igual. */}
+          <button
+            onClick={toggleImmersive}
+            className={`h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full transition-colors state-layer ${
+              immersive ? 'text-[var(--accent-from)]' : ''
+            }`}
+            style={immersive ? undefined : { color: 'var(--text-secondary)' }}
+            title={immersive ? 'Sair da tela cheia (Esc)' : 'Tela cheia'}
+            aria-label={immersive ? 'Sair da tela cheia' : 'Tela cheia'}
+            aria-pressed={immersive}
+          >
+            {immersive ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
           </button>
 
           <SleepTimerDropdown />
