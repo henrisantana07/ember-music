@@ -731,10 +731,10 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             className={`w-full -ml-4 -mr-4 -mb-4 md:ml-0 md:-mr-6 ${queueMinimized ? 'md:w-[calc(20%_+_9.6px)]' : 'md:w-auto md:flex-[2]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none ${showQueueOnMobile ? '' : 'hidden md:flex'}`}
             style={{ backgroundColor: 'var(--bg-elevated)' }}
           >
-            {/* Tela cheia na divisa entre a capa e a fila: `-left-14` (−56px)
+            {/* Tela cheia na divisa entre a capa e a fila: `-left-20` (−80px)
                 passa da largura do botão (48px), então ele fica inteiramente
-                fora do painel com 8px de respiro da borda do #121212 — 16px
-                dentro do gap e os outros 32px mordendo a coluna da capa.
+                fora do painel com 32px de respiro da borda do #121212 — bom
+                afastamento da coluna da fila de 20% e da capa.
                 Quanto mais pra esquerda, mais ele lê como puxador da
                 fronteira e menos como ícone do painel. Continua fora da
                 condição do cabeçalho, então existe também com a fila
@@ -750,7 +750,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 eles some em qualquer uma delas. */}
             <button
               onClick={toggleImmersive}
-              className={`absolute -left-14 top-1 z-10 h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full border border-outline-variant transition-colors state-layer ${
+              className={`absolute -left-20 top-1 z-10 h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full border border-outline-variant transition-colors state-layer ${
                 immersive ? 'text-[var(--accent-from)]' : 'text-[var(--text-secondary)]'
               }`}
               style={{ backgroundColor: 'var(--bg-surface)' }}
