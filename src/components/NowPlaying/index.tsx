@@ -87,7 +87,9 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
       role="listitem"
       tabIndex={undefined}
       className={`flex items-center ${minimized ? 'gap-1.5 px-1' : 'gap-3 px-2'} py-2 rounded-lg group transition-colors md:touch-none ${
-        isCurrent ? 'bg-[var(--accent-muted)]' : 'hover:bg-[var(--bg-elevated)]'
+        /* `--surface-container-highest` (#181818), não `--bg-elevated`: este
+           painel passou a ser #121212, e o hover ia pintar a mesma cor do fundo. */
+        isCurrent ? 'bg-[var(--accent-muted)]' : 'hover:bg-[var(--surface-container-highest)]'
       }`}
     >
       {/* Coluna do número: equalizador na faixa atual, play no hover nas demais.
@@ -639,7 +641,17 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
           </button>
         </div>
 
-          <div className={`w-full ${queueMinimized ? 'md:w-72' : 'md:w-auto md:flex-[2]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none ${showQueueOnMobile ? '' : 'hidden md:flex'}`}>
+          {/* Painel flush na borda, como a fila do Spotify: `#121212` — o
+              background-base oficial da marca — encostado na direita e na base.
+              As margens negativas anulam o `px-4 md:px-6 pb-4` do container
+              (linha acima); sem elas sobraria uma moldura preta de 24px em volta,
+              que não é como o Spotify desenha a fila. `md:ml-0` devolve a
+              margem esquerda no desktop, onde ela é o espaçamento entre as duas
+              colunas. O `overflow-hidden` da raiz garante o corte na borda. */}
+          <div
+            className={`w-full -ml-4 -mr-4 -mb-4 md:ml-0 md:-mr-6 ${queueMinimized ? 'md:w-72' : 'md:w-auto md:flex-[2]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none ${showQueueOnMobile ? '' : 'hidden md:flex'}`}
+            style={{ backgroundColor: 'var(--bg-elevated)' }}
+          >
             {!queueMinimized && (
               <div className="flex-none px-3 py-3">
                 <h2 className="text-title-medium font-semibold" style={{ color: 'var(--text-primary)' }}>Fila</h2>
@@ -666,7 +678,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                             <button
                               key={track.id}
                               onClick={() => play(track, suggestions)}
-                              className="flex items-center gap-3 w-full px-3 min-h-[56px] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors text-left state-layer"
+                              className="flex items-center gap-3 w-full px-3 min-h-[56px] rounded-lg hover:bg-[var(--surface-container-highest)] transition-colors text-left state-layer"
                             >
                               {track.image ? (
                                 <img src={track.image} alt="" className="w-10 h-10 rounded object-cover flex-none" />
