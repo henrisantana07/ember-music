@@ -72,7 +72,9 @@ export function Topbar() {
 
   return (
     <header className="h-16 flex items-center justify-center px-6 flex-shrink-0 relative border-b border-outline-variant" style={{ backgroundColor: 'var(--bg-base)' }}>
-      <div className="absolute left-6 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1">
+      <div
+        className={`absolute top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 transition-[left] duration-[var(--motion-duration-standard)] ease-[var(--motion-easing-standard)] ${sidebarCollapsed ? 'left-[14px]' : 'left-2'}`}
+      >
         <button
           onClick={toggleSidebar}
           className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer"
