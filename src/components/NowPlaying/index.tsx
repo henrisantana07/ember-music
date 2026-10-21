@@ -506,37 +506,11 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
         }}
       />
 
-      {/* Barra do spec: título da faixa à esquerda em todos os breakpoints.
-          Fica em `<p>` porque o título grande abaixo da capa já é o `<h1>`. */}
-      {/* Sem `border-b`: o Topbar de cima já tem um, então manter este geraria
-          duas linhas paralelas a 64px uma da outra. */}
-      <header className="relative flex items-center gap-3 px-4 md:px-6 h-16 flex-none">
-        <p className="min-w-0 flex-1 truncate text-body-large font-medium" style={{ color: 'var(--text-primary)' }}>
-          {currentTrack.name}
-        </p>
-        <button
-          onClick={() => setShowQueueOnMobile(!showQueueOnMobile)}
-          className="md:hidden h-12 w-12 inline-flex items-center justify-center rounded-full hover:bg-state-hover transition-colors state-layer"
-          style={{ color: showQueueOnMobile ? 'var(--accent-from)' : 'var(--text-secondary)' }}
-          aria-label="Fila"
-        >
-          <Music className="w-5 h-5" />
-        </button>
-        {/* Tela cheia: some com Topbar, coluna lateral e navegação inferior pra
-            hero não disputar espaço com a chrome. Visível em todos os
-            breakpoints — no mobile é o único jeito de desfazer, já que não há
-            Esc. */}
-        <button
-          onClick={toggleImmersive}
-          className="h-12 w-12 inline-flex items-center justify-center rounded-full hover:bg-state-hover transition-colors state-layer"
-          style={{ color: immersive ? 'var(--accent-from)' : 'var(--text-secondary)' }}
-          aria-label={immersive ? 'Sair da tela cheia' : 'Tela cheia'}
-          aria-pressed={immersive}
-          title={immersive ? 'Sair da tela cheia (Esc)' : 'Tela cheia'}
-        >
-          {immersive ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
-        </button>
-      </header>
+      {/* O cabeçalho de 64px com o título da faixa foi removido: ele repetia o
+          `<h1>` que já existe logo abaixo da capa. Os dois controles que ele
+          abrigava mudaram de lugar — o de tela cheia do desktop foi para a
+          divisa entre a capa e a fila, e os do mobile entraram na fileira de
+          ações da coluna da capa. */}
 
       <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-6 min-h-0 px-4 md:px-6 pb-4">
         {/* `hide-scrollbar` porque a rolagem aqui é só rede de segurança para
@@ -624,6 +598,39 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </button>
+
+            {/* Fila e tela cheia do mobile: moravam no cabeçalho que foi
+                removido. Aqui continuam dentro do hero, e o `md:hidden` os
+                some no desktop — onde os equivalentes já existem em outros
+                lugares (fila no rodapé, tela cheia na divisa entre as
+                colunas). Sem esta cópia o mobile perderia a fila inteira e,
+                no caso da tela cheia, também a única saída: não existe Esc
+                em tela pequena e as outras duas cópias são `md:`. */}
+            <button
+              onClick={() => setShowQueueOnMobile(!showQueueOnMobile)}
+              className={`md:hidden h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer ${
+                showQueueOnMobile ? 'text-[var(--accent-from)]' : ''
+              }`}
+              style={showQueueOnMobile ? undefined : { color: 'var(--text-secondary)' }}
+              aria-label="Fila"
+              aria-pressed={showQueueOnMobile}
+              title="Fila"
+            >
+              <Music className="w-5 h-5" />
+            </button>
+
+            <button
+              onClick={toggleImmersive}
+              className={`md:hidden h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer ${
+                immersive ? 'text-[var(--accent-from)]' : ''
+              }`}
+              style={immersive ? undefined : { color: 'var(--text-secondary)' }}
+              aria-label={immersive ? 'Sair da tela cheia' : 'Tela cheia'}
+              aria-pressed={immersive}
+              title={immersive ? 'Sair da tela cheia' : 'Tela cheia'}
+            >
+              {immersive ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+            </button>
           </div>
 
           {/* Card "Créditos" do spec. Tudo de dentro do store local (`track_data`
@@ -697,8 +704,35 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             className={`w-full -ml-4 -mr-4 -mb-4 md:ml-0 md:-mr-6 ${queueMinimized ? 'md:w-72' : 'md:w-auto md:flex-[2]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none ${showQueueOnMobile ? '' : 'hidden md:flex'}`}
             style={{ backgroundColor: 'var(--bg-elevated)' }}
           >
+            {/* Tela cheia na divisa entre a capa e a fila: o centro do botão
+                cai exatamente sobre a borda esquerda do painel — metade no gap
+                de 24px, metade sobre o #121212. Assim ele nunca invade a
+                coluna da capa (o `-left-6` é metade do gap, então a outra
+                metade já cobre o resto) e continua existindo com a fila
+                recolhida, porque fica fora da condição do cabeçalho.
+
+                Fundo + borda porque ele encosta em dois fundos diferentes (o
+                preto da hero e o #121212 do painel); sem eles some em um dos
+                dois. `top-0` porque é o canto superior. */}
+            <button
+              onClick={toggleImmersive}
+              className={`absolute -left-6 top-0 z-10 h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full border border-outline-variant transition-colors state-layer ${
+                immersive ? 'text-[var(--accent-from)]' : 'text-[var(--text-secondary)]'
+              }`}
+              style={{ backgroundColor: 'var(--bg-surface)' }}
+              aria-label={immersive ? 'Sair da tela cheia' : 'Tela cheia'}
+              aria-pressed={immersive}
+              title={immersive ? 'Sair da tela cheia (Esc)' : 'Tela cheia'}
+            >
+              {immersive ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+            </button>
+
+            {/* `pt-12` é a faixa do botão de tela cheia que fica na divisa logo
+                acima (top-0 + 48px). Empurra pra baixo e não pra direita de
+                propósito: assim o "Fila" continua alinhado com as linhas da
+                lista, em vez de ficar 24px deslocado por causa do botão. */}
             {!queueMinimized && (
-              <div className="flex-none px-3 py-3">
+              <div className="flex-none pt-12 pl-3 pr-3 pb-3">
                 <h2 className="text-title-medium font-semibold" style={{ color: 'var(--text-primary)' }}>Fila</h2>
                 {usePlayerStore.getState().currentPlaylistName && (
                   <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{usePlayerStore.getState().currentPlaylistName}</p>
@@ -708,7 +742,11 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={queue.map((t, index) => `${index}::${t.id}`)} strategy={verticalListSortingStrategy}>
-                <div className={`flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full${queueMinimized ? ' pb-4' : ''}`}>
+                {/* `mt-12` e não `pt-12`: padding dentro do scroller rola junto
+                    e as linhas passariam por baixo do botão de tela cheia
+                    quando a lista subisse. Margem desloca o scroller inteiro,
+                    então a faixa do botão fica permanentemente livre. */}
+                <div className={`flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full${queueMinimized ? ' mt-12 pb-4' : ''}`}>
                   <div className={`${queueMinimized ? 'px-0' : 'px-1'} space-y-1`}>
                   {queue.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center px-4">
