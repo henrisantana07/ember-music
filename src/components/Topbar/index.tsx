@@ -72,13 +72,7 @@ export function Topbar() {
 
   return (
     <header className="h-16 flex items-center justify-center px-6 flex-shrink-0 relative border-b border-outline-variant" style={{ backgroundColor: 'var(--bg-base)' }}>
-      <img
-        src="/branding/icon.svg"
-        alt=""
-        className="absolute left-6 top-1/2 -translate-y-1/2 w-24 h-20 object-cover pointer-events-none hidden md:block"
-        style={{ filter: 'drop-shadow(0 0 8px rgba(255,106,0,0.4))' }}
-      />
-      <div className="absolute left-36 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1">
+      <div className="absolute left-6 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1">
         <button
           onClick={toggleSidebar}
           className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer"
@@ -91,6 +85,12 @@ export function Topbar() {
             <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
           </svg>
         </button>
+        <img
+          src="/branding/icon.svg"
+          alt=""
+          className="w-24 h-20 object-cover pointer-events-none"
+          style={{ filter: 'drop-shadow(0 0 8px rgba(255,106,0,0.4))' }}
+        />
         <button
           onClick={() => router.back()}
           className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer"
