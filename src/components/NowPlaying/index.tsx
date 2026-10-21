@@ -421,7 +421,9 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
         }}
       />
 
-      <header className="relative flex items-center justify-end px-4 md:px-6 h-16 flex-none border-b border-outline-variant">
+      {/* Só no mobile: lá a hero é full-bleed e precisa da própria barra (marca +
+          botão da fila). No desktop ela fica abaixo do Topbar, que já faz esse papel. */}
+      <header className="relative flex items-center justify-end px-4 h-16 flex-none border-b border-outline-variant md:hidden">
         <button
           onClick={() => setShowQueueOnMobile(!showQueueOnMobile)}
           className="md:hidden h-12 w-12 inline-flex items-center justify-center rounded-full hover:bg-state-hover transition-colors state-layer"
