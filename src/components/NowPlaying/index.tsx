@@ -711,12 +711,19 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 metade já cobre o resto) e continua existindo com a fila
                 recolhida, porque fica fora da condição do cabeçalho.
 
+                `top-3` e não `top-0`: o topo do painel é o topo do modal, que
+                no desktop encosta na linha do `border-b` do Topbar e na tela
+                cheia encosta na borda superior da viewport. Com `top-0` o
+                botão ficava grudado nas duas. Os 12px são o mesmo ritmo do
+                `py-3` do cabeçalho ao lado, então o topo dele alinha com o
+                topo do "Fila".
+
                 Fundo + borda porque ele encosta em dois fundos diferentes (o
                 preto da hero e o #121212 do painel); sem eles some em um dos
-                dois. `top-0` porque é o canto superior. */}
+                dois. */}
             <button
               onClick={toggleImmersive}
-              className={`absolute -left-6 top-0 z-10 h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full border border-outline-variant transition-colors state-layer ${
+              className={`absolute -left-6 top-3 z-10 h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full border border-outline-variant transition-colors state-layer ${
                 immersive ? 'text-[var(--accent-from)]' : 'text-[var(--text-secondary)]'
               }`}
               style={{ backgroundColor: 'var(--bg-surface)' }}
@@ -746,12 +753,13 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={queue.map((t, index) => `${index}::${t.id}`)} strategy={verticalListSortingStrategy}>
                 {/* Com a fila recolhida não há cabeçalho pra absorver o botão
-                    de tela cheia, então a faixa de 48px continua aqui — sem
-                    ela as primeiras linhas passariam por baixo dele. `mt-12` e
-                    não `pt-12`: padding dentro do scroller rola junto e as
-                    linhas subiriam por cima do botão; margem desloca o scroller
-                    inteiro, então a faixa fica permanentemente livre. */}
-                <div className={`flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full${queueMinimized ? ' mt-12 pb-4' : ''}`}>
+                    de tela cheia, então a faixa continua aqui — sem ela as
+                    primeiras linhas passariam por baixo dele. `mt-16` porque o
+                    botão agora começa em `top-3` e termina em 64px: 48px
+                    deixariam as linhas dentro dele. `mt` e não `pt`: padding
+                    dentro do scroller rola junto e as linhas subiriam por cima
+                    do botão; margem desloca o scroller inteiro. */}
+                <div className={`flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full${queueMinimized ? ' mt-16 pb-4' : ''}`}>
                   <div className={`${queueMinimized ? 'px-0' : 'px-1'} space-y-1`}>
                   {queue.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center px-4">
