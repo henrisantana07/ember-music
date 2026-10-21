@@ -442,7 +442,9 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
       {/* Barra do spec: título da faixa à esquerda em todos os breakpoints.
           Fica em `<p>` porque o título grande abaixo da capa já é o `<h1>`. */}
-      <header className="relative flex items-center gap-3 px-4 md:px-6 h-16 flex-none border-b border-outline-variant">
+      {/* Sem `border-b`: o Topbar de cima já tem um, então manter este geraria
+          duas linhas paralelas a 64px uma da outra. */}
+      <header className="relative flex items-center gap-3 px-4 md:px-6 h-16 flex-none">
         <p className="min-w-0 flex-1 truncate text-body-large font-medium" style={{ color: 'var(--text-primary)' }}>
           {currentTrack.name}
         </p>
@@ -457,7 +459,10 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       </header>
 
       <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-6 min-h-0 px-4 md:px-6 pb-4">
-        <div className={`flex-1 md:flex-[3] flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden pt-1 md:pt-2 pb-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
+        {/* `hide-scrollbar` porque a rolagem aqui é só rede de segurança para
+            viewports curtos — numa altura normal tudo cabe e não há o que rolar.
+            Sem ela a trilha apareceria colada na capa. */}
+        <div className={`flex-1 md:flex-[3] flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
           <div ref={coverRef} className={`now-cover relative flex-shrink-0${queueMinimized ? ' now-cover-min' : ''}`} style={{ aspectRatio: '1' }}>
             {baseCover && baseFailed !== currentTrack.id ? (
               <img
