@@ -316,7 +316,7 @@ export default function Sidebar() {
     <>
       <aside
         ref={desktopAsideRef}
-        className={`hidden md:flex flex-col h-full overflow-hidden bg-[var(--bg-surface)] border-r border-outline-variant transition-[width] duration-[var(--motion-duration-standard)] ease-[var(--motion-easing-standard)] flex-shrink-0 ${
+        className={`hidden md:flex flex-col h-full overflow-hidden bg-[var(--bg-surface)] transition-[width] duration-[var(--motion-duration-standard)] ease-[var(--motion-easing-standard)] flex-shrink-0 ${
           collapsed ? 'w-[72px]' : 'w-[240px]'
         }`}
       >
