@@ -495,14 +495,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background: glowTint,
-        }}
-      />
-
       {/* O cabeçalho de 64px com o título da faixa foi removido: ele repetia o
           `<h1>` que já existe logo abaixo da capa. Os dois controles que ele
           abrigava mudaram de lugar — o de tela cheia do desktop foi para a
@@ -510,10 +502,17 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
           ações da coluna da capa. */}
 
       <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-6 min-h-0 px-4 md:px-6 pb-4">
-        {/* `hide-scrollbar` porque a rolagem aqui é só rede de segurança para
-            viewports curtos — numa altura normal tudo cabe e não há o que rolar.
-            Sem ela a trilha apareceria colada na capa. */}
-        <div className={`flex-1 md:flex-[3] flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
+        {/* O tinte do artista (`glowTint`) morava num `absolute inset-0` na
+             raiz da hero e sangrava por baixo do painel da fila. Agora ele é
+             o background da própria coluna da capa: essa div termina exatamente
+             na divisa (o `gap-6` de 24px antes do `#121212`), então o tinte
+             para ali e o `rounded-2xl` dá o canto do painel — mesma escala de
+             forma da capa, por cima do `bgGradient` da raiz.
+
+             `hide-scrollbar` porque a rolagem aqui é só rede de segurança para
+             viewports curtos — numa altura normal tudo cabe e não há o que rolar.
+             Sem ela a trilha apareceria colada na capa. */}
+        <div className={`flex-1 md:flex-[3] flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 rounded-2xl ${showQueueOnMobile ? 'hidden md:flex' : ''}`} style={{ background: glowTint }}>
           <div ref={coverRef} className={`now-cover relative flex-shrink-0${queueMinimized ? ' now-cover-min' : ''}`} style={{ aspectRatio: '1' }}>
             {baseCover && baseFailed !== currentTrack.id ? (
               <img
