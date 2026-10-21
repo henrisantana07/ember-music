@@ -394,8 +394,7 @@ export function Player() {
     return (
       <>
         <audio ref={audioRef} />
-        <footer className="h-14 md:hidden flex-shrink-0 relative z-[70] flex items-center px-3 gap-3 border-t border-outline-variant"
-          style={{ backgroundColor: 'var(--bg-elevated)' }}
+        <footer className="player-footer h-14 md:hidden flex-shrink-0 relative z-[70] flex items-center px-3 gap-3 border-t border-outline-variant"
         >
           <button onClick={openExpanded} className="flex-shrink-0" aria-label="Abrir player expandido">
             <img src={currentTrack.image} alt="" className="w-9 h-9 rounded object-cover flex-shrink-0" />
@@ -461,8 +460,7 @@ export function Player() {
       )}
 
       <footer
-        className="h-20 flex-shrink-0 relative z-[70] flex items-center px-4 border-t border-outline-variant"
-        style={{ backgroundColor: 'var(--bg-elevated)' }}
+        className="player-footer h-20 flex-shrink-0 relative z-[70] flex items-center px-4 border-t border-outline-variant"
       >
         <div className="flex items-center gap-3 w-40 md:w-72">
           <button onClick={openExpanded} className="flex-shrink-0" aria-label="Abrir player expandido">

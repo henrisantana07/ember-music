@@ -478,6 +478,23 @@ body {
   --text-accent: #ff8700;
 }
 
+/* ── Rodapé do player ────────────────────────────────────────────────────────
+   Preto do Spotify (#121212) — o mesmo valor que `.now-playing` dá ao seu
+   `--bg-elevated`. O rodapé fica fora daquele escopo, então o token do app
+   resolveria em #211C18 (o marrom quente) e o rodapé não acompanhava a hero.
+   Classe própria de propósito: repintar o rodapé não pode repintar sidebar,
+   cards e páginas, que dividem o token. */
+.player-footer {
+  background-color: #121212;
+}
+
+/* Tema claro: #121212 fixo reprova aqui por outro motivo que o visual — o
+   texto do rodapé herda `--text-primary`, que no claro é #1A1512, e escuro
+   sobre preto fica em ~1,5:1. Voltando ao token, o rodapé segue a paleta. */
+.theme-light .player-footer {
+  background-color: var(--bg-elevated);
+}
+
 /* Tema claro: a hero volta a seguir a paleta do app.
    Especificidade 0,2,0 vence `.now-playing` e `.theme-light` em qualquer ordem. */
 .theme-light .now-playing {
