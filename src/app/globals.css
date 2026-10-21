@@ -478,6 +478,74 @@ body {
   --text-accent: #ff8700;
 }
 
+/* ── Cores da capa na hero ───────────────────────────────────────────────────
+   O `transition: background 800ms ease` que a hero carregava não fazia nada.
+   `background-image` não é animável: dois `radial-gradient` não interpolam,
+   então a troca de faixa trocava as três cores num frame só — o 800ms era
+   intenção, não comportamento.
+
+   `@property` com `syntax: '<color>'` resolve de verdade: registra as custom
+   properties como cores tipadas, aí o navegador interpola o *valor* e o
+   gradiente se redesenha a cada frame. Sem isso elas são strings opacas e o
+   `transition` as ignora.
+
+   Escopo em `.now-cover-panel` (a div da coluna da capa) — nada fora dela
+   enxerga esses tokens, então sidebar/fila/rodapé ficam intactos. */
+@property --hero-c1 {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: transparent;
+}
+
+@property --hero-c2 {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: transparent;
+}
+
+@property --hero-c3 {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: transparent;
+}
+
+@property --hero-glow {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: transparent;
+}
+
+/* Mesma composição de antes, só que com as cores vindo das props registradas:
+   glow chapado por cima, radial de três paradas embaixo, terminando em
+   `--bg-base` opaco aos 78% (a faixa onde o h1/artista se apoiam).
+
+   A curva é ease-in-out em 900ms — simétrica, sem arranco no início, que é o
+   que uma transição de cor precisa pra ler como "suave" e não como "atraso". */
+.now-cover-panel {
+  background-image:
+    linear-gradient(var(--hero-glow), var(--hero-glow)),
+    radial-gradient(
+      ellipse at 28% 18%,
+      var(--hero-c1) 0%,
+      var(--hero-c2) 30%,
+      var(--hero-c3) 50%,
+      var(--bg-base) 78%
+    );
+  transition:
+    --hero-c1 900ms cubic-bezier(0.42, 0, 0.58, 1),
+    --hero-c2 900ms cubic-bezier(0.42, 0, 0.58, 1),
+    --hero-c3 900ms cubic-bezier(0.42, 0, 0.58, 1),
+    --hero-glow 900ms cubic-bezier(0.42, 0, 0.58, 1),
+    border-color 900ms cubic-bezier(0.42, 0, 0.58, 1);
+}
+
+/* Faixa sem capa extraída: não há paleta pra interpolar, então o fallback
+   sobrepõe o gradiente inteiro. A troca vazia→com cor continua seca, que é o
+   mesmo que era — não existe o que interpolarem. */
+.now-cover-panel-empty {
+  background-image: var(--bg-nowplaying-fallback);
+}
+
 /* ── Rodapé do player ────────────────────────────────────────────────────────
    Preto do Spotify (#121212) — o mesmo valor que `.now-playing` dá ao seu
    `--bg-elevated`. O rodapé fica fora daquele escopo, então o token do app

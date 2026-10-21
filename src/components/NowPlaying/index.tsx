@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef, useCallback, memo, Fragment } from 'react'
+import type { CSSProperties } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { usePlayerStore } from '@/lib/store'
@@ -409,29 +410,31 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   }
 
   const dominantColor = palette?.primary ?? null
-  const secondaryColor = palette?.secondary ?? null
-  const tertiaryColor = palette?.tertiary ?? null
 
-  /* Gradiente da hero em três cores da paleta da capa, na ordem em que elas
-     aparecem na arte: a `primary` puxa o canto superior esquerdo bem opaca
-     (90%), a `secondary` segura o meio (60%) e a `tertiary` dissolva em
-     35% até o fundo. Antes era uma cor só a 40% morrendo aos 60% — dava um
-     borrão chapado, sem variação de matiz.
+  /* Cores da capa viram custom properties (`--hero-c1/2/3` + `--hero-glow`) em
+     vez de entrarem embutidas no `radial-gradient`. A composição do gradiente
+     mora no CSS (`.now-cover-panel`), e é o `@property` daqui de baixo que
+     torna a troca animável.
 
-     Os stops param em 78% de propósito: a área do painel entre 67% e 78% do
-     raio é onde o h1/artista ficam centrados, e ela cai em `var(--bg-base)`
-     puro. Dá pra empurrar a intensidade sem tocar no contraste do texto.
+     Sem isso o `transition: background` da versão anterior não fazia nada:
+     `background-image` não interpola entre dois `radial-gradient`, então a
+     cor pulava num frame só. Com as cores tipadas como `<color>`, o
+     navegador interpola o valor e o gradiente se redesenha a cada frame.
 
-     `--bg-nowplaying-fallback` quando não há paleta (faixa sem capa). */
-  const bgGradient = dominantColor && secondaryColor && tertiaryColor
-    ? `radial-gradient(ellipse at 28% 18%, ${dominantColor}E6 0%, ${secondaryColor}99 30%, ${tertiaryColor}59 50%, var(--bg-base) 78%)`
-    : 'var(--bg-nowplaying-fallback)'
+     Os alphas são os mesmos de antes —90/60/35% nas três paradas e 15% no
+     glow. `transparent` quando não há paleta, e o CSS decide o fallback. */
+  const panelStyle: CSSProperties & Record<string, string> = palette
+    ? {
+        '--hero-c1': `${palette.primary}E6`,
+        '--hero-c2': `${palette.secondary}99`,
+        '--hero-c3': `${palette.tertiary}59`,
+        '--hero-glow': `${palette.primary}26`,
+        border: `1px solid ${palette.primary}4D`,
+      }
+    : { border: '1px solid var(--outline-variant)' }
 
-  /* Tint uniforme por cima do radial (a camada `linear-gradient` chapada que
-     empilha nele). 15% — sobe junto com a intensidade do radial para o canto
-     inferior direito não ficar preto morto contra o miolo saturado. */
-  const glowTint = dominantColor ? `${dominantColor}26` : 'transparent'
-
+  /* Sombra da capa acompanha a cor dominante (30%). Fora da paleta, preto
+     genérico — ela existe pra destacar a capa do fundo, não pra dizer cor. */
   const coverShadow = dominantColor
     ? `0 32px 64px ${dominantColor}4D`
     : '0 32px 64px rgba(0,0,0,0.5)'
@@ -557,15 +560,14 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
              nesta div, que é a única que termina exatamente na divisa — o
              `gap-6` de 24px antes do `#121212`.
 
-             Empilhamento via `background-image`, lista de cima pra baixo: o
-             `linear-gradient` chapado é o glow (15% da cor primária) e o radial
-             é o gradiente de três cores. Nessa ordem porque o radial termina em
-             `var(--bg-base)` opaco aos 78% — se o glow ficasse por baixo, ele
-             nunca apareceria. Com a paleta vazia os dois viram o fallback
-             de sempre (`transparent` e `--bg-nowplaying-fallback`).
+             A composição (glow chapado por cima, radial de três cores embaixo)
+             mora em `.now-cover-panel` no `globals.css`, junto com o
+             `@property` que torna as cores interpoláveis. Aqui só entregamos
+             os valores via `--hero-c1/2/3` e `--hero-glow` — é isso que
+             permite a transição suave entre faixas.
 
              `rounded-2xl` dá o canto, mesma escala de forma da capa; a borda de
-             `${dominantColor}4D` (30%) fecha o contorno e é o que separa o
+             30% da cor primária fecha o contorno e é o que separa o
              painel do vão preto da raiz — sem ela o canto some contra o
              `bg-base`. `--outline-variant` quando não há capa extraída.
 
@@ -573,12 +575,8 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
              viewports curtos — numa altura normal tudo cabe e não há o que rolar.
              Sem ela a trilha apareceria colada na capa. */}
         <div
-          className={`flex-1 md:flex-[3] flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 rounded-2xl ${showQueueOnMobile ? 'hidden md:flex' : ''}`}
-          style={{
-            backgroundImage: `linear-gradient(${glowTint}, ${glowTint}), ${bgGradient}`,
-            transition: 'background 800ms ease, border-color 800ms ease',
-            border: `1px solid ${dominantColor ? `${dominantColor}4D` : 'var(--outline-variant)'}`,
-          }}
+          className={`now-cover-panel flex-1 md:flex-[3] flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 rounded-2xl ${showQueueOnMobile ? 'hidden md:flex' : ''} ${palette ? '' : 'now-cover-panel-empty'}`}
+          style={panelStyle}
         >
           <div ref={coverRef} className={`now-cover relative flex-shrink-0${queueMinimized ? ' now-cover-min' : ''}`} style={{ aspectRatio: '1' }}>
             {baseCover && baseFailed !== currentTrack.id ? (
