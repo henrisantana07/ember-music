@@ -704,12 +704,13 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             className={`w-full -ml-4 -mr-4 -mb-4 md:ml-0 md:-mr-6 ${queueMinimized ? 'md:w-72' : 'md:w-auto md:flex-[2]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none ${showQueueOnMobile ? '' : 'hidden md:flex'}`}
             style={{ backgroundColor: 'var(--bg-elevated)' }}
           >
-            {/* Tela cheia na divisa entre a capa e a fila: o centro do botão
-                cai exatamente sobre a borda esquerda do painel — metade no gap
-                de 24px, metade sobre o #121212. Assim ele nunca invade a
-                coluna da capa (o `-left-6` é metade do gap, então a outra
-                metade já cobre o resto) e continua existindo com a fila
-                recolhida, porque fica fora da condição do cabeçalho.
+            {/* Tela cheia na divisa entre a capa e a fila: com `-left-10`
+                (−40px) o botão fica pendurado na borda esquerda do painel e
+                sai quase todo pra fora dele — 24px tomam o gap inteiro e os
+                outros 16px encostam na coluna da capa. É isso que o faz ler
+                como puxador na fronteira entre as duas colunas, em vez de
+                como um ícone do painel. Continua fora da condição do
+                cabeçalho, então existe também com a fila recolhida.
 
                 `top-3` e não `top-0`: o topo do painel é o topo do modal, que
                 no desktop encosta na linha do `border-b` do Topbar e na tela
@@ -718,12 +719,13 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 `py-3` do cabeçalho ao lado, então o topo dele alinha com o
                 topo do "Fila".
 
-                Fundo + borda porque ele encosta em dois fundos diferentes (o
-                preto da hero e o #121212 do painel); sem eles some em um dos
-                dois. */}
+                Fundo + borda porque ele atravessa duas superfícies diferentes
+                (o preto da hero e o #121212 do painel) e chega perto o
+                bastante da capa pra encostar nela em telas estreitas; sem
+                eles some em qualquer uma delas. */}
             <button
               onClick={toggleImmersive}
-              className={`absolute -left-6 top-3 z-10 h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full border border-outline-variant transition-colors state-layer ${
+              className={`absolute -left-10 top-3 z-10 h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full border border-outline-variant transition-colors state-layer ${
                 immersive ? 'text-[var(--accent-from)]' : 'text-[var(--text-secondary)]'
               }`}
               style={{ backgroundColor: 'var(--bg-surface)' }}
@@ -734,15 +736,14 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
               {immersive ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
             </button>
 
-            {/* `pl-9` porque o botão de tela cheia atravessa a borda esquerda
-                do painel (metade no gap de 24px) e cobre os primeiros 24px do
-                canto superior. Empurrar o texto pra direita em vez de pra
-                baixo é o que devolve 48px de altura às faixas: sem a faixa
-                vazia de antes, o cabeçalho inteiro cabe na altura do botão e
-                ele passa a ler como puxador preso na linha, não como um ícone
-                solto num vão. */}
+            {/* `pl-5` porque o botão de tela cheia agora cobre só os primeiros
+                8px do canto — com `-left-10` ele saiu quase todo pra fora do
+                painel. Empurrar o texto pra direita em vez de pra baixo é o
+                que devolve altura às faixas: sem faixa vazia, o cabeçalho
+                inteiro cabe na altura do botão e ele lê como puxador preso na
+                linha, não como um ícone solto num vão. */}
             {!queueMinimized && (
-              <div className="flex-none pl-9 pr-3 py-3">
+              <div className="flex-none pl-5 pr-3 py-3">
                 <h2 className="text-title-medium font-semibold" style={{ color: 'var(--text-primary)' }}>Fila</h2>
                 {usePlayerStore.getState().currentPlaylistName && (
                   <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{usePlayerStore.getState().currentPlaylistName}</p>
