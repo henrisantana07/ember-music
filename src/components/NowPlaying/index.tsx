@@ -727,12 +727,15 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
               {immersive ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
             </button>
 
-            {/* `pt-12` é a faixa do botão de tela cheia que fica na divisa logo
-                acima (top-0 + 48px). Empurra pra baixo e não pra direita de
-                propósito: assim o "Fila" continua alinhado com as linhas da
-                lista, em vez de ficar 24px deslocado por causa do botão. */}
+            {/* `pl-9` porque o botão de tela cheia atravessa a borda esquerda
+                do painel (metade no gap de 24px) e cobre os primeiros 24px do
+                canto superior. Empurrar o texto pra direita em vez de pra
+                baixo é o que devolve 48px de altura às faixas: sem a faixa
+                vazia de antes, o cabeçalho inteiro cabe na altura do botão e
+                ele passa a ler como puxador preso na linha, não como um ícone
+                solto num vão. */}
             {!queueMinimized && (
-              <div className="flex-none pt-12 pl-3 pr-3 pb-3">
+              <div className="flex-none pl-9 pr-3 py-3">
                 <h2 className="text-title-medium font-semibold" style={{ color: 'var(--text-primary)' }}>Fila</h2>
                 {usePlayerStore.getState().currentPlaylistName && (
                   <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{usePlayerStore.getState().currentPlaylistName}</p>
@@ -742,10 +745,12 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={queue.map((t, index) => `${index}::${t.id}`)} strategy={verticalListSortingStrategy}>
-                {/* `mt-12` e não `pt-12`: padding dentro do scroller rola junto
-                    e as linhas passariam por baixo do botão de tela cheia
-                    quando a lista subisse. Margem desloca o scroller inteiro,
-                    então a faixa do botão fica permanentemente livre. */}
+                {/* Com a fila recolhida não há cabeçalho pra absorver o botão
+                    de tela cheia, então a faixa de 48px continua aqui — sem
+                    ela as primeiras linhas passariam por baixo dele. `mt-12` e
+                    não `pt-12`: padding dentro do scroller rola junto e as
+                    linhas subiriam por cima do botão; margem desloca o scroller
+                    inteiro, então a faixa fica permanentemente livre. */}
                 <div className={`flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full${queueMinimized ? ' mt-12 pb-4' : ''}`}>
                   <div className={`${queueMinimized ? 'px-0' : 'px-1'} space-y-1`}>
                   {queue.length === 0 ? (
