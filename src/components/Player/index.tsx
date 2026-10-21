@@ -13,7 +13,7 @@ import { savePlaybackHistory } from '@/lib/playback-history'
 import { ExpandedPlayerModal } from '@/components/ExpandedPlayerModal'
 import { useYouTube, useYouTubeTime } from '@/components/YouTubePlayer/context'
 import Link from 'next/link'
-import { ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause } from 'lucide-react'
+import { ChevronDown, ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause } from 'lucide-react'
 
 export function Player() {
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -41,8 +41,17 @@ export function Player() {
     pause, resume, next, prev, togglePlay,
     setVolume, setProgress, setDuration,
     setRepeat, toggleShuffle, setSleepTimer, toggleMiniPlayer,
-    openExpanded, isExpandedOpen, queueMinimized, setQueueMinimized,
+    openExpanded, closeExpanded, isExpandedOpen, queueMinimized, setQueueMinimized,
   } = usePlayerStore()
+
+  /**
+   * Um único botão no rodapé abre e fecha a hero.
+   *
+   * O rodapé é `z-[70]` e o `ExpandedPlayerModal` é `z-[60]`, então o rodapé
+   * continua visível por cima da hero quando ela abre — é isso que permite
+   * que o mesmo controle faça as duas coisas, depois que o `v` da hero saiu.
+   */
+  const toggleExpanded = () => (isExpandedOpen ? closeExpanded() : openExpanded())
 
   const isYouTubeTrack = currentTrack?.source === 'youtube' && !!currentTrack.youtubeVideoId
 
@@ -402,8 +411,8 @@ export function Player() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
             </svg>
           </button>
-          <button onClick={openExpanded} className="h-11 w-11 inline-flex items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-disabled)' }} title="Abrir player" aria-label="Abrir player expandido">
-            <ChevronUp className="w-5 h-5" />
+          <button onClick={toggleExpanded} className="h-11 w-11 inline-flex items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-disabled)' }} title={isExpandedOpen ? 'Recolher player' : 'Abrir player'} aria-label={isExpandedOpen ? 'Recolher player expandido' : 'Abrir player expandido'}>
+            {isExpandedOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
           </button>
         </footer>
         <ExpandedPlayerModal />
@@ -588,8 +597,8 @@ export function Player() {
             </svg>
           </button>
 
-          <button onClick={openExpanded} className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer" style={{ color: 'var(--text-secondary)' }} title="Abrir player" aria-label="Abrir player expandido">
-            <ChevronUp className="w-5 h-5" />
+          <button onClick={toggleExpanded} className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer" style={{ color: 'var(--text-secondary)' }} title={isExpandedOpen ? 'Recolher player' : 'Abrir player'} aria-label={isExpandedOpen ? 'Recolher player expandido' : 'Abrir player expandido'}>
+            {isExpandedOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
           </button>
         </div>
       </footer>

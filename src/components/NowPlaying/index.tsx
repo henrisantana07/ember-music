@@ -14,7 +14,7 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from 
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  ChevronDown, Play,
+  Play,
   Music, Trash2, GripVertical, MoreHorizontal,
 } from 'lucide-react'
 import { extractDominantColor } from '@/lib/color/extractDominantColor'
@@ -168,11 +168,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       : ''
 
   const coverRef = useRef<HTMLDivElement>(null)
-
-  function requestClose() {
-    if (onClose) onClose()
-    else router.back()
-  }
 
   const playTrackAt = useCallback((queueIndex: number) => {
     const track = queue[queueIndex]
@@ -398,10 +393,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
         }}
       />
 
-      <header className="relative flex items-center justify-between px-4 md:px-6 h-14 flex-none">
-        <button onClick={requestClose} className="h-12 w-12 inline-flex items-center justify-center rounded-full hover:bg-state-hover transition-colors state-layer" style={{ color: 'var(--text-primary)' }} aria-label="Fechar">
-          <ChevronDown className="w-6 h-6" />
-        </button>
+      <header className="relative flex items-center justify-end px-4 md:px-6 h-14 flex-none">
         <button
           onClick={() => setShowQueueOnMobile(!showQueueOnMobile)}
           className="md:hidden h-12 w-12 inline-flex items-center justify-center rounded-full hover:bg-state-hover transition-colors state-layer"
@@ -410,7 +402,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
         >
           <Music className="w-5 h-5" />
         </button>
-        <div className="hidden md:block" />
       </header>
 
       <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-0 min-h-0 px-4 md:px-6 pb-4">
