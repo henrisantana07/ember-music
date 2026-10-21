@@ -139,8 +139,15 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
         <p className={`text-body-medium truncate ${isCurrent ? 'font-semibold' : ''}`} style={{ color: isCurrent ? 'var(--accent-from)' : 'var(--text-primary)' }}>
           {displayName}
         </p>
-        <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>
-          {minimized ? `${track.artist_name} · ${formatDuration(Math.floor(track.duration))}` : track.artist_name}
+        {/* Nome do artista em laranja, como no resto da hero. No modo minimizado
+            a duração vai na mesma linha — ela segue neutra, senão os dois modos
+            terminariam com a duração em cores diferentes (cinza no expandido,
+            laranja no enxuto). */}
+        <p className="text-body-medium truncate">
+          <span style={{ color: 'var(--text-accent)' }}>{track.artist_name}</span>
+          {minimized && (
+            <span style={{ color: 'var(--text-disabled)' }}> · {formatDuration(Math.floor(track.duration))}</span>
+          )}
         </p>
       </div>
 
@@ -530,7 +537,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             <Link
               href={`/artists/${currentTrack.artist_id}`}
               className="text-base inline-block hover:underline"
-              style={{ color: 'var(--text-secondary)' }}
+              style={{ color: 'var(--text-accent)' }}
             >
               {currentTrack.artist_name}
             </Link>
@@ -567,7 +574,10 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             )}
             <button
               onClick={() => visitArtist(currentTrack.artist_id)}
-              className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors hover:text-[var(--text-primary)] state-layer"
+              /* Classe, não `style`: o botão já tem `hover:text-…`, e um estilo
+                 inline venceria o hover. Só esta fileira fica laranja — baixar e
+                 favoritar continuam neutros (herdam do `div` pai). */
+              className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors text-[var(--text-accent)] hover:text-[var(--text-primary)] state-layer"
               aria-label={`Ver artista ${currentTrack.artist_name}`}
               title="Ver mais do artista"
             >
@@ -587,13 +597,13 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             </h2>
             <dl className="space-y-2">
               <div className="flex items-baseline gap-3 min-h-[24px]">
-                <dt className="w-16 flex-none text-label-medium" style={{ color: 'var(--text-secondary)' }}>Artista</dt>
+                <dt className="w-16 flex-none text-label-medium" style={{ color: 'var(--text-accent)' }}>Artista</dt>
                 <dd className="min-w-0 flex-1 text-body-medium font-medium truncate" style={{ color: 'var(--text-primary)' }}>
                   {currentTrack.artist_name}
                 </dd>
               </div>
               <div className="flex items-baseline gap-3 min-h-[24px]">
-                <dt className="w-16 flex-none text-label-medium" style={{ color: 'var(--text-secondary)' }}>Álbum</dt>
+                <dt className="w-16 flex-none text-label-medium" style={{ color: 'var(--text-accent)' }}>Álbum</dt>
                 <dd className="min-w-0 flex-1 text-body-medium font-medium truncate" style={{ color: 'var(--text-primary)' }}>
                   {currentTrack.album_name || '—'}
                 </dd>
@@ -667,7 +677,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                               )}
                               <div className="min-w-0 flex-1">
                                 <p className="text-body-medium truncate" style={{ color: 'var(--text-primary)' }}>{track.name}</p>
-                                <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
+                                <p className="text-body-medium truncate" style={{ color: 'var(--text-accent)' }}>{track.artist_name}</p>
                               </div>
                               <Play className="w-5 h-5 flex-none" style={{ color: 'var(--text-disabled)' }} />
                             </button>

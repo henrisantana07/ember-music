@@ -447,6 +447,11 @@ body {
   --surface-container-highest: #181818;
   --outline-variant: #242424;
   --text-secondary: #a1a1aa;
+  /* O laranja que `--text-secondary` trazia antes do redesign neutro. Fica como
+     token próprio de propósito: o valor acima é neutro por definição e repintar
+     dele repintaria a hero inteira. Só a identidade de artista/álbum é laranja —
+     duração, fonte e demais rótulos continuam neutros. */
+  --text-accent: #ff8700;
 }
 
 /* Tema claro: a hero volta a seguir a paleta do app.
@@ -459,6 +464,9 @@ body {
   --surface-container-highest: #DBD5CC;
   --outline-variant: #DED8CE;
   --text-secondary: #6B5F54;
+  /* Mantém o neutro no claro: #ff8700 sobre #FAF8F5 fica em ~2,5:1 e reprova
+     no AA. O laranja é exclusivo do tema escuro, como era antes do redesign. */
+  --text-accent: #6B5F54;
 }
 
 .theme-light {
