@@ -651,9 +651,17 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
               (linha acima); sem elas sobraria uma moldura preta de 24px em volta,
               que não é como o Spotify desenha a fila. `md:ml-0` devolve a
               margem esquerda no desktop, onde ela é o espaçamento entre as duas
-              colunas. O `overflow-hidden` da raiz garante o corte na borda. */}
+              colunas. O `overflow-hidden` da raiz garante o corte na borda.
+
+              Recolhida, a largura passa a ser 20% da largura visível da hero —
+              não do content-box do container, que é onde uma % de flex-item é
+              resolvida e que já vem os 48px do `px-6` menores. Daí o
+              `+ 9.6px`: 20% dos 48px de padding, devolvidos, fazem o painel
+              medir 20% da hero inteira. Em 1440px isso dá 288px — exatamente
+              os 288px do antigo `md:w-72`, que era fixo e ignorava a largura
+              da tela; agora a proporção sobrevive a qualquer viewport. */}
           <div
-            className={`w-full -ml-4 -mr-4 -mb-4 md:ml-0 md:-mr-6 ${queueMinimized ? 'md:w-72' : 'md:w-auto md:flex-[2]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none ${showQueueOnMobile ? '' : 'hidden md:flex'}`}
+            className={`w-full -ml-4 -mr-4 -mb-4 md:ml-0 md:-mr-6 ${queueMinimized ? 'md:w-[calc(20%_+_9.6px)]' : 'md:w-auto md:flex-[2]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none ${showQueueOnMobile ? '' : 'hidden md:flex'}`}
             style={{ backgroundColor: 'var(--bg-elevated)' }}
           >
             {/* Tela cheia na divisa entre a capa e a fila: `-left-14` (−56px)
