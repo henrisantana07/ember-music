@@ -60,10 +60,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <MotionConfig reducedMotion="user">
           <YouTubePlayerProvider>
             <KeyboardShortcuts />
-            <div className="flex flex-1 overflow-hidden">
-              <Sidebar />
-              <div className="flex-1 flex flex-col overflow-hidden">
-                <Suspense fallback={<div className="h-16 flex-shrink-0 border-b border-outline-variant" />}><Topbar /></Suspense>
+            <div className="flex flex-col flex-1 overflow-hidden">
+              <Suspense fallback={<div className="h-16 flex-shrink-0 border-b border-outline-variant" />}><Topbar /></Suspense>
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
                 <MainContainer>
                   <PageTransition>
                     {children}

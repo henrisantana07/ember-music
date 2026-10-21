@@ -9,6 +9,7 @@ import { useUser } from '@/hooks/use-user'
 import { useAvatar } from '@/hooks/use-avatar'
 import { AnimatePresence, motion } from 'motion/react'
 import { popoverVariants } from '@/lib/motion'
+import { useSidebarStore } from '@/lib/sidebar-store'
 
 export function Topbar() {
   const [showDropdown, setShowDropdown] = useState(false)
@@ -23,6 +24,8 @@ export function Topbar() {
 
   const { user } = useUser()
   const avatarUrl = useAvatar(user?.id)
+  const sidebarCollapsed = useSidebarStore((s) => s.collapsed)
+  const toggleSidebar = useSidebarStore((s) => s.toggle)
 
   useEffect(() => {
     const q = searchParams.get('q')
@@ -76,6 +79,18 @@ export function Topbar() {
         style={{ filter: 'drop-shadow(0 0 8px rgba(255,106,0,0.4))' }}
       />
       <div className="absolute left-36 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1">
+        <button
+          onClick={toggleSidebar}
+          className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer"
+          style={{ color: 'var(--text-secondary)' }}
+          aria-label={sidebarCollapsed ? 'Expandir barra lateral' : 'Recolher barra lateral'}
+          aria-expanded={!sidebarCollapsed}
+          title={sidebarCollapsed ? 'Expandir barra lateral' : 'Recolher barra lateral'}
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+          </svg>
+        </button>
         <button
           onClick={() => router.back()}
           className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer"

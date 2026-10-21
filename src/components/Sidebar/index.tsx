@@ -8,6 +8,7 @@ import type { ReactNode } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { useArtistsStore } from '@/lib/artists-store'
+import { useSidebarStore } from '@/lib/sidebar-store'
 import { useUser } from '@/hooks/use-user'
 import { useAvatar } from '@/hooks/use-avatar'
 import { AnimatePresence, motion } from 'motion/react'
@@ -60,7 +61,7 @@ function RailItem({ show, children, className = '' }: { show: boolean; children:
 
 export default function Sidebar() {
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
+  const collapsed = useSidebarStore((s) => s.collapsed)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const supabase = createClient()
   const router = useRouter()
@@ -155,16 +156,6 @@ export default function Sidebar() {
   const sidebarContent = (
     <>
       <div className="flex-none flex items-center h-14 px-4 gap-3">
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="h-11 w-11 flex-shrink-0 inline-flex items-center justify-center rounded-lg hover:bg-state-hover transition-colors duration-200 state-layer"
-          aria-label={collapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
-          aria-expanded={!collapsed}
-        >
-          <svg className="w-5 h-5" style={{ color: 'var(--text-primary)' }} viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
-          </svg>
-        </button>
         <RailItem show={!collapsed}>
           <Link href="/" className="block truncate text-lg font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             <span className="gradient-accent-text">Ember</span>
