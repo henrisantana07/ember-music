@@ -19,7 +19,7 @@ import {
   Play, Pause,
   Music, Trash2, MoreHorizontal, Share2, Maximize2, Minimize2,
 } from 'lucide-react'
-import { extractCoverPalette, type CoverPalette } from '@/lib/color/extractCoverPalette'
+import { useTrackHeroColor } from '@/hooks/use-track-hero-color'
 import { getHighResCoverUrl } from '@/lib/image-utils'
 import { useMenu, MenuItem, MenuPanel, MenuPresence } from '@/components/ui/Menu'
 import { PlaylistModal } from '@/components/PlaylistModal'
@@ -225,10 +225,6 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
 
 export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const router = useRouter()
-  /* Paleta extraída da capa (3 cores predominantes). A `primary` vira a
-     `dominantColor` que já era usada por borda/sombra/glow — o resto da hero
-     não muda de comportamento por causa disso. */
-  const [palette, setPalette] = useState<CoverPalette | null>(null)
   const [hdCover, setHdCover] = useState<{ id: string; src: string } | null>(null)
   const [hdFailed, setHdFailed] = useState<string | null>(null)
   const [baseFailed, setBaseFailed] = useState<string | null>(null)
@@ -283,7 +279,15 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
   const isYouTubeTrack = currentTrack?.source === 'youtube' && !!currentTrack.youtubeVideoId
 
-  // Capa base sempre válida (evita flash de imagem quebrada enquanto tentamos a HD)
+  // Capa em alta resolução para extração de cor (yt-image-quality: maxresdefault / =w1200)
+  // O hook `useTrackHeroColor` já faz fallback automático via proxy se CORS falhar.
+  const heroCoverUrl = currentTrack?.image
+    ? getHighResCoverUrl(currentTrack.image, currentTrack.youtubeVideoId)
+    : isYouTubeTrack && currentTrack?.youtubeVideoId
+      ? `https://i.ytimg.com/vi/${currentTrack.youtubeVideoId}/maxresdefault.jpg`
+      : ''
+
+  // Capa base para exibição (hdCover faz o upgrade progressivo)
   const baseCover = currentTrack?.image
     ? currentTrack.image
     : isYouTubeTrack && currentTrack?.youtubeVideoId
@@ -292,11 +296,21 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
   const coverRef = useRef<HTMLDivElement>(null)
 
+  /* Hook de cor do hero: extração K-means + scoring perceptual + cache + cancelamento.
+
+     Sem `fallbackColor`: quando não há cor (capa ausente ou ilegível),
+     `heroColor` fica `null` e o CSS aplica `.now-cover-panel-empty`
+     (`var(--bg-nowplaying-fallback)`). Um hex sintético aqui só poluiria o
+     gradiente — e `var(--accent-from)` nem é hex, geraria `#NaNNaNNaN`. */
+  const { color: heroColor } = useTrackHeroColor({
+    coverUrl: heroCoverUrl || undefined,
+    trackId: currentTrack?.id,
+  })
+
   const playTrackAt = useCallback((queueIndex: number) => {
     const track = queue[queueIndex]
     if (!track) return
     const store = usePlayerStore.getState()
-    // Faixa atual na fila: alterna play/pause (nunca reinicia/zerar a posição)
     if (store.currentTrack?.id === track.id) {
       store.togglePlay()
       return
@@ -304,23 +318,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     store.play(track, store.originalQueue, store.currentPlaylistId ?? undefined, store.currentPlaylistName ?? undefined)
   }, [queue])
 
-  useEffect(() => {
-    if (!baseCover) {
-      return
-    }
-    let cancelled = false
-    // Paleta sempre da capa base (o glow não precisa de HD; evita 404 do
-    // maxresdefault). A paleta já cai no extractDominantColor de sempre quando
-    // a imagem não pode ser lida (CORS/404), então não há segundo fallback aqui.
-    extractCoverPalette(baseCover).then((next) => {
-      if (!cancelled && next) setPalette(next)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [baseCover, currentTrack?.id])
-
-  // Só promove para a capa HD quando ela realmente carrega (evita404/flash quebrado)
+  // Só promove para a capa HD quando ela realmente carrega (evita 404/flash quebrado)
   useEffect(() => {
     if (!currentTrack?.id || !baseCover) return
     // Kill-switch: NEXT_PUBLIC_COVER_HD=off restaura o comportamento da v.2_reordenar
@@ -409,7 +407,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     )
   }
 
-  const dominantColor = palette?.primary ?? null
+  const dominantColor = heroColor?.primary ?? null
 
   /* Cores da capa viram custom properties (`--hero-c1/2/3` + `--hero-glow`) em
      vez de entrarem embutidas no `radial-gradient`. A composição do gradiente
@@ -422,22 +420,22 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
      navegador interpola o valor e o gradiente se redesenha a cada frame.
 
      A parada-base é `--hero-c2`, e ela carrega a `primary` — a cor mais
-     predominante da capa — a 95% de alpha. É o que dá peso ao miolo do
-     gradiente; as outras duas descem em opacidade até o `--bg-base`.
-     O glow caiu de 15% pra 10% justamente pra não competir com essa base.
+     predominante da capa (K-means + scoring QC/QD/QR) — a 95% de alpha.
+     As outras duas descem em opacidade até o `--bg-base`.
+     O glow em 10% pra não competir com a base.
 
-     `transparent` quando não há paleta, e o CSS decide o fallback. */
-  const panelStyle: CSSProperties & Record<string, string> = palette
+     `transparent` quando não há cor, e o CSS decide o fallback. */
+  const panelStyle: CSSProperties & Record<string, string> = heroColor
     ? {
-        '--hero-c1': `${palette.secondary}99`,
-        '--hero-c2': `${palette.primary}F2`,
-        '--hero-c3': `${palette.tertiary}59`,
-        '--hero-glow': `${palette.primary}1A`,
-        border: `1px solid ${palette.primary}4D`,
+        '--hero-c1': `${heroColor.primary}99`,
+        '--hero-c2': `${heroColor.primary}F2`,
+        '--hero-c3': `${heroColor.primary}59`,
+        '--hero-glow': `${heroColor.primary}1A`,
+        border: `1px solid ${heroColor.primary}4D`,
       }
     : { border: '1px solid var(--outline-variant)' }
 
-  /* Sombra da capa acompanha a cor dominante (30%). Fora da paleta, preto
+  /* Sombra da capa acompanha a cor dominante (30%). Fora da cor, preto
      genérico — ela existe pra destacar a capa do fundo, não pra dizer cor. */
   const coverShadow = dominantColor
     ? `0 32px 64px ${dominantColor}4D`
@@ -579,7 +577,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
              viewports curtos — numa altura normal tudo cabe e não há o que rolar.
              Sem ela a trilha apareceria colada na capa. */}
         <div
-          className={`now-cover-panel flex-1 md:flex-[3] flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 rounded-2xl ${showQueueOnMobile ? 'hidden md:flex' : ''} ${palette ? '' : 'now-cover-panel-empty'}`}
+          className={`now-cover-panel flex-1 md:flex-[3] flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 rounded-2xl ${showQueueOnMobile ? 'hidden md:flex' : ''} ${heroColor ? '' : 'now-cover-panel-empty'}`}
           style={panelStyle}
         >
           <div ref={coverRef} className={`now-cover relative flex-shrink-0${queueMinimized ? ' now-cover-min' : ''}`} style={{ aspectRatio: '1' }}>
