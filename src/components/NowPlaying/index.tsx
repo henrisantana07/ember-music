@@ -421,14 +421,18 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
      cor pulava num frame só. Com as cores tipadas como `<color>`, o
      navegador interpola o valor e o gradiente se redesenha a cada frame.
 
-     Os alphas são os mesmos de antes —90/60/35% nas três paradas e 15% no
-     glow. `transparent` quando não há paleta, e o CSS decide o fallback. */
+     A parada-base é `--hero-c2`, e ela carrega a `primary` — a cor mais
+     predominante da capa — a 95% de alpha. É o que dá peso ao miolo do
+     gradiente; as outras duas descem em opacidade até o `--bg-base`.
+     O glow caiu de 15% pra 10% justamente pra não competir com essa base.
+
+     `transparent` quando não há paleta, e o CSS decide o fallback. */
   const panelStyle: CSSProperties & Record<string, string> = palette
     ? {
-        '--hero-c1': `${palette.primary}E6`,
-        '--hero-c2': `${palette.secondary}99`,
+        '--hero-c1': `${palette.secondary}99`,
+        '--hero-c2': `${palette.primary}F2`,
         '--hero-c3': `${palette.tertiary}59`,
-        '--hero-glow': `${palette.primary}26`,
+        '--hero-glow': `${palette.primary}1A`,
         border: `1px solid ${palette.primary}4D`,
       }
     : { border: '1px solid var(--outline-variant)' }
