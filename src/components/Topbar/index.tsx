@@ -116,7 +116,7 @@ export function Topbar() {
             aria-label="Buscar músicas, álbuns ou artistas"
             className="block w-full h-9 pl-10 pr-10 py-0 rounded-full text-sm leading-none border-none appearance-none focus:outline-none focus:ring-2 transition-all [&::-webkit-search-cancel-button]:hidden"
             style={{
-              backgroundColor: 'var(--bg-surface)',
+              backgroundColor: 'var(--bg-elevated)',
               color: 'var(--text-primary)',
               '--tw-ring-color': 'var(--accent-solid)',
             } as React.CSSProperties}
