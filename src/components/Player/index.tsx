@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { savePlaybackHistory } from '@/lib/playback-history'
 import { ExpandedPlayerModal } from '@/components/ExpandedPlayerModal'
+import { PlaylistModal } from '@/components/PlaylistModal'
 import { useYouTube, useYouTubeTime } from '@/components/YouTubePlayer/context'
 import Link from 'next/link'
 import { ChevronDown, ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause } from 'lucide-react'
@@ -26,6 +27,9 @@ export function Player() {
   // Posição do cursor enquanto arrasta. A barra desenha o destino antes do
   // seek acontecer, em vez de esperar o soltar.
   const [seekPreview, setSeekPreview] = useState<number | null>(null)
+  // "Add Button" do cluster esquerdo da barra (spec) — o mesmo PlaylistModal
+  // já usado na tabela de faixas e no menu da fila.
+  const [playlistOpen, setPlaylistOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [sleepRemaining, setSleepRemaining] = useState<string | null>(null)
@@ -472,6 +476,23 @@ export function Player() {
               </Link>
             )}
           </div>
+
+          {/* "Add Button" do spec. Só no desktop: o cluster tem w-40 no mobile
+              e os 48px do botão espremeriam o título. Lá a fila já expõe a
+              mesma ação no menu [...]. */}
+          <button
+            onClick={() => setPlaylistOpen(true)}
+            className="hidden md:inline-flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full transition-colors state-layer"
+            style={{ color: 'var(--text-secondary)' }}
+            title="Adicionar à playlist"
+            aria-label="Adicionar à playlist"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+
+          <PlaylistModal open={playlistOpen} onClose={() => setPlaylistOpen(false)} track={currentTrack} />
         </div>
 
         <div className="flex-1 flex flex-col items-center gap-1">

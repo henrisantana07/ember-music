@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback, memo } from 'react'
+import { useEffect, useState, useRef, useCallback, memo, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { usePlayerStore } from '@/lib/store'
@@ -29,6 +29,24 @@ import { useConfirmAnimation } from '@/lib/motion-hooks'
 function queueIndexFromItemKey(key: string | number): number {
   const parsed = Number(String(key).split('::')[0])
   return Number.isFinite(parsed) ? parsed : -1
+}
+
+/**
+ * Rótulo de seção da fila (spec: "Tocando agora" / "Próximas").
+ *
+ * É um `<p>` comum, não um item do dnd-kit: fica DENTRO do `SortableContext`
+ * mas fora do array `items`, então não arrasta e não desloca os índices
+ * globais que `onPlay(index)` / `onRemove(index)` usam.
+ */
+function QueueSection({ label }: { label: string }) {
+  return (
+    <p
+      className="px-3 pt-4 pb-1 text-label-medium font-semibold uppercase tracking-widest"
+      style={{ color: 'var(--text-disabled)' }}
+    >
+      {label}
+    </p>
+  )
 }
 
 const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, index, isCurrent, isPlaying, onPlay, onRemove, onVisitArtist, minimized }: {
@@ -170,6 +188,9 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   // `md:hidden` no desktop (sem rodapé). O respiro da hero acompanha isso
   // para não abrir uma banda vazia no fim.
   const miniPlayer = usePlayerStore((s) => s.miniPlayer)
+  // Âncora das seções "Tocando agora" / "Próximas". Mantém o índice GLOBAL do
+  // array da fila de propósito: a numeração do dnd e os handlers não mudam.
+  const currentIndex = queue.findIndex((t) => t.id === currentTrack?.id)
 
   // Leva à página do artista da faixa, onde o usuário pode explorar novas faixas dele
   const visitArtist = useCallback((artistId: string) => {
@@ -400,7 +421,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
   return (
     <div
-      className={`h-full relative flex flex-col overflow-hidden ${miniPlayer ? 'pb-14 md:pb-0' : 'pb-20'} ${onClose ? '' : 'animate-slide-up'}`}
+      className={`now-playing h-full relative flex flex-col overflow-hidden ${miniPlayer ? 'pb-14 md:pb-0' : 'pb-20'} ${onClose ? '' : 'animate-slide-up'}`}
       style={{
         background: bgGradient,
         transition: `background 800ms ease${swipeOffset > 0 ? '' : ', transform 300ms cubic-bezier(0.32, 0.72, 0, 1)'}`,
@@ -419,9 +440,12 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
         }}
       />
 
-      {/* Só no mobile: lá a hero é full-bleed e precisa da própria barra (marca +
-          botão da fila). No desktop ela fica abaixo do Topbar, que já faz esse papel. */}
-      <header className="relative flex items-center justify-end px-4 h-16 flex-none border-b border-outline-variant md:hidden">
+      {/* Barra do spec: título da faixa à esquerda em todos os breakpoints.
+          Fica em `<p>` porque o título grande abaixo da capa já é o `<h1>`. */}
+      <header className="relative flex items-center gap-3 px-4 md:px-6 h-16 flex-none border-b border-outline-variant">
+        <p className="min-w-0 flex-1 truncate text-body-large font-medium" style={{ color: 'var(--text-primary)' }}>
+          {currentTrack.name}
+        </p>
         <button
           onClick={() => setShowQueueOnMobile(!showQueueOnMobile)}
           className="md:hidden h-12 w-12 inline-flex items-center justify-center rounded-full hover:bg-state-hover transition-colors state-layer"
@@ -433,7 +457,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       </header>
 
       <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-6 min-h-0 px-4 md:px-6 pb-4">
-        <div className={`flex-1 md:flex-[3] flex flex-col items-center justify-center gap-3 md:gap-4 min-h-0 overflow-hidden pt-1 md:pt-2 pb-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
+        <div className={`flex-1 md:flex-[3] flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden pt-1 md:pt-2 pb-4 ${showQueueOnMobile ? 'hidden md:flex' : ''}`}>
           <div ref={coverRef} className={`now-cover relative flex-shrink-0${queueMinimized ? ' now-cover-min' : ''}`} style={{ aspectRatio: '1' }}>
             {baseCover && baseFailed !== currentTrack.id ? (
               <img
@@ -514,6 +538,42 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             </button>
           </div>
 
+          {/* Card "Créditos" do spec. Só o que já está em `track_data` — nenhuma
+              chamada de rede, nenhuma quota. `dl/dt/dd` para o par label↔valor
+              ficar acessível de verdade, e `truncate` porque a regra do projeto
+              proíbe `overflow: hidden` cego cortando nome. */}
+          <div className="w-full max-w-[560px] rounded-2xl px-5 py-4 text-left" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+            <h2 className="text-label-medium font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--text-secondary)' }}>
+              Créditos
+            </h2>
+            <dl className="space-y-2">
+              <div className="flex items-baseline gap-3 min-h-[24px]">
+                <dt className="w-16 flex-none text-label-medium" style={{ color: 'var(--text-secondary)' }}>Artista</dt>
+                <dd className="min-w-0 flex-1 text-body-medium font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                  {currentTrack.artist_name}
+                </dd>
+              </div>
+              <div className="flex items-baseline gap-3 min-h-[24px]">
+                <dt className="w-16 flex-none text-label-medium" style={{ color: 'var(--text-secondary)' }}>Álbum</dt>
+                <dd className="min-w-0 flex-1 text-body-medium font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                  {currentTrack.album_name || '—'}
+                </dd>
+              </div>
+              <div className="flex items-baseline gap-3 min-h-[24px]">
+                <dt className="w-16 flex-none text-label-medium" style={{ color: 'var(--text-secondary)' }}>Duração</dt>
+                <dd className="min-w-0 flex-1 text-body-medium font-medium" style={{ color: 'var(--text-primary)' }}>
+                  {formatDuration(Math.floor(currentTrack.duration))}
+                </dd>
+              </div>
+              <div className="flex items-baseline gap-3 min-h-[24px]">
+                <dt className="w-16 flex-none text-label-medium" style={{ color: 'var(--text-secondary)' }}>Fonte</dt>
+                <dd className="min-w-0 flex-1 text-body-medium font-medium" style={{ color: 'var(--text-primary)' }}>
+                  {currentTrack.youtubeVideoId ? 'YouTube' : 'Biblioteca local'}
+                </dd>
+              </div>
+            </dl>
+          </div>
+
           {toast && (
             <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl text-body-medium shadow-elevation-3 animate-slide-up" style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
               {toast}
@@ -526,14 +586,14 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}
           >
             <Music className="w-5 h-5" />
-            A seguir
+            Fila
           </button>
         </div>
 
           <div className={`w-full ${queueMinimized ? 'md:w-72' : 'md:w-auto md:flex-[2]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none ${showQueueOnMobile ? '' : 'hidden md:flex'}`}>
             {!queueMinimized && (
               <div className="flex-none px-3 py-3">
-                <h2 className="text-title-medium font-semibold" style={{ color: 'var(--text-primary)' }}>A seguir</h2>
+                <h2 className="text-title-medium font-semibold" style={{ color: 'var(--text-primary)' }}>Fila</h2>
                 {usePlayerStore.getState().currentPlaylistName && (
                   <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{usePlayerStore.getState().currentPlaylistName}</p>
                 )}
@@ -578,18 +638,25 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                     </div>
                   ) : (
                     queue.map((track, index) => (
-                      <SortableQueueItem
-                        key={`${index}-${track.id}`}
-                        track={track}
-                        sortableId={`${index}::${track.id}`}
-                        index={index}
-                        isCurrent={track.id === currentTrack.id}
-                        isPlaying={isPlaying}
-                        onPlay={playTrackAt}
-                        onRemove={removeFromQueue}
-                        onVisitArtist={visitArtist}
-                        minimized={queueMinimized}
-                      />
+                      <Fragment key={`${index}-${track.id}`}>
+                        {!queueMinimized && index === currentIndex && (
+                          <QueueSection label="Tocando agora" />
+                        )}
+                        {!queueMinimized && index === currentIndex + 1 && (
+                          <QueueSection label="Próximas" />
+                        )}
+                        <SortableQueueItem
+                          track={track}
+                          sortableId={`${index}::${track.id}`}
+                          index={index}
+                          isCurrent={track.id === currentTrack.id}
+                          isPlaying={isPlaying}
+                          onPlay={playTrackAt}
+                          onRemove={removeFromQueue}
+                          onVisitArtist={visitArtist}
+                          minimized={queueMinimized}
+                        />
+                      </Fragment>
                     ))
                   )}
                 </div>

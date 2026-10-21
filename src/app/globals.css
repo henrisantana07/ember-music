@@ -413,13 +413,16 @@ body {
   animation: cover-in 300ms ease-out;
 }
 
+/* Reserva vertical: header 64 + pb-20 80 + main 16 + coluna 24 + (título 60 +
+   ações 48 + card Créditos ~160 + 3 gaps de 16) ≈ 500px. A coluna ainda rola
+   com `safe center` se o viewport for menor que isso. */
 .now-cover {
-  width: min(560px, 100%, calc(100vh - 440px));
+  width: min(560px, 100%, calc(100vh - 520px));
 }
 
 @media (min-width: 768px) {
   .now-cover-min {
-    width: min(720px, 100%, calc(100vh - 440px));
+    width: min(720px, 100%, calc(100vh - 520px));
   }
 }
 
@@ -427,6 +430,35 @@ body {
   .now-cover {
     width: min(200px, 60vw);
   }
+}
+
+/* ── Player expandido (hero) ─────────────────────────────────────────────────
+   Design system neutro do spec: base #000 puro + escada de cinzas
+   (#0a0a0a / #121212 / #181818), no lugar do marrom quente do app.
+
+   Escopado em `.now-playing` de propósito — sidebar, cards e páginas ficam
+   intactos. O ACCENT fica de fora: ele é extraído da capa de cada faixa, então
+   o #8b0000 do spec é apenas o resultado daquele artwork, não um token fixo. */
+.now-playing {
+  --bg-base: #000000;
+  --bg-surface: #0a0a0a;
+  --bg-elevated: #121212;
+  --surface-container-low: #0a0a0a;
+  --surface-container-highest: #181818;
+  --outline-variant: #242424;
+  --text-secondary: #a1a1aa;
+}
+
+/* Tema claro: a hero volta a seguir a paleta do app.
+   Especificidade 0,2,0 vence `.now-playing` e `.theme-light` em qualquer ordem. */
+.theme-light .now-playing {
+  --bg-base: #FAF8F5;
+  --bg-surface: #F0EDE8;
+  --bg-elevated: #E5E0D8;
+  --surface-container-low: #F5F2EE;
+  --surface-container-highest: #DBD5CC;
+  --outline-variant: #DED8CE;
+  --text-secondary: #6B5F54;
 }
 
 .theme-light {
