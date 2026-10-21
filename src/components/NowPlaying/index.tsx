@@ -486,8 +486,17 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     <div
       className={`now-playing h-full relative flex flex-col overflow-hidden ${miniPlayer ? 'pb-14 md:pb-0' : 'pb-20'} ${onClose ? '' : 'animate-slide-up'}`}
       style={{
-        background: bgGradient,
-        transition: `background 800ms ease${swipeOffset > 0 ? '' : ', transform 300ms cubic-bezier(0.32, 0.72, 0, 1)'}`,
+        /* O gradiente saiu daqui. Morava nesta raiz em `inset-0` de sangria e
+           sumia por baixo do painel da fila, que é opaco; sobrava dele só a
+           faixa da capa e o vão do rodapé. Agora ele é o background da coluna
+           da capa, com canto e borda — ver comentário naquela div. A raiz fica
+           no `bg-base` do escopo (preto no escuro, marfim no claro). */
+        background: 'var(--bg-base)',
+        /* Só o `transform` transiciona aqui: é o swipe de fechar. O `background`
+           de 800ms foi junto com o gradiente para a coluna da capa. Com o dedo
+           em cima (`swipeOffset > 0`) a transição é `none` pra barra seguir o
+           dedo sem atraso — antes era `background`, que já não existia mais. */
+        transition: swipeOffset > 0 ? 'none' : 'transform 300ms cubic-bezier(0.32, 0.72, 0, 1)',
         transform: swipeOffset > 0 ? `translateY(${swipeOffset}px)` : undefined,
         touchAction: 'pan-x',
       }}
@@ -502,17 +511,36 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
           ações da coluna da capa. */}
 
       <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-6 min-h-0 px-4 md:px-6 pb-4">
-        {/* O tinte do artista (`glowTint`) morava num `absolute inset-0` na
-             raiz da hero e sangrava por baixo do painel da fila. Agora ele é
-             o background da própria coluna da capa: essa div termina exatamente
-             na divisa (o `gap-6` de 24px antes do `#121212`), então o tinte
-             para ali e o `rounded-2xl` dá o canto do painel — mesma escala de
-             forma da capa, por cima do `bgGradient` da raiz.
+        {/* Painel da capa. Antes eram duas coisas separadas: o `bgGradient`
+             (radial da cor dominante da capa) sangrava na raiz da hero inteira
+             e sumia por baixo do painel da fila, que é opaco; o `glowTint` era
+             um `absolute inset-0` com o mesmo problema. Os dois agora empilham
+             nesta div, que é a única que termina exatamente na divisa — o
+             `gap-6` de 24px antes do `#121212`.
+
+             Empilhamento via `background-image`, lista de cima pra baixo: o
+             `linear-gradient` chapado é o glow (10% da cor da capa) e o radial
+             é o gradiente. Nessa ordem porque o radial termina em
+             `var(--bg-base)` opaco aos 60% — se o glow ficasse por baixo, ele
+             nunca apareceria. Com `dominantColor` nulo os dois viram o fallback
+             de sempre (`transparent` e `--bg-nowplaying-fallback`).
+
+             `rounded-2xl` dá o canto, mesma escala de forma da capa; a borda de
+             `${dominantColor}4D` (30%) fecha o contorno e é o que separa o
+             painel do vão preto da raiz — sem ela o canto some contra o
+             `bg-base`. `--outline-variant` quando não há capa extraída.
 
              `hide-scrollbar` porque a rolagem aqui é só rede de segurança para
              viewports curtos — numa altura normal tudo cabe e não há o que rolar.
              Sem ela a trilha apareceria colada na capa. */}
-        <div className={`flex-1 md:flex-[3] flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 rounded-2xl ${showQueueOnMobile ? 'hidden md:flex' : ''}`} style={{ background: glowTint }}>
+        <div
+          className={`flex-1 md:flex-[3] flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 rounded-2xl ${showQueueOnMobile ? 'hidden md:flex' : ''}`}
+          style={{
+            backgroundImage: `linear-gradient(${glowTint}, ${glowTint}), ${bgGradient}`,
+            transition: 'background 800ms ease, border-color 800ms ease',
+            border: `1px solid ${dominantColor ? `${dominantColor}4D` : 'var(--outline-variant)'}`,
+          }}
+        >
           <div ref={coverRef} className={`now-cover relative flex-shrink-0${queueMinimized ? ' now-cover-min' : ''}`} style={{ aspectRatio: '1' }}>
             {baseCover && baseFailed !== currentTrack.id ? (
               <img
