@@ -13,7 +13,8 @@ import { PlaylistModal } from '@/components/PlaylistModal'
 import { Skeleton } from '@/components/Skeleton'
 import { IconButton } from '@/components/ui/IconButton'
 import { EmptyState } from '@/components/ui/states'
-import { MenuPanel, MenuItem, MenuPresence, useMenu } from '@/components/ui/Menu'
+import { MenuPanel, MenuPresence, useMenu } from '@/components/ui/Menu'
+import { MenuAddToPlaylistItem, MenuShareItem, MenuArtistItem, MenuRemoveItem } from '@/components/TrackMenuItems'
 import { cleanDisplayTitle } from '@/lib/clean-title'
 
 export type TrackSortKey = 'default' | 'title' | 'album' | 'duration' | 'date'
@@ -32,6 +33,10 @@ export interface TrackTableProps {
   onSort?: (key: TrackSortKey) => void
   loading?: boolean
   empty?: { title: string; description?: string; action?: { label: string; onClick: () => void } }
+  /** Ação destrutiva contextual do menu "Mais opções" (ícone de lixeira). */
+  onRemove?: (track: Track) => void
+  /** Rótulo da ação destrutiva — ex.: "Remover dos favoritos". */
+  removeLabel?: string
   className?: string
 }
 
@@ -73,7 +78,18 @@ function FavoriteButton({ track, user }: { track: Track; user?: { id: string } |
   )
 }
 
-function RowMenu({ track, placement = 'bottom' }: { track: Track; placement?: 'top' | 'bottom' }) {
+function RowMenu({
+  track,
+  placement = 'bottom',
+  onRemove,
+  removeLabel,
+}: {
+  track: Track
+  placement?: 'top' | 'bottom'
+  /** Ação destrutiva contextual (mesma lixeira da "Remover da fila" da hero). */
+  onRemove?: (track: Track) => void
+  removeLabel?: string
+}) {
   const menu = useMenu()
   const [playlistOpen, setPlaylistOpen] = useState(false)
 
@@ -91,7 +107,16 @@ function RowMenu({ track, placement = 'bottom' }: { track: Track; placement?: 't
       </IconButton>
       <MenuPresence open={menu.open}>
         <MenuPanel {...menu.panelProps} placement={placement} onClick={(e) => e.stopPropagation()}>
-          <MenuItem onClick={() => { setPlaylistOpen(true); menu.close() }}>Adicionar à playlist</MenuItem>
+          {/* Mesmo menu da fila da hero — mesmos ícones, mesmas ações. A única
+              diferença é a ação destrutiva, que é contextual: "Remover da
+              fila" não existe aqui, mas "Remover dos favoritos" (na aba
+              Favoritos) ou "Remover do histórico" (na aba Recentes) sim. */}
+          <MenuAddToPlaylistItem onClick={() => { menu.close(); setPlaylistOpen(true) }} />
+          <MenuShareItem track={track} onDone={menu.close} />
+          <MenuArtistItem track={track} onDone={menu.close} />
+          {onRemove && (
+            <MenuRemoveItem label={removeLabel} onClick={() => { menu.close(); onRemove(track) }} />
+          )}
         </MenuPanel>
       </MenuPresence>
       <PlaylistModal open={playlistOpen} onClose={() => setPlaylistOpen(false)} track={track} />
@@ -162,6 +187,8 @@ export function TrackTable({
   onSort,
   loading,
   empty,
+  onRemove,
+  removeLabel,
   className = '',
 }: TrackTableProps) {
   const { play, currentTrack, isPlaying, togglePlay } = usePlayerStore()
@@ -281,7 +308,12 @@ export function TrackTable({
                 <td className="py-3">
                   <div className="flex items-center gap-1">
                     <FavoriteButton track={track} user={user} />
-                    <RowMenu track={track} placement={index === tracks.length - 1 ? 'top' : 'bottom'} />
+                    <RowMenu
+                      track={track}
+                      placement={index === tracks.length - 1 ? 'top' : 'bottom'}
+                      onRemove={onRemove}
+                      removeLabel={removeLabel}
+                    />
                   </div>
                 </td>
 

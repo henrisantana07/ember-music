@@ -21,6 +21,8 @@ interface FavoritesStore {
   ensure: (trackIds: string[]) => Promise<void>
   /** Optimistic toggle with rollback. Resolves to the new state, or false when it failed/signed out. */
   toggle: (track: Track) => Promise<boolean>
+  /** Writes the state without touching the database (the caller already did it). */
+  setKnown: (trackId: string, value: boolean) => void
 }
 
 export const useFavoritesStore = create<FavoritesStore>((set, get) => ({
@@ -89,6 +91,10 @@ export const useFavoritesStore = create<FavoritesStore>((set, get) => ({
       return false
     }
     return next
+  },
+
+  setKnown: (trackId, value) => {
+    set((state) => ({ known: { ...state.known, [trackId]: value } }))
   },
 }))
 

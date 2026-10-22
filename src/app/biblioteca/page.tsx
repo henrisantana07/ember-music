@@ -9,6 +9,7 @@ import { resolveCover, type CoverSource } from '@/lib/playlist/resolveCover'
 import { extractDominantColor } from '@/lib/color/extractDominantColor'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
 import { usePlaylistsStore } from '@/lib/playlists-store'
+import { useFavoritesStore } from '@/lib/favorites-store'
 import { usePlayerStore } from '@/lib/store'
 import { FollowButton } from '@/components/FollowButton'
 import { ErrorState } from '@/components/ui/states'
@@ -366,6 +367,48 @@ function BibliotecaContent() {
     return true
   }
 
+  /* Ações destrutivas do menu "Mais opções" — o MESMO ícone de lixeira da
+     "Remover da fila" da hero, mas cada aba remove da sua própria tabela e
+     tira a linha da lista na hora, sem recarregar a página.
+
+     A aba "Baixadas" não tem ação destrutiva: a tabela `downloads` não guarda
+     o caminho do arquivo, então apagar a linha deixaria o arquivo órfão no
+     disco sem como limpá-lo. Preferimos não prometer o que o dado não entrega. */
+
+  async function handleRemoveFavorite(track: Track): Promise<boolean> {
+    if (!user) return false
+    const { error } = await supabase
+      .from('favorites')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('track_id', track.id)
+    if (error) {
+      console.error('Erro ao remover dos favoritos:', error.message)
+      return false
+    }
+    /* O store de favoritos é a fonte do coração em toda a app — sem isto a
+       linha sumiria da lista, mas o coração continuaria preenchido em outras
+       telas. */
+    useFavoritesStore.getState().setKnown(track.id, false)
+    setTracks((prev) => prev.filter((t) => t.id !== track.id))
+    return true
+  }
+
+  async function handleRemoveHistory(track: Track): Promise<boolean> {
+    if (!user) return false
+    const { error } = await supabase
+      .from('listening_history')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('track_id', track.id)
+    if (error) {
+      console.error('Erro ao remover do histórico:', error.message)
+      return false
+    }
+    setHistory((prev) => prev.filter((h) => h.track_data?.id !== track.id))
+    return true
+  }
+
   function renderSortDropdown() {
     switch (activeTab) {
       case 'favoritos':
@@ -540,7 +583,12 @@ function BibliotecaContent() {
                 <button onClick={() => router.push('/buscar')} className="btn-primary text-label-large min-h-[48px] px-6">Descobrir músicas</button>
               </div>
             ) : (
-              <TrackTable tracks={getSortedTracks()} user={user} />
+              <TrackTable
+                tracks={getSortedTracks()}
+                user={user}
+                onRemove={handleRemoveFavorite}
+                removeLabel="Remover dos favoritos"
+              />
             )
           )}
 
@@ -664,7 +712,12 @@ function BibliotecaContent() {
                 <button onClick={() => router.push('/')} className="btn-primary text-label-large min-h-[48px] px-6">Comece a ouvir</button>
               </div>
             ) : (
-              <TrackTable tracks={getSortedTracks(history.map((h) => h.track_data))} user={user} />
+              <TrackTable
+                tracks={getSortedTracks(history.map((h) => h.track_data))}
+                user={user}
+                onRemove={handleRemoveHistory}
+                removeLabel="Remover do histórico"
+              />
             )
           )}
 

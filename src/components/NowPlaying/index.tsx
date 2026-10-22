@@ -17,13 +17,13 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import {
   Play, Pause,
-  Music, Trash2, MoreHorizontal, Share2, Maximize2, Minimize2,
+  Music, Trash2, MoreHorizontal, Maximize2, Minimize2,
 } from 'lucide-react'
 import { extractCoverPalette, type CoverPalette } from '@/lib/color/extractCoverPalette'
 import { getHighResCoverUrl } from '@/lib/image-utils'
-import { useMenu, MenuItem, MenuPanel, MenuPresence } from '@/components/ui/Menu'
+import { useMenu, MenuPanel, MenuPresence } from '@/components/ui/Menu'
 import { PlaylistModal } from '@/components/PlaylistModal'
-import { shareContent } from '@/components/ShareButton'
+import { MenuAddToPlaylistItem, MenuShareItem, MenuArtistItem, MenuRemoveItem } from '@/components/TrackMenuItems'
 import { motion } from 'motion/react'
 import { confirmPopProps } from '@/lib/motion'
 import { useConfirmAnimation } from '@/lib/motion-hooks'
@@ -190,31 +190,13 @@ const SortableQueueItem = memo(function SortableQueueItem({ track, sortableId, i
         </button>
         <MenuPresence open={menuOpen}>
           <MenuPanel {...panelProps} align="right">
-            <MenuItem onClick={() => { closeMenu(); setPlaylistOpen(true) }}>
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              Adicionar à playlist
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                closeMenu()
-                void shareContent({ title: track.name, text: `Ouça "${track.name}" de ${track.artist_name} no Ember Music` })
-              }}
-            >
-              <Share2 className="w-5 h-5 flex-shrink-0" />
-              Compartilhar
-            </MenuItem>
-            <MenuItem onClick={() => { closeMenu(); onVisitArtist(track.artist_id) }}>
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              Ver artista
-            </MenuItem>
-            <MenuItem danger onClick={() => { closeMenu(); onRemove(index) }}>
-              <Trash2 className="w-5 h-5 flex-shrink-0" />
-              Remover da fila
-            </MenuItem>
+            {/* Menu compartilhado com as tabelas de faixas (biblioteca, busca) —
+                mesmos ícones e mesmas ações nos dois lugares. Ver
+                `components/TrackMenuItems.tsx`. */}
+            <MenuAddToPlaylistItem onClick={() => { closeMenu(); setPlaylistOpen(true) }} />
+            <MenuShareItem track={track} onDone={closeMenu} />
+            <MenuArtistItem track={track} onDone={closeMenu} onVisit={onVisitArtist} />
+            <MenuRemoveItem label="Remover da fila" onClick={() => { closeMenu(); onRemove(index) }} />
           </MenuPanel>
         </MenuPresence>
         <PlaylistModal open={playlistOpen} onClose={() => setPlaylistOpen(false)} track={track} />
