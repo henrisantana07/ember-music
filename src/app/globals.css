@@ -533,7 +533,7 @@ body {
     radial-gradient(
       ellipse at 28% 18%,
       var(--hero-c1) 30%,
-      var(--hero-c3) 50%,
+      var(--hero-c3) 100%,
       var(--bg-base) 120%
     );
   transition:
