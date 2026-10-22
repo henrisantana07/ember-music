@@ -852,10 +852,16 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             </button>
 
             {/* Divisória arrastável — a aresta direita do gradiente da capa.
-                Fica dentro da coluna da fila, colada na BORDA ESQUERDA dela,
-                que é exatamente a linha onde a capa termina e a fila começa:
-                meia faixa de cada lado, como um puxador de redimensionamento
-                de verdade.
+                Fica dentro da coluna da fila, mas é posicionada SOBRE o
+                `border` do painel da capa: a borda existe (1px, no tom do
+                álbum) e é ela que separa a capa da fila, então é nela que o
+                gesto mora. Não há linha nova — a divisória é invisível, e o
+                que o usuário enxerga é a própria borda.
+
+                `-left-8` + `w-4` = 32px a esquerda da coluna, com 16px de
+                largura: o centro cai exatamente nos 24px do `gap-6`, ou
+                seja, na borda da capa. O botão ⛶ (que fica 80px à
+                esquerda) não encosta nela.
 
                 O gesto é o BOTÃO DIREITO: o esquerdo é o clique normal da
                 página, e o botão direito é o que o usuário já associa a
@@ -863,22 +869,16 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 sistema abre no meio do arraste.
 
                 `select-none` para a seleção de texto não começar junto com o
-                arraste. O `cursor-ew-resize` é a dica principal; a linha
-                central aparece no hover para o puxador não ser invisível. */}
+                arraste. O `cursor-ew-resize` é a dica: a borda da capa já
+                diz onde a coisa é. */}
             <div
               onPointerDown={startColumnDrag}
               onContextMenu={(e) => e.preventDefault()}
               role="separator"
               aria-orientation="vertical"
               aria-label="Arraste com o botão direito para redimensionar a fila"
-              className="group absolute -left-2.5 top-0 bottom-0 z-20 hidden w-5 cursor-ew-resize select-none md:block"
-            >
-              <span
-                aria-hidden="true"
-                className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 opacity-0 transition-opacity group-hover:opacity-100"
-                style={{ backgroundColor: 'var(--text-disabled)' }}
-              />
-            </div>
+              className="absolute -left-8 top-0 bottom-0 z-20 hidden w-4 cursor-ew-resize select-none md:block"
+            />
 
             {/* Wrapper do CONTEÚDO da coluna. Existe por dois motivos:
                 (1) o fade da "capa em tela cheia" é aqui, e não na coluna
