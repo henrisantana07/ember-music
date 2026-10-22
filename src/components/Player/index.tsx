@@ -611,21 +611,37 @@ export function Player() {
             </svg>
           </button>
 
-          {/* Cópia do ícone que também está no cabeçalho da hero, colada no
-              botão de expandir/minimizar a fila. Mesmo `hidden md:inline-flex`
-              dele: no mobile a cópia da hero já cobre o acesso, e aqui a fila
-              também não existe. O estado ativo pinta de accent igual. */}
+          {/* Botão combinado "tela cheia + player expandido". Substituiu os dois
+              controles que moravam aqui separados (tela cheia e Chevron de
+              abrir/recolher): um clique entra na hero já em tela cheia —
+              `openExpanded` + `toggleImmersive` — e um clique no mesmo botão
+              sai da hero e devolve Topbar/sidebar/nav de uma vez. Os ícones
+              permanecem os de tela cheia (Maximize2/Minimize2); o estado ativo
+              se deriva de `isExpandedOpen && immersive` pra nada dessincronizar
+              quando um dos dois entra por outro caminho (avatar/Esc).
+
+              `hidden md:inline-flex`: no mobile a hero já abre cobrindo tudo —
+              o Chevron logo abaixo (md:hidden) segue sendo o acesso rápido. */}
           <button
-            onClick={toggleImmersive}
+            onClick={() => {
+              const combinedOn = isExpandedOpen && immersive
+              if (combinedOn) {
+                if (isExpandedOpen) closeExpanded()
+                if (immersive) toggleImmersive()
+              } else {
+                if (!isExpandedOpen) openExpanded()
+                if (!immersive) toggleImmersive()
+              }
+            }}
             className={`h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full transition-colors state-layer ${
-              immersive ? 'text-[var(--accent-from)]' : ''
+              isExpandedOpen && immersive ? 'text-[var(--accent-from)]' : ''
             }`}
-            style={immersive ? undefined : { color: 'var(--text-secondary)' }}
-            title={immersive ? 'Sair da tela cheia (Esc)' : 'Tela cheia'}
-            aria-label={immersive ? 'Sair da tela cheia' : 'Tela cheia'}
-            aria-pressed={immersive}
+            style={isExpandedOpen && immersive ? undefined : { color: 'var(--text-secondary)' }}
+            title={isExpandedOpen && immersive ? 'Sair da tela cheia (Esc)' : 'Tela cheia'}
+            aria-label={isExpandedOpen && immersive ? 'Sair da tela cheia' : 'Abrir player em tela cheia'}
+            aria-pressed={isExpandedOpen && immersive}
           >
-            {immersive ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+            {isExpandedOpen && immersive ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
           </button>
 
           <SleepTimerDropdown />
@@ -646,7 +662,10 @@ export function Player() {
             </svg>
           </button>
 
-          <button onClick={toggleExpanded} className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer" style={{ color: 'var(--text-secondary)' }} title={isExpandedOpen ? 'Recolher player' : 'Abrir player'} aria-label={isExpandedOpen ? 'Recolher player expandido' : 'Abrir player expandido'}>
+          {/* No mobile este é o único acesso rápido ao player expandido a
+              partir do footer normal — o botão combinado é desktop-only.
+              Mesmo comportamento de antes: só abre/recolhe, sem tela cheia. */}
+          <button onClick={toggleExpanded} className="h-12 w-12 md:hidden inline-flex items-center justify-center rounded-full transition-colors state-layer" style={{ color: 'var(--text-secondary)' }} title={isExpandedOpen ? 'Recolher player' : 'Abrir player'} aria-label={isExpandedOpen ? 'Recolher player expandido' : 'Abrir player expandido'}>
             {isExpandedOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
           </button>
         </div>
