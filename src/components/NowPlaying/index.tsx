@@ -736,7 +736,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
               os 288px do antigo `md:w-72`, que era fixo e ignorava a largura
               da tela; agora a proporção sobrevive a qualquer viewport. */}
           <div
-            className={`w-full -ml-4 -mr-4 -mb-4 md:ml-0 md:-mr-6 ${wideCover ? 'md:w-0 md:grow-0 md:shrink-0 opacity-0 pointer-events-none' : queueMinimized ? 'md:w-[calc(20%_+_9.6px)]' : 'md:w-auto md:flex-[2]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none transition-[flex-grow,width,opacity] duration-[var(--motion-duration-medium)] ease-[var(--motion-easing-surface)] ${showQueueOnMobile ? '' : 'hidden md:flex'}`}
+            className={`w-full -ml-4 -mr-4 -mb-4 md:ml-0 md:-mr-6 ${wideCover ? 'md:w-0 md:grow-0 md:shrink-0 md:min-w-0' : queueMinimized ? 'md:w-[calc(20%_+_9.6px)]' : 'md:w-auto md:flex-[2]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none transition-[flex-grow,width] duration-[var(--motion-duration-medium)] ease-[var(--motion-easing-surface)] ${showQueueOnMobile ? '' : 'hidden md:flex'}`}
             style={{ backgroundColor: 'var(--bg-elevated)' }}
           >
             {/* Tela cheia na divisa entre a capa e a fila: `-left-14` (−56px)
@@ -779,117 +779,129 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
               {wideCover ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
             </button>
 
-            {/* Sem inset extra: com `-left-14` o botão está inteiramente fora
-                do painel, então o cabeçalho mantém o `px-3` original — o
-                mesmo alinhamento das linhas da lista (`px-1` + `px-2` = 12px).
-                Empurrar o texto pra direita em vez de pra baixo foi o que
-                devolveu altura às faixas: sem faixa vazia, o cabeçalho inteiro
-                cabe na altura do botão.
+            {/* Wrapper do CONTEÚDO da coluna. Existe por dois motivos:
+                (1) o fade da "capa em tela cheia" é aqui, e não na coluna
+                inteira — o `opacity` do pai também apagaria o botão de tela
+                cheia, que é filho da coluna e precisa continuar visível e
+                clicável para o usuário voltar; (2) o `overflow-hidden`
+                deixa a coluna poder zerar de largura sem o conteúdo
+                estourando por baixo (o cabeçalho e o "Limpar fila" são
+                maiores que zero). */}
+            <div
+              className={`flex-1 min-h-0 flex flex-col overflow-hidden transition-opacity duration-[var(--motion-duration-medium)] ease-[var(--motion-easing-surface)] ${wideCover ? 'opacity-0' : ''}`}
+            >
+              {/* Sem inset extra: com `-left-14` o botão está inteiramente fora
+                  do painel, então o cabeçalho mantém o `px-3` original — o
+                  mesmo alinhamento das linhas da lista (`px-1` + `px-2` = 12px).
+                  Empurrar o texto pra direita em vez de pra baixo foi o que
+                  devolveu altura às faixas: sem faixa vazia, o cabeçalho inteiro
+                  cabe na altura do botão.
 
-                O cabeçalho existe nos dois modos agora, e o `<h2>` "Fila" é o
-                rótulo da coluna — some daqui e a coluna recolhida vira uma
-                pilha de faixas sem nome. Só o nome da playlist fica de fora do
-                modo enxuto: a 20% de largura ele truncaria antes da segunda
-                sílaba e não diria nada.
+                  O cabeçalho existe nos dois modos agora, e o `<h2>` "Fila" é o
+                  rótulo da coluna — some daqui e a coluna recolhida vira uma
+                  pilha de faixas sem nome. Só o nome da playlist fica de fora do
+                  modo enxuto: a 20% de largura ele truncaria antes da segunda
+                  sílaba e não diria nada.
 
-                O `px` acompanha o modo porque o alvo é a mesma linha das
-                faixas: expandido são `px-1` + `px-2` = 12px, recolhido são
-                `px-0` + `px-1` = 4px. Fixar os 12px nos dois deixaria o
-                título 8px à direita da lista quando a coluna encolhe. */}
-            <div className={`flex-none ${queueMinimized ? 'px-1' : 'px-3'} py-3`}>
-              <h2 className="text-title-medium font-semibold" style={{ color: 'var(--text-primary)' }}>Fila</h2>
-              {!queueMinimized && usePlayerStore.getState().currentPlaylistName && (
-                <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{usePlayerStore.getState().currentPlaylistName}</p>
-              )}
-            </div>
-
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={queue.map((t, index) => `${index}::${t.id}`)} strategy={verticalListSortingStrategy}>
-                {/* O `mt-16` sumiu junto com o cabeçalho recolhido: ele existia
-                    porque a fila enxuta não tinha título que absorvesse o topo,
-                    e a lista encostava no botão de tela cheia. Com o `<h2>` de
-                    volta nos dois modos, o cabeçalho ocupa esse lugar e a
-                    margem viraria 64px de vão morto entre "Fila" e a primeira
-                    faixa. O botão segue inteiramente fora do painel (`-left-14`
-                    o joga no gap e na coluna da capa), então nada encosta nele
-                    por dentro. */}
-                <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full pb-4">
-                  <div className={`${queueMinimized ? 'px-0' : 'px-1'} space-y-1`}>
-                  {queue.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 text-center px-4">
-                      <Music className="w-10 h-10 mb-3" style={{ color: 'var(--text-disabled)' }} />
-                      <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>Nenhuma faixa na fila</p>
-                      {!queueMinimized && suggestions.length > 0 && (
-                        <div className="w-full mt-4 text-left">
-                          <p className="text-label-medium font-semibold uppercase tracking-widest mb-1.5" style={{ color: 'var(--text-disabled)' }}>
-                            Faixas relacionadas
-                          </p>
-                          {suggestions.map((track) => (
-                            <button
-                              key={track.id}
-                              onClick={() => play(track, suggestions)}
-                              className="flex items-center gap-3 w-full px-3 min-h-[56px] rounded-lg hover:bg-[var(--surface-container-highest)] transition-colors text-left state-layer"
-                            >
-                              {track.image ? (
-                                <img src={track.image} alt="" className="w-10 h-10 rounded object-cover flex-none" />
-                              ) : (
-                                <div className="w-10 h-10 rounded flex items-center justify-center flex-none" style={{ backgroundColor: 'var(--bg-surface)' }}>
-                                  <Music className="w-5 h-5" style={{ color: 'var(--text-disabled)' }} />
-                                </div>
-                              )}
-                              <div className="min-w-0 flex-1">
-                                <p className="text-body-medium truncate" style={{ color: 'var(--text-primary)' }}>{track.name}</p>
-                                <p className="text-body-medium truncate" style={{ color: 'var(--text-accent)' }}>{track.artist_name}</p>
-                              </div>
-                              <Play className="w-5 h-5 flex-none" style={{ color: 'var(--text-disabled)' }} />
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    queue.map((track, index) => (
-                      <Fragment key={`${index}-${track.id}`}>
-                        {!queueMinimized && index === currentIndex && (
-                          <QueueSection label="Tocando agora" />
-                        )}
-                        {!queueMinimized && index === currentIndex + 1 && (
-                          <QueueSection label="Próximas" />
-                        )}
-                        <SortableQueueItem
-                          track={track}
-                          sortableId={`${index}::${track.id}`}
-                          index={index}
-                          /* "Próximas" recomeça em 1 logo abaixo da atual, como no
-                             Spotify, em vez de seguir a posição absoluta (2, 3, 4…). */
-                          displayNumber={index > currentIndex ? index - currentIndex : index + 1}
-                          isCurrent={track.id === currentTrack.id}
-                          isPlaying={isPlaying}
-                          onPlay={playTrackAt}
-                          onRemove={removeFromQueue}
-                          onVisitArtist={visitArtist}
-                          minimized={queueMinimized}
-                        />
-                      </Fragment>
-                    ))
-                  )}
-                </div>
-                {!queueMinimized && (
-                <div className="sticky bottom-0 z-10 flex-none flex items-center gap-2 px-2 py-4 pointer-events-none" style={{ backgroundColor: 'rgba(49, 45, 41, 0.13)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
-                  <button
-                    onClick={() => { clearQueue(); showToast('Fila limpa') }}
-                    className="pointer-events-auto flex items-center gap-2 px-4 min-h-[48px] rounded-lg text-label-large transition-colors state-layer"
-                    style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg-surface)' }}
-                  >
-                    <Trash2 className="w-5 h-5" />
-                    Limpar fila
-                  </button>
-                </div>
+                  O `px` acompanha o modo porque o alvo é a mesma linha das
+                  faixas: expandido são `px-1` + `px-2` = 12px, recolhido são
+                  `px-0` + `px-1` = 4px. Fixar os 12px nos dois deixaria o
+                  título 8px à direita da lista quando a coluna encolhe. */}
+              <div className={`flex-none ${queueMinimized ? 'px-1' : 'px-3'} py-3`}>
+                <h2 className="text-title-medium font-semibold" style={{ color: 'var(--text-primary)' }}>Fila</h2>
+                {!queueMinimized && usePlayerStore.getState().currentPlaylistName && (
+                  <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{usePlayerStore.getState().currentPlaylistName}</p>
                 )}
               </div>
-            </SortableContext>
-          </DndContext>
-        </div>
+
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={queue.map((t, index) => `${index}::${t.id}`)} strategy={verticalListSortingStrategy}>
+                  {/* O `mt-16` sumiu junto com o cabeçalho recolhido: ele existia
+                      porque a fila enxuta não tinha título que absorvesse o topo,
+                      e a lista encostava no botão de tela cheia. Com o `<h2>` de
+                      volta nos dois modos, o cabeçalho ocupa esse lugar e a
+                      margem viraria 64px de vão morto entre "Fila" e a primeira
+                      faixa. O botão segue inteiramente fora do painel (`-left-14`
+                      o joga no gap e na coluna da capa), então nada encosta nele
+                      por dentro. */}
+                  <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full pb-4">
+                    <div className={`${queueMinimized ? 'px-0' : 'px-1'} space-y-1`}>
+                    {queue.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-8 text-center px-4">
+                        <Music className="w-10 h-10 mb-3" style={{ color: 'var(--text-disabled)' }} />
+                        <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>Nenhuma faixa na fila</p>
+                        {!queueMinimized && suggestions.length > 0 && (
+                          <div className="w-full mt-4 text-left">
+                            <p className="text-label-medium font-semibold uppercase tracking-widest mb-1.5" style={{ color: 'var(--text-disabled)' }}>
+                              Faixas relacionadas
+                            </p>
+                            {suggestions.map((track) => (
+                              <button
+                                key={track.id}
+                                onClick={() => play(track, suggestions)}
+                                className="flex items-center gap-3 w-full px-3 min-h-[56px] rounded-lg hover:bg-[var(--surface-container-highest)] transition-colors text-left state-layer"
+                              >
+                                {track.image ? (
+                                  <img src={track.image} alt="" className="w-10 h-10 rounded object-cover flex-none" />
+                                ) : (
+                                  <div className="w-10 h-10 rounded flex items-center justify-center flex-none" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                                    <Music className="w-5 h-5" style={{ color: 'var(--text-disabled)' }} />
+                                  </div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-body-medium truncate" style={{ color: 'var(--text-primary)' }}>{track.name}</p>
+                                  <p className="text-body-medium truncate" style={{ color: 'var(--text-accent)' }}>{track.artist_name}</p>
+                                </div>
+                                <Play className="w-5 h-5 flex-none" style={{ color: 'var(--text-disabled)' }} />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      queue.map((track, index) => (
+                        <Fragment key={`${index}-${track.id}`}>
+                          {!queueMinimized && index === currentIndex && (
+                            <QueueSection label="Tocando agora" />
+                          )}
+                          {!queueMinimized && index === currentIndex + 1 && (
+                            <QueueSection label="Próximas" />
+                          )}
+                          <SortableQueueItem
+                            track={track}
+                            sortableId={`${index}::${track.id}`}
+                            index={index}
+                            /* "Próximas" recomeça em 1 logo abaixo da atual, como no
+                               Spotify, em vez de seguir a posição absoluta (2, 3, 4…). */
+                            displayNumber={index > currentIndex ? index - currentIndex : index + 1}
+                            isCurrent={track.id === currentTrack.id}
+                            isPlaying={isPlaying}
+                            onPlay={playTrackAt}
+                            onRemove={removeFromQueue}
+                            onVisitArtist={visitArtist}
+                            minimized={queueMinimized}
+                          />
+                        </Fragment>
+                      ))
+                    )}
+                  </div>
+                  {!queueMinimized && (
+                  <div className="sticky bottom-0 z-10 flex-none flex items-center gap-2 px-2 py-4 pointer-events-none" style={{ backgroundColor: 'rgba(49, 45, 41, 0.13)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
+                    <button
+                      onClick={() => { clearQueue(); showToast('Fila limpa') }}
+                      className="pointer-events-auto flex items-center gap-2 px-4 min-h-[48px] rounded-lg text-label-large transition-colors state-layer"
+                      style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg-surface)' }}
+                    >
+                      <Trash2 className="w-5 h-5" />
+                      Limpar fila
+                    </button>
+                  </div>
+                  )}
+                </div>
+              </SortableContext>
+            </DndContext>
+            </div>
+          </div>
       </div>
     </div>
   )
