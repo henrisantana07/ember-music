@@ -215,6 +215,11 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const [hdFailed, setHdFailed] = useState<string | null>(null)
   const [baseFailed, setBaseFailed] = useState<string | null>(null)
   const [showQueueOnMobile, setShowQueueOnMobile] = useState(false)
+  /* Capa em tela cheia: a coluna da fila some e a capa toma a largura toda,
+     centralizada no eixo x. É o que o botão de tela cheia da hero faz no
+     desktop — no mobile não faz sentido (a fila é uma folha por cima) e
+     ali o mesmo botão segue escondendo Topbar e navegação. */
+  const [wideCover, setWideCover] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(null)
@@ -580,10 +585,10 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
              viewports curtos — numa altura normal tudo cabe e não há o que rolar.
              Sem ela a trilha apareceria colada na capa. */}
         <div
-          className={`now-cover-panel flex-1 md:flex-[3] flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 rounded-2xl ${showQueueOnMobile ? 'hidden md:flex' : ''} ${palette ? '' : 'now-cover-panel-empty'}`}
+          className={`now-cover-panel flex-1 ${wideCover ? 'md:flex-1' : 'md:flex-[3]'} flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 rounded-2xl ${showQueueOnMobile ? 'hidden md:flex' : ''} ${palette ? '' : 'now-cover-panel-empty'} transition-[flex-grow] duration-[var(--motion-duration-medium)] ease-[var(--motion-easing-surface)]`}
           style={panelStyle}
         >
-          <div ref={coverRef} className={`now-cover relative flex-shrink-0${queueMinimized ? ' now-cover-min' : ''}`} style={{ aspectRatio: '1' }}>
+          <div ref={coverRef} className={`now-cover relative flex-shrink-0${queueMinimized || wideCover ? ' now-cover-min' : ''}`} style={{ aspectRatio: '1' }}>
             {baseCover && baseFailed !== currentTrack.id ? (
               <img
                 key={currentTrack.id}
@@ -609,7 +614,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             )}
           </div>
 
-          <div className={`w-full ${queueMinimized ? 'max-w-[720px]' : 'max-w-[560px]'} text-center space-y-0.5`}>
+          <div className={`w-full ${queueMinimized || wideCover ? 'max-w-[720px]' : 'max-w-[560px]'} text-center space-y-0.5`}>
             <h1 className="text-[28px] md:text-[36px] leading-tight font-bold truncate" style={{ color: 'var(--text-primary)' }} title={currentTrack.name}>
               {currentTrack.name}
             </h1>
@@ -731,7 +736,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
               os 288px do antigo `md:w-72`, que era fixo e ignorava a largura
               da tela; agora a proporção sobrevive a qualquer viewport. */}
           <div
-            className={`w-full -ml-4 -mr-4 -mb-4 md:ml-0 md:-mr-6 ${queueMinimized ? 'md:w-[calc(20%_+_9.6px)]' : 'md:w-auto md:flex-[2]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none ${showQueueOnMobile ? '' : 'hidden md:flex'}`}
+            className={`w-full -ml-4 -mr-4 -mb-4 md:ml-0 md:-mr-6 ${wideCover ? 'md:w-0 md:grow-0 md:shrink-0 opacity-0 pointer-events-none' : queueMinimized ? 'md:w-[calc(20%_+_9.6px)]' : 'md:w-auto md:flex-[2]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none transition-[flex-grow,width,opacity] duration-[var(--motion-duration-medium)] ease-[var(--motion-easing-surface)] ${showQueueOnMobile ? '' : 'hidden md:flex'}`}
             style={{ backgroundColor: 'var(--bg-elevated)' }}
           >
             {/* Tela cheia na divisa entre a capa e a fila: `-left-14` (−56px)
@@ -750,18 +755,28 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 Fundo + borda porque ele atravessa duas superfícies diferentes
                 (o preto da hero e o #121212 do painel) e chega perto o
                 bastante da capa pra encostar nela em telas estreitas; sem
-                eles some em qualquer uma delas. */}
+                eles some em qualquer uma delas.
+
+                O botão é o "tela cheia" DA HERO, e aqui ele faz uma coisa
+                diferente do homônimo do rodapé: em vez de abrir o player
+                expandido, ele joga a coluna da fila pra fora (o `flex-grow`
+                da fila vai a zero e a opacidade some) e a capa toma a largura
+                toda, centralizada no eixo x. Por estar ancorado na BORDA
+                ESQUERDA da coluna, ele viaja junto com a borda: no fim do
+                movimento ele está no canto superior direito da hero, que é
+                onde o "sair" precisa ficar — a fila some, mas o controle
+                continua à mão. */}
             <button
-              onClick={toggleImmersive}
+              onClick={() => setWideCover(!wideCover)}
               className={`absolute -left-20 top-1 z-10 h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full border border-outline-variant transition-colors state-layer ${
-                immersive ? 'text-[var(--accent-from)]' : 'text-[var(--text-secondary)]'
+                wideCover ? 'text-[var(--accent-from)]' : 'text-[var(--text-secondary)]'
               }`}
               style={{ backgroundColor: 'var(--bg-surface)' }}
-              aria-label={immersive ? 'Sair da tela cheia' : 'Tela cheia'}
-              aria-pressed={immersive}
-              title={immersive ? 'Sair da tela cheia (Esc)' : 'Tela cheia'}
+              aria-label={wideCover ? 'Sair da tela cheia' : 'Tela cheia'}
+              aria-pressed={wideCover}
+              title={wideCover ? 'Sair da tela cheia' : 'Tela cheia'}
             >
-              {immersive ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+              {wideCover ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
             </button>
 
             {/* Sem inset extra: com `-left-14` o botão está inteiramente fora
