@@ -532,10 +532,9 @@ body {
     linear-gradient(var(--hero-glow), var(--hero-glow)),
     radial-gradient(
       ellipse at 28% 18%,
-      var(--hero-c2) 0%,
       var(--hero-c1) 30%,
       var(--hero-c3) 50%,
-      var(--bg-base) 78%
+      var(--bg-base) 120%
     );
   transition:
     --hero-c1 900ms cubic-bezier(0.42, 0, 0.58, 1),
