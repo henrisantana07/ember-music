@@ -554,8 +554,16 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
    * fim da direita a coluna zera e a hero entra em "capa em tela cheia" —
    * o mesmo estado do botão ⛶, e o mesmo de onde ele volta. */
   function startColumnDrag(e: React.PointerEvent<HTMLDivElement>) {
-    if (e.button !== 2) return
-    e.preventDefault()
+    /* Os DOIS botões: o esquerdo é o gesto natural de redimensionar, e o
+       direito (o que foi pedido primeiro) funciona igual. O do meio fica
+       de fora. */
+    if (e.button !== 0 && e.button !== 2) return
+    /* Sem `preventDefault` aqui de propósito: ele cancelaria o `mousedown`
+       de compatibilidade, e é o `mousedown` que impede o Chrome de assumir
+       o gesto (o arrasto nativo de rolagem com o botão direito). Com o
+       gesto nativo assumido, o navegador manda `pointercancel` e os
+       `pointermove` param de chegar — o arraste morria no primeiro
+       pixel. O cancelamento fica no `onMouseDown` do puxador. */
     e.stopPropagation()
     const col = queueColRef.current
     const row = rowRef.current
@@ -576,12 +584,14 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       setQueueWidth(next)
       setWideCover(next <= 8)
     }
-    const onUp = () => {
+    const stop = () => {
       window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointerup', stop)
+      window.removeEventListener('pointercancel', stop)
     }
     window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointerup', stop)
+    window.addEventListener('pointercancel', stop)
   }
 
   return (
@@ -863,20 +873,26 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 seja, na borda da capa. O botão ⛶ (que fica 80px à
                 esquerda) não encosta nela.
 
-                O gesto é o BOTÃO DIREITO: o esquerdo é o clique normal da
-                página, e o botão direito é o que o usuário já associa a
-                "ajustar". O `contextmenu` é bloqueado aqui — senão o menu do
-                sistema abre no meio do arraste.
+                O gesto aceita os DOIS botões: o esquerdo, que é o natural de
+                redimensionar, e o direito, que foi o pedido original. O
+                `contextmenu` é bloqueado aqui — senão o menu do sistema abre
+                no meio do arraste.
 
                 `select-none` para a seleção de texto não começar junto com o
                 arraste. O `cursor-ew-resize` é a dica: a borda da capa já
                 diz onde a coisa é. */}
             <div
               onPointerDown={startColumnDrag}
+              /* O `mousedown` é quem cancela o gesto nativo do Chrome (o
+                 arrasto de rolagem com o botão direito) — e de passagem o
+                 menu de contexto. No botão esquerdo ele cancela também a
+                 seleção de texto, que não pode começar junto com o
+                 arraste. */
+              onMouseDown={(e) => { if (e.button === 0 || e.button === 2) e.preventDefault() }}
               onContextMenu={(e) => e.preventDefault()}
               role="separator"
               aria-orientation="vertical"
-              aria-label="Arraste com o botão direito para redimensionar a fila"
+              aria-label="Arraste para redimensionar a fila"
               className="absolute -left-8 top-0 bottom-0 z-20 hidden w-4 cursor-ew-resize select-none md:block"
             />
 
