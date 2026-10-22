@@ -46,7 +46,7 @@ export function Player() {
     pause, resume, next, prev, togglePlay,
     setVolume, setProgress, setDuration,
     setRepeat, toggleShuffle, setSleepTimer, toggleMiniPlayer,
-    openExpanded, closeExpanded, isExpandedOpen, queueMinimized, setQueueMinimized,
+    openExpanded, closeExpanded, isExpandedOpen, queueMinimized, setQueueMinimized, setQueueWidth,
   } = usePlayerStore()
 
   // Tela cheia: mesma store da sidebar/topbar (irmãos no layout, sem props).
@@ -591,6 +591,9 @@ export function Player() {
         <div className="w-auto md:w-72 flex items-center justify-end gap-2">
           <button
             onClick={() => {
+              /* Apaga a largura que o arraste da divisória possa ter deixado:
+                 o botão do rodapé reassume o controle da coluna. */
+              setQueueWidth(null)
               if (!isExpandedOpen) {
                 setQueueMinimized(true)
                 openExpanded()

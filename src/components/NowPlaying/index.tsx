@@ -220,6 +220,14 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
      desktop — no mobile não faz sentido (a fila é uma folha por cima) e
      ali o mesmo botão segue escondendo Topbar e navegação. */
   const [wideCover, setWideCover] = useState(false)
+  /* Largura livre da coluna da fila, em px, vinda do arraste da divisória.
+     `null` = sem arraste: a coluna usa a largura do estado (normal ou
+     recolhida). Com um valor, ela obedece ao ponteiro — é o que dá o
+     expandir/recolher contínuo, no lugar do salto entre dois estados. */
+  const queueWidth = usePlayerStore((s) => s.queueWidth)
+  const setQueueWidth = usePlayerStore((s) => s.setQueueWidth)
+  const rowRef = useRef<HTMLDivElement>(null)
+  const queueColRef = useRef<HTMLDivElement>(null)
   const [user, setUser] = useState<User | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(null)
@@ -415,7 +423,8 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
      essa base.
 
      `transparent` quando não há paleta, e o CSS decide o fallback. */
-  const panelStyle: CSSProperties & Record<string, string> = palette
+  const panelStyle: CSSProperties & Record<string, string> = {
+    ...(palette
     ? {
         /* `--hero-c1` é a cor que inunda o painel (o centro do elipse, parada
            30%). A 48% ela castigava a leitura: com um álbum saturado
@@ -435,7 +444,11 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
            a capa clara ou saturada. */
         border: `1px solid color-mix(in srgb, color-mix(in srgb, ${palette.primary} 50%, #ffffff) 30%, transparent)`,
       }
-    : { border: '1px solid var(--outline-variant)' }
+    : { border: '1px solid var(--outline-variant)' }),
+    /* Durante o arraste a capa toma o que sobra da fila — e a transição
+       morre: a coluna tem de seguir o ponteiro, sem atraso. */
+    ...(queueWidth != null ? { flexGrow: '1', transition: 'none' } : {}),
+  }
 
   /* Sombra da capa acompanha a cor dominante (30%). Fora da paleta, preto
      genérico — ela existe pra destacar a capa do fundo, não pra dizer cor. */
@@ -528,6 +541,49 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     reorderQueue(fromIndex, toIndex)
   }
 
+  /* Arraste da divisória entre a capa e a fila.
+   *
+   * Só com o BOTÃO DIREITO: o esquerdo é o clique normal da página, e o
+   * botão direito é o gesto que o usuário já associa a "ajustar" — além de
+   * não competir com nenhum outro clique da hero. O `contextmenu` é
+   * bloqueado na divisória, senão o menu do sistema abre no meio do
+   * arraste.
+   *
+   * A largura segue o ponteiro 1:1 (a transição morre durante o arraste,
+   * senão a coluna ficaria atrás do cursor) e a capa toma o que sobra. No
+   * fim da direita a coluna zera e a hero entra em "capa em tela cheia" —
+   * o mesmo estado do botão ⛶, e o mesmo de onde ele volta. */
+  function startColumnDrag(e: React.PointerEvent<HTMLDivElement>) {
+    if (e.button !== 2) return
+    e.preventDefault()
+    e.stopPropagation()
+    const col = queueColRef.current
+    const row = rowRef.current
+    if (!col || !row) return
+
+    const rowRect = row.getBoundingClientRect()
+    const startX = e.clientX
+    const startWidth = col.getBoundingClientRect().width
+    /* A capa nunca some: 320px é o mínimo em que a arte e o título ainda
+       se leem. Do espaço livre do desktop (`px-6` = 48px e `gap-6` = 24px)
+       sai o tanto que a fila pode tomar. */
+    const contentWidth = rowRect.width - 48
+    const maxWidth = Math.max(0, contentWidth - 24 - 320)
+
+    const onMove = (ev: PointerEvent) => {
+      ev.preventDefault()
+      const next = Math.min(maxWidth, Math.max(0, startWidth - (ev.clientX - startX)))
+      setQueueWidth(next)
+      setWideCover(next <= 8)
+    }
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
+
   return (
     <div
       /* `animate-hero-rise` só entra quando a hero é a PÁGINA (`/reproducao`,
@@ -561,7 +617,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
           divisa entre a capa e a fila, e os do mobile entraram na fileira de
           ações da coluna da capa. */}
 
-      <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-6 min-h-0 px-4 md:px-6 pt-4 md:pt-6 pb-4">
+      <div ref={rowRef} className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-6 min-h-0 px-4 md:px-6 pt-4 md:pt-6 pb-4">
         {/* Painel da capa. Antes eram duas coisas separadas: o `bgGradient`
              (radial da cor dominante da capa) sangrava na raiz da hero inteira
              e sumia por baixo do painel da fila, que é opaco; o `glowTint` era
@@ -736,8 +792,14 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
               os 288px do antigo `md:w-72`, que era fixo e ignorava a largura
               da tela; agora a proporção sobrevive a qualquer viewport. */}
           <div
+            ref={queueColRef}
             className={`w-full -ml-4 -mr-4 -mb-4 md:ml-0 md:-mr-6 ${wideCover ? 'md:w-0 md:grow-0 md:shrink-0 md:min-w-0' : queueMinimized ? 'md:w-[calc(20%_+_9.6px)]' : 'md:w-auto md:flex-[2]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none transition-[flex-grow,width] duration-[var(--motion-duration-medium)] ease-[var(--motion-easing-surface)] ${showQueueOnMobile ? '' : 'hidden md:flex'}`}
-            style={{ backgroundColor: 'var(--bg-elevated)' }}
+            style={{
+              backgroundColor: 'var(--bg-elevated)',
+              /* Largura vinda do arraste da divisória: em px e com o
+                 crescimento zerado, para a capa ficar com o que sobrar. */
+              ...(queueWidth != null ? { width: queueWidth, flexGrow: 0, flexBasis: 'auto' } : {}),
+            }}
           >
             {/* Tela cheia na divisa entre a capa e a fila: `-left-14` (−56px)
                 passa da largura do botão (48px), então ele fica inteiramente
@@ -767,7 +829,17 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 onde o "sair" precisa ficar — a fila some, mas o controle
                 continua à mão. */}
             <button
-              onClick={() => setWideCover(!wideCover)}
+              onClick={() => {
+                if (wideCover) {
+                  setWideCover(false)
+                  /* Se a fila foi zerada pelo arraste, ela volta na largura
+                     normal — do contrário o botão não tiraria a fila de
+                     baixo de ninguém. */
+                  if (queueWidth != null && queueWidth <= 8) setQueueWidth(null)
+                } else {
+                  setWideCover(true)
+                }
+              }}
               className={`absolute -left-20 top-1 z-10 h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full border border-outline-variant transition-colors state-layer ${
                 wideCover ? 'text-[var(--accent-from)]' : 'text-[var(--text-secondary)]'
               }`}
@@ -778,6 +850,35 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             >
               {wideCover ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
             </button>
+
+            {/* Divisória arrastável — a aresta direita do gradiente da capa.
+                Fica dentro da coluna da fila, colada na BORDA ESQUERDA dela,
+                que é exatamente a linha onde a capa termina e a fila começa:
+                meia faixa de cada lado, como um puxador de redimensionamento
+                de verdade.
+
+                O gesto é o BOTÃO DIREITO: o esquerdo é o clique normal da
+                página, e o botão direito é o que o usuário já associa a
+                "ajustar". O `contextmenu` é bloqueado aqui — senão o menu do
+                sistema abre no meio do arraste.
+
+                `select-none` para a seleção de texto não começar junto com o
+                arraste. O `cursor-ew-resize` é a dica principal; a linha
+                central aparece no hover para o puxador não ser invisível. */}
+            <div
+              onPointerDown={startColumnDrag}
+              onContextMenu={(e) => e.preventDefault()}
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Arraste com o botão direito para redimensionar a fila"
+              className="group absolute -left-2.5 top-0 bottom-0 z-20 hidden w-5 cursor-ew-resize select-none md:block"
+            >
+              <span
+                aria-hidden="true"
+                className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 opacity-0 transition-opacity group-hover:opacity-100"
+                style={{ backgroundColor: 'var(--text-disabled)' }}
+              />
+            </div>
 
             {/* Wrapper do CONTEÚDO da coluna. Existe por dois motivos:
                 (1) o fade da "capa em tela cheia" é aqui, e não na coluna

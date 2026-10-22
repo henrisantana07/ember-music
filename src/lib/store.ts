@@ -49,6 +49,13 @@ interface PlayerState {
   openExpanded: () => void
   closeExpanded: () => void
   setQueueMinimized: (minimized: boolean) => void
+  /**
+   * Largura livre da coluna da fila, em px, vinda do arraste da divisória.
+   * `null` = sem arraste: vale a largura do estado (normal ou recolhida).
+   * Não é persistida de propósito — é um ajuste de tela, não uma preferência.
+   */
+  queueWidth: number | null
+  setQueueWidth: (width: number | null) => void
 }
 
 function generateShuffleOrder(length: number, currentIndex: number): number[] {
@@ -81,6 +88,7 @@ export const usePlayerStore = create<PlayerState>()(
   miniPlayer: false,
   isExpandedOpen: false,
   queueMinimized: false,
+  queueWidth: null,
 
   play: ((arg: Track | Track[], opt1?: unknown, opt2?: unknown, opt3?: unknown) => {
     const prev = get()
@@ -259,6 +267,7 @@ export const usePlayerStore = create<PlayerState>()(
   openExpanded: () => set({ isExpandedOpen: true }),
   closeExpanded: () => set({ isExpandedOpen: false }),
   setQueueMinimized: (minimized) => set({ queueMinimized: minimized }),
+  setQueueWidth: (width) => set({ queueWidth: width }),
 }),
     {
       name: 'player-storage',
