@@ -752,7 +752,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 eles some em qualquer uma delas. */}
             <button
               onClick={toggleImmersive}
-              className={`absolute -left-14 top-1 z-10 h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full border border-outline-variant transition-colors state-layer ${
+              className={`absolute -left-20 top-1 z-10 h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full border border-outline-variant transition-colors state-layer ${
                 immersive ? 'text-[var(--accent-from)]' : 'text-[var(--text-secondary)]'
               }`}
               style={{ backgroundColor: 'var(--bg-surface)' }}
