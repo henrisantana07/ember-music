@@ -412,11 +412,23 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
      `transparent` quando não há paleta, e o CSS decide o fallback. */
   const panelStyle: CSSProperties & Record<string, string> = palette
     ? {
-        '--hero-c1': `${palette.secondary}7A`,   /* 60% → 48% (−20%) */
+        /* `--hero-c1` é a cor que inunda o painel (o centro do elipse, parada
+           30%). A 48% ela castigava a leitura: com um álbum saturado
+           (ex.: #0117ed) o painel virava um borrão azul e a borda — que é
+           da MESMA cor do álbum — sumia dentro dele. A 26% o flood continua
+           identificando o álbum, mas deixa a superfície respirar. */
+        '--hero-c1': `${palette.secondary}42`,   /* 60% → 48% → 26% */
         '--hero-c2': `${palette.primary}C2`,     /* 95% → 76% (−20%) */
         '--hero-c3': `${palette.tertiary}47`,    /* 35% → 28% (−20%) */
         '--hero-glow': `${palette.primary}14`,   /* 10% → 8% (−20%) */
-        border: `1px solid ${palette.primary}4D`,
+        /* A borda é o que separa o painel do vão preto ao redor — e ela não
+           pode ser a cor crua do álbum, que é justamente a cor do fundo
+           dele: num álbum saturado a linha comia a si mesma e o painel
+           perdia o contorno. Aqui a cor do álbum é puxada pro claro
+           (50% álbum + 50% branco) e mantida translúcida (30%): o mesmo
+           peso de antes, mas um tom que sempre fica ACIMA do flood — seja
+           a capa clara ou saturada. */
+        border: `1px solid color-mix(in srgb, color-mix(in srgb, ${palette.primary} 50%, #ffffff) 30%, transparent)`,
       }
     : { border: '1px solid var(--outline-variant)' }
 
@@ -558,10 +570,11 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
              os valores via `--hero-c1/2/3` e `--hero-glow` — é isso que
              permite a transição suave entre faixas.
 
-             `rounded-2xl` dá o canto, mesma escala de forma da capa; a borda de
-             30% da cor primária fecha o contorno e é o que separa o
-             painel do vão preto da raiz — sem ela o canto some contra o
-             `bg-base`. `--outline-variant` quando não há capa extraída.
+             `rounded-2xl` dá o canto, mesma escala de forma da capa; a borda
+             fecha o contorno e é o que separa o painel do vão preto da raiz —
+             sem ela o canto some contra o `bg-base`. A cor dela vem do
+             `panelStyle`, puxada pro claro: a cor crua do álbum é a mesma do
+             fundo do painel, e num álbum saturado a borda sumia dentro dele.
 
              `hide-scrollbar` porque a rolagem aqui é só rede de segurança para
              viewports curtos — numa altura normal tudo cabe e não há o que rolar.
