@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback, memo, Fragment } from 'react'
+import { useEffect, useLayoutEffect, useState, useRef, useCallback, memo, Fragment } from 'react'
 import type { CSSProperties } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -245,7 +245,14 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   // Espelha o modo no `<html>` para o CSS conseguir dar a faixa do Topbar
   // liberada (64px) de volta pra capa. Sai junto com o componente, que só
   // existe enquanto a hero está aberta.
-  useEffect(() => {
+  //
+  // `useLayoutEffect` e não `useEffect`: essa classe é o que troca o tamanho
+  // da capa (560 → 680) e o que esconde o Topbar e a coluna lateral. Com
+  // `useEffect` ela entra DEPOIS do paint — a capa dava o salto num frame
+  // separado da subida do painel, e o olho lia "tudo saltou, e aí alguma
+  // coisa deslizou". Antes do paint, a geometria já está certa e o
+  // movimento é um só.
+  useLayoutEffect(() => {
     document.documentElement.classList.toggle('immersive', immersive)
     return () => document.documentElement.classList.remove('immersive')
   }, [immersive])
@@ -716,9 +723,31 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
               `+ 9.6px`: 20% dos 48px de padding, devolvidos, fazem o painel
               medir 20% da hero inteira. Em 1440px isso dá 288px — exatamente
               os 288px do antigo `md:w-72`, que era fixo e ignorava a largura
-              da tela; agora a proporção sobrevive a qualquer viewport. */}
+              da tela; agora a proporção sobrevive a qualquer viewport.
+
+              Expandida, a largura é `calc(40% + var(--queue-extra))` — 40% do
+              content-box, que é exatamente o que o `md:flex-[2]` entregava
+              (2/5 do espaço flexível): o `gap` de 24px e a margem direita de
+              -24px do painel se cancelam, então o espaço flexível é o
+              content-box inteiro.
+
+              E a largura é explícita por um motivo: `flex-[2]` deixa a largura
+              como `auto`, e `auto` não interpola — uma `transition: width` não
+              dispararia. Com o comprimento fixo, a coluna da fila passa a
+              deslizar junto com a capa, e os dois gestos (abrir a fila, entrar
+              em tela cheia) falam a mesma língua: 500ms na curva de
+              superfície.
+
+              O `--queue-extra` é o que permite a interpolação: os dois
+              estados precisam ter a MESMA estrutura de `calc` (soma de uma
+              porcentagem e um comprimento). Um `calc(40% + 0px)` seria
+              reduzido pelo minificador para `40%`, e `40%` ↔
+              `calc(20% + 9.6px)` não interpola —_structuras diferentes_ dão
+              um salto no meio em vez de deslizar. Pela variável, o valor
+              resolvido é sempre `calc(<%> + <comprimento>)` e a soma
+              interpola componente a componente. */}
           <div
-            className={`w-full -ml-4 -mr-4 -mb-4 md:ml-0 md:-mr-6 ${queueMinimized ? 'md:w-[calc(20%_+_9.6px)]' : 'md:w-auto md:flex-[2]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none ${showQueueOnMobile ? '' : 'hidden md:flex'}`}
+            className={`w-full -ml-4 -mr-4 -mb-4 md:ml-0 md:-mr-6 ${queueMinimized ? 'md:w-[calc(20%_+_var(--queue-extra))] md:[--queue-extra:9.6px]' : 'md:w-[calc(40%_+_var(--queue-extra))] md:[--queue-extra:0px]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none transition-[width] duration-[var(--motion-duration-long)] ease-[var(--motion-easing-surface)] ${showQueueOnMobile ? '' : 'hidden md:flex'}`}
             style={{ backgroundColor: 'var(--bg-elevated)' }}
           >
             {/* Tela cheia na divisa entre a capa e a fila: `-left-14` (−56px)
