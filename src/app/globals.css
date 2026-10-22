@@ -455,39 +455,14 @@ body {
    existir.
 
    A coluna ainda rola se o viewport for menor que isso — rolagem é a rede de
-   segurança, nunca corte.
-
-   O tamanho vai por DUAS custom properties, e não num `width` só, porque é
-   preciso animar o teto sem arrastar o redimensionamento da janela junto: o
-   `100%` e o `100vh` resolvem em px no valor computado, então um
-   `transition: width` dispararia a cada pixel de resize. As duas custom
-   properties abaixo são comprimentos fixos registrados com `@property` (o
-   mesmo truque das cores da capa): elas mudam só quando o estado muda —
-   tela cheia ou fila recolhida — e é isso que a transição anima. */
-@property --cover-cap {
-  syntax: '<length>';
-  inherits: false;
-  initial-value: 560px;
-}
-
-@property --cover-vh {
-  syntax: '<length>';
-  inherits: false;
-  initial-value: 520px;
-}
-
+   segurança, nunca corte. */
 .now-cover {
-  --cover-cap: 560px;
-  --cover-vh: 520px;
-  width: min(var(--cover-cap), 100%, calc(100vh - var(--cover-vh)));
-  transition:
-    --cover-cap var(--motion-duration-long) var(--motion-easing-surface),
-    --cover-vh var(--motion-duration-long) var(--motion-easing-surface);
+  width: min(560px, 100%, calc(100vh - 520px));
 }
 
 @media (min-width: 768px) {
   .now-cover-min {
-    --cover-cap: 720px;
+    width: min(720px, 100%, calc(100vh - 520px));
   }
 
   /* Tela cheia: o `html` recebe a classe `.immersive` e o Topbar de 64px deixa
@@ -498,19 +473,16 @@ body {
      Só em md de propósito: abaixo de 768px a capa é `min(200px, 60vw)` por
      decisão de layout, e não há budget medido pra ela crescer. */
   .immersive .now-cover {
-    --cover-cap: 680px;
-    --cover-vh: 488px;
+    width: min(680px, 100%, calc(100vh - 488px));
   }
 
   .immersive .now-cover-min {
-    --cover-cap: 900px;
-    --cover-vh: 488px;
+    width: min(900px, 100%, calc(100vh - 488px));
   }
 }
 
 @media (max-width: 767px) {
   .now-cover {
-    --cover-cap: 200px;
     width: min(200px, 60vw);
   }
 }
