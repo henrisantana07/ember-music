@@ -557,7 +557,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
           divisa entre a capa e a fila, e os do mobile entraram na fileira de
           ações da coluna da capa. */}
 
-      <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-6 min-h-0 px-4 md:px-6 pb-4">
+      <div className="relative flex-1 flex flex-col md:flex-row gap-4 md:gap-6 min-h-0 px-4 md:px-6 pt-4 md:pt-6 pb-4">
         {/* Painel da capa. Antes eram duas coisas separadas: o `bgGradient`
              (radial da cor dominante da capa) sangrava na raiz da hero inteira
              e sumia por baixo do painel da fila, que é opaco; o `glowTint` era
