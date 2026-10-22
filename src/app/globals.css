@@ -160,14 +160,21 @@
   --motion-duration-fast: 160ms;
   --motion-duration-standard: 240ms;
   --motion-duration-medium: 320ms;
-  --motion-duration-long: 420ms;
+  /* A superfície de altura cheia — a hero subindo da base. Mais longa que as
+     outras de propósito: o trajeto percorre a tela inteira e precisa ser
+     lido. Espelha `DURATION.long` em `lib/motion.ts`. */
+  --motion-duration-long: 500ms;
 
   --motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
   --motion-easing-enter: cubic-bezier(0, 0, 0, 1);
   --motion-easing-exit: cubic-bezier(0.3, 0, 1, 1);
-  /* Sheet: a curva do player expandido (`EASE.sheet` em `lib/motion.ts`) — a
-     superfície sai rápido e assenta sem quicar. */
+  /* Sheet: a curva do carrossel (`EASE.sheet` em `lib/motion.ts`) — sai rápido
+     e assenta sem quicar. */
   --motion-easing-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  /* A curva da superfície de altura cheia: a "standard" clássica do Material —
+     sai com velocidade, viaja num ritmo legível e assenta sem quicar. É a que
+     faz a subida da hero ser visível do começo ao fim. Espelha `EASE.surface`. */
+  --motion-easing-surface: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
@@ -425,7 +432,7 @@ body {
 }
 
 .animate-hero-rise {
-  animation: hero-rise var(--motion-duration-medium) var(--motion-easing-sheet);
+  animation: hero-rise var(--motion-duration-long) var(--motion-easing-surface);
 }
 
 @keyframes cover-in {
@@ -514,8 +521,8 @@ body {
    a posição da caixa, e por isso a transição vive em `top`/`left`. */
 .expanded-player {
   transition:
-    top var(--motion-duration-medium) var(--motion-easing-sheet),
-    left var(--motion-duration-medium) var(--motion-easing-sheet);
+    top var(--motion-duration-long) var(--motion-easing-surface),
+    left var(--motion-duration-long) var(--motion-easing-surface);
 }
 
 /* ── Cores da capa na hero ───────────────────────────────────────────────────

@@ -45,8 +45,8 @@ export function ExpandedPlayerModal() {
           className={`expanded-player fixed top-0 ${immersive ? '' : 'md:top-16'} right-0 bottom-0 left-0 ${immersive ? '' : 'md:left-[var(--sidebar-w,0px)]'} z-[60] overflow-hidden`}
           style={{ backgroundColor: 'var(--bg-base)' }}
           initial={{ y: '100%' }}
-          animate={{ y: 0, transition: TRANSITION.surface }}
-          exit={{ y: '100%', transition: TRANSITION.surface }}
+          animate={{ y: 0, transition: TRANSITION.surfaceEnter }}
+          exit={{ y: '100%', transition: TRANSITION.surfaceExit }}
         >
           <NowPlaying onClose={closeExpanded} />
         </motion.div>

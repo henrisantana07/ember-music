@@ -30,6 +30,13 @@ export const DURATION = {
   standard: 0.24,
   /** 320ms — full-height surfaces: the drawer, the expanded player. */
   medium: 0.32,
+  /**
+   * 500ms — a hero subindo da base até a posição de repouso.
+   *
+   * Mais longa que as outras de propósito: a superfície percorre a altura
+   * inteira da tela, e a 320ms o trajeto não chegava a ser lido.
+   */
+  long: 0.5,
 } as const
 
 /**
@@ -42,6 +49,16 @@ export const EASE = {
   standard: [0.2, 0, 0, 1] as [number, number, number, number],
   /** Sheets and full-height panels — slides in, settles, never bounces. */
   sheet: [0.32, 0.72, 0, 1] as [number, number, number, number],
+  /**
+   * A curva da superfície de altura cheia: a "standard" clássica do Material
+   * (0.4, 0, 0.2, 1) — sai com velocidade, viaja num ritmo legível e assenta
+   * sem quicar.
+   *
+   * A curva de sheet (0.32, 0.72, 0, 1) cobre 72% da distância nos primeiros
+   * 32% do tempo: a hero chegava ao topo antes de o olho registrar que ela
+   * tinha saído de baixo. Aqui a viagem é visível do começo ao fim.
+   */
+  surface: [0.4, 0, 0.2, 1] as [number, number, number, number],
 } as const
 
 export const TRANSITION = {
@@ -51,10 +68,21 @@ export const TRANSITION = {
   /** Press feedback has to feel instant — anything slower reads as lag. */
   press: { duration: DURATION.short, ease: EASE.standard },
   /**
-   * A surface travelling its own width: slower than a popover, and it has to
-   * land without overshoot, since the panel is the whole viewport.
+   * A superfície de altura cheia subindo da base até a posição de repouso:
+   * a hero do player expandido, entrando pela borda de baixo.
+   *
+   * `DURATION.long` (500ms) com a curva `EASE.surface` — o trajeto é longo e
+   * a curva segura o movimento no meio do caminho, para a subida ser
+   * realmente vista. A curva de sheet antiga (0.32, 0.72, 0, 1) jogava 72%
+   * da distância nos primeiros 32% do tempo e a hero chegava antes de o olho
+   * registrar que tinha saído de baixo.
    */
-  surface: { duration: DURATION.medium, ease: EASE.sheet },
+  surfaceEnter: { duration: DURATION.long, ease: EASE.surface },
+  /**
+   * A volta: mais curta e acelerando, como pede o M3 na saída — a hero some
+   * sem fazer a tela esperar.
+   */
+  surfaceExit: { duration: DURATION.medium, ease: EASE.sheet },
   /**
    * A carousel card arriving on an arrow press. Longer and softer than the
    * `enter` used for a first paint, because here the card has real distance to
