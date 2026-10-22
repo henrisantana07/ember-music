@@ -513,7 +513,12 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
   return (
     <div
-      className={`now-playing h-full relative flex flex-col overflow-hidden ${miniPlayer ? 'pb-14 md:pb-0' : 'pb-20'} ${onClose ? '' : 'animate-slide-up'}`}
+      /* `animate-hero-rise` só entra quando a hero é a PÁGINA (`/reproducao`,
+         sem `onClose`): ela sobe da borda inferior até a posição de repouso, o
+         mesmo gesto do player expandido (o modal anima o `y` de 100% para 0).
+         No modal esta raiz não anima — o `motion.div` de fora já faz isso, e
+         dois gestos juntos dariam um salto duplo. */
+      className={`now-playing h-full relative flex flex-col overflow-hidden ${miniPlayer ? 'pb-14 md:pb-0' : 'pb-20'} ${onClose ? '' : 'animate-hero-rise'}`}
       style={{
         /* O gradiente saiu daqui. Morava nesta raiz em `inset-0` de sangria e
            sumia por baixo do painel da fila, que é opaco; sobrava dele só a

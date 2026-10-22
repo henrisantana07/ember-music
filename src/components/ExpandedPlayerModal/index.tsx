@@ -16,6 +16,12 @@ import { TRANSITION } from '@/lib/motion'
  * somewhere to happen before unmounting. The presence condition now carries
  * the tree through its own exit, so `closeExpanded` can flip the store
  * immediately and the animation follows.
+ *
+ * O `y` de 100% para 0 e a entrada DE BAIXO PARA CIMA ate a posicao de
+ * repouso: o mesmo gesto da rota `/reproducao` (`.animate-hero-rise`).
+ * Quando a tela cheia liga ou desliga com a hero ABERTA, o que muda e a
+ * POSICAO da caixa (`top`/`left`), e isso e a transicao da classe
+ * `.expanded-player` no `globals.css`: sem ela o painel saltava de lugar.
  */
 export function ExpandedPlayerModal() {
   const isExpandedOpen = usePlayerStore((s) => s.isExpandedOpen)
@@ -36,7 +42,7 @@ export function ExpandedPlayerModal() {
           role="dialog"
           aria-modal="true"
           aria-label="Player expandido"
-          className={`fixed top-0 ${immersive ? '' : 'md:top-16'} right-0 bottom-0 left-0 ${immersive ? '' : 'md:left-[var(--sidebar-w,0px)]'} z-[60] overflow-hidden`}
+          className={`expanded-player fixed top-0 ${immersive ? '' : 'md:top-16'} right-0 bottom-0 left-0 ${immersive ? '' : 'md:left-[var(--sidebar-w,0px)]'} z-[60] overflow-hidden`}
           style={{ backgroundColor: 'var(--bg-base)' }}
           initial={{ y: '100%' }}
           animate={{ y: 0, transition: TRANSITION.surface }}

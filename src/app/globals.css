@@ -165,6 +165,9 @@
   --motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
   --motion-easing-enter: cubic-bezier(0, 0, 0, 1);
   --motion-easing-exit: cubic-bezier(0.3, 0, 1, 1);
+  /* Sheet: a curva do player expandido (`EASE.sheet` em `lib/motion.ts`) — a
+     superfície sai rápido e assenta sem quicar. */
+  --motion-easing-sheet: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 * {
@@ -404,6 +407,27 @@ body {
   animation: slide-up 300ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+/* A hero sobe DA BORDA INFERIOR até a posição de repouso — o mesmo gesto do
+   player expandido (o modal do `ExpandedPlayerModal`, que faz `y: 100% → 0`).
+   A rota `/reproducao` usava `animate-slide-up`, que sobe só 24px: os dois
+   jeitos de chegar na hero não conversavam.
+
+   O container da página tem `overflow-hidden`, então a hero aparece cortada
+   na borda de baixo durante a subida — é o que dá a leitura de "painel que
+   entra", e não de "página que aparece". */
+@keyframes hero-rise {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-hero-rise {
+  animation: hero-rise var(--motion-duration-medium) var(--motion-easing-sheet);
+}
+
 @keyframes cover-in {
   from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
@@ -476,6 +500,22 @@ body {
      dele repintaria a hero inteira. Só a identidade de artista/álbum é laranja —
      duração, fonte e demais rótulos continuam neutros. */
   --text-accent: #ff8700;
+}
+
+/* ── Player expandido: posição ──────────────────────────────────────────────
+   O painel do `ExpandedPlayerModal` ocupa a tela inteira, mas a classe
+   `md:top-16` (abaixo do Topbar) e o `left` ligado em `--sidebar-w` mudam
+   quando o modo tela cheia liga e desliga. Sem transição, o painel SALTAVA
+   de lugar — e era o que acontecia no botão "tela cheia" do rodapé: a hero já
+   aberta virava tela cheia num{frame só, sem o caminho percorrido.
+
+   Com a transição, ela desliza até a nova posição. O que o Motion anima (o
+   `y` da entrada e da saída) continua sendo transform; aqui o que se move é
+   a posição da caixa, e por isso a transição vive em `top`/`left`. */
+.expanded-player {
+  transition:
+    top var(--motion-duration-medium) var(--motion-easing-sheet),
+    left var(--motion-duration-medium) var(--motion-easing-sheet);
 }
 
 /* ── Cores da capa na hero ───────────────────────────────────────────────────
