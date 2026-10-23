@@ -463,8 +463,10 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       }
     : { border: '1px solid var(--outline-variant)' }),
     /* Durante o arraste a capa toma o que sobra da fila — e a transição
-       morre: a coluna tem de seguir o ponteiro, sem atraso. */
-    ...(queueWidth != null ? { flexGrow: '1', transition: 'none' } : {}),
+       morre: a coluna tem de seguir o ponteiro, sem atraso. Fora do
+       wideCover: os inline venceriam o `md:flex-1` da tela cheia e a capa
+       não tomaria a largura toda com um queueWidth antigo nas costas. */
+    ...(queueWidth != null && !wideCover ? { flexGrow: '1', transition: 'none' } : {}),
   }
 
   /* Sombra da capa acompanha a cor dominante (30%). Fora da paleta, preto
@@ -861,7 +863,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                  cursor (o travamento visível do arraste). Ela volta quando o
                  override sai — os caminhos que animam (Fila, ⛶) antes limpam
                  o `queueWidth`. */
-              ...(queueWidth != null
+              ...(queueWidth != null && !wideCover
                 ? { width: queueWidth, flexGrow: 0, flexBasis: 'auto', transition: 'none' }
                 : {}),
             }}
@@ -1041,7 +1043,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                       faixa. O botão segue inteiramente fora do painel (`-left-14`
                       o joga no gap e na coluna da capa), então nada encosta nele
                       por dentro. */}
-                  <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full pb-4">
+                  <div className="flex-1 overflow-y-auto min-h-0 hide-scrollbar queue-scroll flex flex-col max-h-full">
                     <div className={`${queueMinimized ? 'px-0' : 'px-1'} space-y-1`}>
                     {queue.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-8 text-center px-4">
@@ -1102,8 +1104,19 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                       ))
                     )}
                   </div>
+                  {/* Barra do "Limpar fila" e o glow translúcido que a
+                      carrega: ENCOSTADA no rodapé, sem intercalar vão. O
+                      `mt-auto` empurra o conjunto pro fundo do scroll mesmo
+                      com a fila curta — sem ele a barra ficava logo após a
+                      última faixa e o espaço da coluna sobrava vazio em
+                      baixo. Com fila longa, o `sticky bottom-0` continua
+                      pinando na borda visível durante a rolagem. O banco do
+                      rodapé mesmo entra por baixo: a coluna já avança 16px
+                      (-mb-4) sob o rodapé fixo e opaco, então a BANDA é
+                      coberta nesses 16px e o BOTÃO termina exatamente na
+                      linha do rodapé — encostado, sem misturar um no outro. */}
                   {!queueMinimized && (
-                  <div className="sticky bottom-0 z-10 flex-none flex items-center gap-2 px-2 py-4 pointer-events-none" style={{ backgroundColor: 'rgba(49, 45, 41, 0.13)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
+                  <div className="sticky bottom-0 z-10 mt-auto flex-none flex items-center gap-2 px-2 py-4 pointer-events-none" style={{ backgroundColor: 'rgba(49, 45, 41, 0.13)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
                     <button
                       onClick={() => { clearQueue(); showToast('Fila limpa') }}
                       className="pointer-events-auto flex items-center gap-2 px-4 min-h-[48px] rounded-lg text-label-large transition-colors state-layer"
