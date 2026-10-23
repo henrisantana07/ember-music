@@ -281,7 +281,7 @@ export async function extractCoverPalette(
     grid = 3,
     primarySaturation = 0.72,
     secondarySaturation = 0.55,
-    lightnessRange = [0.55, 0.64],
+    lightnessRange = [0.85, 0.95],
   } = options
 
   const direct = await loadForSampling(src, 'anonymous')
