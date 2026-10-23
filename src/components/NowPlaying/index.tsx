@@ -910,9 +910,15 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
                 O painel posiciona por portal + `triggerRect` (ver
                 `MenuPanel`): nada de wrapper relative aqui. */}
+            {/* `absolute!`: o `.state-layer` do CSS global é unlayered e
+                vence o `.absolute` de utilities — sem o `!` este botão vira
+                item de fluxo da coluna e empilha ABAIXO do ⛶ (o bug que
+                apareceu quando ele entrou). Absoluto, ele flutua sem ocupar
+                a faixa do cabeçalho, que segue calibrada só pra altura
+                do ⛶. */}
             <button
               {...triggerProps}
-              className="absolute -left-[136px] top-1 z-10 h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full border border-outline-variant text-[var(--text-secondary)] transition-colors state-layer"
+              className="absolute! -left-[136px] top-1 z-10 h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full border border-outline-variant text-[var(--text-secondary)] transition-colors state-layer"
               style={{ backgroundColor: 'var(--bg-surface)' }}
               title="Mais opções"
               aria-label={currentTrack ? `Mais opções para ${currentTrack.name}` : 'Mais opções'}
