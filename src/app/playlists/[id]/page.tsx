@@ -394,9 +394,11 @@ function PlaylistContent() {
 
   return (
     <div className="w-full relative">
+      {/* Mesmo bleed da biblioteca: banda full-bleed até a linha da coluna
+          de navegação, offsets espelhando os `px-4 md:px-6` do MainContainer. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-6 left-0 right-0 h-[400px] transition-opacity duration-500"
+        className="pointer-events-none absolute -top-6 -left-4 -right-4 md:-left-6 md:-right-6 h-[400px] transition-opacity duration-500"
         style={{
           opacity: coverColor ? 1 : 0,
           background: coverColor

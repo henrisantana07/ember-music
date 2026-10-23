@@ -462,9 +462,14 @@ function BibliotecaContent() {
 
   return (
     <div className="mx-auto w-full relative isolate">
+      {/* Bleed horizontal: `left-0/right-0` parava na borda do conteúdo depois
+          dos `px-4 md:px-6` do `MainContainer` — o glow nascia 16/24px depois
+          da linha da coluna de navegação. Os offsets espelham esses paddings:
+          banda encosta no sidebar à esquerda e na borda da janela à direita,
+          sem scrollbar (soma cabe border-box no main). */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-6 left-0 right-0 h-[380px] z-[-1] transition-opacity duration-500"
+        className="pointer-events-none absolute -top-6 -left-4 -right-4 md:-left-6 md:-right-6 h-[380px] z-[-1] transition-opacity duration-500"
         style={{
           opacity: coverColor ? 1 : 0,
           background: coverColor
