@@ -47,6 +47,7 @@ export function Player() {
     setVolume, setProgress, setDuration,
     setRepeat, toggleShuffle, setSleepTimer, toggleMiniPlayer,
     openExpanded, closeExpanded, isExpandedOpen, queueMinimized, setQueueMinimized, setQueueWidth,
+    wideCover, setWideCover,
   } = usePlayerStore()
 
   // Tela cheia: mesma store da sidebar/topbar (irmãos no layout, sem props).
@@ -594,7 +595,14 @@ export function Player() {
               /* Apaga a largura que o arraste da divisória possa ter deixado:
                  o botão do rodapé reassume o controle da coluna. */
               setQueueWidth(null)
-              if (!isExpandedOpen) {
+              if (wideCover) {
+                /* Sai do modo capa em tela cheia e devolve a fila na posição
+                   minimizada original. Sem isto o clique girava o estado da
+                   fila por baixo do wideCover — que ficava true na store da
+                   NowPlaying e a coluna nunca mais voltava. */
+                setWideCover(false)
+                setQueueMinimized(true)
+              } else if (!isExpandedOpen) {
                 setQueueMinimized(true)
                 openExpanded()
               } else {

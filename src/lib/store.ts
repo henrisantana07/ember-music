@@ -56,6 +56,15 @@ interface PlayerState {
    */
   queueWidth: number | null
   setQueueWidth: (width: number | null) => void
+  /**
+   * Modo "capa em tela cheia" da hero: a fila recolhe até desaparecer e a
+   * capa ocupa a largura toda. Vive na store (e não no estado local da
+   * NowPlaying) para o botão "Fila" do rodapé conseguir sair do modo —
+   * do contrário o clique dele não alcança a coluna, que some inteira
+   * nesse estado. Não é persistida: é um ajuste de tela, como o queue-width.
+   */
+  wideCover: boolean
+  setWideCover: (wide: boolean) => void
 }
 
 function generateShuffleOrder(length: number, currentIndex: number): number[] {
@@ -89,6 +98,7 @@ export const usePlayerStore = create<PlayerState>()(
   isExpandedOpen: false,
   queueMinimized: false,
   queueWidth: null,
+  wideCover: false,
 
   play: ((arg: Track | Track[], opt1?: unknown, opt2?: unknown, opt3?: unknown) => {
     const prev = get()
@@ -268,6 +278,7 @@ export const usePlayerStore = create<PlayerState>()(
   closeExpanded: () => set({ isExpandedOpen: false }),
   setQueueMinimized: (minimized) => set({ queueMinimized: minimized }),
   setQueueWidth: (width) => set({ queueWidth: width }),
+  setWideCover: (wide) => set({ wideCover: wide }),
 }),
     {
       name: 'player-storage',

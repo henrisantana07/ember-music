@@ -218,8 +218,14 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   /* Capa em tela cheia: a coluna da fila some e a capa toma a largura toda,
      centralizada no eixo x. É o que o botão de tela cheia da hero faz no
      desktop — no mobile não faz sentido (a fila é uma folha por cima) e
-     ali o mesmo botão segue escondendo Topbar e navegação. */
-  const [wideCover, setWideCover] = useState(false)
+     ali o mesmo botão segue escondendo Topbar e navegação.
+
+     Vive na store, não aqui: o botão "Fila" do rodapé também precisa sair
+     dele, e um useState local o deixaria cego — o clique do rodapé girava
+     o estado da fila por baixo do modo, que ficava true pra sempre e a
+     coluna nunca mais aparecia. */
+  const wideCover = usePlayerStore((s) => s.wideCover)
+  const setWideCover = usePlayerStore((s) => s.setWideCover)
   /* Largura livre da coluna da fila, em px, vinda do arraste da divisória.
      `null` = sem arraste: a coluna usa a largura do estado (normal ou
      recolhida). Com um valor, ela obedece ao ponteiro — é o que dá o
