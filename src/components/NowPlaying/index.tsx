@@ -17,7 +17,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import {
   Play, Pause,
-  Music, Trash2, MoreHorizontal, Maximize2, Minimize2,
+  Music, Trash2, MoreHorizontal, Maximize2, Minimize2, Maximize, Minimize,
 } from 'lucide-react'
 import { extractCoverPalette, type CoverPalette } from '@/lib/color/extractCoverPalette'
 import { getHighResCoverUrl } from '@/lib/image-utils'
@@ -864,7 +864,13 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
               aria-pressed={wideCover}
               title={wideCover ? 'Sair da tela cheia' : 'Tela cheia'}
             >
-              {wideCover ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+              {/* ⛶ e sua versão de sair: o `Maximize` do lucide são os quatro
+                  cantos do glifo (o "tela cheia" que o usuário reconhece); o
+                  `Minimize` traz os mesmos cantos apontando pra dentro — o
+                  padrão de recolher. Os `Maximize2/Minimize2` (setas
+                  diagonais) ficam no controle do `immersive`, que é outro
+                  botão. */}
+              {wideCover ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
             </button>
 
             {/* Divisória arrastável — a aresta direita do gradiente da capa.
