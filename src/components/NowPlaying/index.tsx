@@ -238,6 +238,17 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
   const [toast, setToast] = useState<string | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(null)
   const [suggestions, setSuggestions] = useState<Track[]>([])
+  /* "Mais opções" da faixa atual: gêmeo do menu das linhas da fila (mesma
+     fonte em `TrackMenuItems.tsx`), ancorado ao lado do ⛶ da divisa. Uma
+     instância própria de `useMenu` — o estado das linhas mora no escopo
+     delas, e misturar os dois faria o clique nas faixas abrir este painel. */
+  const {
+    open: heroMenuOpen,
+    close: closeHeroMenu,
+    triggerProps,
+    panelProps,
+  } = useMenu()
+  const [heroPlaylistOpen, setHeroPlaylistOpen] = useState(false)
   const supabase = createClient()
 
   const currentTrack = usePlayerStore((s) => s.currentTrack)
@@ -882,6 +893,45 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 movimento ele está no canto superior direito da hero, que é
                 onde o "sair" precisa ficar — a fila some, mas o controle
                 continua à mão. */}
+            {/* "Mais opções" da FAIXA ATUAL, vizinho esquerdo do ⛶: o canto
+                superior direito é onde o controle da faixa já mora na hero.
+                Os itens são os mesmos das linhas da fila — fonte única em
+                `TrackMenuItems.tsx` — menos o "remover", que é por linha da
+                fila e não por faixa-tocando-agora.
+
+                Mesma cara do ⛶ (fundo + borda, `` mesma altura): dois botões
+                de 48px com 8px de vão. `-left-[136px]` = 80px do ⛶ + 48px
+                dele + 8px de vão. Na mesma âncora, viaja com a borda e
+                termina no mesmo canto na tela cheia — por isso ele continua
+                acessível com a fila recolhida ou na tela cheia, sem variar
+                de lugar.
+
+                O painel posiciona por portal + `triggerRect` (ver
+                `MenuPanel`): nada de wrapper relative aqui. */}
+            <button
+              {...triggerProps}
+              className="absolute -left-[136px] top-1 z-10 h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full border border-outline-variant text-[var(--text-secondary)] transition-colors state-layer"
+              style={{ backgroundColor: 'var(--bg-surface)' }}
+              title="Mais opções"
+              aria-label={currentTrack ? `Mais opções para ${currentTrack.name}` : 'Mais opções'}
+              disabled={!currentTrack}
+            >
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
+            <MenuPresence open={heroMenuOpen}>
+              <MenuPanel {...panelProps} align="right">
+                {currentTrack && (
+                  <>
+                    <MenuAddToPlaylistItem onClick={() => { closeHeroMenu(); setHeroPlaylistOpen(true) }} />
+                    <MenuShareItem track={currentTrack} onDone={closeHeroMenu} />
+                    <MenuArtistItem track={currentTrack} onDone={closeHeroMenu} onVisit={visitArtist} />
+                  </>
+                )}
+              </MenuPanel>
+            </MenuPresence>
+            {currentTrack && (
+              <PlaylistModal open={heroPlaylistOpen} onClose={() => setHeroPlaylistOpen(false)} track={currentTrack} />
+            )}
             <button
               onClick={() => {
                 if (wideCover) {
