@@ -15,7 +15,7 @@ import { ExpandedPlayerModal } from '@/components/ExpandedPlayerModal'
 import { PlaylistModal } from '@/components/PlaylistModal'
 import { useYouTube, useYouTubeTime } from '@/components/YouTubePlayer/context'
 import Link from 'next/link'
-import { ChevronDown, ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause, Maximize2, Minimize2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause, Maximize, Minimize } from 'lucide-react'
 
 export function Player() {
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -626,8 +626,9 @@ export function Player() {
               controles que moravam aqui separados (tela cheia e Chevron de
               abrir/recolher): um clique entra na hero já em tela cheia —
               `openExpanded` + `toggleImmersive` — e um clique no mesmo botão
-              sai da hero e devolve Topbar/sidebar/nav de uma vez. Os ícones
-              permanecem os de tela cheia (Maximize2/Minimize2); o estado ativo
+              sai da hero e devolve Topbar/sidebar/nav de uma vez. Os ícones são
+              o par ⛶ (Maximize/Minimize do lucide), gêmeos do botão da
+              divisa; o estado ativo
               se deriva de `isExpandedOpen && immersive` pra nada dessincronizar
               quando um dos dois entra por outro caminho (avatar/Esc).
 
@@ -652,7 +653,7 @@ export function Player() {
             aria-label={isExpandedOpen && immersive ? 'Sair da tela cheia' : 'Abrir player em tela cheia'}
             aria-pressed={isExpandedOpen && immersive}
           >
-            {isExpandedOpen && immersive ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+            {isExpandedOpen && immersive ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
           </button>
 
           <SleepTimerDropdown />

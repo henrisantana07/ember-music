@@ -581,16 +581,44 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     /* A capa nunca some: 320px é o mínimo em que a arte e o título ainda
        se leem. Do espaço livre do desktop (`px-6` = 48px e `gap-6` = 24px)
        sai o tanto que a fila pode tomar. */
+    /* A fila nunca toma mais do que o que sobra pra capa. */
     const contentWidth = rowRect.width - 48
     const maxWidth = Math.max(0, contentWidth - 24 - 320)
 
+    /* Defesa contra o travamento: os `pointermove` chegam a ~120Hz e CADA um
+       dispararia uma escrita na store, que re-renderiza a hero inteira (e o
+       rodapé, que ouve a store sem selector). O `requestAnimationFrame`
+       agrupa o fluxo: no máximo uma escrita por frame, e nem essa quando o
+       valor não mudou (ponteiro parado ou preso na borda). O `setWideCover`
+       só sai na virada do estado, não a cada pixel. */
+    let last = startWidth
+    let lastWide = usePlayerStore.getState().wideCover
+    let rafId = 0
+    let pendingX = startX
+
     const onMove = (ev: PointerEvent) => {
       ev.preventDefault()
-      const next = Math.min(maxWidth, Math.max(0, startWidth - (ev.clientX - startX)))
-      setQueueWidth(next)
-      setWideCover(next <= 8)
+      pendingX = ev.clientX
+      if (rafId) return
+      rafId = requestAnimationFrame(() => {
+        rafId = 0
+        const next = Math.min(maxWidth, Math.max(0, startWidth - (pendingX - startX)))
+        if (next !== last) {
+          last = next
+          setQueueWidth(next)
+        }
+        const wide = next <= 8
+        if (wide !== lastWide) {
+          lastWide = wide
+          setWideCover(wide)
+        }
+      })
     }
     const stop = () => {
+      if (rafId) {
+        cancelAnimationFrame(rafId)
+        rafId = 0
+      }
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', stop)
       window.removeEventListener('pointercancel', stop)
@@ -813,8 +841,15 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             style={{
               backgroundColor: 'var(--bg-elevated)',
               /* Largura vinda do arraste da divisória: em px e com o
-                 crescimento zerado, para a capa ficar com o que sobrar. */
-              ...(queueWidth != null ? { width: queueWidth, flexGrow: 0, flexBasis: 'auto' } : {}),
+                 crescimento zerado, para a capa ficar com o que sobrar.
+                 A transição morre junto: o className ainda anima
+                 `flex-grow,width` e, sem isto, a coluna chegava atrasada ao
+                 cursor (o travamento visível do arraste). Ela volta quando o
+                 override sai — os caminhos que animam (Fila, ⛶) antes limpam
+                 o `queueWidth`. */
+              ...(queueWidth != null
+                ? { width: queueWidth, flexGrow: 0, flexBasis: 'auto', transition: 'none' }
+                : {}),
             }}
           >
             {/* Tela cheia na divisa entre a capa e a fila: `-left-14` (−56px)
