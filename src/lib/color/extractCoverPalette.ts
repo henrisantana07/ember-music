@@ -279,7 +279,7 @@ export async function extractCoverPalette(
   const {
     cropY = 0.15,
     grid = 3,
-    primarySaturation = 0.72,
+    primarySaturation = 1.30,
     secondarySaturation = 0.55,
     lightnessRange = [0.5, 0.64],
   } = options
