@@ -140,8 +140,8 @@ export function rankPaletteCells(cells: readonly PaletteCell[]): readonly Palett
       (acc, other) =>
         acc +
         (hueDistance(cell.h, other.h) < 0.12 &&
-          Math.abs(cell.s - other.s) < 0.25 &&
-          Math.abs(cell.l - other.l) < 0.25
+        Math.abs(cell.s - other.s) < 0.25 &&
+        Math.abs(cell.l - other.l) < 0.25
           ? 1
           : 0),
       0
@@ -281,7 +281,7 @@ export async function extractCoverPalette(
     grid = 3,
     primarySaturation = 0.72,
     secondarySaturation = 0.55,
-    lightnessRange = [0.85, 0.95],
+    lightnessRange = [0.5, 0.64],
   } = options
 
   const direct = await loadForSampling(src, 'anonymous')
