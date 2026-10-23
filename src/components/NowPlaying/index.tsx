@@ -578,12 +578,15 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     const rowRect = row.getBoundingClientRect()
     const startX = e.clientX
     const startWidth = col.getBoundingClientRect().width
-    /* A capa nunca some: 320px é o mínimo em que a arte e o título ainda
-       se leem. Do espaço livre do desktop (`px-6` = 48px e `gap-6` = 24px)
-       sai o tanto que a fila pode tomar. */
-    /* A fila nunca toma mais do que o que sobra pra capa. */
+    /* TETO do arraste: a fila para no tamanho que ela ocupa na versão
+       EXPANDIDA — o `md:flex-[2]` que o ícone de fila alcança. Num row flex
+       com capa `flex-[3]` e fila `flex-[2]` (base 0 em ambos, `gap-6` =
+       24px), a fila expandida toma 2/5 do espaço livre (`px-6` = 48px).
+       Arrastar à direita além disso não espreme a capa: ela nunca fica com
+       menos que os 60% complementares do espaço. Piso continua em 0: até
+       zerar a fila — e entrar em tela cheia — segue sendo gesto de arraste. */
     const contentWidth = rowRect.width - 48
-    const maxWidth = Math.max(0, contentWidth - 24 - 320)
+    const maxWidth = Math.max(0, ((contentWidth - 24) * 2) / 5)
 
     /* Defesa contra o travamento: os `pointermove` chegam a ~120Hz e CADA um
        dispararia uma escrita na store, que re-renderiza a hero inteira (e o
