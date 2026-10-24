@@ -21,7 +21,7 @@ create policy "Users can update own profile"
   using (auth.uid() = id)
   with check (auth.uid() = id);
 
-create function if not exists public.handle_new_user()
+create or replace function public.handle_new_user()
 returns trigger as $$
 begin
   insert into public.profiles (id)
@@ -30,6 +30,6 @@ begin
 end;
 $$ language plpgsql security definer;
 
-create trigger if not exists on_auth_user_created
+create or replace trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
