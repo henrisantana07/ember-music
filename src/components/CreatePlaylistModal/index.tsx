@@ -329,7 +329,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
       {open && cropImage && (
           <motion.div
             key="crop-scrim"
-            className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+            className="fixed inset-0 z-[80] flex items-center justify-center p-4"
             style={{ backgroundColor: 'var(--scrim)' }}
             variants={scrimVariants}
             initial="hidden"
