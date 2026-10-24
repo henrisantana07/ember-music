@@ -409,6 +409,27 @@ function BibliotecaContent() {
     return true
   }
 
+  /* ── Busca das listas de faixas ───────────────────────────────────────────────
+     Filtra AO VIVO (sem debounce — a lista já está em memória) as três abas de
+     TRACKS: Favoritos (o que você salvou), Recentes (o que você ouviu) e
+     Baixadas. Casam nome, artista e ÁLBUM. Os artistas/playlists (grids de
+     cartões) ficam de fora: lá não existe tabela de colunas para corresponder. */
+  const [query, setQuery] = useState('')
+  const q = query.trim().toLowerCase()
+  function filterTracks(list: Track[]): Track[] {
+    if (!q) return list
+    return list.filter((t) =>
+      t.name.toLowerCase().includes(q) ||
+      t.artist_name.toLowerCase().includes(q) ||
+      (t.album_name ?? '').toLowerCase().includes(q),
+    )
+  }
+  /* As listas filtradas alimentam CONTAGEM e TABELA:
+     conta a lista real em tela, não o acervo inteiro. */
+  const favoriteList = filterTracks(tracks)
+  const historyList = filterTracks(history.map((h) => h.track_data))
+  const downloadsList = filterTracks(downloads)
+
   function renderSortDropdown() {
     switch (activeTab) {
       case 'favoritos':
@@ -557,13 +578,51 @@ function BibliotecaContent() {
 
       <div className="flex items-center justify-between mb-4">
         <span className="text-body-medium" style={{ color: 'var(--text-disabled)' }}>
-          {activeTab === 'favoritos' && `${tracks.length} ${tracks.length === 1 ? 'favorito' : 'favoritos'}`}
+          {activeTab === 'favoritos' && `${favoriteList.length} ${favoriteList.length === 1 ? 'favorito' : 'favoritos'}`}
           {activeTab === 'artistas' && `${artists.length} ${artists.length === 1 ? 'artista' : 'artistas'}`}
           {activeTab === 'playlists' && `${playlists.length} ${playlists.length === 1 ? 'playlist' : 'playlists'}`}
-          {activeTab === 'recentes' && `${history.length} ${history.length === 1 ? 'item' : 'itens'}`}
-          {activeTab === 'baixadas' && `${downloads.length} ${downloads.length === 1 ? 'download' : 'downloads'}`}
+          {activeTab === 'recentes' && `${historyList.length} ${historyList.length === 1 ? 'item' : 'itens'}`}
+          {activeTab === 'baixadas' && `${downloadsList.length} ${downloadsList.length === 1 ? 'download' : 'downloads'}`}
         </span>
-        {renderSortDropdown()}
+        {/* Busca (M3 Search Bar)+S ordena, vignette em gap de 12px: resta à
+            ESQUERDA do select de ordenação, como o Spotify — a caixa de
+            contagem à esquerda e estas duas ficam no clamp à direita.
+            Aparece nos três grupos de faixas (favoritos, recentes, baixadas) e
+            usa investimento visual idêntico ao select ao lado: 48px de alvo de
+            toque, abas arredondada cheia, borda outline-variant. O X de limpar
+            só entra com texto — limpar os estados com teclado em rótulo. */}
+        <div className="flex items-center gap-3">
+          {(activeTab === 'favoritos' || activeTab === 'recentes' || activeTab === 'baixadas') && (
+            <div role="search" className="relative w-52 md:w-72">
+              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--text-secondary)' }} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+              </svg>
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar nesta lista"
+                aria-label="Buscar nesta lista"
+                className="w-full text-body-medium text-[var(--text-primary)] rounded-full pl-11 pr-11 min-h-[48px] outline-none placeholder:text-[var(--text-disabled)]"
+                style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--outline-variant)' }}
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  aria-label="Limpar busca"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full inline-flex items-center justify-center transition-colors state-layer"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
+          {renderSortDropdown()}
+        </div>
       </div>
 
       {loading ? (
@@ -589,8 +648,9 @@ function BibliotecaContent() {
               </div>
             ) : (
               <TrackTable
-                tracks={getSortedTracks()}
+                tracks={getSortedTracks(favoriteList)}
                 user={user}
+                empty={q ? { title: `Nenhum resultado para "${query}"`, description: 'Pesquise por nome da faixa, artista ou álbum.' } : undefined}
                 onRemove={handleRemoveFavorite}
                 removeLabel="Remover dos favoritos"
               />
@@ -718,8 +778,9 @@ function BibliotecaContent() {
               </div>
             ) : (
               <TrackTable
-                tracks={getSortedTracks(history.map((h) => h.track_data))}
+                tracks={getSortedTracks(historyList)}
                 user={user}
+                empty={q ? { title: `Nenhum resultado para "${query}"`, description: 'Pesquise por nome da faixa, artista ou álbum.' } : undefined}
                 onRemove={handleRemoveHistory}
                 removeLabel="Remover do histórico"
               />
@@ -738,7 +799,11 @@ function BibliotecaContent() {
           )}
 
           {activeTab === 'baixadas' && downloads.length > 0 && (
-            <TrackTable tracks={getSortedTracks(downloads)} user={user} />
+            <TrackTable
+              tracks={getSortedTracks(downloadsList)}
+              user={user}
+              empty={q ? { title: `Nenhum resultado para "${query}"`, description: 'Pesquise por nome da faixa, artista ou álbum.' } : undefined}
+            />
           )}
         </>
       )}

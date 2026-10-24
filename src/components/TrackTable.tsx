@@ -151,7 +151,11 @@ function SortHeader({
       <button
         type="button"
         onClick={() => onSort(sortKey)}
-        className={`inline-flex items-center gap-1 text-label-large font-semibold uppercase tracking-wider transition-colors state-layer rounded px-2 py-1 min-h-[48px] ${active ? 'text-[var(--accent-solid)]' : 'text-[var(--text-disabled)] hover:text-[var(--text-primary)]'}`}
+        /* O `-ml-2` cancela o `px-2`: o rótulo começa exatamente na mesma
+           margem do dado da coluna (nome do álbum, data, duração). Sem ele o
+           cabeçalho "Álbum" flutuava 8px longe da coluna que ele rotula. O
+           `px-2` fica — é ele que dá a largura do alvo de toque de 48px. */
+        className={`-ml-2 inline-flex items-center gap-1 text-label-large font-semibold uppercase tracking-wider transition-colors state-layer rounded px-2 py-1 min-h-[48px] ${active ? 'text-[var(--accent-solid)]' : 'text-[var(--text-disabled)] hover:text-[var(--text-primary)]'}`}
       >
         {label}
         <svg className={`w-4 h-4 transition-transform ${active && dir === 'desc' ? 'rotate-180' : ''} ${active ? 'opacity-100' : 'opacity-30'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
