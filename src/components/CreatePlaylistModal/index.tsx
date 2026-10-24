@@ -327,46 +327,46 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
       )}
 
       {open && cropImage && (
+        <motion.div
+          key="crop-scrim"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          style={{ backgroundColor: 'var(--scrim)' }}
+          variants={scrimVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          onClick={(e) => { if (e.target === e.currentTarget) cancelCrop() }}
+        >
           <motion.div
-            key="crop-scrim"
-            className="fixed inset-0 z-[80] flex items-center justify-center p-4"
-            style={{ backgroundColor: 'var(--scrim)' }}
-            variants={scrimVariants}
+            className="w-full max-w-sm rounded-xl p-6 shadow-xl"
+            style={{ backgroundColor: 'var(--bg-elevated)' }}
+            variants={panelVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
-            onClick={(e) => { if (e.target === e.currentTarget) cancelCrop() }}
           >
-            <motion.div
-              className="w-full max-w-sm rounded-xl p-6 shadow-xl"
-              style={{ backgroundColor: 'var(--bg-elevated)' }}
-              variants={panelVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-            >
-              <h3 className="text-lg font-bold mb-4">Ajustar capa</h3>
-              <div className="w-full max-h-80 flex items-center justify-center overflow-hidden rounded-lg">
-                <img ref={cropperRef} src={cropImage} alt="Cortar" className="max-w-full" style={{ maxHeight: '320px' }} />
-              </div>
-              <div className="flex gap-2 mt-3">
-                <button
-                  onClick={confirmCrop}
-                  className="flex-1 px-4 py-2 rounded-lg text-sm font-bold"
-                  style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
-                >
-                  Aplicar
-                </button>
-                <button
-                  onClick={cancelCrop}
-                  className="px-4 py-2 rounded-lg text-sm"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  Cancelar
-                </button>
-              </div>
-            </motion.div>
+            <h3 className="text-lg font-bold mb-4">Ajustar capa</h3>
+            <div className="w-full max-h-80 flex items-center justify-center overflow-hidden rounded-lg">
+              <img ref={cropperRef} src={cropImage} alt="Cortar" className="max-w-full" style={{ maxHeight: '320px' }} />
+            </div>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={confirmCrop}
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-bold"
+                style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
+              >
+                Aplicar
+              </button>
+              <button
+                onClick={cancelCrop}
+                className="px-4 py-2 rounded-lg text-sm"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Cancelar
+              </button>
+            </div>
           </motion.div>
+        </motion.div>
       )}
     </AnimatePresence>
   )
