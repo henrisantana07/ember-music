@@ -359,6 +359,62 @@ body {
   }
 }
 
+/* ── Scrollbar estilo Spotify ────────────────────────────────────────────────
+   Referência: no web player do Spotify a barra é 8px de espessura, a TRILHA é
+   transparente (a superfície da página é o próprio trilho) e o THUMB é um
+   translúcido em pill que só escurece/clareia quando o ponteiro chega perto —
+   nenhum momento, nenhum shimmer: feedback INSTANTÂNEO no hover (M3 instant).
+
+   Tokens no lugar de hex embutido: o thumb muda de família de cor quando o
+   tema troca, e os componentes continuam lendo um só nome. Alpha fixo (30%/50%)
+   por cima de qualquer superfície mantém o contraste mínimo sem sumir. */
+:root {
+  --scrollbar-thumb: rgba(255, 255, 255, 0.3);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.5);
+}
+
+/* Clone do bloco do Spotify, invertido: #FAF8F5 de fundo não tolera um thumb
+   branco translúcido — no claro o pill escurece em vez de clarear. */
+.theme-light {
+  --scrollbar-thumb: rgba(0, 0, 0, 0.3);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.45);
+}
+
+/* Padrão do app inteiro, inclusive onde hoje é a barra NATIVA (o main e os
+   listões sem `scrollbar-thin`): 8px, sem setas, sem cantos de canto. */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Firefox: `thin` ≈ 8px e as cores resolvidas pelos mesmos tokens. Sem webkit
+   no Firefox, este é o caminho que ele enxerga. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+/* Versão enxuta existente: 6px, agora lendo o MESMO token do thumb (antes usava
+   `--text-disabled`, uma cor que mudava de significado por escopo da hero).
+   O pill cheio aqui: em 6px, meio-raio = raio. */
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
 }
@@ -368,8 +424,12 @@ body {
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: var(--text-disabled);
-  border-radius: 3px;
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
 }
 
 .hide-scrollbar::-webkit-scrollbar {
