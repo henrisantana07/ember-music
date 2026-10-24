@@ -213,7 +213,7 @@ export function Topbar() {
           {showDropdown && user && (
             <motion.div
               key="user-menu"
-              className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-elevation-2 border border-outline-variant py-1 z-50"
+              className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-elevation-2 border border-outline-variant py-1 z-[80]"
               style={{ backgroundColor: 'var(--bg-elevated)', transformOrigin: 'top right' }}
               variants={popoverVariants}
               initial="hidden"
