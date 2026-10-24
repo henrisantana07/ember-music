@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Toggle } from '@/components/Settings/Toggle'
@@ -430,9 +431,9 @@ export default function ConfiguracoesPage() {
                 <p className="text-body-medium mt-2" style={{ color: 'var(--error)' }}>{avatarError}</p>
               )}
 
-              {/* Crop modal */}
-              {cropImage && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim" onClick={cancelCrop}>
+              {/* Crop modal: portal evita contextos de empilhamento da página/gradientes */}
+              {cropImage && typeof document !== 'undefined' && createPortal(
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-scrim" onClick={cancelCrop}>
                   <div
                     className="p-6 rounded-xl max-w-lg w-full mx-4"
                     style={{ backgroundColor: 'var(--bg-elevated)' }}
@@ -453,7 +454,8 @@ export default function ConfiguracoesPage() {
                       </button>
                     </div>
                   </div>
-                </div>
+                </div>,
+                document.body
               )}
 
               {/* Display name */}
