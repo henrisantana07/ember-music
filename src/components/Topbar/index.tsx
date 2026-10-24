@@ -143,19 +143,19 @@ export function Topbar() {
             </button>
           )}
         </div>
-          <SearchSuggestions
-            query={searchQuery}
-            visible={searchFocused}
-            user={user}
-            onSearch={(query) => void submitSearch(query)}
-            onSelect={() => {
-              setSearchQuery('')
-              setSearchFocused(false)
-              inputRef.current?.blur()
-            }}
-            onClose={() => setSearchFocused(false)}
-            inputRef={inputRef}
-          />
+        <SearchSuggestions
+          query={searchQuery}
+          visible={searchFocused}
+          user={user}
+          onSearch={(query) => void submitSearch(query)}
+          onSelect={() => {
+            setSearchQuery('')
+            setSearchFocused(false)
+            inputRef.current?.blur()
+          }}
+          onClose={() => setSearchFocused(false)}
+          inputRef={inputRef}
+        />
       </form>
 
 
@@ -184,62 +184,62 @@ export function Topbar() {
           </svg>
         </button>
         <div className="relative" ref={dropdownRef}>
-        {user ? (
-          <button
-            onClick={() => setShowDropdown(!showDropdown)}
-            className="flex items-center gap-2 focus-ring rounded-full"
-          >
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover" />
-            ) : (
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
-                style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
-              >
-                {user.email?.[0].toUpperCase()}
-              </div>
-            )}
-          </button>
-        ) : (
-          <button
-            onClick={() => router.push('/login')}
-            className="btn-primary text-label-large min-h-[48px] py-2 px-5"
-          >
-            Entrar
-          </button>
-        )}
-
-        <AnimatePresence>
-          {showDropdown && user && (
-            <motion.div
-              key="user-menu"
-              className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-elevation-2 border border-outline-variant py-1 z-[80]"
-              style={{ backgroundColor: 'var(--bg-elevated)', transformOrigin: 'top right' }}
-              variants={popoverVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
+          {user ? (
+            <button
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="flex items-center gap-2 focus-ring rounded-full"
             >
-              <div className="px-4 py-3 border-b border-outline-variant">
-                <p className="text-body-medium font-medium truncate">{user.email}</p>
-              </div>
-              <button
-                onClick={() => { router.push('/configuracoes'); setShowDropdown(false) }}
-                className="w-full text-left px-4 min-h-[48px] text-body-medium hover:bg-state-hover transition-colors state-layer"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                Configurações
-              </button>
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-4 min-h-[48px] text-body-medium hover:bg-state-hover transition-colors state-layer"
-                style={{ color: 'var(--error)' }}
-              >
-                Sair
-              </button>
-            </motion.div>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover" />
+              ) : (
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
+                  style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
+                >
+                  {user.email?.[0].toUpperCase()}
+                </div>
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={() => router.push('/login')}
+              className="btn-primary text-label-large min-h-[48px] py-2 px-5"
+            >
+              Entrar
+            </button>
           )}
-        </AnimatePresence>
+
+          <AnimatePresence>
+            {showDropdown && user && (
+              <motion.div
+                key="user-menu"
+                className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-elevation-2 border border-outline-variant py-1 z-[100]"
+                style={{ backgroundColor: 'var(--bg-elevated)', transformOrigin: 'top right' }}
+                variants={popoverVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+              >
+                <div className="px-4 py-3 border-b border-outline-variant">
+                  <p className="text-body-medium font-medium truncate">{user.email}</p>
+                </div>
+                <button
+                  onClick={() => { router.push('/configuracoes'); setShowDropdown(false) }}
+                  className="w-full text-left px-4 min-h-[48px] text-body-medium hover:bg-state-hover transition-colors state-layer"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  Configurações
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 min-h-[48px] text-body-medium hover:bg-state-hover transition-colors state-layer"
+                  style={{ color: 'var(--error)' }}
+                >
+                  Sair
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </header>
