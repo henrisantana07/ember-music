@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { createPortal } from 'react-dom'
 import { createClient } from '@/lib/supabase/client'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { AnimatePresence, motion } from 'motion/react'
@@ -153,7 +154,9 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
   const coverPreview = getCoverPreview()
   const charsLeft = 80 - name.length
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal((
     // The crop dialog is a sibling of the scrim, not a child of the panel: a
     // panel carrying a transform is the containing block for fixed
     // descendants, which would clip the dialog to the panel instead of the
@@ -162,7 +165,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
       {open && (
         <motion.div
           key="scrim"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[55] flex items-center justify-center p-4"
           style={{ backgroundColor: 'var(--scrim)' }}
           variants={scrimVariants}
           initial="hidden"
@@ -369,5 +372,5 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
         </motion.div>
       )}
     </AnimatePresence>
-  )
+  ), document.body)
 }
