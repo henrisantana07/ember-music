@@ -220,7 +220,7 @@ export function TrackActionsMenu({ track, allTracks }: TrackActionsMenuProps) {
               return (
                 <button
                   key={index}
-                  onClick={item.action}
+                  onClick={(e) => { e.stopPropagation(); item.action() }}
                   className={`w-full flex items-center gap-3 px-4 min-h-[48px] text-body-medium transition-colors state-layer ${item.primary ? 'font-semibold' : ''} ${item.danger ? 'text-red-400' : ''}`}
                   style={{
                     color: item.danger ? 'var(--error)' : item.primary ? 'var(--accent-from)' : 'var(--text-primary)',
