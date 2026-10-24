@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { panelVariants, scrimVariants } from '@/lib/motion'
 import { IconButton } from './IconButton'
@@ -32,7 +33,14 @@ export function Modal({ open, onClose, title, children, maxWidth = 'max-w-sm', l
     }
   }, [open, onClose])
 
-  return (
+  /* Portal: um ancestral com `transform` ativo (card-hover no hover, por
+     exemplo) vira containing block de `position: fixed` e prenderia o diálogo
+     dentro do card — aparecer como retângulo vertical espremido e oscilar
+     quando o hover entra e sai. No body o fixed é viewport de verdade. O
+     guard permite SSR (nada renderiza com open=false de todo modo). */
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     // AnimatePresence owns the exit: it keeps the scrim (and the panel, whose
     // own `exit` it waits for) mounted until the animation lands, so the
     // dialog never disappears in a single frame.
@@ -77,6 +85,7 @@ export function Modal({ open, onClose, title, children, maxWidth = 'max-w-sm', l
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }
