@@ -17,8 +17,13 @@ import { useUser } from '@/hooks/use-user'
 import type { Track } from '@/types/music'
 import type { Json } from '@/types/database'
 import { Suspense } from 'react'
+import { LocalLibraryView } from '@/features/local-library/components/LocalLibraryView'
 
-type TabId = 'favoritos' | 'artistas' | 'playlists' | 'recentes' | 'baixadas'
+type TabId = 'favoritos' | 'artistas' | 'playlists' | 'recentes' | 'local'
+
+/* Aba por índice: `?tab=baixadas` de links antigos não casa com nada e
+   cai no fallback 'favoritos' em vez de renderizar uma seção vazia. */
+const VALID_TABS: TabId[] = ['favoritos', 'artistas', 'playlists', 'recentes', 'local']
 
 interface FollowedArtist {
   artist_id: string
@@ -51,7 +56,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'artistas', label: 'Artistas' },
   { id: 'playlists', label: 'Playlists' },
   { id: 'recentes', label: 'Recentes' },
-  { id: 'baixadas', label: 'Baixadas' },
+  { id: 'local', label: 'Local' },
 ]
 
 // Tamanho de página interno usado apenas para percorrer todas as linhas
@@ -86,7 +91,8 @@ function BibliotecaContent() {
   const supabase = createClient()
 
   const { user, loading: userLoading } = useUser()
-  const activeTab = (searchParams.get('tab') as TabId) || 'favoritos'
+  const paramTab = searchParams.get('tab') as TabId | null
+  const activeTab = paramTab && VALID_TABS.includes(paramTab) ? paramTab : 'favoritos'
 
   const [artistSort, setArtistSort] = useState<'recent' | 'a-z'>('recent')
   const [playlistSort, setPlaylistSort] = useState<'recent' | 'updated' | 'a-z' | 'tracks'>('recent')
@@ -96,7 +102,6 @@ function BibliotecaContent() {
   const [artists, setArtists] = useState<FollowedArtist[]>([])
   const [playlists, setPlaylists] = useState<PlaylistTabItem[]>([])
   const [history, setHistory] = useState<HistoryItem[]>([])
-  const [downloads, setDownloads] = useState<Track[]>([])
   const [confirmClear, setConfirmClear] = useState(false)
   const [clearError, setClearError] = useState(false)
 
@@ -122,9 +127,7 @@ function BibliotecaContent() {
         ? artists[0]?.artist_data?.image ?? null
         : activeTab === 'recentes'
           ? history[0]?.track_data?.image ?? null
-          : activeTab === 'baixadas'
-            ? downloads[0]?.image ?? null
-            : tracks[0]?.image ?? history[0]?.track_data?.image ?? null
+          : tracks[0]?.image ?? history[0]?.track_data?.image ?? null
 
   const [coverColorEntry, setCoverColorEntry] = useState<{ src: string; color: string | null } | null>(null)
 
@@ -240,28 +243,6 @@ function BibliotecaContent() {
     }
   }, [user])
 
-  const fetchDownloads = useCallback(async () => {
-    if (!user) return
-    setLoading(true)
-    try {
-      const { data, error } = await supabase
-        .from('downloads')
-        .select('track_data')
-        .eq('user_id', user.id)
-        .order('downloaded_at', { ascending: false })
-      if (error) throw error
-      if (data) {
-        const parsed = data.map((d: any) => d.track_data as unknown as Track).filter(Boolean)
-        setDownloads(parsed)
-      }
-      setLoadError(false)
-    } catch {
-      setLoadError(true)
-    } finally {
-      setLoading(false)
-    }
-  }, [user])
-
   const storePlaylists = usePlaylistsStore((s) => s.playlists)
 
   useEffect(() => {
@@ -287,7 +268,16 @@ function BibliotecaContent() {
     setArtists([])
     setPlaylists([])
     setHistory([])
-    setDownloads([])
+
+    /* "Local" não mora no Supabase — vive no IndexedDB do dispositivo e o
+       LocalLibraryView tem seu próprio spinner (initialized/loading). Sem
+       fetch próprio, nós apenas liberamos o estado para não deixar o
+       skeleton da biblioteca travado na tela. */
+    if (activeTab === 'local') {
+      setLoading(false)
+      setLoadError(false)
+      return
+    }
 
     switch (activeTab) {
       case 'favoritos':
@@ -301,9 +291,6 @@ function BibliotecaContent() {
         break
       case 'recentes':
         fetchHistory()
-        break
-      case 'baixadas':
-        fetchDownloads()
         break
     }
   }, [user, activeTab, loadAttempt])
@@ -369,11 +356,7 @@ function BibliotecaContent() {
 
   /* Ações destrutivas do menu "Mais opções" — o MESMO ícone de lixeira da
      "Remover da fila" da hero, mas cada aba remove da sua própria tabela e
-     tira a linha da lista na hora, sem recarregar a página.
-
-     A aba "Baixadas" não tem ação destrutiva: a tabela `downloads` não guarda
-     o caminho do arquivo, então apagar a linha deixaria o arquivo órfão no
-     disco sem como limpá-lo. Preferimos não prometer o que o dado não entrega. */
+     tira a linha da lista na hora, sem recarregar a página. */
 
   async function handleRemoveFavorite(track: Track): Promise<boolean> {
     if (!user) return false
@@ -428,13 +411,11 @@ function BibliotecaContent() {
      conta a lista real em tela, não o acervo inteiro. */
   const favoriteList = filterTracks(tracks)
   const historyList = filterTracks(history.map((h) => h.track_data))
-  const downloadsList = filterTracks(downloads)
 
   function renderSortDropdown() {
     switch (activeTab) {
       case 'favoritos':
       case 'recentes':
-      case 'baixadas':
         return (
           <select
             value={trackSort}
@@ -582,17 +563,17 @@ function BibliotecaContent() {
           {activeTab === 'artistas' && `${artists.length} ${artists.length === 1 ? 'artista' : 'artistas'}`}
           {activeTab === 'playlists' && `${playlists.length} ${playlists.length === 1 ? 'playlist' : 'playlists'}`}
           {activeTab === 'recentes' && `${historyList.length} ${historyList.length === 1 ? 'item' : 'itens'}`}
-          {activeTab === 'baixadas' && `${downloadsList.length} ${downloadsList.length === 1 ? 'download' : 'downloads'}`}
         </span>
-        {/* Busca (M3 Search Bar)+S ordena, vignette em gap de 12px: resta à
-            ESQUERDA do select de ordenação, como o Spotify — a caixa de
-            contagem à esquerda e estas duas ficam no clamp à direita.
-            Aparece nos três grupos de faixas (favoritos, recentes, baixadas) e
-            usa investimento visual idêntico ao select ao lado: 48px de alvo de
-            toque, abas arredondada cheia, borda outline-variant. O X de limpar
-            só entra com texto — limpar os estados com teclado em rótulo. */}
+        {/* Busca (M3 Search Bar) fica à ESQUERDA do select de ordenação, como
+            o Spotify — a caixa de contagem à esquerda e estas duas ficam no
+            clamp à direita. Aparece nos grupos de faixas que usam a nossa
+            tabela (favoritos, recentes) e usa investimento visual idêntico ao
+            select ao lado: 48px de alvo de toque, pill arredondada cheia,
+            borda outline-variant. O X de limpar só entra com texto.
+            Na aba Local não entra: lá já existe busca própria da feature
+            (que também casa gênero e caminho do arquivo). */}
         <div className="flex items-center gap-3">
-          {(activeTab === 'favoritos' || activeTab === 'recentes' || activeTab === 'baixadas') && (
+          {(activeTab === 'favoritos' || activeTab === 'recentes') && (
             <div role="search" className="relative w-52 md:w-72">
               <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--text-secondary)' }} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
@@ -787,24 +768,12 @@ function BibliotecaContent() {
             )
           )}
 
-          {/* Baixadas tab */}
-          {activeTab === 'baixadas' && downloads.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 gap-4">
-              <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1} style={{ color: 'var(--text-disabled)' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>Nenhuma música baixada ainda</p>
-              <p className="text-body-medium" style={{ color: 'var(--text-disabled)' }}>Baixe músicas para ouvir offline</p>
-            </div>
-          )}
-
-          {activeTab === 'baixadas' && downloads.length > 0 && (
-            <TrackTable
-              tracks={getSortedTracks(downloadsList)}
-              user={user}
-              empty={q ? { title: `Nenhum resultado para "${query}"`, description: 'Pesquise por nome da faixa, artista ou álbum.' } : undefined}
-            />
-          )}
+          {/* Local tab — biblioteca local do dispositivo (ex-"Biblioteca
+              Local", rota /biblioteca/local continua viva para os links).
+              Ao adicionar a pasta, o scanner varre em lotes de 50 e o store
+              da feature recebe `addTracks` a cada lote: as músicas aparecem
+              na grade/lista enquanto a barra de progresso corre. */}
+          {activeTab === 'local' && <LocalLibraryView />}
         </>
       )}
       <CreatePlaylistModal open={createModalOpen} onClose={() => setCreateModalOpen(false)} />
