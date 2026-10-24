@@ -54,7 +54,7 @@ export function Modal({ open, onClose, title, children, maxWidth = 'max-w-sm', l
           initial="hidden"
           animate="visible"
           exit="exit"
-          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+          onClick={(e) => { e.stopPropagation(); if (e.target === e.currentTarget) onClose() }}
         >
           <motion.div
             ref={panelRef}
