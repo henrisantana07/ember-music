@@ -113,7 +113,7 @@ export function LocalLibraryHeader() {
             <button
               onClick={() => setSearchQuery('')}
               aria-label="Limpar busca"
-              className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 inline-flex items-center justify-center rounded-full hover:bg-state-pressed state-layer"
+              className="absolute! right-3 top-1/2 -translate-y-1/2 h-9 w-9 inline-flex items-center justify-center rounded-full hover:bg-state-pressed state-layer"
               style={{ color: 'var(--text-secondary)' }}
             >
               <X className="w-5 h-5" />
