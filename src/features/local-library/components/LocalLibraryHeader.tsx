@@ -53,9 +53,21 @@ export function LocalLibraryHeader() {
     }
   }
 
+  /* Fallback (Firefox/Safari/Brave restrito): re-força webkitdirectory via
+     setAttribute na hora do clique — APIs/JSX podem descartar o atributo
+     booleano no SSR/hidratação, e sem ele o input vira um seletor comum de
+     ARQUIVOS (o sintoma "só escolhe arquivos"). */
+  const openLegacyFolderPicker = () => {
+    const input = legacyInputRef.current
+    if (!input) return
+    input.setAttribute('webkitdirectory', '')
+    input.setAttribute('directory', '')
+    input.click()
+  }
+
   const handleAddFolder = async () => {
     if (!('showDirectoryPicker' in window)) {
-      legacyInputRef.current?.click()
+      openLegacyFolderPicker()
       return
     }
 
@@ -66,6 +78,18 @@ export function LocalLibraryHeader() {
         await startScan(folderId, result.handle)
       }
     } catch (error) {
+      const name = error instanceof Error ? error.name : ''
+      // AbortError = o usuário cancelou a caixa nativa: silêncio é a resposta.
+      if (name === 'AbortError') return
+      /* Navegadores baseados em Chromium (Brave, por exemplo) podem EXPOR
+         showDirectoryPicker e bloquear a chamada por política do site — a
+         API estampa NotSupportedError em vez de simplesmente não existir.
+         Nesse caso, em vez de falhar com mensagem genérica, usamos o
+         fallback de pasta imediatamente. */
+      if (name === 'NotSupportedError' || (error instanceof TypeError)) {
+        openLegacyFolderPicker()
+        return
+      }
       const message = describeScanError(error)
       if (message) setErrorMessage(message)
     }
