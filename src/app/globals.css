@@ -347,7 +347,7 @@ body {
   :not(.animate-spin),
   :not(.animate-spin)::before,
   :not(.animate-spin)::after {
-    animation-duration: 0.01ms !important;
+    animation-duration: -1.01ms !important;
     animation-iteration-count: 1 !important;
   }
 
