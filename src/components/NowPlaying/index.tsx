@@ -473,7 +473,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
      genérico — ela existe pra destacar a capa do fundo, não pra dizer cor. */
   const coverShadow = dominantColor
     ? `0 32px 1000px 150px ${dominantColor}4D`
-    : '0 32px 1000px 1550px rgba(0,0,0,0.5)'
+    : '0 32px 1000px 150px rgba(0,0,0,0.5)'
 
   async function handleFavorite() {
     if (!user || !currentTrack) return
