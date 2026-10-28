@@ -1,0 +1,250 @@
+{
+    "componente": "Sua Biblioteca (Your Library)",
+    "versao_do_documento": "2026-10-25",
+    "plataformas": {
+        "desktop_e_web": "barra lateral (menu lateral)",
+        "mobile_e_tablet": "aba 'Sua Biblioteca' na barra de menu"
+    },
+    "filtros": {
+        "tipo_de_conteudo": {
+            "selecao": "um por vez; clicar no filtro ativo ou no X remove o filtro",
+            "sem_filtro": "todos os tipos aparecem misturados",
+            "opcoes": [
+                {
+                    "id": "playlists",
+                    "rotulo": "Playlists",
+                    "observacao": "Músicas Curtidas fica dentro de Playlists"
+                },
+                {
+                    "id": "artists",
+                    "rotulo": "Artistas"
+                },
+                {
+                    "id": "albums",
+                    "rotulo": "Álbuns"
+                },
+                {
+                    "id": "podcasts",
+                    "rotulo": "Podcasts e programas"
+                }
+            ]
+        },
+        "subfiltros_combinaveis": {
+            "descricao": "combinam com o tipo escolhido; a combinação de filtros está documentada para desktop e para o mobile (ex.: Playlists + Baixados mostra só playlists offline)",
+            "opcoes": [
+                {
+                    "id": "by_you",
+                    "rotulo": "Por você"
+                },
+                {
+                    "id": "by_spotify",
+                    "rotulo": "Pelo Spotify"
+                },
+                {
+                    "id": "downloaded",
+                    "rotulo": "Baixados"
+                }
+            ]
+        },
+        "comportamento": [
+            "a roda do mouse sobre a linha de filtros rola os chips horizontalmente",
+            "filtro e ordenação escolhidos são salvos para as próximas sessões"
+        ]
+    },
+    "ordenacao": {
+        "controle": {
+            "desktop": "ícone de seta para baixo",
+            "mobile_e_tablet": "ícone de ordenar"
+        },
+        "observacao": "as opções variam conforme o tipo de conteúdo filtrado",
+        "opcoes_gerais": [
+            {
+                "id": "recents",
+                "rotulo": "Recentes",
+                "descricao": "inclui novos episódios e conteúdo tocado recentemente"
+            },
+            {
+                "id": "recently_added",
+                "rotulo": "Adicionados recentemente"
+            },
+            {
+                "id": "alphabetical",
+                "rotulo": "Ordem alfabética"
+            },
+            {
+                "id": "creator",
+                "rotulo": "Criador"
+            }
+        ],
+        "opcoes_condicionais": [
+            {
+                "id": "custom_order",
+                "rotulo": "Ordem personalizada",
+                "aparece_quando": "filtro Playlists ativo",
+                "efeito": "arrastar playlists e pastas para a posição desejada",
+                "sincronizacao": "definida no app desktop, aparece em todos os dispositivos"
+            },
+            {
+                "id": "recently_updated",
+                "rotulo": "Atualizados recentemente",
+                "aparece_quando": "filtro Podcasts e programas ativo"
+            }
+        ]
+    },
+    "modos_de_visualizacao": {
+        "opcoes": [
+            {
+                "id": "compact",
+                "rotulo": "Compacto",
+                "descricao": "somente texto, sem capas"
+            },
+            {
+                "id": "list",
+                "rotulo": "Lista",
+                "descricao": "linhas com capa pequena"
+            },
+            {
+                "id": "grid",
+                "rotulo": "Grade",
+                "descricao": "capas maiores"
+            }
+        ],
+        "biblioteca_expandida": "Lista e Compacto mostram as colunas Data de adição e Última reprodução",
+        "configuracao": "o layout compacto sem capas também pode ser ativado nas Configurações"
+    },
+    "busca": {
+        "descricao": "ícone de busca para pesquisar dentro da própria coleção"
+    },
+    "criar": {
+        "controle": "botão + no cabeçalho da biblioteca",
+        "opcoes": [
+            {
+                "id": "new_playlist",
+                "rotulo": "Playlist"
+            },
+            {
+                "id": "new_playlist_folder",
+                "rotulo": "Pasta"
+            }
+        ]
+    },
+    "pastas_de_playlists": {
+        "plataformas": [
+            "desktop",
+            "web",
+            "mobile (novo em maio de 2026)"
+        ],
+        "sincronizacao": "criadas em qualquer plataforma, aparecem em todos os dispositivos",
+        "criar": "Sua Biblioteca > + > Pasta > nomear e confirmar",
+        "aninhamento": {
+            "suportado": true,
+            "desktop_e_web": "botão direito na pasta > Criar pasta, ou clicar na pasta e usar o +",
+            "mobile": "abrir a pasta > + > Pasta"
+        },
+        "mover_playlist_ou_pasta": {
+            "desktop_e_web": [
+                "arrastar a playlist para dentro da pasta",
+                "menu de três pontos da playlist > Mover para pasta",
+                "botão direito em playlist ou pasta > Mover para pasta"
+            ],
+            "mobile": [
+                "menu de três pontos da playlist > Adicionar à pasta",
+                "pressionar e segurar playlist ou pasta > Mover para pasta"
+            ]
+        },
+        "exibicao": "no desktop expandem na barra lateral como árvore; ao clicar, mostra só o conteúdo da pasta",
+        "menu_de_contexto": [
+            {
+                "id": "play",
+                "rotulo": "Reproduzir",
+                "observacao": "embaralhar exige ativar o modo aleatório antes"
+            }
+        ]
+    },
+    "fixar_itens": {
+        "limite_atual": 20,
+        "limite_anterior": 4,
+        "desde": "2026-07-08",
+        "disponibilidade": "usuários Free e Premium, global",
+        "tipos_aceitos": [
+            "playlists",
+            "pastas de playlists",
+            "artistas",
+            "álbuns",
+            "podcasts",
+            "audiolivros"
+        ],
+        "finalidade": "acesso rápido no topo da biblioteca",
+        "mobile": "deslizar o item fixa no topo (descrito na versão de 2023 com limite de 4)"
+    },
+    "layout_da_coluna": {
+        "redimensionar": "arrastar a borda direita define uma largura personalizada",
+        "expandir": "botão de seta expande a biblioteca em largura total",
+        "recolher": "clicar no título 'Sua Biblioteca' recolhe a coluna para mostrar apenas as capas"
+    },
+    "dentro_de_uma_playlist": {
+        "desktop": {
+            "ordenar": "ícone de seta para baixo ou clique no cabeçalho da coluna (clicar de novo inverte)",
+            "colunas": [
+                "Título",
+                "Álbum",
+                "Data de adição",
+                "Duração (ícone de relógio)"
+            ],
+            "observacao_colunas": "mais colunas aparecem quando a janela é maior",
+            "busca": "ícone de busca"
+        },
+        "mobile_e_tablet": {
+            "filtros_e_busca": "puxar a lista para baixo e soltar revela filtros e a barra de busca"
+        },
+        "edicao_em_massa": {
+            "descricao": "selecionar e reordenar várias faixas, episódios ou audiolivros de uma vez",
+            "disponibilidade": "liberado globalmente a partir de maio de 2026"
+        }
+    },
+    "musicas_curtidas": {
+        "criar_playlist_a_partir_do_filtro": {
+            "rotulo": "Transformar em playlist",
+            "plataforma": "somente mobile",
+            "comportamento": "escolher um filtro no topo de Músicas Curtidas e tocar em 'Transformar em playlist'; a playlist é um retrato do momento e não recebe curtidas futuras"
+        }
+    },
+    "novidades_2026": [
+        {
+            "data": "2026-05-28",
+            "item": "Pastas de playlists no mobile",
+            "detalhe": "antes eram exclusivas do desktop; disponível globalmente"
+        },
+        {
+            "data": "2026-05",
+            "item": "Edição em massa de playlists",
+            "detalhe": "editar e reordenar várias faixas, audiolivros ou episódios de uma vez"
+        },
+        {
+            "data": "2026-07-08",
+            "item": "Limite de itens fixados sobe de 4 para 20",
+            "detalhe": "inclui audiolivros entre os tipos fixáveis; Free e Premium"
+        }
+    ],
+    "relacionado_nao_confirmado_para_a_biblioteca": [
+        "ordenar álbuns e singles por data de lançamento, sino de novos lançamentos e datas de lançamento visíveis (post da comunidade sem data, mobile e desktop; não está claro se valem para a Sua Biblioteca ou só para a discografia do artista)",
+        "filtros de preferência no Release Radar (julho de 2026); são da playlist, não da biblioteca",
+        "seleção múltipla e botão de reembaralhar na fila de reprodução (Premium, maio de 2026); são da fila, não da biblioteca"
+    ],
+    "fontes": [
+        "https://support.spotify.com/us/article/your-library/",
+        "https://support.spotify.com/us/article/sort-and-filter/",
+        "https://support.spotify.com/us/article/playlist-folders/",
+        "https://newsroom.spotify.com/2026-05-28/playlist-folders-mobile-queue-controls-updates/",
+        "https://alternativeto.net/news/2026/7/spotify-lets-you-pin-up-to-20-favorites-in-your-library/",
+        "https://thegatekeeperspace.com/whats-new-on-spotify-july-2026-update/",
+        "https://community.spotify.com/t5/Your-Library/Desktop-New-Your-Library-sidebar/m-p/5643517",
+        "https://alternativeto.net/news/2023/5/spotify-introduces-your-library-sidebar-for-improved-navigation-and-content-collection",
+        "https://www.androidcentral.com/spotify-your-library-ui-update-dynamic-filters"
+    ],
+    "lacunas": [
+        "o menu de contexto completo (botão direito) de playlists, artistas e álbuns não foi confirmado; só 'Reproduzir' em pastas e 'Mover para pasta' estão documentados",
+        "os modos de visualização (Compacto, Lista, Grade) e o filtro de audiolivros como tipo de conteúdo não aparecem nas páginas de ajuda oficiais consultadas; os modos vêm de um tópico da comunidade e do anúncio de 2023",
+        "o limite de 20 itens fixados vem de cobertura da imprensa (julho de 2026); a ajuda oficial consultada ainda não foi conferida quanto a esse número"
+    ]
+}
