@@ -65,7 +65,7 @@ function RailItem({ show, children, className = '' }: { show: boolean; children:
              hitting the flex `min-width:auto` floor — so labels ellipsize in
              place while the rail narrows, rather than wrapping (which would
              jump the row height mid-transition) or spilling past the border. */
-          className={`min-w-0 ${className}`}
+          className={`min-h-0 min-w-0 flex flex-col ${className}`}
           initial={{ opacity: 0, x: -12 }}
           animate={{ opacity: 1, x: 0, transition: TRANSITION.enter }}
           exit={{ opacity: 0, x: -12, transition: TRANSITION.exit }}
