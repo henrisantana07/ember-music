@@ -46,14 +46,20 @@ export const usePlaylistsStore = create<PlaylistsState>((set) => ({
       set({ playlists: [], loading: false })
       return
     }
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('playlists')
       .select('*, playlist_tracks(count)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
+    if (error) {
+      console.error('[usePlaylistsStore.fetchPlaylists] erro RLS:', error)
+      set({ loading: false })
+      return
+    }
+
     if (data) {
-      const mapped = data.map((p: any) => ({
+      const mapped = data.map((p) => ({
         ...p,
         track_count: p.playlist_tracks?.[0]?.count ?? 0,
       }))

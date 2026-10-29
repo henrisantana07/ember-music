@@ -29,11 +29,16 @@ export const useArtistsStore = create<ArtistsState>((set) => ({
       set({ artists: [], loading: false })
       return
     }
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('followed_artists')
       .select('*')
       .eq('user_id', user.id)
       .order('followed_at', { ascending: false })
+    if (error) {
+      console.error('[useArtistsStore.fetchArtists] erro Zebra/RLS:', error)
+      set({ loading: false })
+      return
+    }
     if (data) set({ artists: data as unknown as FollowedArtist[] })
     set({ loading: false })
   },
