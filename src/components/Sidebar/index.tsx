@@ -339,13 +339,50 @@ export default function Sidebar() {
     )
   }
 
+  /* Cabeçalho da coluna, estilo Spotify Web (Opção 1 do @m3-fullscreen-ui):
+     pills encaixados no topo da coluna. Os quatro itens de texto da navegação
+     saem da coluna; Início e Explorar sobrevivem como os dois atalhos de 48px.
+     "Biblioteca" é o título do painel abaixo (link para /biblioteca) e
+     "Biblioteca Local" permanece na navegação inferior e no drawer mobile. */
+  const homeActive = isActive('/')
+  const exploreActive = isActive('/buscar')
+
+  const pillBase = 'inline-flex items-center justify-center gap-2 h-12 min-h-[48px] rounded-full bg-[var(--surface-container-highest)] state-layer transition-colors duration-200 '
+  const pillTone = (active: boolean) => `${pillBase} ${
+    active
+      ? 'text-[var(--text-primary)] shadow-elevation-1'
+      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+  }`
+
   const sidebarContent = (
     <>
-      <nav className="flex-none px-2 pt-2 space-y-0.5">
-        {NAV_SECTION1.map(item => (
-          <NavLink key={item.href} href={item.href} label={item.label} icon={{ outline: item.outline, fill: item.fill }} />
-        ))}
-      </nav>
+      <div className={`flex-none ${collapsed ? 'pt-2 px-2 flex flex-col items-center gap-2' : 'pt-2 px-2 pb-1 flex gap-2'}`}>
+        <Link
+          href="/"
+          aria-label="Início"
+          aria-current={homeActive ? 'page' : undefined}
+          title="Início"
+          className={`h-12 w-12 flex-none ${pillTone(homeActive)}`}
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={homeActive ? 2.5 : 2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+        </Link>
+        <Link
+          href="/buscar"
+          aria-label="Explorar"
+          aria-current={exploreActive ? 'page' : undefined}
+          title="Explorar"
+          className={`${pillTone(exploreActive)} ${collapsed ? 'h-12 w-12' : 'flex-1 min-w-0 px-4 justify-start'}`}
+        >
+          <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={exploreActive ? 2.5 : 2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z" />
+          </svg>
+          {!collapsed && (
+            <span className="truncate text-label-large font-semibold">Explorar</span>
+          )}
+        </Link>
+      </div>
 
       <hr className="mx-4 my-2 border-outline-variant" />
 
