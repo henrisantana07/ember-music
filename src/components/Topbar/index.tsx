@@ -158,8 +158,9 @@ export function Topbar() {
               onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
               placeholder="O que você quer ouvir?"
               aria-label="Buscar músicas, álbuns ou artistas"
-              className="block w-full h-10 pl-10 pr-10 py-0 leading-none bg-surface-container-highest border-none rounded-full text-sm appearance-none focus:outline-none focus:ring-2 transition-all [&::-webkit-search-cancel-button]:hidden"
+              className="block w-full h-10 pl-10 py-0 leading-none bg-surface-container-highest border-none rounded-full text-sm appearance-none focus:outline-none focus:ring-2 transition-all [&::-webkit-search-cancel-button]:hidden"
               style={{
+                paddingRight: searchQuery ? '4.5rem' : '2.75rem',
                 color: 'var(--text-primary)',
                 '--tw-ring-color': 'var(--accent-solid)',
               } as React.CSSProperties}
@@ -169,7 +170,7 @@ export function Topbar() {
                 type="button"
                 onClick={handleClear}
                 aria-label="Limpar busca"
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
+                className="absolute right-[2rem] top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
                 style={{ color: 'var(--text-secondary)' }}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -177,6 +178,20 @@ export function Topbar() {
                 </svg>
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => {
+                void submitSearch()
+              }}
+              aria-label="Explorar"
+              title="Explorar"
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full inline-flex items-center justify-center transition-colors hover:bg-white/10"
+              style={{ color: pathname === '/buscar' ? 'var(--text-primary)' : 'var(--text-secondary)' }}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={pathname === '/buscar' ? 2.5 : 2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z" />
+              </svg>
+            </button>
           </div>
           <SearchSuggestions
             query={searchQuery}
