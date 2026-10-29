@@ -31,7 +31,10 @@ export function Topbar() {
 
   useEffect(() => {
     const q = searchParams.get('q')
-    if (q) setSearchQuery(q)
+    if (q) {
+// eslint-disable-next-line react-hooks/set-state-in-effect
+      setSearchQuery(q)
+    }
   }, [searchParams])
 
   useEffect(() => {
@@ -72,13 +75,18 @@ export function Topbar() {
     void submitSearch()
   }
 
-  // `display: none` inline, não `return null`: o componente tem hooks e
-  // effects — sair cedo violaria as Rules of Hooks. Assim o `h-16` sai do
-  // fluxo e a hero recupera os 64px de uma vez.
+  const homeActive = pathname === '/'
+
   return (
-    <header className="h-16 flex items-center justify-center px-6 flex-shrink-0 relative z-[100] border-b border-outline-variant" style={{ backgroundColor: 'var(--bg-base)', display: immersive ? 'none' : undefined }}>
+    <header
+      className="h-16 flex items-center justify-center px-6 flex-shrink-0 relative z-[100] border-b border-outline-variant"
+      style={{ backgroundColor: 'var(--bg-base)', display: immersive ? 'none' : undefined }}
+    >
+      {/* Left cluster: sidebar toggle + branding. Recolhe-se para dar espaço à busca (Estilo Spotify). */}
       <div
-        className={`absolute top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 transition-[left] duration-[var(--motion-duration-standard)] ease-[var(--motion-easing-standard)] ${sidebarCollapsed ? 'left-[14px]' : 'left-2'}`}
+        className={`absolute top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 transition-[left] duration-[var(--motion-duration-standard)] ease-[var(--motion-easing-standard)] ${
+          sidebarCollapsed ? 'left-[14px]' : 'left-2'
+        }`}
       >
         <button
           onClick={toggleSidebar}
@@ -107,42 +115,69 @@ export function Topbar() {
           <span> Music</span>
         </Link>
       </div>
-      <form onSubmit={handleSearch} className="w-full max-w-xl relative">
-        <div className="relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+
+      {/* Spotify-style "search cluster": Home pill + Search box, dois atalhos de 48px seguidos.
+          Home (✓) e Explorar (busca) saem da sidebar e vêm para o topo, no estilo
+          Spotify Web, em que o pill de "Casa" precede a caixa de busca. */}
+      <div className="hidden md:flex items-center gap-2 flex-1 max-w-2xl min-w-0 z-10">
+        <Link
+          href="/"
+          aria-label="Início"
+          title="Início"
+          aria-current={homeActive ? 'page' : undefined}
+          className={`inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors state-layer ${
+            homeActive
+              ? 'bg-[var(--surface-container-highest)] text-[var(--text-primary)]'
+              : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
+          }`}
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={homeActive ? 2.5 : 2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
           </svg>
-          <input
-            ref={inputRef}
-            type="text"
-            inputMode="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => setSearchFocused(true)}
-            onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-            placeholder="O que você quer ouvir?"
-            aria-label="Buscar músicas, álbuns ou artistas"
-            className="block w-full h-9 pl-10 pr-10 py-0 rounded-full text-sm leading-none border-none appearance-none focus:outline-none focus:ring-2 transition-all [&::-webkit-search-cancel-button]:hidden"
-            style={{
-              backgroundColor: 'var(--bg-elevated)',
-              color: 'var(--text-primary)',
-              '--tw-ring-color': 'var(--accent-solid)',
-            } as React.CSSProperties}
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={handleClear}
-              aria-label="Limpar busca"
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
-              style={{ color: 'var(--text-secondary)' }}
+        </Link>
+        <form onSubmit={handleSearch} className="relative min-w-0 flex-1">
+          <div className="relative">
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+              style={{ color: 'var(--text-disabled)' }}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden="true"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          )}
-        </div>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              ref={inputRef}
+              type="text"
+              inputMode="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+              placeholder="O que você quer ouvir?"
+              aria-label="Buscar músicas, álbuns ou artistas"
+              className="block w-full h-10 pl-10 pr-10 py-0 leading-none bg-surface-container-highest border-none rounded-full text-sm appearance-none focus:outline-none focus:ring-2 transition-all [&::-webkit-search-cancel-button]:hidden"
+              style={{
+                color: 'var(--text-primary)',
+                '--tw-ring-color': 'var(--accent-solid)',
+              } as React.CSSProperties}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={handleClear}
+                aria-label="Limpar busca"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
           <SearchSuggestions
             query={searchQuery}
             visible={searchFocused}
@@ -156,9 +191,8 @@ export function Topbar() {
             onClose={() => setSearchFocused(false)}
             inputRef={inputRef}
           />
-      </form>
-
-
+        </form>
+      </div>
 
       <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-1">
         <button
@@ -184,62 +218,62 @@ export function Topbar() {
           </svg>
         </button>
         <div className="relative" ref={dropdownRef}>
-        {user ? (
-          <button
-            onClick={() => setShowDropdown(!showDropdown)}
-            className="flex items-center gap-2 focus-ring rounded-full"
-          >
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover" />
-            ) : (
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
-                style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
-              >
-                {user.email?.[0].toUpperCase()}
-              </div>
-            )}
-          </button>
-        ) : (
-          <button
-            onClick={() => router.push('/login')}
-            className="btn-primary text-label-large min-h-[48px] py-2 px-5"
-          >
-            Entrar
-          </button>
-        )}
-
-        <AnimatePresence>
-          {showDropdown && user && (
-            <motion.div
-              key="user-menu"
-              className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-elevation-2 border border-outline-variant py-1 z- 50"
-              style={{ backgroundColor: 'var(--bg-elevated)', transformOrigin: 'top right' }}
-              variants={popoverVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
+          {user ? (
+            <button
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="flex items-center gap-2 focus-ring rounded-full"
             >
-              <div className="px-4 py-3 border-b border-outline-variant">
-                <p className="text-body-medium font-medium truncate">{user.email}</p>
-              </div>
-              <button
-                onClick={() => { router.push('/configuracoes'); setShowDropdown(false) }}
-                className="w-full text-left px-4 min-h-[48px] text-body-medium hover:bg-state-hover transition-colors state-layer"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                Configurações
-              </button>
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-4 min-h-[48px] text-body-medium hover:bg-state-hover transition-colors state-layer"
-                style={{ color: 'var(--error)' }}
-              >
-                Sair
-              </button>
-            </motion.div>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover" />
+              ) : (
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
+                  style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
+                >
+                  {user.email?.[0].toUpperCase()}
+                </div>
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={() => router.push('/login')}
+              className="btn-primary text-label-large min-h-[48px] py-2 px-5"
+            >
+              Entrar
+            </button>
           )}
-        </AnimatePresence>
+
+          <AnimatePresence>
+            {showDropdown && user && (
+              <motion.div
+                key="user-menu"
+                className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-elevation-2 border border-outline-variant py-1 z- 50"
+                style={{ backgroundColor: 'var(--bg-elevated)', transformOrigin: 'top right' }}
+                variants={popoverVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+              >
+                <div className="px-4 py-3 border-b border-outline-variant">
+                  <p className="text-body-medium font-medium truncate">{user.email}</p>
+                </div>
+                <button
+                  onClick={() => { router.push('/configuracoes'); setShowDropdown(false) }}
+                  className="w-full text-left px-4 min-h-[48px] text-body-medium hover:bg-state-hover transition-colors state-layer"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  Configurações
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 min-h-[48px] text-body-medium hover:bg-state-hover transition-colors state-layer"
+                  style={{ color: 'var(--error)' }}
+                >
+                  Sair
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </header>
