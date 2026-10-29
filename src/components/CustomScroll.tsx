@@ -127,8 +127,8 @@ export function CustomScroll({
           <div
             ref={thumbRef}
             onMouseDown={onThumbMouseDown}
-            className="absolute left-0 right-0 rounded-full bg-[var(--scrollbar-thumb)] hover:bg-[var(--scrollbar-thumb-hover)] transition-colors"
-            style={{ height: `${thumbHeight}px`, transform: `translateY(${thumbTop}px)` }}
+            className="absolute left-0 right-0 rounded-full transition-colors"
+            style={{ height: `${thumbHeight}px`, transform: `translateY(${thumbTop}px)`, backgroundColor: 'var(--scrollbar-thumb)' }}
           />
         </div>
       )}

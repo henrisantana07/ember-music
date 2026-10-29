@@ -319,7 +319,7 @@ useEffect(() => {
     <>
       {/* Navegação da biblioteca: as mesmas fontes de dados em modo rail recolhido. */}
       <RailItem show={collapsed} className="flex-1">
-        <CustomScroll className="px-2 py-6 flex flex-col items-center justify-center space-y-0.5">
+        <CustomScroll className="px-2 py-6 flex flex-col items-center justify-center space-y-0.5" wrapperClassName="flex-1" role="list" ariaLabel="Itens da biblioteca minimizada">
           {visibleItems.slice(0, RAIL_LIMIT).map(item => {
             const active = pathname === item.href
             return (
@@ -407,7 +407,7 @@ useEffect(() => {
             <ClassificationMenu sort={prefs.sort} view={prefs.view} onSortChange={(s) => updatePrefs({ sort: s })} onViewChange={(v) => updatePrefs({ view: v })} />
           </div>
 
-          <CustomScroll className="px-2 pb-2 space-y-0.5" role="list" ariaLabel="Itens da biblioteca">
+          <CustomScroll className="px-2 pb-2 space-y-0.5" wrapperClassName="flex-1 min-h-0" role="list" ariaLabel="Itens da biblioteca">
             {libraryLoading && <LoadingState title="Carregando biblioteca…" />}
             {!libraryLoading && noResults && (
               <EmptyState
