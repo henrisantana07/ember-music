@@ -103,7 +103,8 @@ export function ClassificationMenu({ sort, view, onSortChange, onViewChange }: C
                   `w-full min-h-[36px] inline-flex items-center gap-2 px-3 text-left ` +
                   `transition-colors duration-200 rounded-md ` +
                   (active
-                    ? 'bg-state-hover text-[#4ade80] font-semibold'
+                    ? 'bg-state-hover text-white font-semibold'
+
                     : item.disabled
                     ? 'text-[var(--text-disabled)] cursor-not-allowed opacity-60'
                     : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]')
@@ -111,7 +112,7 @@ export function ClassificationMenu({ sort, view, onSortChange, onViewChange }: C
               >
                 <span className="flex-1 truncate text-label-large">{item.label}</span>
                 {active && (
-                  <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ color: '#4ade80' }} aria-hidden="true">
+                  <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ color: 'white' }} aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 )}
@@ -135,7 +136,8 @@ export function ClassificationMenu({ sort, view, onSortChange, onViewChange }: C
                 className={
                   `min-h-[34px] inline-flex items-center justify-center rounded-md transition-colors duration-200 ` +
                   (active
-                    ? 'bg-state-hover text-[#4ade80] font-semibold'
+                    ? 'bg-state-hover text-white font-semibold'
+
                     : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]')
                 }
                 aria-label={option.title}
