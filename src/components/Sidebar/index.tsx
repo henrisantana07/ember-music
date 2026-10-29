@@ -147,7 +147,7 @@ export default function Sidebar() {
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
   const [expandedWidth, setExpandedWidth] = useState<number>(() => {
-    let w = 280
+    let w = 320
     if (typeof window !== 'undefined') {
       try {
         const raw = window.localStorage.getItem('ember:sidebar-width')
