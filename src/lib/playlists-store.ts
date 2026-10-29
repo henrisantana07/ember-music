@@ -59,7 +59,8 @@ export const usePlaylistsStore = create<PlaylistsState>((set) => ({
     }
 
     if (data) {
-      const mapped = data.map((p) => ({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mapped = data.map((p: any) => ({
         ...p,
         track_count: p.playlist_tracks?.[0]?.count ?? 0,
       }))
