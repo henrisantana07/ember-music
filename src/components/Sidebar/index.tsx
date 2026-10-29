@@ -3,16 +3,28 @@
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import type { ReactNode } from 'react'
-import type { User } from '@supabase/supabase-js'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { useArtistsStore } from '@/lib/artists-store'
 import { useSidebarStore } from '@/lib/sidebar-store'
 import { useUser } from '@/hooks/use-user'
 import { useAvatar } from '@/hooks/use-avatar'
+import { useLibraryPreferences } from '@/hooks/use-library-preferences'
 import { AnimatePresence, motion } from 'motion/react'
 import { scrimVariants, drawerVariants, TRANSITION } from '@/lib/motion'
+import { FilterChip } from '@/components/ui/FilterChip'
+import { SortMenu } from '@/components/ui/SortMenu'
+import { SegmentedToggle } from '@/components/ui/SegmentedToggle'
+import { SearchBar } from '@/components/ui/ControlToolbar'
+import { IconButton } from '@/components/ui/IconButton'
+import { CoverImage } from '@/components/ui/CoverImage'
+import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
+import { EmptyState, LoadingState } from '@/components/ui/states'
+import { buildLibraryItems } from '@/lib/library/types'
+import { filterLibraryItems } from '@/lib/library/filterLibraryItems'
+import { sortLibraryItems } from '@/lib/library/sortLibraryItems'
+import type { LibraryItemType, LibraryView } from '@/lib/library/types'
 
 const NAV_SECTION1 = [
   { href: '/', label: 'Início', outline: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', fill: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -21,9 +33,13 @@ const NAV_SECTION1 = [
   { href: '/biblioteca/local', label: 'Biblioteca Local', outline: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z', fill: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z' },
 ]
 
-// Quantidade máxima de itens exibidos em cada seção da sidebar
-const SIDEBAR_LIMIT = 5
+// Quantidade máxima de itens exibidos no rail recolhido
+const RAIL_LIMIT = 5
 
+const TYPE_FILTERS: { value: LibraryItemType; label: string; singular: string }[] = [
+  { value: 'playlist', label: 'Playlists', singular: 'Playlist' },
+  { value: 'artist', label: 'Artistas', singular: 'Artista' },
+]
 
 /**
  * Anything in the rail that has no room once it is minimised.
@@ -59,6 +75,41 @@ function RailItem({ show, children, className = '' }: { show: boolean; children:
   )
 }
 
+const VIEW_OPTIONS: { value: LibraryView; ariaLabel: string; icon: ReactNode }[] = [
+  {
+    value: 'compact',
+    ariaLabel: 'Ver como compacto',
+    icon: (
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 8h16M4 12h16M4 16h16" />
+      </svg>
+    ),
+  },
+  {
+    value: 'list',
+    ariaLabel: 'Ver como lista',
+    icon: (
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" />
+      </svg>
+    ),
+  },
+  {
+    value: 'grid',
+    ariaLabel: 'Ver como grade',
+    icon: (
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" />
+      </svg>
+    ),
+  },
+]
+
+const SORT_OPTIONS = [
+  { value: 'recent' as const, label: 'Recentes' },
+  { value: 'alphabetical' as const, label: 'Alfabetica' },
+]
+
 export default function Sidebar() {
   const pathname = usePathname()
   const collapsed = useSidebarStore((s) => s.collapsed)
@@ -69,10 +120,17 @@ export default function Sidebar() {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const desktopAsideRef = useRef<HTMLElement>(null)
   const [showDropdown, setShowDropdown] = useState(false)
-  const { playlists, fetchPlaylists } = usePlaylistsStore()
-  const { artists, fetchArtists } = useArtistsStore()
+  const { playlists, loading: playlistsLoading, fetchPlaylists } = usePlaylistsStore()
+  const { artists, loading: artistsLoading, fetchArtists } = useArtistsStore()
   const { user, loading: userLoading } = useUser()
   const avatarUrl = useAvatar(user?.id)
+  const { prefs, update: updatePrefs } = useLibraryPreferences()
+
+  // Filtro de tipo: seleção única, removível — clicar no chip ativo limpa (§5.1).
+  const [typeFilter, setTypeFilter] = useState<LibraryItemType | null>(null)
+  const [query, setQuery] = useState('')
+
+  const [createModalOpen, setCreateModalOpen] = useState(false)
 
   useEffect(() => {
     const el = desktopAsideRef.current
@@ -154,6 +212,63 @@ export default function Sidebar() {
     )
   }
 
+  /* Coleção normalizada das stores reais → busca + filtro de tipo + ordenação
+     (§5.1/§5.2, funções puras em lib/library). */
+  const libraryItems = useMemo(
+    () => buildLibraryItems(playlists, artists),
+    [playlists, artists],
+  )
+
+  const visibleItems = useMemo(() => {
+    const filtered = filterLibraryItems(libraryItems, query, typeFilter)
+    return sortLibraryItems(filtered, prefs.sort)
+  }, [libraryItems, query, typeFilter, prefs.sort])
+
+  const libraryLoading = !userLoading && (playlistsLoading || artistsLoading)
+
+  /* Estados de vazio distintos (§8): sem resultados da busca versus coleção vazia. */
+  const noResults = !libraryLoading && visibleItems.length === 0 && (query !== '' || typeFilter !== null)
+  const emptyLibrary = !libraryLoading && libraryItems.length === 0
+
+  function renderLibraryRow(item: (typeof libraryItems)[number], compact: boolean) {
+    const active = pathname === item.href
+    const cover = item.type === 'artist'
+      ? 'rounded-full'
+      : 'rounded-md'
+    return (
+      <Link
+        key={item.id}
+        href={item.href}
+        aria-current={active ? 'page' : undefined}
+        className={`flex items-center ${compact ? 'gap-2 h-8 px-3' : 'gap-3 h-[48px] px-2'} rounded-lg text-body-medium transition-all duration-200 state-layer ${
+          active
+            ? 'font-bold bg-state-hover text-[var(--text-primary)]'
+            : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
+        }`}
+      >
+        {!compact && (
+          <span className={`w-10 h-10 overflow-hidden flex-shrink-0 bg-surface-container-highest ${cover}`}>
+            {item.imageUrl ? (
+              <CoverImage src={item.imageUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span className="w-full h-full flex items-center justify-center text-label-medium font-bold" style={{ color: 'var(--text-primary)' }}>
+                {item.title.charAt(0).toUpperCase()}
+              </span>
+            )}
+          </span>
+        )}
+        <span className="min-w-0 flex-1">
+          <span className="block truncate">{item.title}</span>
+          {!compact && item.subtitle && (
+            <span className="block truncate text-label-medium" style={{ color: 'var(--text-disabled)' }}>
+              {item.subtitle}
+            </span>
+          )}
+        </span>
+      </Link>
+    )
+  }
+
   const sidebarContent = (
     <>
       <nav className="flex-none px-2 pt-2 space-y-0.5">
@@ -164,79 +279,157 @@ export default function Sidebar() {
 
       <hr className="mx-4 my-2 border-outline-variant" />
 
-      <RailItem show={!collapsed && playlists.length > 0} className="flex-none">
-        <div className="flex-none px-2 space-y-0.5 max-h-[40vh] overflow-y-auto scrollbar-thin">
-          <p className="truncate px-3 pt-1 pb-1 text-label-medium font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
-            Sua Biblioteca
-          </p>
-          <div className="space-y-0.5">
-            {playlists.slice(0, SIDEBAR_LIMIT).map(pl => {
-              const active = pathname === `/playlists/${pl.id}`
-              return (
-                <Link
-                  key={pl.id}
-                  href={`/playlists/${pl.id}`}
-                  aria-current={active ? 'page' : undefined}
-                  className={`flex items-center gap-3 px-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${
-                    active
-                      ? 'font-bold bg-state-hover text-[var(--text-primary)]'
-                      : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
-                  }`}
-                >
-                  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                  </svg>
-                  <span className="truncate">{pl.name}</span>
-                </Link>
-              )
+      {/* Navegação da biblioteca: as mesmas fontes de dados em modo rail recolhido. */}
+      <RailItem show={collapsed} className="flex-1">
+        <div className="flex-1 overflow-y-auto scrollbar-thin px-2 space-y-0.5">
+          {libraryItems.slice(0, RAIL_LIMIT).map(item => {
+            const active = pathname === item.href
+            return (
+              <Link
+                key={item.id}
+                href={item.href}
+                aria-current={active ? 'page' : undefined}
+                className={`flex items-center gap-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${
+                  active
+                    ? 'font-bold bg-state-hover text-[var(--text-primary)]'
+                    : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
+                }`}
+                title={item.title}
+              >
+                <span className="w-5 h-5 flex-shrink-0">
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} alt="" className={`w-5 h-5 object-cover ${item.type === 'artist' ? 'rounded-full' : 'rounded-sm'}`} />
+                  ) : (
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                    </svg>
+                  )}
+                </span>
+              </Link>
+            )
+          })}
+        </div>
+      </RailItem>
+
+      {/* Nova interface da biblioteca — filtros, busca, ordenação e modos de
+          visualização operam sobre as stores reais, nunca sobre JSON. */}
+      <RailItem show={!collapsed} className="flex-1">
+        <div className="flex-1 min-h-0 flex flex-col">
+          <div className="flex-none flex items-center justify-between pl-3 pr-1">
+            <Link
+              href="/biblioteca"
+              className="flex-1 min-w-0 h-12 flex items-center truncate text-title-medium font-bold hover:underline"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              Sua Biblioteca
+            </Link>
+            {/* Criar: reutiliza o fluxo real de criação de playlist (§5.4). */}
+            <IconButton
+              label="Criar playlist"
+              size="md"
+              onClick={() => setCreateModalOpen(true)}
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+              </svg>
+            </IconButton>
+          </div>
+
+          <div className="flex-none flex flex-wrap items-center gap-1.5 px-3 pb-1">
+            {TYPE_FILTERS.map(filter => (
+              <FilterChip
+                key={filter.value}
+                label-value={filter.label}
+                selected={typeFilter === filter.value}
+                onClick={() => setTypeFilter(typeFilter === filter.value ? null : filter.value)}
+              >
+                {filter.label}
+              </FilterChip>
+            ))}
+          </div>
+
+          <div className="flex-none px-3 pb-2">
+            <SearchBar
+              value={query}
+              onChange={setQuery}
+              placeholder="Buscar na biblioteca"
+              className="h-10"
+            />
+          </div>
+
+          <div className="flex-none flex items-center justify-between gap-1 px-2 pb-2">
+            <SegmentedToggle
+              size="sm"
+              ariaLabel="Modo de visualização"
+              options={VIEW_OPTIONS}
+              value={prefs.view}
+              onChange={(value) => updatePrefs({ view: value })}
+            />
+            <SortMenu
+              options={SORT_OPTIONS}
+              value={prefs.sort}
+              onChange={(value) => updatePrefs({ sort: value })}
+              label="Ordenar"
+              className="min-w-0"
+            />
+          </div>
+
+          <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-2 pb-2 space-y-0.5" role="list" aria-label="Itens da biblioteca">
+            {libraryLoading && <LoadingState title="Carregando biblioteca…" />}
+            {!libraryLoading && noResults && (
+              <EmptyState
+                title="Sem resultados"
+                description={`Nada encontrado${query ? ` para "${query}"` : ''}.`}
+                className="py-8"
+                action={{ label: 'Limpar filtros', onClick: () => { setQuery(''); setTypeFilter(null) } }}
+              />
+            )}
+            {!libraryLoading && emptyLibrary && (
+              <EmptyState
+                title="Biblioteca vazia"
+                description="Crie playlists e siga artistas para vê-los aqui."
+                className="py-8"
+                action={{ label: 'Criar playlist', onClick: () => setCreateModalOpen(true) }}
+              />
+            )}
+            {!libraryLoading && !noResults && !emptyLibrary && visibleItems.map(item => {
+              if (prefs.view === 'grid') {
+                const active = pathname === item.href
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    aria-current={active ? 'page' : undefined}
+                    className={`flex flex-col gap-1.5 p-2 rounded-lg transition-all duration-200 state-layer ${
+                      active
+                        ? 'bg-state-hover text-[var(--text-primary)]'
+                        : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    <span className="w-full aspect-square overflow-hidden rounded-md bg-surface-container-highest inline-block">
+                      {item.imageUrl ? (
+                        <CoverImage src={item.imageUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="w-full h-full flex items-center justify-center text-title-large font-bold" style={{ color: 'var(--text-primary)' }}>
+                          {item.title.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </span>
+                    <span className="block truncate text-body-medium">{item.title}</span>
+                    <span className="block truncate text-label-medium" style={{ color: 'var(--text-disabled)' }}>
+                      {item.type === 'playlist' ? 'Playlist' : 'Artista'}
+                    </span>
+                  </Link>
+                )
+              }
+              return renderLibraryRow(item, prefs.view === 'compact')
             })}
           </div>
         </div>
       </RailItem>
 
-      <RailItem show={!collapsed}>
+      <RailItem show={!collapsed} className="flex-none">
         <hr className="mx-4 my-2 border-outline-variant" />
-      </RailItem>
-
-      <RailItem show={!collapsed} className="flex-1">
-        <div className="flex-1 overflow-y-auto scrollbar-thin px-2 space-y-0.5 min-h-[150px] max-h-[calc(100vh-8rem)]">
-          {artists.length > 0 && (
-            <p className="truncate px-3 pt-1 pb-1 text-label-medium font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
-              Artistas
-            </p>
-          )}
-          {artists.slice(0, SIDEBAR_LIMIT).map(artist => {
-            const active = pathname === `/artists/${artist.artist_id}`
-            return (
-              <Link
-                key={artist.artist_id}
-                href={`/artists/${artist.artist_id}`}
-                aria-current={active ? 'page' : undefined}
-                className={`flex items-center gap-3 px-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${
-                  active
-                    ? 'font-bold bg-state-hover text-[var(--text-primary)]'
-                    : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
-                }`}
-              >
-                <div className="relative w-8 h-8 flex-shrink-0">
-                  {artist.artist_data?.image ? (
-                    <img src={artist.artist_data.image} alt="" className="w-full h-full rounded-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full rounded-full bg-surface-container-highest flex items-center justify-center text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                      {artist.artist_data?.name?.[0] ?? '?'}
-                    </div>
-                  )}
-                </div>
-                <span className="truncate">{artist.artist_data?.name ?? 'Artista'}</span>
-              </Link>
-            )
-          })}
-          {artists.length === 0 && (
-            <div className="truncate px-3 py-6 text-center text-body-medium" style={{ color: 'var(--text-disabled)' }}>
-              Siga artistas para vê-los aqui
-            </div>
-          )}
-        </div>
       </RailItem>
 
       <RailItem show={!collapsed} className="flex-none">
@@ -292,6 +485,8 @@ export default function Sidebar() {
           )}
         </div>
       </RailItem>
+
+      <CreatePlaylistModal open={createModalOpen} onClose={() => setCreateModalOpen(false)} />
     </>
   )
 
@@ -311,8 +506,9 @@ export default function Sidebar() {
         {sidebarContent}
       </aside>
 
-<nav className="fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around bg-[var(--bg-base)] border-t border-outline-variant z-50 md:hidden safe-area-bottom" style={{ display: immersive ? 'none' : undefined }}>
-  {NAV_SECTION1.map(item => {
+      {/* Navegação inferior existente: uma única barra, sem segunda barra nova (§7). */}
+      <nav className="fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around bg-[var(--bg-base)] border-t border-outline-variant z-50 md:hidden safe-area-bottom" style={{ display: immersive ? 'none' : undefined }}>
+        {NAV_SECTION1.map(item => {
           const active = isActive(item.href)
           const isLibrary = item.href === '/biblioteca' || item.href === '/biblioteca/local'
           return (
@@ -323,16 +519,18 @@ export default function Sidebar() {
                 router.push(item.href)
               }}
               className="flex flex-col items-center justify-center gap-0.5 w-full h-full pt-2"
+              aria-current={active ? 'page' : undefined}
             >
               <svg className={`w-5 h-5 ${active ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d={item.outline} />
               </svg>
-              <span className={`text-label-medium ${active ? 'font-bold text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>{item.label}</span>
+              <span className={`text-label-medium ${active ? 'font-bold text-[var(--text-secondary)]' : 'text-[var(--text-secondary)]'}`}>{item.label}</span>
             </button>
           )
         })}
       </nav>
 
+      {/* Drawer mobile existente: biblioteca integra-se à navegação móvel atual (§7). */}
       <AnimatePresence>
         {drawerOpen && (
           <motion.div
@@ -374,6 +572,7 @@ export default function Sidebar() {
                     key={item.href}
                     href={item.href}
                     onClick={() => setDrawerOpen(false)}
+                    aria-current={active ? 'page' : undefined}
                     className={`flex items-center gap-3 px-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${
                       active
                         ? 'font-bold bg-state-hover text-[var(--text-primary)]'
@@ -389,72 +588,44 @@ export default function Sidebar() {
 
             <hr className="mx-4 my-2 border-outline-variant flex-none" />
 
-            {playlists.length > 0 && (
-            <div className="flex-none px-2 space-y-0.5 max-h-[40vh] overflow-y-auto scrollbar-thin">
-              <p className="px-3 pt-1 pb-1 text-label-medium font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
-                Sua Biblioteca
-              </p>
-                <div className="space-y-0.5">
-                  {playlists.slice(0, SIDEBAR_LIMIT).map(pl => {
-                    const active = pathname === `/playlists/${pl.id}`
-                    return (
-                      <Link
-                        key={pl.id}
-                        href={`/playlists/${pl.id}`}
-                        onClick={() => setDrawerOpen(false)}
-                        aria-current={active ? 'page' : undefined}
-                        className={`flex items-center gap-3 px-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${
-                          active
-                            ? 'font-bold bg-state-hover text-[var(--text-primary)]'
-                            : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
-                        }`}
-                      >
-                        <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                        </svg>
-                        <span className="truncate">{pl.name}</span>
-                      </Link>
-                    )
-                  })}
-                </div>
-            </div>
-            )}
-
-            <hr className="mx-4 my-2 border-outline-variant flex-none" />
-
-            <div className="flex-1 overflow-y-auto scrollbar-thin px-2 space-y-0.5 min-h-[150px] max-h-[calc(100dvh-8rem)]">
-              {artists.length > 0 && (
-                <p className="px-3 pt-1 pb-1 text-label-medium font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
-                  Artistas
-                </p>
-              )}
-              {artists.slice(0, SIDEBAR_LIMIT).map(artist => {
-                const active = pathname === `/artists/${artist.artist_id}`
+            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-2 space-y-0.5" role="list" aria-label="Itens da biblioteca">
+              {libraryItems.map(item => {
+                const active = pathname === item.href
                 return (
                   <Link
-                    key={artist.artist_data?.id ?? artist.artist_id}
-                    href={`/artists/${artist.artist_id}`}
+                    key={item.id}
+                    href={item.href}
                     onClick={() => setDrawerOpen(false)}
                     aria-current={active ? 'page' : undefined}
-                    className={`flex items-center gap-3 px-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${
+                    className={`flex items-center gap-3 h-[48px] px-2 rounded-lg text-body-medium transition-all duration-200 state-layer ${
                       active
                         ? 'font-bold bg-state-hover text-[var(--text-primary)]'
                         : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
                     }`}
                   >
-                    <div className="relative w-8 h-8 flex-shrink-0">
-                      {artist.artist_data?.image ? (
-                        <img src={artist.artist_data.image} alt="" className="w-full h-full rounded-full object-cover" />
+                    <span className="w-10 h-10 overflow-hidden flex-shrink-0 bg-surface-container-highest inline-block">
+                      {item.imageUrl ? (
+                        <CoverImage src={item.imageUrl} alt="" className={`w-full h-full object-cover ${item.type === 'artist' ? 'rounded-full' : 'rounded-md'}`} />
                       ) : (
-                        <div className="w-full h-full rounded-full bg-surface-container-highest flex items-center justify-center text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                          {artist.artist_data?.name?.[0] ?? '?'}
-                        </div>
+                        <span className="w-full h-full flex items-center justify-center text-label-medium font-bold" style={{ color: 'var(--text-primary)' }}>
+                          {item.title.charAt(0).toUpperCase()}
+                        </span>
                       )}
-                    </div>
-                    <span className="truncate">{artist.artist_data?.name ?? 'Artista'}</span>
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate">{item.title}</span>
+                      <span className="block truncate text-label-medium" style={{ color: 'var(--text-disabled)' }}>
+                        {item.type === 'playlist' ? 'Playlist' : 'Artista'}
+                      </span>
+                    </span>
                   </Link>
                 )
               })}
+              {!libraryLoading && libraryItems.length === 0 && (
+                <div className="truncate px-3 py-6 text-center text-body-medium" style={{ color: 'var(--text-disabled)' }}>
+                  Sua biblioteca está vazia
+                </div>
+              )}
             </div>
 
             {user && (
@@ -481,5 +652,5 @@ export default function Sidebar() {
         )}
       </AnimatePresence>
     </>
-  ) 
+  )
 }
