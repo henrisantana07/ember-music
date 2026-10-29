@@ -2,97 +2,354 @@
 
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { useEffect, useState, useRef } from 'react'
+import type { ReactNode } from 'react'
+import type { User } from '@supabase/supabase-js'
+import { usePlaylistsStore } from '@/lib/playlists-store'
+import { useArtistsStore } from '@/lib/artists-store'
 import { useSidebarStore } from '@/lib/sidebar-store'
 import { useUser } from '@/hooks/use-user'
 import { useAvatar } from '@/hooks/use-avatar'
 import { AnimatePresence, motion } from 'motion/react'
+import { scrimVariants, drawerVariants, TRANSITION } from '@/lib/motion'
 
-const NAV_LINKS = [
-  { href: '/', label: 'Início', outline: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-  { href: '/buscar', label: 'Explorar', outline: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z' },
-  { href: '/biblioteca', label: 'Biblioteca', outline: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
+const NAV_SECTION1 = [
+  { href: '/', label: 'Início', outline: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', fill: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+  { href: '/buscar', label: 'Explorar', outline: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z', fill: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z' },
+  { href: '/biblioteca', label: 'Biblioteca', outline: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', fill: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
   { href: '/biblioteca/local', label: 'Biblioteca Local', outline: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z', fill: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z' },
-  { href: '/playlists', label: 'Playlists', outline: 'M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 3 .895 3-2 3 .895 3 2zM9 10l12-3' },
-  { href: '/artists', label: 'Artistas', outline: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z' },
-  { href: '/albums', label: 'Álbuns', outline: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
 ]
 
+// Quantidade máxima de itens exibidos em cada seção da sidebar
+const SIDEBAR_LIMIT = 5
+
+
+/**
+ * Anything in the rail that has no room once it is minimised.
+ *
+ * The rail hugs the left edge, so content can only leave and arrive from that
+ * side — a card sliding in from the right would clip straight through the
+ * icons. Direction is therefore fixed, not derived from anything.
+ *
+ * No cascade here, unlike lists: a sidebar is not a list, and every row
+ * arriving on its own timer reads as lag rather than as order.
+ *
+ * `initial={false}` keeps the first paint still — the rail should animate in
+ * response to the toggle, never on page load.
+ */
+function RailItem({ show, children, className = '' }: { show: boolean; children: ReactNode; className?: string }) {
+  return (
+    <AnimatePresence initial={false}>
+      {show && (
+        <motion.div
+          /* `min-w-0` lets the rail content shrink with the aside instead of
+             hitting the flex `min-width:auto` floor — so labels ellipsize in
+             place while the rail narrows, rather than wrapping (which would
+             jump the row height mid-transition) or spilling past the border. */
+          className={`min-w-0 ${className}`}
+          initial={{ opacity: 0, x: -12 }}
+          animate={{ opacity: 1, x: 0, transition: TRANSITION.enter }}
+          exit={{ opacity: 0, x: -12, transition: TRANSITION.exit }}
+        >
+          {children}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
 export default function Sidebar() {
-  const router = useRouter()
   const pathname = usePathname()
   const collapsed = useSidebarStore((s) => s.collapsed)
   const immersive = useSidebarStore((s) => s.immersive)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const supabase = createClient()
+  const router = useRouter()
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const desktopAsideRef = useRef<HTMLElement>(null)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const { playlists, fetchPlaylists } = usePlaylistsStore()
+  const { artists, fetchArtists } = useArtistsStore()
   const { user, loading: userLoading } = useUser()
   const avatarUrl = useAvatar(user?.id)
 
-  const isActive = (href: string) => {
+  useEffect(() => {
+    const el = desktopAsideRef.current
+    if (!el) return
+    const update = () => {
+      document.documentElement.style.setProperty('--sidebar-w', `${el.offsetWidth}px`)
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    window.addEventListener('resize', update)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('resize', update)
+    }
+  }, [collapsed])
+
+  useEffect(() => {
+    if (user) {
+      fetchPlaylists()
+      fetchArtists()
+    }
+  }, [user])
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  async function handleLogout() {
+    await supabase.auth.signOut()
+    router.push('/login')
+    setShowDropdown(false)
+  }
+
+  function isActive(href: string) {
     if (href === '/') return pathname === '/'
     return pathname.startsWith(href)
   }
 
-  // Bottom navigation for mobile (when not immersive)
-  const bottomNavItems = NAV_LINKS.map((item) => {
-    const active = isActive(item.href)
-    const isLibrary = item.href === '/biblioteca' || item.href === '/biblioteca/local'
+  function NavIcon({ icon, active }: { icon: { outline: string; fill: string }; active: boolean }) {
     return (
-      <button
-        key={item.href}
-        onClick={() => {
-          if (isLibrary) {
-            // toggle drawer open
-            useSidebarStore.getState().toggle()
-            return
-          }
-          router.push(item.href)
-        }}
-        className="flex flex-col items-center justify-center gap-0.5 w-full h-full pt-2"
-      >
-        <svg
-          className={`w-5 h-5 ${active ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={active ? 2.5 : 1.5}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d={item.outline} />
-        </svg>
-        <span className={`text-label-medium ${active ? 'font-bold text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>
-          {item.label}
-        </span>
-      </button>
+      <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d={icon.outline} />
+      </svg>
     )
-  })
+  }
 
-  // Drawer panel for mobile
-  const drawerOpen = useSidebarStore((s) => { var _a; return (_a = s.collapsed) !== null && _a !== void 0 ? _a : false; })
-
-  return (
-    <>
-      {/* Bottom navigation for mobile (when not immersive) */}
-      <nav
-        className="fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around bg-[var(--bg-base)] border-t border-outline-variant z-50 md:hidden safe-area-bottom"
-        style={{ display: immersive ? 'none' : undefined }}
+  function NavLink({ href, label, icon }: { href: string; label: string; icon: { outline: string; fill: string } }) {
+    const active = isActive(href)
+    return (
+      <Link
+        href={href}
+        aria-current={active ? 'page' : undefined}
+        className={`flex items-center gap-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${
+          /* Collapsed rail: nav sits behind `px-2` (8px) inside a 72px aside,
+             so the link box is 56px wide. Padding the 20px icon by (56-20)/2
+             centres it exactly. `justify-center` would do the same job, but
+             `justify-content` is not animatable — it snaps on the first frame
+             instead of sliding, so the icon jumps. Padding does animate. */
+          collapsed ? 'px-[18px]' : 'px-3'
+        } ${
+          active
+            ? 'font-bold bg-state-hover text-[var(--text-primary)]'
+            : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
+        }`}
+        title={collapsed ? label : undefined}
       >
-        {bottomNavItems}
+        <NavIcon icon={icon} active={active} />
+        <RailItem show={!collapsed}>
+          <span className="block truncate">{label}</span>
+        </RailItem>
+      </Link>
+    )
+  }
+
+  const sidebarContent = (
+    <>
+      <nav className="flex-none px-2 pt-2 space-y-0.5">
+        {NAV_SECTION1.map(item => (
+          <NavLink key={item.href} href={item.href} label={item.label} icon={{ outline: item.outline, fill: item.fill }} />
+        ))}
       </nav>
 
-      {/* Drawer panel for mobile */}
+      <hr className="mx-4 my-2 border-outline-variant" />
+
+      <RailItem show={!collapsed && playlists.length > 0} className="flex-none">
+        <div className="flex-none px-2 space-y-0.5 max-h-[40vh] overflow-y-auto scrollbar-thin">
+          <p className="truncate px-3 pt-1 pb-1 text-label-medium font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
+            Sua Biblioteca
+          </p>
+          <div className="space-y-0.5">
+            {playlists.slice(0, SIDEBAR_LIMIT).map(pl => {
+              const active = pathname === `/playlists/${pl.id}`
+              return (
+                <Link
+                  key={pl.id}
+                  href={`/playlists/${pl.id}`}
+                  aria-current={active ? 'page' : undefined}
+                  className={`flex items-center gap-3 px-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${
+                    active
+                      ? 'font-bold bg-state-hover text-[var(--text-primary)]'
+                      : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                  </svg>
+                  <span className="truncate">{pl.name}</span>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      </RailItem>
+
+      <RailItem show={!collapsed}>
+        <hr className="mx-4 my-2 border-outline-variant" />
+      </RailItem>
+
+      <RailItem show={!collapsed} className="flex-1">
+        <div className="flex-1 overflow-y-auto scrollbar-thin px-2 space-y-0.5 min-h-[150px] max-h-[calc(100vh-8rem)]">
+          {artists.length > 0 && (
+            <p className="truncate px-3 pt-1 pb-1 text-label-medium font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
+              Artistas
+            </p>
+          )}
+          {artists.slice(0, SIDEBAR_LIMIT).map(artist => {
+            const active = pathname === `/artists/${artist.artist_id}`
+            return (
+              <Link
+                key={artist.artist_id}
+                href={`/artists/${artist.artist_id}`}
+                aria-current={active ? 'page' : undefined}
+                className={`flex items-center gap-3 px-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${
+                  active
+                    ? 'font-bold bg-state-hover text-[var(--text-primary)]'
+                    : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
+                }`}
+              >
+                <div className="relative w-8 h-8 flex-shrink-0">
+                  {artist.artist_data?.image ? (
+                    <img src={artist.artist_data.image} alt="" className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-surface-container-highest flex items-center justify-center text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                      {artist.artist_data?.name?.[0] ?? '?'}
+                    </div>
+                  )}
+                </div>
+                <span className="truncate">{artist.artist_data?.name ?? 'Artista'}</span>
+              </Link>
+            )
+          })}
+          {artists.length === 0 && (
+            <div className="truncate px-3 py-6 text-center text-body-medium" style={{ color: 'var(--text-disabled)' }}>
+              Siga artistas para vê-los aqui
+            </div>
+          )}
+        </div>
+      </RailItem>
+
+      <RailItem show={!collapsed} className="flex-none">
+        <div className="flex-none border-t border-outline-variant px-2 py-1">
+          {user && (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="flex items-center gap-3 w-full px-2 min-h-[48px] rounded-lg text-body-medium transition-colors duration-200 hover:bg-state-hover state-layer"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-label-medium font-bold flex-shrink-0" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}>
+                    {user.email?.[0].toUpperCase()}
+                  </div>
+                )}
+                <span className="truncate text-left flex-1">{user.email?.split('@')[0]}</span>
+                <svg className="w-5 h-5 transition-transform duration-200" style={{ transform: showDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {showDropdown && (
+                <div
+                  className="absolute bottom-full left-0 right-0 mb-1 rounded-xl shadow-elevation-2 py-1 z-50 border border-outline-variant"
+                  style={{ backgroundColor: 'var(--bg-elevated)' }}
+                >
+                  <button
+                    onClick={() => { router.push('/configuracoes'); setShowDropdown(false) }}
+                    className="w-full text-left px-4 min-h-[48px] text-body-medium hover:bg-state-hover transition-colors flex items-center gap-3 state-layer"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Configurações
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 min-h-[48px] text-body-medium hover:bg-state-hover transition-colors flex items-center gap-3 state-layer"
+                    style={{ color: 'var(--error)' }}
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Sair
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </RailItem>
+    </>
+  )
+
+  // `display: none` inline nos dois ramos (coluna e navegação inferior) em vez
+  // de `return null`: há hooks/effects depois deste ponto e sair cedo violaria
+  // as Rules of Hooks. O `aside` ainda tem ResizeObserver — ao sumir, ele
+  // reporta largura 0 e zera `--sidebar-w`, então o modal acompanha sozinho.
+  return (
+    <>
+      <aside
+        ref={desktopAsideRef}
+        style={{ display: immersive ? 'none' : undefined }}
+        className={`hidden md:flex flex-col h-full overflow-hidden bg-[var(--bg-surface)] transition-[width] duration-[var(--motion-duration-standard)] ease-[var(--motion-easing-standard)] flex-shrink-0 ${
+          collapsed ? 'w-[72px]' : 'w-[240px]'
+        }`}
+      >
+        {sidebarContent}
+      </aside>
+
+<nav className="fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around bg-[var(--bg-base)] border-t border-outline-variant z-50 md:hidden safe-area-bottom" style={{ display: immersive ? 'none' : undefined }}>
+  {NAV_SECTION1.map(item => {
+          const active = isActive(item.href)
+          const isLibrary = item.href === '/biblioteca' || item.href === '/biblioteca/local'
+          return (
+            <button
+              key={item.href}
+              onClick={() => {
+                if (isLibrary) { setDrawerOpen(true); return }
+                router.push(item.href)
+              }}
+              className="flex flex-col items-center justify-center gap-0.5 w-full h-full pt-2"
+            >
+              <svg className={`w-5 h-5 ${active ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d={item.outline} />
+              </svg>
+              <span className={`text-label-medium ${active ? 'font-bold text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>{item.label}</span>
+            </button>
+          )
+        })}
+      </nav>
+
       <AnimatePresence>
         {drawerOpen && (
           <motion.div
             key="drawer-scrim"
             className="fixed inset-0 bg-scrim backdrop-blur-sm z-40 md:hidden"
-            variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 }, exit: { opacity: 0 } }}
+            variants={scrimVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
+            onClick={() => setDrawerOpen(false)}
           />
         )}
         {drawerOpen && (
           <motion.aside
             key="drawer-panel"
             className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-[300px] bg-[var(--bg-surface)] z-50 flex flex-col md:hidden shadow-2xl"
-            variants={{ hidden: { x: '-100%' }, visible: { x: 0 }, exit: { x: '-100%' }}}
+            variants={drawerVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
@@ -102,7 +359,7 @@ export default function Sidebar() {
                 <span className="gradient-accent-text">Ember</span>
                 <span> Music</span>
               </Link>
-              <button onClick={() => useSidebarStore.getState().toggle()} className="h-12 w-12 inline-flex items-center justify-center rounded-lg hover:bg-state-hover transition-colors duration-200 state-layer" aria-label="Fechar menu">
+              <button onClick={() => setDrawerOpen(false)} className="h-12 w-12 inline-flex items-center justify-center rounded-lg hover:bg-state-hover transition-colors duration-200 state-layer" aria-label="Fechar menu">
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--text-primary)' }}>
                   <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -110,17 +367,20 @@ export default function Sidebar() {
             </div>
 
             <nav className="flex-none px-2 space-y-0.5">
-              {NAV_LINKS.map((item) => {
+              {NAV_SECTION1.map(item => {
                 const active = isActive(item.href)
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    onClick={() => useSidebarStore.getState().toggle()}
-                    className={`flex items-center gap-3 px-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${active ? 'font-bold bg-state-hover text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'}`}>
-                    <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d={item.outline} />
-                    </svg>
+                    onClick={() => setDrawerOpen(false)}
+                    className={`flex items-center gap-3 px-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${
+                      active
+                        ? 'font-bold bg-state-hover text-[var(--text-primary)]'
+                        : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    <NavIcon icon={{ outline: item.outline, fill: item.fill }} active={active} />
                     <span>{item.label}</span>
                   </Link>
                 )
@@ -129,17 +389,82 @@ export default function Sidebar() {
 
             <hr className="mx-4 my-2 border-outline-variant flex-none" />
 
-            {/* Playlists section in drawer */}
-            { /* Simplified for now - just placeholder */ }
+            {playlists.length > 0 && (
+            <div className="flex-none px-2 space-y-0.5 max-h-[40vh] overflow-y-auto scrollbar-thin">
+              <p className="px-3 pt-1 pb-1 text-label-medium font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
+                Sua Biblioteca
+              </p>
+                <div className="space-y-0.5">
+                  {playlists.slice(0, SIDEBAR_LIMIT).map(pl => {
+                    const active = pathname === `/playlists/${pl.id}`
+                    return (
+                      <Link
+                        key={pl.id}
+                        href={`/playlists/${pl.id}`}
+                        onClick={() => setDrawerOpen(false)}
+                        aria-current={active ? 'page' : undefined}
+                        className={`flex items-center gap-3 px-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${
+                          active
+                            ? 'font-bold bg-state-hover text-[var(--text-primary)]'
+                            : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
+                        }`}
+                      >
+                        <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                        </svg>
+                        <span className="truncate">{pl.name}</span>
+                      </Link>
+                    )
+                  })}
+                </div>
+            </div>
+            )}
 
-            {/* Artists section in drawer */}
-            { /* Simplified for now - just placeholder */ }
+            <hr className="mx-4 my-2 border-outline-variant flex-none" />
 
-            {/* User section in drawer */}
+            <div className="flex-1 overflow-y-auto scrollbar-thin px-2 space-y-0.5 min-h-[150px] max-h-[calc(100dvh-8rem)]">
+              {artists.length > 0 && (
+                <p className="px-3 pt-1 pb-1 text-label-medium font-semibold uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>
+                  Artistas
+                </p>
+              )}
+              {artists.slice(0, SIDEBAR_LIMIT).map(artist => {
+                const active = pathname === `/artists/${artist.artist_id}`
+                return (
+                  <Link
+                    key={artist.artist_data?.id ?? artist.artist_id}
+                    href={`/artists/${artist.artist_id}`}
+                    onClick={() => setDrawerOpen(false)}
+                    aria-current={active ? 'page' : undefined}
+                    className={`flex items-center gap-3 px-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${
+                      active
+                        ? 'font-bold bg-state-hover text-[var(--text-primary)]'
+                        : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    <div className="relative w-8 h-8 flex-shrink-0">
+                      {artist.artist_data?.image ? (
+                        <img src={artist.artist_data.image} alt="" className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full rounded-full bg-surface-container-highest flex items-center justify-center text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                          {artist.artist_data?.name?.[0] ?? '?'}
+                        </div>
+                      )}
+                    </div>
+                    <span className="truncate">{artist.artist_data?.name ?? 'Artista'}</span>
+                  </Link>
+                )
+              })}
+            </div>
+
             {user && (
               <div className="flex-none border-t border-outline-variant px-2 py-1">
                 <div className="relative">
-                  <button className="flex items-center gap-3 w-full px-2 min-h-[48px] rounded-lg text-body-medium transition-colors duration-200 hover:bg-state-hover state-layer" style={{ color: 'var(--text-secondary)' }}>
+                  <button
+                    onClick={() => { router.push('/configuracoes'); setDrawerOpen(false) }}
+                    className="flex items-center gap-3 w-full px-2 min-h-[48px] rounded-lg text-body-medium transition-colors duration-200 hover:bg-state-hover state-layer"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
                     {avatarUrl ? (
                       <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
                     ) : (
@@ -156,5 +481,5 @@ export default function Sidebar() {
         )}
       </AnimatePresence>
     </>
-  )
+  ) 
 }
