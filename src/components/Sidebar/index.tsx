@@ -327,7 +327,7 @@ useEffect(() => {
                 key={item.id}
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
-                className={`flex items-center justify-center min-h-[72px] w-full rounded-lg transition-all duration-200 state-layer ${
+                className={`flex items-center justify-center min-h-[64px] w-full rounded-lg transition-all duration-200 state-layer ${
                   active
                     ? 'font-bold bg-state-hover text-[var(--text-primary)]'
                     : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
@@ -340,7 +340,7 @@ useEffect(() => {
                       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                     </svg>
                   ) : item.imageUrl ? (
-                    <CoverImage src={item.imageUrl} alt="" className={`w-12 h-12 object-cover ${item.type === "artist" ? "rounded-full" : "rounded-md"}`} />
+                    <CoverImage src={item.imageUrl} alt="" className={`w-14 h-14 object-cover ${item.type === "artist" ? "rounded-full" : "rounded-md"}`} />
                   ) : (
                     <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
