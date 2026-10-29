@@ -380,8 +380,8 @@ useEffect(() => {
 
           <div className="flex-none flex items-center gap-2 min-w-0 px-1">
             <div
-              className="flex items-center gap-2 rounded-md px-2 h-8 max-w-[210px] flex-1 min-w-0"
-              style={{ backgroundColor: '#121212' }}
+              className="flex items-center gap-2 rounded-full px-3 h-8 max-w-[210px] flex-1 min-w-0"
+              style={{ backgroundColor: '#121212', border: '1px solid var(--outline-variant)' }}
             >
               <svg className="w-4 h-4 flex-shrink-0 pointer-events-none" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
