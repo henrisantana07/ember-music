@@ -425,30 +425,35 @@ useEffect(() => {
                 action={{ label: 'Criar playlist', onClick: () => setCreateModalOpen(true) }}
               />
             )}
-            {!libraryLoading && !noResults && !emptyLibrary && visibleItems.map(item => {
-              if (prefs.view === 'grid') {
-                const active = pathname === item.href
-                return (
-                  <Link
-                    key={item.id}
-                    href={item.href}
-                    aria-current={active ? 'page' : undefined}
-                    className={`flex flex-col gap-1.5 p-2 rounded-lg transition-all duration-200 state-layer ${
-                      active
-                        ? 'bg-state-hover text-[var(--text-primary)]'
-                        : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
-                    }`}
-                  >
-                    <ItemCover item={item} size="grid" />
-                    <span className="block truncate text-body-medium">{item.title}</span>
-                    <span className="block truncate text-label-medium" style={{ color: 'var(--text-disabled)' }}>
-                      {item.type === 'playlist' ? 'Playlist' : item.type === 'album' ? 'Álbum' : item.type === 'artist' ? 'Artista' : 'Curtidas'}
-                    </span>
-                  </Link>
-                )
-              }
-              return renderLibraryRow(item, prefs.view === 'compact')
-            })}
+            {!libraryLoading && !noResults && !emptyLibrary && (
+              prefs.view === 'grid' ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {visibleItems.map(item => {
+                    const active = pathname === item.href
+                    return (
+                      <Link
+                        key={item.id}
+                        href={item.href}
+                        aria-current={active ? 'page' : undefined}
+                        className={`flex flex-col gap-1.5 p-2 rounded-lg transition-all duration-200 state-layer ${
+                          active
+                            ? 'bg-state-hover text-[var(--text-primary)]'
+                            : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
+                        }`}
+                      >
+                        <ItemCover item={item} size="grid" />
+                        <span className="block truncate text-body-medium">{item.title}</span>
+                        <span className="block truncate text-label-medium" style={{ color: 'var(--text-disabled)' }}>
+                          {item.type === 'playlist' ? 'Playlist' : item.type === 'album' ? 'Álbum' : item.type === 'artist' ? 'Artista' : 'Curtidas'}
+                        </span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              ) : (
+                visibleItems.map(item => renderLibraryRow(item, prefs.view === 'compact'))
+              )
+            )}
           </CustomScroll>
         </div>
       </RailItem>
