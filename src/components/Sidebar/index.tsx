@@ -666,7 +666,22 @@ useEffect(() => {
                 </div>
               )}
             </div>
-
+              {user && (
+              <div className="flex-none border-t border-outline-variant px-2 py-1">
+                <div className="relative">
+                  <button className="flex items-center gap-3 w-full px-2 min-h-[48px] rounded-lg text-body-medium transition-colors duration-200 hover:bg-state-hover state-layer" style={{ color: 'var(--text-secondary)' }}>
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-label-medium font-bold flex-shrink-0" style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}>
+                        {user.email?.[0].toUpperCase()}
+                      </div>
+                    )}
+                    <span className="truncate text-left flex-1">{user.email?.split('@')[0]}</span>
+                  </button>
+                </div>
+              </div>
+            )}
         
           </motion.aside>
         )}
