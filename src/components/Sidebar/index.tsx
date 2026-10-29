@@ -369,15 +369,17 @@ function isActive(href: string) {
                   <span className="flex-1 text-label-large">{prefs.sort === "recent" ? "Recentes" : prefs.sort === "alphabetical" ? "Ordem alfabetica" : "Recentes"}</span>
                   {prefs.sort === "recent" && <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ color: "#4ade80" }} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                 </button>
-                <button type="button" disabled className="w-full min-h-[36px] inline-flex items-center gap-2 px-2 rounded-md text-[var(--text-disabled)] cursor-not-allowed text-left">
+                <button type="button" onClick={() => updatePrefs({ sort: 'added' })} className={"w-full min-h-[36px] inline-flex items-center gap-2 px-2 rounded-md transition-colors duration-200 text-left " + (prefs.sort === 'added' ? "bg-state-hover text-[#4ade80] font-semibold" : "text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]")}>
                   <span className="flex-1 text-label-large">Adicionados recentemente</span>
+                  {prefs.sort === 'added' && <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ color: "#4ade80" }} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                 </button>
                 <button type="button" onClick={() => updatePrefs({ sort: "alphabetical" })} className={"w-full min-h-[36px] inline-flex items-center gap-2 px-2 rounded-md transition-colors duration-200 text-left " + (prefs.sort === "alphabetical" ? "bg-state-hover text-[#4ade80] font-semibold" : "text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]")}>
                   <span className="flex-1 text-label-large">Ordem alfabetica</span>
                   {prefs.sort === "alphabetical" && <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ color: "#4ade80" }} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                 </button>
-                <button type="button" disabled className="w-full min-h-[36px] inline-flex items-center gap-2 px-2 rounded-md text-[var(--text-disabled)] cursor-not-allowed text-left">
+                <button type="button" onClick={() => updatePrefs({ sort: 'creator' })} className={"w-full min-h-[36px] inline-flex items-center gap-2 px-2 rounded-md transition-colors duration-200 text-left " + (prefs.sort === 'creator' ? "bg-state-hover text-[#4ade80] font-semibold" : "text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]")}>
                   <span className="flex-1 text-label-large">Criador</span>
+                  {prefs.sort === 'creator' && <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ color: "#4ade80" }} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                 </button>
                 <button type="button" disabled className="w-full min-h-[36px] inline-flex items-center gap-2 px-2 rounded-md text-[var(--text-disabled)] cursor-not-allowed text-left">
                   <span className="flex-1 text-label-large">Ordem personalizada</span>
