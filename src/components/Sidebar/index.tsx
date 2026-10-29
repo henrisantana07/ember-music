@@ -252,40 +252,6 @@ export default function Sidebar() {
   }
 
   function NavIcon({ icon, active }: { icon: { outline: string; fill: string }; active: boolean }) {
-    return (
-      <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d={icon.outline} />
-      </svg>
-    )
-  }
-
-  function NavLink({ href, label, icon }: { href: string; label: string; icon: { outline: string; fill: string } }) {
-    const active = isActive(href)
-    return (
-      <Link
-        href={href}
-        aria-current={active ? 'page' : undefined}
-        className={`flex items-center gap-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${
-          /* Collapsed rail: nav sits behind `px-2` (8px) inside a 72px aside,
-             so the link box is 56px wide. Padding the 20px icon by (56-20)/2
-             centres it exactly. `justify-center` would do the same job, but
-             `justify-content` is not animatable — it snaps on the first frame
-             instead of sliding, so the icon jumps. Padding does animate. */
-          collapsed ? 'px-[18px]' : 'px-3'
-        } ${
-          active
-            ? 'font-bold bg-state-hover text-[var(--text-primary)]'
-            : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
-        }`}
-        title={collapsed ? label : undefined}
-      >
-        <NavIcon icon={icon} active={active} />
-        <RailItem show={!collapsed}>
-          <span className="block truncate">{label}</span>
-        </RailItem>
-      </Link>
-    )
-  }
 
   /* Coleção normalizada das fontes reais → busca + filtro de tipo + ordenação
      (§5.1/§5.2, funções puras em lib/library). */
