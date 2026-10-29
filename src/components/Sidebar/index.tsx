@@ -377,7 +377,7 @@ useEffect(() => {
 
           <div className="flex-none">
             <div
-              className="flex items-center gap-2 rounded-md px-8 h-8 max-w-[210px]"
+              className="flex items-center gap-2 rounded-md px-2 h-8 max-w-[210px]"
               style={{ backgroundColor: '#121212' }}
             >
               <svg className="w-4 h-4 flex-shrink-0 pointer-events-none" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
