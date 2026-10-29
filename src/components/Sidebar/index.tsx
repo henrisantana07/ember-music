@@ -373,26 +373,25 @@ function isActive(href: string) {
             </IconButton>
           </div>
 
-          <div className="flex-none flex flex-wrap items-center gap-1.5 px-3 pb-1">
+          <div className="flex items-center gap-1.5 px-3 pb-1 min-w-0">
+            <div className="flex-1 min-w-0">
+              <SearchBar
+                value={query}
+                onChange={setQuery}
+                placeholder="Buscar na biblioteca"
+                className="h-10"
+              />
+            </div>
             {TYPE_FILTERS.map(filter => (
               <FilterChip
                 key={filter.value}
-                label-value={filter.label}
                 selected={typeFilter === filter.value}
                 onClick={() => setTypeFilter(typeFilter === filter.value ? null : filter.value)}
+                className="h-7"
               >
                 {filter.label}
               </FilterChip>
             ))}
-          </div>
-
-          <div className="flex-none px-3 pb-2">
-            <SearchBar
-              value={query}
-              onChange={setQuery}
-              placeholder="Buscar na biblioteca"
-              className="h-10"
-            />
           </div>
 
           <details className="group w-full min-w-0 px-2 relative">
