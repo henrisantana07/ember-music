@@ -250,7 +250,13 @@ export default function Sidebar() {
     setShowDropdown(false)
   }
 
-function isActive(href: string) {
+useEffect(() => {
+    if (user) {
+      fetchPlaylists()
+      fetchArtists()
+    }
+  }, [user, fetchPlaylists, fetchArtists])
+  function isActive(href: string) {
     if (href === '/') return pathname === '/'
     return pathname.startsWith(href)
   }
