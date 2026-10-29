@@ -82,7 +82,7 @@ function RailItem({ show, children, className = '' }: { show: boolean; children:
  *  imagem, ou inicial sobre a superfície mais alta. Mesmo padrão na lista,
  *  na grade, no drawer e no rail. */
 function ItemCover({ item, size }: { item: LibraryItem; size: 'row' | 'grid' }) {
-  const frame = size === 'row' ? 'w-10 h-10' : 'w-full aspect-square'
+  const frame = size === 'row' ? 'w-14 h-14' : 'w-full aspect-square'
   if (isLikedItem(item)) {
     return (
       <span
@@ -296,7 +296,7 @@ useEffect(() => {
         key={item.id}
         href={item.href}
         aria-current={active ? 'page' : undefined}
-        className={`flex items-center ${compact ? 'gap-2 h-8 px-3' : 'gap-3 h-[48px] px-2'} rounded-lg text-body-medium transition-all duration-200 state-layer ${
+        className={`flex items-center ${compact ? 'gap-2 h-8 px-3' : 'gap-3 h-[64px] px-3'} rounded-lg text-body-medium transition-all duration-200 state-layer ${
           active
             ? 'font-bold bg-state-hover text-[var(--text-primary)]'
             : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
@@ -427,7 +427,7 @@ useEffect(() => {
             )}
             {!libraryLoading && !noResults && !emptyLibrary && (
               prefs.view === 'grid' ? (
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-3">
                   {visibleItems.map(item => {
                     const active = pathname === item.href
                     return (
@@ -435,7 +435,7 @@ useEffect(() => {
                         key={item.id}
                         href={item.href}
                         aria-current={active ? 'page' : undefined}
-                        className={`flex flex-col gap-1.5 p-2 rounded-lg transition-all duration-200 state-layer ${
+                        className={`flex flex-col gap-2 p-3 rounded-lg transition-all duration-200 state-layer ${
                           active
                             ? 'bg-state-hover text-[var(--text-primary)]'
                             : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
