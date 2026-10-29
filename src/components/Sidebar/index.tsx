@@ -318,7 +318,7 @@ useEffect(() => {
     <>
       {/* Navegação da biblioteca: as mesmas fontes de dados em modo rail recolhido. */}
       <RailItem show={collapsed} className="flex-1">
-        <div className="flex-1 overflow-y-auto scrollbar-thin px-2 py-6 space-y-0.5 flex flex-col items-center justify-end">
+        <div className="flex-1 overflow-y-auto scrollbar-thin px-2 py-6 space-y-0.5 flex flex-col items-center justify-center">
           {visibleItems.slice(0, RAIL_LIMIT).map(item => {
             const active = pathname === item.href
             return (
