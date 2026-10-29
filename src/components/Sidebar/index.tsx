@@ -403,7 +403,7 @@ function isActive(href: string) {
           <details className="group w-full px-2 relative">
             <summary className="w-full h-8 inline-flex items-center justify-between gap-2 px-2 rounded-md bg-[var(--surface-container-highest)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors state-layer cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
               <span className="truncate text-label-medium font-medium">
-                {prefs.sort === "recent" ? "Recentes" : "Alfabetica"} · {prefs.view === "compact" ? "Compacto" : prefs.view === "list" ? "Lista" : "Grade"}
+                Classificar por
               </span>
               <svg className="w-4 h-4 flex-shrink-0 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
             </summary>
