@@ -392,7 +392,7 @@ function isActive(href: string) {
           </div>
 
           <details className="group w-full min-w-[240px] px-2 relative">
-            <summary className="w-full h-10 inline-flex items-center justify-between gap-2 px-3 rounded-lg bg-[var(--surface-container-highest)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors state-layer cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+            <summary className="w-full h-8 inline-flex items-center justify-between gap-2 px-3 rounded-lg bg-[var(--surface-container-highest)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors state-layer cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
               <span className="flex items-center gap-2 min-w-0">
                 <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3" />
