@@ -80,8 +80,8 @@ export function ClassificationMenu({ sort, view, onSortChange, onViewChange }: C
         </svg>
       </summary>
       <div
-        className="absolute bottom-full left-0 right-0 mt-1 rounded-xl shadow-elevation-2 py-1 z-[70] border border-outline-variant overflow-hidden"
-        style={{ backgroundColor: '#121212', transformOrigin: 'top left', width: '220px' }}
+        className="absolute top-full right-0 mt-1 rounded-xl shadow-elevation-2 py-1 z-[70] border border-outline-variant overflow-hidden"
+        style={{ backgroundColor: '#121212', transformOrigin: 'top right', width: '220px' }}
         role="menu"
       >
         <div className="px-3 pt-2 pb-1 text-label-small uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>Classificar por</div>
