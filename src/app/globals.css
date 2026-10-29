@@ -424,6 +424,7 @@ body {
   border: none !important;
   -webkit-appearance: none;
   appearance: none;
+}
 
 /* Firefox: `thin` ≈ 8px e as cores resolvidas pelos mesmos tokens. Sem webkit
    no Firefox, este é o caminho que ele enxerga. */
