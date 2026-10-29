@@ -375,7 +375,20 @@ useEffect(() => {
             </IconButton>
           </div>
 
-          <div className="flex-none flex items-center justify-between gap-2 min-w-0 pl-3 pr-1 mb-2">
+          <div className="flex gap-1 pl-3 pr-3 py-1 min-w-0 overflow-x-auto mb-2">
+            {TYPE_FILTERS.map(filter => (
+              <FilterChip
+                key={filter.value}
+                selected={typeFilter === filter.value}
+                onClick={() => setTypeFilter(typeFilter === filter.value ? null : filter.value)}
+                className="h-7 flex-shrink-0"
+              >
+                {filter.label}
+              </FilterChip>
+            ))}
+          </div>
+
+          <div className="flex-none flex items-center justify-between gap-2 min-w-0 pl-3 pr-1">
             <div
               className="flex items-center gap-2 rounded-full px-3 h-8 max-w-[210px] flex-1 min-w-0"
               style={{ backgroundColor: '#121212', border: '1px solid var(--outline-variant)' }}
@@ -391,19 +404,6 @@ useEffect(() => {
               />
             </div>
             <ClassificationMenu sort={prefs.sort} view={prefs.view} onSortChange={(s) => updatePrefs({ sort: s })} onViewChange={(v) => updatePrefs({ view: v })} />
-          </div>
-
-          <div className="flex gap-1 pl-3 pr-3 py-1 min-w-0 overflow-x-auto">
-            {TYPE_FILTERS.map(filter => (
-              <FilterChip
-                key={filter.value}
-                selected={typeFilter === filter.value}
-                onClick={() => setTypeFilter(typeFilter === filter.value ? null : filter.value)}
-                className="h-7 flex-shrink-0"
-              >
-                {filter.label}
-              </FilterChip>
-            ))}
           </div>
 
           <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-2 pb-2 space-y-0.5" role="list" aria-label="Itens da biblioteca">
