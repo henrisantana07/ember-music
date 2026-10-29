@@ -319,7 +319,7 @@ useEffect(() => {
     <>
       {/* Navegação da biblioteca: as mesmas fontes de dados em modo rail recolhido. */}
       <RailItem show={collapsed} className="flex-1">
-        <CustomScroll className="px-2 py-8 flex flex-col items-center justify-center space-y-3" wrapperClassName="flex-1 min-h-0" role="list" ariaLabel="Itens da biblioteca minimizada">
+        <CustomScroll className="px-2 py-8 flex flex-col items-center justify-start space-y-3" wrapperClassName="flex-1 min-h-0" role="list" ariaLabel="Itens da biblioteca minimizada">
           {visibleItems.map(item => {
             const active = pathname === item.href
             return (
