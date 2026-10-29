@@ -384,10 +384,9 @@ useEffect(() => {
               </svg>
               <input
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
                 placeholder="Buscar na biblioteca"
                 aria-label="Buscar músicas, álbuns ou artistas"
-                className="flex-1 min-w-0 h-7 bg-transparent border-none outline-none text-sm text-[var(--text-primary)] placeholder:text-[var(--text-disabled)] focus:ring-0"
+                className="flex-1 min-w-0 h-7 bg-transparent border-none outline-none text-sm text-[var(--text-primary)] placeholder:text-[var(--text-disabled)] focus:ring-0 max-w-[140px]"
               />
             </div>
           </div>
