@@ -93,6 +93,7 @@ export function ClassificationMenu({ sort, view, onSortChange, onViewChange }: C
                 type="button"
                 key={item.id}
                 disabled={item.id === 'custom' || false}
+                style={active ? { color: 'white' } : undefined}
                 onClick={() => {
                   if (!item.disabled) {
                     onSortChange(item.id as Exclude<SortOption, 'custom'>)
@@ -110,7 +111,7 @@ export function ClassificationMenu({ sort, view, onSortChange, onViewChange }: C
                     : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]')
                 }
               >
-                <span className="flex-1 truncate text-label-large">{item.label}</span>
+                <span className="flex-1 truncate text-label-large" style={active ? { color: 'white' } : undefined}>{item.label}</span>
                 {active && (
                   <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ color: 'white' }} aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -141,6 +142,7 @@ export function ClassificationMenu({ sort, view, onSortChange, onViewChange }: C
                     : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]')
                 }
                 aria-label={option.title}
+                style={active ? { color: 'white' } : undefined}
               >
                 {option.icon}
               </button>
