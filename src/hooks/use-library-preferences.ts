@@ -26,7 +26,7 @@ interface LibraryPrefs {
 const STORAGE_KEY = 'ember:library-prefs'
 
 const VIEWS: LibraryView[] = ['compact', 'list', 'grid']
-const SORTS: LibrarySort[] = ['recent', 'alphabetical']
+const SORTS: LibrarySort[] = ['recent', 'added', 'alphabetical', 'creator']
 
 const DEFAULTS: LibraryPrefs = { view: 'list', sort: 'recent' }
 
