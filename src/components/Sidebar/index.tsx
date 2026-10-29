@@ -14,9 +14,6 @@ import { useLibraryPreferences } from '@/hooks/use-library-preferences'
 import { AnimatePresence, motion } from 'motion/react'
 import { scrimVariants, drawerVariants, TRANSITION } from '@/lib/motion'
 import { FilterChip } from '@/components/ui/FilterChip'
-import { SortMenu } from '@/components/ui/SortMenu'
-import { SegmentedToggle } from '@/components/ui/SegmentedToggle'
-import { SearchBar } from '@/components/ui/ControlToolbar'
 import { IconButton } from '@/components/ui/IconButton'
 import { CoverImage } from '@/components/ui/CoverImage'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
@@ -391,33 +388,46 @@ function isActive(href: string) {
             </div>
           </div>
 
-          <details className="group w-full min-w-[240px] px-2 relative">
-            <summary className="w-full h-8 inline-flex items-center justify-between gap-2 px-3 rounded-lg bg-[var(--surface-container-highest)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors state-layer cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
-              <span className="flex items-center gap-2 min-w-0">
-                <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3" />
-                </svg>
-                <span className="truncate text-label-medium font-medium">
-                  {prefs.sort === 'recent' ? 'Recentes' : 'Alfabetica'} · {prefs.view === 'compact' ? 'Compacto' : prefs.view === 'list' ? 'Lista' : 'Grade'}
-                </span>
-              </span>
-              <svg className="w-4 h-4 flex-shrink-0 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </summary>
-            <div className="absolute top-full left-0 right-0 mt-1 rounded-xl shadow-elevation-2 border border-outline-variant py-1 z-[60] overflow-hidden" style={{ backgroundColor: 'var(--bg-elevated)', transformOrigin: 'top left' }}>
-              <div className="px-3 pt-2 pb-1 text-label-small uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>Visualizacao</div>
-              <div className="flex items-center justify-center w-full py-1">
-                <SegmentedToggle size="sm" ariaLabel="Modo de visualizacao" options={VIEW_OPTIONS} value={prefs.view} onChange={(value) => updatePrefs({ view: value })} />
-              </div>
-              <hr className="mx-3 my-1" style={{ backgroundColor: 'var(--outline-variant)' }} />
-              <div className="px-3 pt-1 pb-1 text-label-small uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>Ordenacao</div>
-              <div className="px-2">
-                <SortMenu options={SORT_OPTIONS} value={prefs.sort} onChange={(value) => updatePrefs({ sort: value })} label="Ordenar" className="w-full min-w-0" />
+          <div className="rounded-md px-2 py-1.5 space-y-2" style={{ backgroundColor: "#121212" }}>
+            <div>
+              <div className="px-1 pb-1 text-label-small uppercase tracking-widest" style={{ color: "var(--text-disabled)" }}>Classificar por</div>
+              <button type="button" onClick={() => updatePrefs({ sort: "recent" })} className={"w-full min-h-[36px] inline-flex items-center gap-2 px-2 rounded-md transition-colors duration-200 text-left " + (prefs.sort === "recent" ? "bg-state-hover text-[#4ade80] font-semibold" : "text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]")}>
+                <span className="flex-1 text-label-large">{prefs.sort === "recent" ? "Recentes" : prefs.sort === "alphabetical" ? "Ordem alfabética" : "Recentes"}</span>
+                {prefs.sort === "recent" && <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ color: "#4ade80" }} aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>}
+              </button>
+              <button type="button" disabled className="w-full min-h-[36px] inline-flex items-center gap-2 px-2 rounded-md text-[var(--text-disabled)] cursor-not-allowed text-left">
+                <span className="flex-1 text-label-large">Adicionados recentemente</span>
+              </button>
+              <button type="button" onClick={() => updatePrefs({ sort: "alphabetical" })} className={"w-full min-h-[36px] inline-flex items-center gap-2 px-2 rounded-md transition-colors duration-200 text-left " + (prefs.sort === "alphabetical" ? "bg-state-hover text-[#4ade80] font-semibold" : "text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]")}>
+                <span className="flex-1 text-label-large">Ordem alfabética</span>
+                {prefs.sort === "alphabetical" && <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ color: "#4ade80" }} aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>}
+              </button>
+              <button type="button" disabled className="w-full min-h-[36px] inline-flex items-center gap-2 px-2 rounded-md text-[var(--text-disabled)] cursor-not-allowed text-left">
+                <span className="flex-1 text-label-large">Criador</span>
+              </button>
+              <button type="button" disabled className="w-full min-h-[36px] inline-flex items-center gap-2 px-2 rounded-md text-[var(--text-disabled)] cursor-not-allowed text-left">
+                <span className="flex-1 text-label-large">Ordem personalizada</span>
+              </button>
+            </div>
+            <div className="h-px my-1" style={{ backgroundColor: "var(--outline-variant)" }} aria-hidden="true" />
+            <div>
+              <div className="px-1 pb-1 text-label-small uppercase tracking-widest" style={{ color: "var(--text-disabled)" }}>Ver como</div>
+              <div className="flex gap-1 px-1">
+                <button type="button" onClick={() => updatePrefs({ view: "compact" })} aria-label="Estilo linhas compactas" className={"flex-1 min-h-[36px] inline-flex items-center justify-center rounded-md transition-colors duration-200 " + (prefs.view === "compact" ? "bg-state-hover text-[#4ade80]" : "text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]")}>
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                </button>
+                <button type="button" onClick={() => updatePrefs({ view: "list" })} aria-label="Estilo lista detalhada" className={"flex-1 min-h-[36px] inline-flex items-center justify-center rounded-md transition-colors duration-200 " + (prefs.view === "list" ? "bg-state-hover text-[#4ade80]" : "text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]")}>
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg>
+                </button>
+                <button type="button" onClick={() => updatePrefs({ view: "grid" })} aria-label="Estilo grade compacta" className={"flex-1 min-h-[36px] inline-flex items-center justify-center rounded-md transition-colors duration-200 " + (prefs.view === "grid" ? "bg-state-hover text-[#4ade80]" : "text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]")}>
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" /></svg>
+                </button>
+                <button type="button" disabled aria-label="Estilo grade expandida (em breve)" className="flex-1 min-h-[36px] inline-flex items-center justify-center rounded-md text-[var(--text-disabled)] cursor-not-allowed">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h9v4H4zM4 10h16v10H4zM20 4h-5v4h5z" /></svg>
+                </button>
               </div>
             </div>
-          </details>
-
+          </div>
           <div className="flex gap-1 px-2 py-1 min-w-0 overflow-x-auto">
             {TYPE_FILTERS.map(filter => (
               <FilterChip
