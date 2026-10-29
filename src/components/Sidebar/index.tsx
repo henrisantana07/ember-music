@@ -19,6 +19,7 @@ import { IconButton } from '@/components/ui/IconButton'
 import { CoverImage } from '@/components/ui/CoverImage'
 import { CustomScroll } from '@/components/CustomScroll'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
+import { SaveAlbumButton } from '@/components/SaveAlbumButton'
 import { EmptyState, LoadingState } from '@/components/ui/states'
 import { buildLibraryItems, isLikedItem } from '@/lib/library/types'
 import { filterLibraryItems } from '@/lib/library/filterLibraryItems'
@@ -280,7 +281,8 @@ useEffect(() => {
       query,
       typeFilter,
     )
-    return sortLibraryItems([...fixed, ...candidates], prefs.sort)
+    const cleanCandidates = candidates.filter((i) => !(i.type === 'album' && !i.creator))
+    return sortLibraryItems([...fixed, ...cleanCandidates], prefs.sort)
   }, [libraryItems, query, typeFilter, prefs.sort])
 
   const libraryLoading = !userLoading && (playlistsLoading || artistsLoading)
@@ -311,6 +313,11 @@ useEffect(() => {
             </span>
           )}
         </span>
+        {!compact && item.type === 'album' && (
+          <span className="flex-shrink-0">
+            <SaveAlbumButton album={{ id: item.id, name: item.title, artist_name: item.creator || item.subtitle || '', image: item.imageUrl || '' } as any} />
+          </span>
+        )}
       </Link>
     )
   }
@@ -435,7 +442,7 @@ useEffect(() => {
                         key={item.id}
                         href={item.href}
                         aria-current={active ? 'page' : undefined}
-                        className={`flex flex-col gap-2 p-3 rounded-lg transition-all duration-200 state-layer ${
+                        className={`relative flex flex-col gap-2 p-3 rounded-lg transition-all duration-200 state-layer ${
                           active
                             ? 'bg-state-hover text-[var(--text-primary)]'
                             : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
@@ -446,6 +453,11 @@ useEffect(() => {
                         <span className="block truncate text-label-medium" style={{ color: 'var(--text-disabled)' }}>
                           {item.type === 'playlist' ? 'Playlist' : item.type === 'album' ? 'Álbum' : item.type === 'artist' ? 'Artista' : 'Curtidas'}
                         </span>
+                        {item.type === 'album' && (
+                          <div className="absolute bottom-2 right-2">
+                            <SaveAlbumButton album={{ id: item.id, name: item.title, artist_name: item.creator || item.subtitle || '', image: item.imageUrl || '' } as any} />
+                          </div>
+                        )}
                       </Link>
                     )
                   })}
