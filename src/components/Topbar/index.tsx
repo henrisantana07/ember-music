@@ -31,7 +31,6 @@ export function Topbar() {
   const toggleSidebar = useSidebarStore((s) => s.toggle)
   const immersive = useSidebarStore((s) => s.immersive)
   const { prefs: topLibPrefs, update: updateTopLib } = useLibraryPreferences()
-  const homeActive = pathname === '/'
 
   useEffect(() => {
     const q = searchParams.get('q')
@@ -125,20 +124,6 @@ export function Topbar() {
 
       {/* Spotify-style search cluster with Home pill + Search box + Sort/View menu. */}
       <div className="hidden md:flex items-center gap-2 flex-1 max-w-2xl min-w-0 z-10">
-        <Link
-          href="/"
-          aria-label="Início"
-          title="Início"
-          className={`inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors state-layer ${
-            homeActive
-              ? 'bg-[var(--surface-container-highest)] text-[var(--text-primary)]'
-              : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
-          }`}
-        >
-          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={homeActive ? 2.5 : 2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
-        </Link>
         <button
           type="button"
           onClick={() => updateTopLib({ sort: 'recent' })}
