@@ -124,36 +124,17 @@ export interface SidebarMobileBehavior {
   }
 }
 
-export interface SidebarData {
-  modo: "expanded" | "collapsed" | "mobile"
-  tema: "m3"
-  header: {
-    titulo: string
-    subtitulo: string
-    profileMenu: {
-      items: SidebarProfileMenuItem[]
-    }
-  }
-  sections: (
-    | SidebarNavigationSection
-    | SidebarFiltersSection
-    | SidebarOrdenacaoSection
-    | SidebarViewModesSection
-    | SidebarCreateSection
-    | SidebarFixedItemsSection
-    | SidebarLayoutColumnSection
-  )[]
-  mobile: SidebarMobileBehavior
-  novidades_2026: {
-    data: string
-    item: string
-    detalhe: string
-  }[]
-  musicas_curtidas: {
-    criar_playlist_a_partir_do_filtro: {
-      rotulo: string
-      plataforma: string
-      comportamento: string
-    }
-  }
+export interface SidebarHeader {
+  titulo: string
+  subtitulo?: string
+  profileMenu?: SidebarProfileMenuItem[]
 }
+
+export type SidebarSection =
+  | SidebarNavigationSection
+  | SidebarFiltersSection
+  | SidebarOrdenacaoSection
+  | SidebarViewModesSection
+  | SidebarCreateSection
+  | SidebarFixedItemsSection
+  | SidebarLayoutColumnSection
