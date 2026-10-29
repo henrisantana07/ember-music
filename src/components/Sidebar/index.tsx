@@ -399,7 +399,7 @@ useEffect(() => {
           <div className="flex-none flex items-center justify-between gap-2 min-w-0 pl-3 pr-1">
             <div
               className="flex items-center gap-2 rounded-full px-3 h-8 max-w-[210px] flex-1 min-w-0 outline-none border border-[var(--outline-variant)] focus-within:border-[var(--accent-from)] transition-colors"
-              style={{ backgroundColor: '#121212' }}
+              style={{ backgroundColor: '#2c2620' }}
             >
               <svg className="w-4 h-4 flex-shrink-0 pointer-events-none" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
