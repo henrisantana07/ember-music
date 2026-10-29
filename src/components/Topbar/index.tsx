@@ -30,8 +30,8 @@ export function Topbar() {
   const sidebarCollapsed = useSidebarStore((s) => s.collapsed)
   const toggleSidebar = useSidebarStore((s) => s.toggle)
   const immersive = useSidebarStore((s) => s.immersive)
+  const { prefs: topLibPrefs, update: updateTopLib } = useLibraryPreferences()
   const { prefs: libraryPrefs, update: updateLibraryPrefs } = useLibraryPreferences()
-
   const homeActive = pathname === '/'
 
   useEffect(() => {
@@ -140,6 +140,18 @@ export function Topbar() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
           </svg>
         </Link>
+        <button
+          type="button"
+          onClick={() => updateTopLib({ sort: 'recent' })}
+          aria-label="Classificar por recentes"
+          title="Recentes"
+          className="hidden md:inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer"
+          style={{ color: topLibPrefs.sort === 'recent' ? 'var(--text-primary)' : 'var(--text-secondary)' }}
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={topLibPrefs.sort === 'recent' ? 2.5 : 2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3" />
+          </svg>
+        </button>
         <form onSubmit={handleSearch} className="relative min-w-0 flex-1">
           <div className="relative">
             <svg
