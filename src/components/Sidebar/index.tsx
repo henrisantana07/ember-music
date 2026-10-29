@@ -373,28 +373,25 @@ function isActive(href: string) {
             </IconButton>
           </div>
 
-          <div className="flex items-center gap-1.5 px-3 pb-1 min-w-0">
-            <div className="flex-1 min-w-0">
-              <SearchBar
+          <div className="flex-none px-3 pb-1">
+            <div
+              className="flex items-center gap-2 rounded-md px-2 h-8"
+              style={{ backgroundColor: '#121212' }}
+            >
+              <svg className="w-4 h-4 flex-shrink-0 pointer-events-none" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
                 value={query}
-                onChange={setQuery}
+                onChange={(e) => setQuery(e.target.value)}
                 placeholder="Buscar na biblioteca"
-                className="h-10"
+                aria-label="Buscar músicas, álbuns ou artistas"
+                className="flex-1 min-w-0 h-7 bg-transparent border-none outline-none text-sm text-[var(--text-primary)] placeholder:text-[var(--text-disabled)] focus:ring-0"
               />
             </div>
-            {TYPE_FILTERS.map(filter => (
-              <FilterChip
-                key={filter.value}
-                selected={typeFilter === filter.value}
-                onClick={() => setTypeFilter(typeFilter === filter.value ? null : filter.value)}
-                className="h-7"
-              >
-                {filter.label}
-              </FilterChip>
-            ))}
           </div>
 
-          <details className="group w-full min-w-0 px-2 relative">
+          <details className="group w-full min-w-[240px] px-2 relative">
             <summary className="w-full h-10 inline-flex items-center justify-between gap-2 px-3 rounded-lg bg-[var(--surface-container-highest)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors state-layer cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
               <span className="flex items-center gap-2 min-w-0">
                 <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -420,6 +417,19 @@ function isActive(href: string) {
               </div>
             </div>
           </details>
+
+          <div className="flex gap-1 px-2 py-1 min-w-0 overflow-x-auto">
+            {TYPE_FILTERS.map(filter => (
+              <FilterChip
+                key={filter.value}
+                selected={typeFilter === filter.value}
+                onClick={() => setTypeFilter(typeFilter === filter.value ? null : filter.value)}
+                className="h-7 flex-shrink-0"
+              >
+                {filter.label}
+              </FilterChip>
+            ))}
+          </div>
 
           <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-2 pb-2 space-y-0.5" role="list" aria-label="Itens da biblioteca">
             {libraryLoading && <LoadingState title="Carregando biblioteca…" />}
