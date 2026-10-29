@@ -375,9 +375,9 @@ useEffect(() => {
             </IconButton>
           </div>
 
-          <div className="flex-none px-3 pb-1">
+          <div className="flex-none px-8 pb-1">
             <div
-              className="flex items-center gap-2 rounded-md px-2 h-8"
+              className="flex items-center gap-2 rounded-md px-8 h-9"
               style={{ backgroundColor: '#121212' }}
             >
               <svg className="w-4 h-4 flex-shrink-0 pointer-events-none" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -393,7 +393,7 @@ useEffect(() => {
           </div>
 
           <ClassificationMenu sort={prefs.sort} view={prefs.view} onSortChange={(s) => updatePrefs({ sort: s })} onViewChange={(v) => updatePrefs({ view: v })} />
-          <div className="flex gap-1 px-2 py-1 min-w-0 overflow-x-auto">
+          <div className="flex gap-1 px-8 py-1 min-w-0 overflow-x-auto">
             {TYPE_FILTERS.map(filter => (
               <FilterChip
                 key={filter.value}
