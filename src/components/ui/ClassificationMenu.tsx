@@ -59,9 +59,10 @@ export function ClassificationMenu({ sort, view, onSortChange, onViewChange }: C
     <details ref={detailsRef} className="group relative" aria-label="Classificação e visualização">
       <summary
         className={
-          'h-8 w-8 inline-flex items-center justify-center rounded-md cursor-pointer select-none ' +
+          'h-10 w-10 inline-flex items-center justify-center rounded-full cursor-pointer select-none ' +
           'list-none [&::-webkit-details-marker]:hidden bg-[var(--surface-container-highest)] ' +
-          'text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors'
+          'text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors ' +
+          'state-layer'
         }
         title="Classificar por & Ver como"
         aria-label="Abrir classificação e visualização"
