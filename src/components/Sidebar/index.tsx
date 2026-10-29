@@ -390,7 +390,9 @@ useEffect(() => {
                 className="flex-1 min-w-0 h-7 bg-transparent border-none outline-none text-sm text-[var(--text-primary)] placeholder:text-[var(--text-disabled)] focus:ring-0 max-w-[140px]"
               />
             </div>
-             <ClassificationMenu sort={prefs.sort} view={prefs.view} onSortChange={(s) => updatePrefs({ sort: s })} onViewChange={(v) => updatePrefs({ view: v })} />
+          </div>
+
+          <ClassificationMenu sort={prefs.sort} view={prefs.view} onSortChange={(s) => updatePrefs({ sort: s })} onViewChange={(v) => updatePrefs({ view: v })} />
           <div className="flex gap-1 px-8 py-1 min-w-0 overflow-x-auto">
             {TYPE_FILTERS.map(filter => (
               <FilterChip
@@ -402,9 +404,6 @@ useEffect(() => {
                 {filter.label}
               </FilterChip>
             ))}
-          </div>
-
-         
           </div>
 
           <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-2 pb-2 space-y-0.5" role="list" aria-label="Itens da biblioteca">
