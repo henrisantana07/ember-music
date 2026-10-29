@@ -375,7 +375,7 @@ useEffect(() => {
             </IconButton>
           </div>
 
-          <div className="flex-none flex items-center gap-2 min-w-0 pl-3 pr-1 mb-2">
+          <div className="flex-none flex items-center justify-between gap-2 min-w-0 pl-3 pr-1 mb-2">
             <div
               className="flex items-center gap-2 rounded-full px-3 h-8 max-w-[210px] flex-1 min-w-0"
               style={{ backgroundColor: '#121212', border: '1px solid var(--outline-variant)' }}
