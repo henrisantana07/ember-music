@@ -180,7 +180,13 @@ export function Topbar() {
             <button
               type="button"
               onClick={() => {
-                void submitSearch()
+                const sanitized = searchQuery.trim()
+                if (sanitized) {
+                  void submitSearch()
+                } else {
+                  inputRef.current?.blur()
+                  void router.push('/buscar')
+                }
               }}
               aria-label="Explorar"
               title="Explorar"
