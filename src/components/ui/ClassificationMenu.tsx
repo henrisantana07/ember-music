@@ -60,9 +60,9 @@ export function ClassificationMenu({ sort, view, onSortChange, onViewChange }: C
       <summary
         className={
           'h-10 w-10 inline-flex items-center justify-center rounded-full cursor-pointer select-none ' +
-          'list-none [&::-webkit-details-marker]:hidden bg-[var(--surface-container-highest)] ' +
+          'list-none [&::-webkit-details-marker]:hidden ' +
           'text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors ' +
-          'state-layer'
+          'state-layer hover:bg-[var(--surface-container-highest)]'
         }
         title="Classificar por & Ver como"
         aria-label="Abrir classificação e visualização"
