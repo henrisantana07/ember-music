@@ -152,7 +152,7 @@ export default function Sidebar() {
       try {
         const raw = window.localStorage.getItem('ember:sidebar-width')
         const parsed = raw ? parseInt(raw, 10) : NaN
-        if (!Number.isNaN(parsed) && parsed >= 240 && parsed <= 460) w = parsed
+        if (!Number.isNaN(parsed) && parsed >= 320 && parsed <= 460) w = parsed
       } catch { /* ignore */ }
     }
     return w
@@ -227,7 +227,7 @@ export default function Sidebar() {
     if (!isDraggingSidebar) return
     function onMove(e: MouseEvent) {
       if (e.clientX <= 120) return
-      const next = Math.max(240, Math.min(460, e.clientX))
+      const next = Math.max(320, Math.min(460, e.clientX))
       setExpandedWidth(next)
     }
     function onUp() {
