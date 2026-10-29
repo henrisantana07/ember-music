@@ -401,8 +401,11 @@ body {
   background: var(--scrollbar-thumb-hover);
 }
 
-::-webkit-scrollbar-button {
-  display: none;
+::-webkit-scrollbar-button,
+.scrollbar-thin::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* Firefox: `thin` ≈ 8px e as cores resolvidas pelos mesmos tokens. Sem webkit
