@@ -411,7 +411,7 @@ function isActive(href: string) {
               <div>
                 <div className="px-1 pb-1 text-label-small uppercase tracking-widest" style={{ color: "var(--text-disabled)" }}>Classificar por</div>
                 <button type="button" onClick={() => updatePrefs({ sort: "recent" })} className={"w-full min-h-[36px] inline-flex items-center gap-2 px-2 rounded-md transition-colors duration-200 text-left " + (prefs.sort === "recent" ? "bg-state-hover text-[#4ade80] font-semibold" : "text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]")}>
-                  <span className="flex-1 text-label-large">{prefs.sort === "recent" ? "Recentes" : prefs.sort === "alphabetical" ? "Ordem alfabetica" : "Recentes"}</span>
+                  <span className="flex-1 text-label-large">Recentes</span>
                   {prefs.sort === "recent" && <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ color: "#4ade80" }} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                 </button>
                 <button type="button" onClick={() => updatePrefs({ sort: 'added' })} className={"w-full min-h-[36px] inline-flex items-center gap-2 px-2 rounded-md transition-colors duration-200 text-left " + (prefs.sort === 'added' ? "bg-state-hover text-[#4ade80] font-semibold" : "text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]")}>
