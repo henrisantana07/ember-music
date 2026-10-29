@@ -17,6 +17,7 @@ import { FilterChip } from '@/components/ui/FilterChip'
 import { ClassificationMenu } from '@/components/ui/ClassificationMenu'
 import { IconButton } from '@/components/ui/IconButton'
 import { CoverImage } from '@/components/ui/CoverImage'
+import { CustomScroll } from '@/components/CustomScroll'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
 import { EmptyState, LoadingState } from '@/components/ui/states'
 import { buildLibraryItems, isLikedItem } from '@/lib/library/types'
@@ -318,7 +319,7 @@ useEffect(() => {
     <>
       {/* Navegação da biblioteca: as mesmas fontes de dados em modo rail recolhido. */}
       <RailItem show={collapsed} className="flex-1">
-        <div className="flex-1 overflow-y-auto scrollbar-thin px-2 py-6 space-y-0.5 flex flex-col items-center justify-center">
+        <CustomScroll className="px-2 py-6 flex flex-col items-center justify-center space-y-0.5">
           {visibleItems.slice(0, RAIL_LIMIT).map(item => {
             const active = pathname === item.href
             return (
@@ -349,7 +350,7 @@ useEffect(() => {
               </Link>
             )
           })}
-        </div>
+        </CustomScroll>
       </RailItem>
 
       {/* Nova interface da biblioteca — filtros, busca, ordenação e modos de
@@ -406,7 +407,7 @@ useEffect(() => {
             <ClassificationMenu sort={prefs.sort} view={prefs.view} onSortChange={(s) => updatePrefs({ sort: s })} onViewChange={(v) => updatePrefs({ view: v })} />
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-2 pb-2 space-y-0.5" role="list" aria-label="Itens da biblioteca">
+          <CustomScroll className="px-2 pb-2 space-y-0.5" role="list" ariaLabel="Itens da biblioteca">
             {libraryLoading && <LoadingState title="Carregando biblioteca…" />}
             {!libraryLoading && noResults && (
               <EmptyState
@@ -448,7 +449,7 @@ useEffect(() => {
               }
               return renderLibraryRow(item, prefs.view === 'compact')
             })}
-          </div>
+          </CustomScroll>
         </div>
       </RailItem>
 
