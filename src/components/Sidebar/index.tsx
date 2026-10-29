@@ -583,7 +583,7 @@ useEffect(() => {
               ))}
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-2 space-y-0.5" role="list" aria-label="Itens da biblioteca">
+            <CustomScroll className="px-2 space-y-0.5" wrapperClassName="flex-1 min-h-0" role="list" ariaLabel="Itens da biblioteca">
               {visibleItems.map(item => {
                 const active = pathname === item.href
                 return (
@@ -613,7 +613,7 @@ useEffect(() => {
                   Sua biblioteca está vazia
                 </div>
               )}
-            </div>
+            </CustomScroll>
               {user && (
               <div className="flex-none border-t border-outline-variant px-2 py-1">
                 <div className="relative">
