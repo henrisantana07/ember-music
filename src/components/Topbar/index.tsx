@@ -38,6 +38,22 @@ export function Topbar() {
   }, [searchParams])
 
   useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const isCtrl = e.ctrlKey || e.metaKey
+      if (isCtrl && e.shiftKey && (e.key === 'l' || e.key === 'L')) {
+        e.preventDefault()
+        inputRef.current?.focus()
+      }
+      if (isCtrl && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault()
+        handleClear()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
+  useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setShowDropdown(false)
