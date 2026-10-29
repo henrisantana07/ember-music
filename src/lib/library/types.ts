@@ -1,36 +1,51 @@
-import type { PlaylistItem } from '@/lib/playlists-store'
+﻿import type { PlaylistItem } from '@/lib/playlists-store'
 import type { FollowedArtist } from '@/lib/artists-store'
+import type { Album } from '@/types/music'
 import { resolveCover } from '@/lib/playlist/resolveCover'
 
 /**
  * Tipos reais da biblioteca do Ember Music.
  *
  * `podcast` do guia de origem fica de fora: o projeto não oferece esse tipo
- * de conteúdo. `albuns` também não entra enquanto não houver fonte de dados
- * real (store consulta de álbuns) — nada é inventado aqui.
+ * de conteúdo. Fontes reais confirmadas:
+ * - `playlist`: tabela `playlists` (store do Supabase).
+ * - `artist`: tabela `followed_artists` (store do Supabase).
+ * - `album`: resultado de `/api/youtube?endpoint=albums` (searchYouTubePlaylists,
+ *   API do YouTube com cache no servidor) — aberto em /albums/[id].
+ * - `liked`: coleção da tabela `favorites` — a "Músicas curtidas", que mora
+ *   na aba `favoritos` de /biblioteca.
  */
-export type LibraryItemType = 'playlist' | 'artist'
+export type LibraryItemType = 'playlist' | 'artist' | 'album' | 'liked'
 
 export type LibraryView = 'compact' | 'list' | 'grid'
 
 /**
  * Ordenações suportadas pelos campos realmente existentes:
- * - `recent`: `created_at` (playlists, banco) / `followed_at` (artistas, banco)
+ * - `recent`: `created_at` (playlists) / `followed_at` (artistas) /
+ *   `release_date` (álbuns) / `created_at` (curtidas)
  * - `alphabetical`: título normalizado
  * `custom` só entra quando a reordenação manual estiver implementada e persistida.
  */
 export type LibrarySort = 'recent' | 'alphabetical'
 
-/** Modelo de apresentação da biblioteca, normalizado a partir das stores reais. */
+/** Modelo de apresentação da biblioteca, normalizado a partir das fontes reais. */
 export interface LibraryItem {
   id: string
   type: LibraryItemType
   title: string
   subtitle?: string
   imageUrl?: string | null
-  /** Campo de data real do banco: `created_at` ou `followed_at`. */
+  /** Campo de data real da fonte; null quando a fonte não tem data. */
   createdAt?: string | null
   href: string
+}
+
+/** A coleção de curtidas é um atalho fixo (como a "Músicas curtidas" do guia
+ *  de origem): entra sempre no topo, fora dos filtros de tipo. */
+export const LIKED_ITEM_ID = 'liked'
+
+export function isLikedItem(item: LibraryItem): boolean {
+  return item.type === 'liked'
 }
 
 function playlistToLibraryItem(playlist: PlaylistItem): LibraryItem {
@@ -56,10 +71,48 @@ function artistToLibraryItem(artist: FollowedArtist): LibraryItem {
   }
 }
 
-/** Normaliza playlists e artistas das stores reais em um único modelo de UI. */
+function albumToLibraryItem(album: Album): LibraryItem {
+  return {
+    id: album.id,
+    type: 'album',
+    title: album.name,
+    subtitle: album.artist_name,
+    imageUrl: album.image,
+    createdAt: album.release_date ?? null,
+    href: `/albums/${album.id}`,
+  }
+}
+
+/**
+ * Normaliza as fontes reais em um único modelo de UI.
+ *
+ * As curtidas entram primeiro (id fixo `LIKED_ITEM_ID`) porque são a coleção
+ * fixa do guia; o `likedCount` de zero as deixa fora até existirem.
+ */
 export function buildLibraryItems(
   playlists: PlaylistItem[],
   artists: FollowedArtist[],
+  albums: Album[] = [],
+  likedCount: number = 0,
 ): LibraryItem[] {
-  return [...playlists.map(playlistToLibraryItem), ...artists.map(artistToLibraryItem)]
+  const items: LibraryItem[] = []
+
+  if (likedCount > 0) {
+    items.push({
+      id: LIKED_ITEM_ID,
+      type: 'liked',
+      title: 'Músicas curtidas',
+      subtitle: `${likedCount} ${likedCount === 1 ? 'faixa' : 'faixas'}`,
+      imageUrl: null,
+      createdAt: null,
+      href: '/biblioteca?tab=favoritos',
+    })
+  }
+
+  items.push(
+    ...playlists.map(playlistToLibraryItem),
+    ...albums.map(albumToLibraryItem),
+    ...artists.map(artistToLibraryItem),
+  )
+  return items
 }

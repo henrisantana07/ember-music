@@ -82,38 +82,75 @@ describe('sortLibraryItems', () => {
 })
 
 describe('buildLibraryItems', () => {
+  const playlist = {
+    id: 'p1',
+    name: 'Madrugada',
+    description: null,
+    cover_url: null,
+    cover_source: 'custom' as const,
+    custom_cover_url: 'https://example.com/capa.jpg',
+    last_track_cover_url: null,
+    user_id: 'u1',
+    created_at: '2025-01-10T00:00:00Z',
+    updated_at: null,
+    track_count: 3,
+    is_public: false,
+    collaborative: null,
+    share_token: null,
+  }
+
+  const artist = {
+    artist_id: 'a1',
+    artist_data: { id: 'a1', name: 'Gal Costa', image: 'https://example.com/gal.jpg' },
+    followed_at: '2025-02-01T00:00:00Z',
+  }
+
+  const album = {
+    id: 'al1',
+    name: 'Álbum',
+    artist_id: 'x',
+    artist_name: 'Único',
+    image: 'https://example.com/al.jpg',
+    release_date: '2024-11-01',
+    total_tracks: 10,
+    url: 'https://youtube.com/playlist?list=al1',
+  }
+
   it('normaliza playlists e artistas no mesmo modelo', () => {
-    const result = buildLibraryItems(
-      [
-        {
-          id: 'p1',
-          name: 'Madrugada',
-          description: null,
-          cover_url: null,
-          cover_source: 'custom' as const,
-          custom_cover_url: 'https://example.com/capa.jpg',
-          last_track_cover_url: null,
-          user_id: 'u1',
-          created_at: '2025-01-10T00:00:00Z',
-          updated_at: null,
-          track_count: 3,
-          is_public: false,
-          collaborative: null,
-          share_token: null,
-        },
-      ],
-      [
-        {
-          artist_id: 'a1',
-          artist_data: { id: 'a1', name: 'Gal Costa', image: 'https://example.com/gal.jpg' },
-          followed_at: '2025-02-01T00:00:00Z',
-        },
-      ],
-    )
+    const result = buildLibraryItems([playlist], [artist])
     expect(result).toHaveLength(2)
-    const playlist = result.find((r) => r.type === 'playlist')
-    const artist = result.find((r) => r.type === 'artist')
-    expect(playlist).toMatchObject({ title: 'Madrugada', imageUrl: 'https://example.com/capa.jpg', subtitle: '3 faixas' })
-    expect(artist).toMatchObject({ title: 'Gal Costa', imageUrl: 'https://example.com/gal.jpg' })
+    const found = result.find((r) => r.type === 'playlist')
+    const artistItem = result.find((r) => r.type === 'artist')
+    expect(found).toMatchObject({ title: 'Madrugada', imageUrl: 'https://example.com/capa.jpg', subtitle: '3 faixas' })
+    expect(artistItem).toMatchObject({ title: 'Gal Costa', imageUrl: 'https://example.com/gal.jpg' })
+  })
+
+  it('entra com curtidas primeiro, quando houver curtidas', () => {
+    const result = buildLibraryItems([playlist], [artist], [], 2)
+    expect(result[0]).toMatchObject({
+      id: 'liked',
+      type: 'liked',
+      title: 'Músicas curtidas',
+      subtitle: '2 faixas',
+      href: '/biblioteca?tab=favoritos',
+    })
+  })
+
+  it('sem curtidas, nenhum item de curtidas é criado', () => {
+    const result = buildLibraryItems([playlist], [artist], [], 0)
+    expect(result.some((r) => r.type === 'liked')).toBe(false)
+  })
+
+  it('mapeia álbuns da API do YouTube para /albums/[id]', () => {
+    const result = buildLibraryItems([], [], [album], 1)
+    expect(result[0].type).toBe('liked')
+    expect(result[1]).toMatchObject({
+      type: 'album',
+      title: 'Álbum',
+      subtitle: 'Único',
+      imageUrl: 'https://example.com/al.jpg',
+      createdAt: '2024-11-01',
+      href: '/albums/al1',
+    })
   })
 })

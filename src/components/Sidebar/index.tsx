@@ -21,10 +21,11 @@ import { IconButton } from '@/components/ui/IconButton'
 import { CoverImage } from '@/components/ui/CoverImage'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
 import { EmptyState, LoadingState } from '@/components/ui/states'
-import { buildLibraryItems } from '@/lib/library/types'
+import { buildLibraryItems, isLikedItem } from '@/lib/library/types'
 import { filterLibraryItems } from '@/lib/library/filterLibraryItems'
 import { sortLibraryItems } from '@/lib/library/sortLibraryItems'
-import type { LibraryItemType, LibraryView } from '@/lib/library/types'
+import type { LibraryItem, LibraryItemType, LibraryView } from '@/lib/library/types'
+import type { Album } from '@/types/music'
 
 const NAV_SECTION1 = [
   { href: '/', label: 'Início', outline: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', fill: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -36,9 +37,10 @@ const NAV_SECTION1 = [
 // Quantidade máxima de itens exibidos no rail recolhido
 const RAIL_LIMIT = 5
 
-const TYPE_FILTERS: { value: LibraryItemType; label: string; singular: string }[] = [
-  { value: 'playlist', label: 'Playlists', singular: 'Playlist' },
-  { value: 'artist', label: 'Artistas', singular: 'Artista' },
+const TYPE_FILTERS: { value: LibraryItemType; label: string }[] = [
+  { value: 'playlist', label: 'Playlists' },
+  { value: 'artist', label: 'Artistas' },
+  { value: 'album', label: 'Álbuns' },
 ]
 
 /**
@@ -110,6 +112,40 @@ const SORT_OPTIONS = [
   { value: 'alphabetical' as const, label: 'Alfabetica' },
 ]
 
+/** Tile de capa normalizado: curtidas (coração sobre gradação de acento),
+ *  imagem, ou inicial sobre a superfície mais alta. Mesmo padrão na lista,
+ *  na grade, no drawer e no rail. */
+function ItemCover({ item, size }: { item: LibraryItem; size: 'row' | 'grid' }) {
+  const frame = size === 'row' ? 'w-10 h-10' : 'w-full aspect-square'
+  if (isLikedItem(item)) {
+    return (
+      <span
+        className={`${frame} flex-shrink-0 inline-flex items-center justify-center rounded-md`}
+        style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
+        aria-hidden="true"
+      >
+        <svg className={size === 'row' ? 'w-5 h-5' : 'w-8 h-8'} viewBox="0 0 24 24" fill="currentColor" style={{ color: 'var(--bg-base)' }}>
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+        </svg>
+      </span>
+    )
+  }
+  if (item.imageUrl) {
+    return (
+      <span className={`${frame} flex-shrink-0 overflow-hidden inline-block bg-surface-container-highest ${item.type === 'artist' ? 'rounded-full' : 'rounded-md'}`}>
+        <CoverImage src={item.imageUrl} alt="" className="w-full h-full object-cover" />
+      </span>
+    )
+  }
+  return (
+    <span className={`${frame} flex-shrink-0 inline-flex items-center justify-center bg-surface-container-highest ${item.type === 'artist' ? 'rounded-full' : 'rounded-md'}`}>
+      <span className="text-label-medium font-bold" style={{ color: 'var(--text-primary)' }}>
+        {item.title.charAt(0).toUpperCase()}
+      </span>
+    </span>
+  )
+}
+
 export default function Sidebar() {
   const pathname = usePathname()
   const collapsed = useSidebarStore((s) => s.collapsed)
@@ -129,6 +165,12 @@ export default function Sidebar() {
   // Filtro de tipo: seleção única, removível — clicar no chip ativo limpa (§5.1).
   const [typeFilter, setTypeFilter] = useState<LibraryItemType | null>(null)
   const [query, setQuery] = useState('')
+
+  /* Fontes reais complementares:
+     - curtidas: contagem na mesma tabela `favorites` que a aba favoritos de /biblioteca;
+     - álbuns: /api/youtube (searchYouTubePlaylists, cache no servidor). */
+  const [youtubeAlbums, setYoutubeAlbums] = useState<Album[]>([])
+  const [likedCount, setLikedCount] = useState(0)
 
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
@@ -152,6 +194,39 @@ export default function Sidebar() {
     if (user) {
       fetchPlaylists()
       fetchArtists()
+    }
+  }, [user])
+
+  /* Curtidas + álbuns, como as fontes "antigas": a contagem vem da tabela
+     `favorites` e os álbuns da API do YouTube via /api/youtube. Em falha ou
+     sem chave configurada, o painel se degrada sem a seção de álbuns (a
+     resposta 503/429 é tratada como ausência — nada de conteúdo falso).
+     Sem usuário, não há escrita de estado aqui: playlists/artistas do
+     zustand se comportam igual (nada é limpo no logout até o próximo login). */
+  useEffect(() => {
+    if (!user) return
+    const supabase = createClient()
+    const controller = new AbortController()
+    let cancelled = false
+    ;(async () => {
+      const { count } = await supabase
+        .from('favorites')
+        .select('track_id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+      if (!cancelled && typeof count === 'number') setLikedCount(count)
+      try {
+        const res = await fetch('/api/youtube?endpoint=albums&limit=12', { signal: controller.signal })
+        const data: unknown = await res.json()
+        const results = (data as { results?: unknown })?.results
+        if (!cancelled && Array.isArray(results)) setYoutubeAlbums(results as Album[])
+        else if (!cancelled) setYoutubeAlbums([])
+      } catch (err) {
+        if (!cancelled && (err as Error)?.name !== 'AbortError') setYoutubeAlbums([])
+      }
+    })()
+    return () => {
+      cancelled = true
+      controller.abort()
     }
   }, [user])
 
@@ -212,16 +287,24 @@ export default function Sidebar() {
     )
   }
 
-  /* Coleção normalizada das stores reais → busca + filtro de tipo + ordenação
+  /* Coleção normalizada das fontes reais → busca + filtro de tipo + ordenação
      (§5.1/§5.2, funções puras em lib/library). */
   const libraryItems = useMemo(
-    () => buildLibraryItems(playlists, artists),
-    [playlists, artists],
+    () => buildLibraryItems(playlists, artists, youtubeAlbums, likedCount),
+    [playlists, artists, youtubeAlbums, likedCount],
   )
 
   const visibleItems = useMemo(() => {
-    const filtered = filterLibraryItems(libraryItems, query, typeFilter)
-    return sortLibraryItems(filtered, prefs.sort)
+    /* Curtidas são um atalho fixo: ficam sempre no topo, fora do filtro de
+       tipo e da busca — chips e consulta restringem apenas as coleções de
+       playlists/artistas/álbuns abaixo delas. */
+    const fixed = libraryItems.filter((i) => i.type === 'liked')
+    const candidates = filterLibraryItems(
+      libraryItems.filter((i) => i.type !== 'liked'),
+      query,
+      typeFilter,
+    )
+    return sortLibraryItems([...fixed, ...candidates], prefs.sort)
   }, [libraryItems, query, typeFilter, prefs.sort])
 
   const libraryLoading = !userLoading && (playlistsLoading || artistsLoading)
@@ -232,9 +315,6 @@ export default function Sidebar() {
 
   function renderLibraryRow(item: (typeof libraryItems)[number], compact: boolean) {
     const active = pathname === item.href
-    const cover = item.type === 'artist'
-      ? 'rounded-full'
-      : 'rounded-md'
     return (
       <Link
         key={item.id}
@@ -246,17 +326,7 @@ export default function Sidebar() {
             : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
         }`}
       >
-        {!compact && (
-          <span className={`w-10 h-10 overflow-hidden flex-shrink-0 bg-surface-container-highest ${cover}`}>
-            {item.imageUrl ? (
-              <CoverImage src={item.imageUrl} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <span className="w-full h-full flex items-center justify-center text-label-medium font-bold" style={{ color: 'var(--text-primary)' }}>
-                {item.title.charAt(0).toUpperCase()}
-              </span>
-            )}
-          </span>
-        )}
+        {!compact && <ItemCover item={item} size="row" />}
         <span className="min-w-0 flex-1">
           <span className="block truncate">{item.title}</span>
           {!compact && item.subtitle && (
@@ -297,7 +367,11 @@ export default function Sidebar() {
                 title={item.title}
               >
                 <span className="w-5 h-5 flex-shrink-0">
-                  {item.imageUrl ? (
+                  {item.type === 'liked' ? (
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" style={{ color: 'var(--accent-solid)' }}>
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                  ) : item.imageUrl ? (
                     <img src={item.imageUrl} alt="" className={`w-5 h-5 object-cover ${item.type === 'artist' ? 'rounded-full' : 'rounded-sm'}`} />
                   ) : (
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
@@ -406,18 +480,10 @@ export default function Sidebar() {
                         : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
                     }`}
                   >
-                    <span className="w-full aspect-square overflow-hidden rounded-md bg-surface-container-highest inline-block">
-                      {item.imageUrl ? (
-                        <CoverImage src={item.imageUrl} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="w-full h-full flex items-center justify-center text-title-large font-bold" style={{ color: 'var(--text-primary)' }}>
-                          {item.title.charAt(0).toUpperCase()}
-                        </span>
-                      )}
-                    </span>
+                    <ItemCover item={item} size="grid" />
                     <span className="block truncate text-body-medium">{item.title}</span>
                     <span className="block truncate text-label-medium" style={{ color: 'var(--text-disabled)' }}>
-                      {item.type === 'playlist' ? 'Playlist' : 'Artista'}
+                      {item.type === 'playlist' ? 'Playlist' : item.type === 'album' ? 'Álbum' : item.type === 'artist' ? 'Artista' : 'Curtidas'}
                     </span>
                   </Link>
                 )
@@ -603,19 +669,11 @@ export default function Sidebar() {
                         : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
                     }`}
                   >
-                    <span className="w-10 h-10 overflow-hidden flex-shrink-0 bg-surface-container-highest inline-block">
-                      {item.imageUrl ? (
-                        <CoverImage src={item.imageUrl} alt="" className={`w-full h-full object-cover ${item.type === 'artist' ? 'rounded-full' : 'rounded-md'}`} />
-                      ) : (
-                        <span className="w-full h-full flex items-center justify-center text-label-medium font-bold" style={{ color: 'var(--text-primary)' }}>
-                          {item.title.charAt(0).toUpperCase()}
-                        </span>
-                      )}
-                    </span>
+                    <ItemCover item={item} size="row" />
                     <span className="min-w-0">
                       <span className="block truncate">{item.title}</span>
                       <span className="block truncate text-label-medium" style={{ color: 'var(--text-disabled)' }}>
-                        {item.type === 'playlist' ? 'Playlist' : 'Artista'}
+                        {item.type === 'playlist' ? 'Playlist' : item.type === 'album' ? 'Álbum' : item.type === 'artist' ? 'Artista' : 'Curtidas'}
                       </span>
                     </span>
                   </Link>
