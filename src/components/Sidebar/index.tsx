@@ -405,7 +405,7 @@ function isActive(href: string) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </summary>
-            <div className="absolute bottom-full left-0 right-0 mb-1 rounded-xl shadow-elevation-2 border border-outline-variant py-1 z-[60] overflow-hidden" style={{ backgroundColor: 'var(--bg-elevated)', transformOrigin: 'bottom left' }}>
+            <div className="absolute top-full left-0 right-0 mt-1 rounded-xl shadow-elevation-2 border border-outline-variant py-1 z-[60] overflow-hidden" style={{ backgroundColor: 'var(--bg-elevated)', transformOrigin: 'top left' }}>
               <div className="px-3 pt-2 pb-1 text-label-small uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>Visualizacao</div>
               <div className="flex items-center justify-center w-full py-1">
                 <SegmentedToggle size="sm" ariaLabel="Modo de visualizacao" options={VIEW_OPTIONS} value={prefs.view} onChange={(value) => updatePrefs({ view: value })} />
