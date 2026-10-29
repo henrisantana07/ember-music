@@ -11,6 +11,7 @@ import { useAvatar } from '@/hooks/use-avatar'
 import { AnimatePresence, motion } from 'motion/react'
 import { popoverVariants } from '@/lib/motion'
 import { useSidebarStore } from '@/lib/sidebar-store'
+import { useLibraryPreferences } from '@/hooks/use-library-preferences'
 
 export function Topbar() {
   const [showDropdown, setShowDropdown] = useState(false)
@@ -22,12 +23,16 @@ export function Topbar() {
   const supabase = createClient()
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const libraryMenuRef = useRef<HTMLDivElement>(null)
 
   const { user } = useUser()
   const avatarUrl = useAvatar(user?.id)
   const sidebarCollapsed = useSidebarStore((s) => s.collapsed)
   const toggleSidebar = useSidebarStore((s) => s.toggle)
   const immersive = useSidebarStore((s) => s.immersive)
+  const { prefs: libraryPrefs, update: updateLibraryPrefs } = useLibraryPreferences()
+
+  const homeActive = pathname === '/'
 
   useEffect(() => {
     const q = searchParams.get('q')
@@ -38,7 +43,7 @@ export function Topbar() {
   }, [searchParams])
 
   useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
+    function handleKey(e: KeyboardEvent) {
       const isCtrl = e.ctrlKey || e.metaKey
       if (isCtrl && e.shiftKey && (e.key === 'l' || e.key === 'L')) {
         e.preventDefault()
@@ -49,24 +54,8 @@ export function Topbar() {
         handleClear()
       }
     }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
-
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      const isCtrl = e.ctrlKey || e.metaKey
-      if (isCtrl && e.shiftKey && (e.key === 'l' || e.key === 'L')) {
-        e.preventDefault()
-        inputRef.current?.focus()
-      }
-      if (isCtrl && (e.key === 's' || e.key === 'S')) {
-        e.preventDefault()
-        handleClear()
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
   }, [])
 
   useEffect(() => {
@@ -107,18 +96,14 @@ export function Topbar() {
     void submitSearch()
   }
 
-  const homeActive = pathname === '/'
-
   return (
     <header
       className="h-16 flex items-center justify-center px-6 flex-shrink-0 relative z-[100] border-b border-outline-variant"
       style={{ backgroundColor: 'var(--bg-base)', display: immersive ? 'none' : undefined }}
     >
-      {/* Left cluster: sidebar toggle + branding. Recolhe-se para dar espaço à busca (Estilo Spotify). */}
+      {/* Left cluster: sidebar toggle + branding. */}
       <div
-        className={`absolute top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 transition-[left] duration-[var(--motion-duration-standard)] ease-[var(--motion-easing-standard)] ${
-          sidebarCollapsed ? 'left-[14px]' : 'left-2'
-        }`}
+        className={`absolute top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 transition-[left] duration-[var(--motion-duration-standard)] ease-[var(--motion-easing-standard)] ${sidebarCollapsed ? 'left-[14px]' : 'left-2'}`}
       >
         <button
           onClick={toggleSidebar}
@@ -132,31 +117,19 @@ export function Topbar() {
             <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
           </svg>
         </button>
-        <img
-          src="/branding/icon.svg"
-          alt=""
-          className="w-24 h-20 object-cover pointer-events-none"
-          style={{ filter: 'drop-shadow(0 0 8px rgba(255,106,0,0.4))' }}
-        />
-        <Link
-          href="/"
-          className="whitespace-nowrap text-lg font-bold tracking-tight"
-          style={{ color: 'var(--text-primary)' }}
-        >
+        <img src="/branding/icon.svg" alt="" className="w-24 h-20 object-cover pointer-events-none" style={{ filter: 'drop-shadow(0 0 8px rgba(255,106,0,0.4))' }} />
+        <Link href="/" className="whitespace-nowrap text-lg font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
           <span className="gradient-accent-text">Ember</span>
           <span> Music</span>
         </Link>
       </div>
 
-      {/* Spotify-style "search cluster": Home pill + Search box, dois atalhos de 48px seguidos.
-          Home (✓) e Explorar (busca) saem da sidebar e vêm para o topo, no estilo
-          Spotify Web, em que o pill de "Casa" precede a caixa de busca. */}
+      {/* Spotify-style search cluster with Home pill + Search box + Sort/View menu. */}
       <div className="hidden md:flex items-center gap-2 flex-1 max-w-2xl min-w-0 z-10">
         <Link
           href="/"
           aria-label="Início"
           title="Início"
-          aria-current={homeActive ? 'page' : undefined}
           className={`inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors state-layer ${
             homeActive
               ? 'bg-[var(--surface-container-highest)] text-[var(--text-primary)]'
@@ -239,6 +212,51 @@ export function Topbar() {
             inputRef={inputRef}
           />
         </form>
+
+        {/* Classificação + Visualização embedded (Spotify-style embedded, opens downward). */}
+        <div className="hidden md:flex flex-shrink-0 relative" ref={libraryMenuRef}>
+          <details className="group">
+            <summary className="h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden" title="Classificação e Visualização" aria-label="Classificação e Visualização">
+              <svg className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3" />
+              </svg>
+            </summary>
+            <div
+              className="absolute top-full right-0 mt-1 rounded-xl shadow-elevation-2 border border-outline-variant py-1 z-[70] overflow-hidden w-44"
+              style={{ backgroundColor: 'var(--bg-elevated)', transformOrigin: 'top right' }}
+            >
+              <div className="px-2 pt-1 pb-0.5 text-label-small uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>Classificar por</div>
+              <button type="button" onClick={() => updateLibraryPrefs({ sort: 'recent' })} className={`w-full min-h-[34px] inline-flex items-center gap-2 px-2 text-left rounded-md transition-colors duration-200 ${libraryPrefs.sort === 'recent' ? 'bg-state-hover text-[var(--accent-solid)] font-semibold' : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'}`}>
+                <span className="flex-1 text-label-medium">Recentes</span>
+                {libraryPrefs.sort === 'recent' && <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+              </button>
+              <button type="button" onClick={() => updateLibraryPrefs({ sort: 'added' })} className={`w-full min-h-[34px] inline-flex items-center gap-2 px-2 text-left rounded-md transition-colors duration-200 ${libraryPrefs.sort === 'added' ? 'bg-state-hover text-[var(--accent-solid)] font-semibold' : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'}`}>
+                <span className="flex-1 text-label-medium">Adicionados recentemente</span>
+                {libraryPrefs.sort === 'added' && <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+              </button>
+              <button type="button" onClick={() => updateLibraryPrefs({ sort: 'alphabetical' })} className={`w-full min-h-[34px] inline-flex items-center gap-2 px-2 text-left rounded-md transition-colors duration-200 ${libraryPrefs.sort === 'alphabetical' ? 'bg-state-hover text-[var(--accent-solid)] font-semibold' : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'}`}>
+                <span className="flex-1 text-label-medium">Ordem alfabética</span>
+                {libraryPrefs.sort === 'alphabetical' && <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+              </button>
+              <button type="button" onClick={() => updateLibraryPrefs({ sort: 'creator' })} className={`w-full min-h-[34px] inline-flex items-center gap-2 px-2 text-left rounded-md transition-colors duration-200 ${libraryPrefs.sort === 'creator' ? 'bg-state-hover text-[var(--accent-solid)] font-semibold' : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'}`}>
+                <span className="flex-1 text-label-medium">Criador</span>
+                {libraryPrefs.sort === 'creator' && <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+              </button>
+              <div className="px-2 pt-1 pb-0.5 text-label-small uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>Ver como</div>
+              <div className="grid grid-cols-3 gap-1 px-2 pb-1">
+                <button type="button" onClick={() => updateLibraryPrefs({ view: 'compact' })} className={`min-h-[32px] inline-flex items-center justify-center rounded-md transition-colors duration-200 ${libraryPrefs.view === 'compact' ? 'bg-state-hover text-[var(--accent-solid)] font-semibold' : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'}`} aria-label="Compacto">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M4 8h16M4 12h16M4 16h16" /></svg>
+                </button>
+                <button type="button" onClick={() => updateLibraryPrefs({ view: 'list' })} className={`min-h-[32px] inline-flex items-center justify-center rounded-md transition-colors duration-200 ${libraryPrefs.view === 'list' ? 'bg-state-hover text-[var(--accent-solid)] font-semibold' : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'}`} aria-label="Lista detalhada">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg>
+                </button>
+                <button type="button" onClick={() => updateLibraryPrefs({ view: 'grid' })} className={`min-h-[32px] inline-flex items-center justify-center rounded-md transition-colors duration-200 ${libraryPrefs.view === 'grid' ? 'bg-state-hover text-[var(--accent-solid)] font-semibold' : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'}`} aria-label="Grade compacta">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" /></svg>
+                </button>
+              </div>
+            </div>
+          </details>
+      </div>
       </div>
 
       <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-1">
