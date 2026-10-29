@@ -364,15 +364,18 @@ useEffect(() => {
             >
               Sua Biblioteca
             </Link>
-            <IconButton
-              label="Criar playlist"
-              size="md"
-              onClick={() => setCreateModalOpen(true)}
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
-              </svg>
-            </IconButton>
+            <div className="flex items-center gap-2">
+              <ClassificationMenu sort={prefs.sort} view={prefs.view} onSortChange={(s) => updatePrefs({ sort: s })} onViewChange={(v) => updatePrefs({ view: v })} />
+              <IconButton
+                label="Criar playlist"
+                size="md"
+                onClick={() => setCreateModalOpen(true)}
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+                </svg>
+              </IconButton>
+            </div>
           </div>
 
           <div className="flex-none flex items-center gap-2 min-w-0 px-1">
@@ -390,7 +393,6 @@ useEffect(() => {
                 className="flex-1 min-w-0 h-7 bg-transparent border-none outline-none text-sm text-[var(--text-primary)] placeholder:text-[var(--text-disabled)] focus:ring-0 max-w-[140px]"
               />
             </div>
-            <ClassificationMenu sort={prefs.sort} view={prefs.view} onSortChange={(s) => updatePrefs({ sort: s })} onViewChange={(v) => updatePrefs({ view: v })} />
           </div>
 
           <div className="flex gap-1 px-8 py-1 min-w-0 overflow-x-auto">
