@@ -1,4 +1,4 @@
-const CACHE = 'ember-music-v2'
+const CACHE = 'ember-music-v3'
 
 const PRECACHE_URLS = ['/', '/buscar', '/biblioteca', '/login', '/offline']
 
@@ -31,6 +31,15 @@ self.addEventListener('fetch', (event) => {
   if (isDev) return
 
   if (event.request.url.includes('/api/') || event.request.url.includes('supabase.co')) {
+    return
+  }
+
+  // Links de autenticação/OAuth (callback da Supabase/GoTrue) NÃO devem ser
+  // cacheados nem interceptados pelo SW. O `?code=...` é one-shot e a tentativa de
+  // servir o HTML cached amarra o fluxo.
+  let parsedUrl
+  try { parsedUrl = new URL(event.request.url) } catch { return }
+  if (parsedUrl.search.includes('code=') || parsedUrl.search.includes('state=')) {
     return
   }
 
