@@ -143,8 +143,20 @@ export default function Sidebar() {
      - álbuns: /api/youtube (searchYouTubePlaylists, cache no servidor). */
   const [youtubeAlbums, setYoutubeAlbums] = useState<Album[]>([])
   const [likedCount, setLikedCount] = useState(0)
-
   const [createModalOpen, setCreateModalOpen] = useState(false)
+
+  const [expandedWidth, setExpandedWidth] = useState<number>(() => {
+    let w = 280
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = window.localStorage.getItem('ember:sidebar-width')
+        const parsed = raw ? parseInt(raw, 10) : NaN
+        if (!Number.isNaN(parsed) && parsed >= 240 && parsed <= 460) w = parsed
+      } catch { /* ignore */ }
+    }
+    return w
+  })
+  const [isDraggingSidebar, setIsDraggingSidebar] = useState(false)
 
   useEffect(() => {
     const el = desktopAsideRef.current
@@ -163,11 +175,9 @@ export default function Sidebar() {
   }, [collapsed])
 
   useEffect(() => {
-    if (user) {
-      fetchPlaylists()
-      fetchArtists()
-    }
-  }, [user])
+    if (typeof window === 'undefined') return
+    try { window.localStorage.setItem('ember:sidebar-width', String(expandedWidth)) } catch { /* ignore */ }
+  }, [expandedWidth])
 
   /* Curtidas + álbuns, como as fontes "antigas": a contagem vem da tabela
      `favorites` e os álbuns da API do YouTube via /api/youtube. Em falha ou
@@ -211,6 +221,28 @@ export default function Sidebar() {
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
+
+  useEffect(() => {
+    if (!isDraggingSidebar) return
+    function onMove(e: MouseEvent) {
+      if (e.clientX <= 120) return
+      const next = Math.max(240, Math.min(460, e.clientX))
+      setExpandedWidth(next)
+    }
+    function onUp() {
+      setIsDraggingSidebar(false)
+    }
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    return () => {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  }, [isDraggingSidebar])
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -534,12 +566,22 @@ function isActive(href: string) {
     <>
       <aside
         ref={desktopAsideRef}
-        style={{ display: immersive ? 'none' : undefined }}
-        className={`hidden md:flex flex-col h-full overflow-hidden bg-[var(--bg-surface)] transition-[width] duration-[var(--motion-duration-standard)] ease-[var(--motion-easing-standard)] flex-shrink-0 ${
-          collapsed ? 'w-[72px]' : 'w-[280px]'
+        style={{ display: immersive ? 'none' : undefined, width: collapsed ? undefined : `${expandedWidth}px` }}
+        className={`hidden md:flex flex-col h-full overflow-hidden bg-[var(--bg-surface)] flex-shrink-0 relative ${
+          collapsed ? 'w-[72px]' : (isDraggingSidebar ? '' : 'transition-[width] duration-[var(--motion-duration-standard)] ease-[var(--motion-easing-standard)]')
         }`}
       >
         {sidebarContent}
+        {!collapsed && (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Redimensionar a barra lateral"
+            onMouseDown={() => setIsDraggingSidebar(true)}
+            className="absolute top-0 bottom-0 right-0 w-1.5 cursor-col-resize z-20 bg-transparent hover:bg-[var(--accent-solid)]/30 group"
+            title="Arraste para redimensionar"
+          />
+        )}
       </aside>
 
       {/* Navegação inferior existente: uma única barra, sem segunda barra nova (§7). */}
