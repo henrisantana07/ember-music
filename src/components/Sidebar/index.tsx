@@ -357,20 +357,6 @@ function isActive(href: string) {
             >
               Sua Biblioteca
             </Link>
-            {/* Criar: reutiliza o fluxo real de criação de playlist (§5.4). */}
-            <IconButton
-              label="Atualizar biblioteca"
-              size="md"
-              onClick={() => {
-                fetchPlaylists()
-                fetchArtists()
-              }}
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 1 1 -6.364-8.636" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 3v7h-7" />
-              </svg>
-            </IconButton>
             <IconButton
               label="Criar playlist"
               size="md"
