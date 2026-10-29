@@ -124,23 +124,12 @@ export function Topbar() {
 
       {/* Spotify-style search cluster with Home pill + Search box + Sort/View menu. */}
       <div className="hidden md:flex items-center gap-2 flex-1 max-w-2xl min-w-0 z-10">
-        <button
-          type="button"
-          onClick={() => updateTopLib({ sort: 'recent' })}
-          aria-label="Classificar por recentes"
-          title="Recentes"
-          className="hidden md:inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer"
-          style={{ color: topLibPrefs.sort === 'recent' ? 'var(--text-primary)' : 'var(--text-secondary)' }}
-        >
-          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={topLibPrefs.sort === 'recent' ? 2.5 : 2} aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3" />
-          </svg>
-        </button>
+
         <Link
           href="/"
           aria-label="Início"
           title="Início"
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors state-layer text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors state-layer text-[var(--text-primary)] hover:bg-state-hover hover:text-[var(--text-secondary)]"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={pathname === '/' ? 2.5 : 2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
