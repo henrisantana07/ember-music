@@ -395,20 +395,22 @@ function isActive(href: string) {
             />
           </div>
 
-          <div className="flex-none flex items-center justify-between gap-1 px-2 pb-2">
-            <SegmentedToggle
-              size="sm"
-              ariaLabel="Modo de visualização"
-              options={VIEW_OPTIONS}
-              value={prefs.view}
-              onChange={(value) => updatePrefs({ view: value })}
-            />
+          <div className="flex-none flex flex-col items-stretch gap-1.5 px-2 pb-2">
+            <div className="flex items-center justify-center w-full">
+              <SegmentedToggle
+                size="sm"
+                ariaLabel="Modo de visualização"
+                options={VIEW_OPTIONS}
+                value={prefs.view}
+                onChange={(value) => updatePrefs({ view: value })}
+              />
+            </div>
             <SortMenu
               options={SORT_OPTIONS}
               value={prefs.sort}
               onChange={(value) => updatePrefs({ sort: value })}
               label="Ordenar"
-              className="min-w-0"
+              className="w-full min-w-0"
             />
           </div>
 
@@ -530,7 +532,7 @@ function isActive(href: string) {
         ref={desktopAsideRef}
         style={{ display: immersive ? 'none' : undefined }}
         className={`hidden md:flex flex-col h-full overflow-hidden bg-[var(--bg-surface)] transition-[width] duration-[var(--motion-duration-standard)] ease-[var(--motion-easing-standard)] flex-shrink-0 ${
-          collapsed ? 'w-[72px]' : 'w-[240px]'
+          collapsed ? 'w-[72px]' : 'w-[280px]'
         }`}
       >
         {sidebarContent}
