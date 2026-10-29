@@ -375,7 +375,7 @@ useEffect(() => {
             </IconButton>
           </div>
 
-          <div className="flex-none flex items-center gap-2 min-w-0 px-1 mb-2">
+          <div className="flex-none flex items-center gap-2 min-w-0 pl-3 pr-1 mb-2">
             <div
               className="flex items-center gap-2 rounded-full px-3 h-8 max-w-[210px] flex-1 min-w-0"
               style={{ backgroundColor: '#121212', border: '1px solid var(--outline-variant)' }}
@@ -393,7 +393,7 @@ useEffect(() => {
             <ClassificationMenu sort={prefs.sort} view={prefs.view} onSortChange={(s) => updatePrefs({ sort: s })} onViewChange={(v) => updatePrefs({ view: v })} />
           </div>
 
-          <div className="flex gap-1 px-8 py-1 min-w-0 overflow-x-auto">
+          <div className="flex gap-1 pl-3 pr-3 py-1 min-w-0 overflow-x-auto">
             {TYPE_FILTERS.map(filter => (
               <FilterChip
                 key={filter.value}
