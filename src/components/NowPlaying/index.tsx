@@ -459,7 +459,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
            (50% álbum + 50% branco) e mantida translúcida (30%): o mesmo
            peso de antes, mas um tom que sempre fica ACIMA do flood — seja
            a capa clara ou saturada. */
-        border: `2px solid color-mix(in srgb, color-mix(in srgb, ${palette.primary} 50%, #ffffff) 30%, transparent)`,
+        border: `1px solid color-mix(in srgb, color-mix(in srgb, ${palette.primary} 50%, #ffffff) 30%, transparent)`,
       }
     : { border: '1px solid var(--outline-variant)' }),
     /* Durante o arraste a capa toma o que sobra da fila — e a transição
