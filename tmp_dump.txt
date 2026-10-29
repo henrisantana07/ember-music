@@ -1,0 +1,4 @@
+        )}
+      </aside>>
+
+      {/* Navegação inferior existente: uma única barra, sem segunda barra nova (§7). */}
