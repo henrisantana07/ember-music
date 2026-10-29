@@ -402,10 +402,27 @@ body {
 }
 
 ::-webkit-scrollbar-button,
-.scrollbar-thin::-webkit-scrollbar-button {
+.scrollbar-thin::-webkit-scrollbar-button,
+::-webkit-scrollbar-button:vertical,
+.scrollbar-thin::-webkit-scrollbar-button:vertical,
+::-webkit-scrollbar-button:vertical:start,
+.scrollbar-thin::-webkit-scrollbar-button:vertical:start,
+::-webkit-scrollbar-button:vertical:start:increment,
+.scrollbar-thin::-webkit-scrollbar-button:vertical:start:increment,
+::-webkit-scrollbar-button:vertical:start:decrement,
+.scrollbar-thin::-webkit-scrollbar-button:vertical:start:decrement,
+::-webkit-scrollbar-button:vertical:end,
+.scrollbar-thin::-webkit-scrollbar-button:vertical:end,
+::-webkit-scrollbar-button:vertical:end:increment,
+.scrollbar-thin::-webkit-scrollbar-button:vertical:end:increment,
+::-webkit-scrollbar-button:vertical:end:decrement,
+.scrollbar-thin::-webkit-scrollbar-button:vertical:end:decrement {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 /* Firefox: `thin` ≈ 8px e as cores resolvidas pelos mesmos tokens. Sem webkit
