@@ -398,7 +398,7 @@ useEffect(() => {
 
           <div className="flex-none flex items-center justify-between gap-2 min-w-0 pl-3 pr-1">
             <div
-              className="flex items-center gap-2 rounded-full px-3 h-8 max-w-[210px] flex-1 min-w-0"
+              className="flex items-center gap-2 rounded-full px-3 h-8 max-w-[210px] flex-1 min-w-0 outline-none"
               style={{ backgroundColor: '#121212', border: '1px solid var(--outline-variant)' }}
             >
               <svg className="w-4 h-4 flex-shrink-0 pointer-events-none" style={{ color: 'var(--text-disabled)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -409,7 +409,8 @@ useEffect(() => {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Buscar na biblioteca"
                 aria-label="Buscar músicas, álbuns ou artistas"
-                className="flex-1 min-w-0 h-7 bg-transparent border-none outline-none text-sm text-[var(--text-primary)] placeholder:text-[var(--text-disabled)] focus:ring-0 max-w-[140px]"
+                className="flex-1 min-w-0 h-7 bg-transparent border-none outline-none text-sm text-[var(--text-primary)] placeholder:text-[var(--text-disabled)] focus:ring-0 focus-visible:outline-none max-w-[140px]"
+                style={{ outline: 'none' }}
               />
             </div>
             <ClassificationMenu sort={prefs.sort} view={prefs.view} onSortChange={(s) => updatePrefs({ sort: s })} onViewChange={(v) => updatePrefs({ view: v })} />
