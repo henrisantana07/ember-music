@@ -124,7 +124,18 @@ export function Topbar() {
 
       {/* Spotify-style search cluster with Home pill + Search box + Sort/View menu. */}
       <div className="hidden md:flex items-center gap-2 flex-1 max-w-2xl min-w-0 z-10">
-
+        <button
+          type="button"
+          onClick={() => updateTopLib({ sort: 'recent' })}
+          aria-label="Classificar por recentes"
+          title="Recentes"
+          className="hidden md:inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer"
+          style={{ color: topLibPrefs.sort === 'recent' ? 'var(--text-primary)' : 'var(--text-secondary)' }}
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={topLibPrefs.sort === 'recent' ? 2.5 : 2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3" />
+          </svg>
+        </button>
         <Link
           href="/"
           aria-label="Início"
