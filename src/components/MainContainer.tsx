@@ -10,9 +10,14 @@ export function MainContainer({ children }: { children: React.ReactNode }) {
     // ~7800px e o header centralizado do artista era empurrado para fora da
     // tela. Com `min-w-0` a página fica na largura da viewport e o carrossel
     // rola internamente, como deveria.
+    //
+    // `main-container` vai no `className` (div interno), não no wrapper: é o
+    // div interno que tem `overflow-y-auto` e é o alvo do `scrollTo(0, 0)`
+    // que o PageTransition dispara ao navegar. No wrapper o scrollTo seria
+    // no-op, porque o wrapper não rola.
     <CustomScroll
-      className="px-4 md:px-6 py-5 flex flex-col pb-24 md:pb-5"
-      wrapperClassName="main-container flex-1 min-h-0 min-w-0"
+      className="main-container px-4 md:px-6 py-5 flex flex-col pb-24 md:pb-5"
+      wrapperClassName="flex-1 min-h-0 min-w-0"
     >
       {children}
     </CustomScroll>
