@@ -49,6 +49,20 @@ export function isLikedItem(item: LibraryItem): boolean {
   return item.type === 'liked'
 }
 
+/**
+ * Mantém a coleção de curtidas fixada na primeira posição, independentemente
+ * da ordenação escolhida (Recentes, Alfabética, Criador…). Sem isto o
+ * `sortLibraryItems` poderia empurrar "Músicas curtidas" para o meio da lista,
+ * já que ela não tem `createdAt`.
+ *
+ * Pura e estável: não muta o array recebido e não duplica o item fixado.
+ */
+export function pinLikedFirst<T extends LibraryItem>(items: T[]): T[] {
+  const pinned = items.filter(isLikedItem)
+  if (pinned.length === 0) return [...items]
+  return [...pinned, ...items.filter((item) => !isLikedItem(item))]
+}
+
 function playlistToLibraryItem(playlist: PlaylistItem, creatorDisplayName: string): LibraryItem {
   return {
     id: playlist.id,

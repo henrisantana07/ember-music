@@ -21,7 +21,7 @@ import { CustomScroll } from '@/components/CustomScroll'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
 import { SaveAlbumButton } from '@/components/SaveAlbumButton'
 import { EmptyState, LoadingState } from '@/components/ui/states'
-import { buildLibraryItems, isLikedItem } from '@/lib/library/types'
+import { buildLibraryItems, isLikedItem, pinLikedFirst } from '@/lib/library/types'
 import { filterLibraryItems } from '@/lib/library/filterLibraryItems'
 import { sortLibraryItems } from '@/lib/library/sortLibraryItems'
 import type { LibraryItem, LibraryItemType } from '@/lib/library/types'
@@ -77,8 +77,6 @@ function RailItem({ show, children, className = '' }: { show: boolean; children:
   )
 }
 
-
-
 /** Tile de capa normalizado: curtidas (coração sobre gradação de acento),
  *  imagem, ou inicial sobre a superfície mais alta. Mesmo padrão na lista,
  *  na grade, no drawer e no rail. */
@@ -109,6 +107,46 @@ function ItemCover({ item, size }: { item: LibraryItem; size: 'row' | 'grid' }) 
       <span className="text-label-medium font-bold" style={{ color: 'var(--text-primary)' }}>
         {item.title.charAt(0).toUpperCase()}
       </span>
+    </span>
+  )
+}
+
+/** Reconstrói o `Album` mínimo que o `SaveAlbumButton` consome a partir do
+ *  item normalizado da biblioteca — evita `as any` e mantém o tipo real. */
+function libraryItemToAlbum(item: LibraryItem): Album {
+  return {
+    id: item.id,
+    name: item.title,
+    artist_id: '',
+    artist_name: item.creator || item.subtitle || '',
+    image: item.imageUrl || '',
+    release_date: item.createdAt || '',
+    total_tracks: 0,
+    url: '',
+  }
+}
+
+/** Marcador discreto do item fixado ("Músicas curtidas"). */
+function PinnedBadge() {
+  return (
+    <span className="inline-flex flex-shrink-0 items-center" title="Fixado">
+      <svg
+        className="w-3 h-3"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        style={{ color: 'var(--text-disabled)' }}
+        aria-hidden="true"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 17v5" />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"
+        />
+      </svg>
+      <span className="sr-only">Fixado</span>
     </span>
   )
 }
@@ -274,7 +312,8 @@ useEffect(() => {
   const visibleItems = useMemo(() => {
     /* Curtidas são um atalho fixo: ficam sempre no topo, fora do filtro de
        tipo e da busca — chips e consulta restringem apenas as coleções de
-       playlists/artistas/álbuns abaixo delas. */
+       playlists/artistas/álbuns abaixo delas. `pinLikedFirst` garante que a
+       ordenação escolhida nunca mova o item fixado da primeira posição. */
     const fixed = libraryItems.filter((i) => i.type === 'liked')
     const candidates = filterLibraryItems(
       libraryItems.filter((i) => i.type !== 'liked'),
@@ -282,7 +321,7 @@ useEffect(() => {
       typeFilter,
     )
     const cleanCandidates = candidates.filter((i) => !(i.type === 'album' && !i.creator))
-    return sortLibraryItems([...fixed, ...cleanCandidates], prefs.sort)
+    return pinLikedFirst(sortLibraryItems([...fixed, ...cleanCandidates], prefs.sort))
   }, [libraryItems, query, typeFilter, prefs.sort])
 
   const libraryLoading = !userLoading && (playlistsLoading || artistsLoading)
@@ -306,7 +345,10 @@ useEffect(() => {
       >
         {!compact && <ItemCover item={item} size="row" />}
         <span className="min-w-0 flex-1">
-          <span className="block truncate">{item.title}</span>
+          <span className="flex items-center gap-1.5 min-w-0">
+            <span className="truncate">{item.title}</span>
+            {item.type === 'liked' && <PinnedBadge />}
+          </span>
           {!compact && item.subtitle && (
             <span className="block truncate text-label-medium" style={{ color: 'var(--text-disabled)' }}>
               {item.subtitle}
@@ -315,7 +357,7 @@ useEffect(() => {
         </span>
         {!compact && item.type === 'album' && (
           <span className="flex-shrink-0">
-            <SaveAlbumButton album={{ id: item.id, name: item.title, artist_name: item.creator || item.subtitle || '', image: item.imageUrl || '' } as any} />
+            <SaveAlbumButton album={libraryItemToAlbum(item)} />
           </span>
         )}
       </Link>
@@ -341,7 +383,7 @@ useEffect(() => {
                 }`}
                 title={item.title}
               >
-                <span className="w-14 h-14 flex-shrink-0 inline-flex items-center justify-center">
+                <span className="relative w-14 h-14 flex-shrink-0 inline-flex items-center justify-center">
                   {item.type === 'liked' ? (
                     <svg className="w-10 h-10" viewBox="0 0 24 24" fill="currentColor" style={{ color: "var(--accent-solid)" }}>
                       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
@@ -352,6 +394,11 @@ useEffect(() => {
                     <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                     </svg>
+                  )}
+                  {item.type === 'liked' && (
+                    <span className="absolute top-0 right-0">
+                      <PinnedBadge />
+                    </span>
                   )}
                 </span>
               </Link>
@@ -451,13 +498,16 @@ useEffect(() => {
                         }`}
                       >
                         <ItemCover item={item} size="grid" />
-                        <span className="block truncate text-body-medium">{item.title}</span>
+                        <span className="flex items-center gap-1.5 min-w-0">
+                          <span className="truncate text-body-medium">{item.title}</span>
+                          {item.type === 'liked' && <PinnedBadge />}
+                        </span>
                         <span className="block truncate text-label-medium" style={{ color: 'var(--text-disabled)' }}>
                           {item.type === 'playlist' ? 'Playlist' : item.type === 'album' ? 'Álbum' : item.type === 'artist' ? 'Artista' : 'Curtidas'}
                         </span>
                         {item.type === 'album' && (
                           <div className="absolute bottom-2 right-2">
-                            <SaveAlbumButton album={{ id: item.id, name: item.title, artist_name: item.creator || item.subtitle || '', image: item.imageUrl || '' } as any} />
+                            <SaveAlbumButton album={libraryItemToAlbum(item)} />
                           </div>
                         )}
                       </Link>
@@ -619,7 +669,10 @@ useEffect(() => {
                   >
                     <ItemCover item={item} size="row" />
                     <span className="min-w-0">
-                      <span className="block truncate">{item.title}</span>
+                      <span className="flex items-center gap-1.5 min-w-0">
+                        <span className="truncate">{item.title}</span>
+                        {item.type === 'liked' && <PinnedBadge />}
+                      </span>
                       <span className="block truncate text-label-medium" style={{ color: 'var(--text-disabled)' }}>
                         {item.type === 'playlist' ? 'Playlist' : item.type === 'album' ? 'Álbum' : item.type === 'artist' ? 'Artista' : 'Curtidas'}
                       </span>

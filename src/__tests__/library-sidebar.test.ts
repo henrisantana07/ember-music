@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { filterLibraryItems } from '@/lib/library/filterLibraryItems'
 import { sortLibraryItems } from '@/lib/library/sortLibraryItems'
-import { buildLibraryItems } from '@/lib/library/types'
+import { buildLibraryItems, pinLikedFirst } from '@/lib/library/types'
 import type { LibraryItem } from '@/lib/library/types'
 
 function item(partial: Partial<LibraryItem> & Pick<LibraryItem, 'id' | 'title'>): LibraryItem {
@@ -152,5 +152,27 @@ describe('buildLibraryItems', () => {
       createdAt: '2024-11-01',
       href: '/albums/al1',
     })
+  })
+})
+
+describe('pinLikedFirst', () => {
+  const liked = item({ id: 'liked', title: 'Músicas curtidas', type: 'liked' })
+  const almir = item({ id: 'a', title: 'Almir Guinéto', createdAt: '2025-03-01T00:00:00Z' })
+  const zeca = item({ id: 'z', title: 'Zeca Pagodinho', createdAt: '2024-01-01T00:00:00Z' })
+
+  it('mantém curtidas na primeira posição mesmo depois de ordenar', () => {
+    const sorted = sortLibraryItems([almir, liked, zeca], 'alphabetical')
+    expect(pinLikedFirst(sorted)[0].type).toBe('liked')
+  })
+
+  it('não muta o array recebido', () => {
+    const source = [almir, liked]
+    const result = pinLikedFirst(source)
+    expect(source.map((i) => i.id)).toEqual(['a', 'liked'])
+    expect(result.map((i) => i.id)).toEqual(['liked', 'a'])
+  })
+
+  it('sem curtidas, preserva a ordem recebida', () => {
+    expect(pinLikedFirst([almir, zeca]).map((i) => i.id)).toEqual(['a', 'z'])
   })
 })
