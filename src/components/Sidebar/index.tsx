@@ -11,6 +11,7 @@ import { useSidebarStore } from '@/lib/sidebar-store'
 import { useUser } from '@/hooks/use-user'
 import { useAvatar } from '@/hooks/use-avatar'
 import { useLibraryPreferences } from '@/hooks/use-library-preferences'
+import { usePinnedPlaylists } from '@/hooks/use-pinned-playlists'
 import { AnimatePresence, motion } from 'motion/react'
 import { scrimVariants, drawerVariants, TRANSITION } from '@/lib/motion'
 import { FilterChip } from '@/components/ui/FilterChip'
@@ -24,6 +25,7 @@ import { EmptyState, LoadingState } from '@/components/ui/states'
 import { buildLibraryItems, isLikedItem, pinLikedFirst } from '@/lib/library/types'
 import { filterLibraryItems } from '@/lib/library/filterLibraryItems'
 import { sortLibraryItems } from '@/lib/library/sortLibraryItems'
+import { orderPinnedFirst } from '@/lib/library/pinLibraryItems'
 import type { LibraryItem, LibraryItemType } from '@/lib/library/types'
 import type { Album } from '@/types/music'
 
@@ -174,6 +176,7 @@ export default function Sidebar() {
   const { user, loading: userLoading } = useUser()
   const avatarUrl = useAvatar(user?.id)
   const { prefs, update: updatePrefs } = useLibraryPreferences()
+  const { ids: pinnedIds, isPinned } = usePinnedPlaylists()
 
   // Filtro de tipo: seleção única, removível — clicar no chip ativo limpa (§5.1).
   const [typeFilter, setTypeFilter] = useState<LibraryItemType | null>(null)
@@ -321,8 +324,12 @@ useEffect(() => {
       typeFilter,
     )
     const cleanCandidates = candidates.filter((i) => !(i.type === 'album' && !i.creator))
-    return pinLikedFirst(sortLibraryItems([...fixed, ...cleanCandidates], prefs.sort))
-  }, [libraryItems, query, typeFilter, prefs.sort])
+    /* Fixadas manualmente vêm logo depois das curtidas, na ordem de fixação
+       (prioridade/chegada). `pinLikedFirst` mantém "Músicas curtidas" no topo. */
+    return pinLikedFirst(
+      orderPinnedFirst(sortLibraryItems([...fixed, ...cleanCandidates], prefs.sort), pinnedIds),
+    )
+  }, [libraryItems, query, typeFilter, prefs.sort, pinnedIds])
 
   const libraryLoading = !userLoading && (playlistsLoading || artistsLoading)
 
@@ -347,7 +354,7 @@ useEffect(() => {
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5 min-w-0">
             <span className="truncate">{item.title}</span>
-            {item.type === 'liked' && <PinnedBadge />}
+            {(item.type === 'liked' || isPinned(item.id)) && <PinnedBadge />}
           </span>
           {!compact && item.subtitle && (
             <span className="block truncate text-label-medium" style={{ color: 'var(--text-disabled)' }}>
@@ -395,7 +402,7 @@ useEffect(() => {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                     </svg>
                   )}
-                  {item.type === 'liked' && (
+                  {(item.type === 'liked' || isPinned(item.id)) && (
                     <span className="absolute top-0 right-0">
                       <PinnedBadge />
                     </span>
@@ -500,7 +507,7 @@ useEffect(() => {
                         <ItemCover item={item} size="grid" />
                         <span className="flex items-center gap-1.5 min-w-0">
                           <span className="truncate text-body-medium">{item.title}</span>
-                          {item.type === 'liked' && <PinnedBadge />}
+                          {(item.type === 'liked' || isPinned(item.id)) && <PinnedBadge />}
                         </span>
                         <span className="block truncate text-label-medium" style={{ color: 'var(--text-disabled)' }}>
                           {item.type === 'playlist' ? 'Playlist' : item.type === 'album' ? 'Álbum' : item.type === 'artist' ? 'Artista' : 'Curtidas'}
@@ -671,7 +678,7 @@ useEffect(() => {
                     <span className="min-w-0">
                       <span className="flex items-center gap-1.5 min-w-0">
                         <span className="truncate">{item.title}</span>
-                        {item.type === 'liked' && <PinnedBadge />}
+                        {(item.type === 'liked' || isPinned(item.id)) && <PinnedBadge />}
                       </span>
                       <span className="block truncate text-label-medium" style={{ color: 'var(--text-disabled)' }}>
                         {item.type === 'playlist' ? 'Playlist' : item.type === 'album' ? 'Álbum' : item.type === 'artist' ? 'Artista' : 'Curtidas'}
