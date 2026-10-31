@@ -560,7 +560,8 @@ function PlaylistContent() {
               aria-label="Fixar na biblioteca"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={isPinned(id) ? 2.5 : 1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 17v5m-3-11l3-3 3 3m-6 0h6" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.414l-4.743-4.743A1 1 0 018 14V7a1 1 0 011-1h3a1 1 0 011 1v7a1 1 0 01-.293.707z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11V3m0 0L18 6m-3-3l-3 3" />
               </svg>
             </button>
           </div>
