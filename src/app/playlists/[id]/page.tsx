@@ -555,7 +555,7 @@ function PlaylistContent() {
             <button
               onClick={() => togglePin(id)}
               className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer"
-              style={{ color: isPinned(id) ? 'var(--accent-from)' : 'var(--text-secondary)' }}
+              style={{ color: isPinned(id) ? 'var(--accent-from)' : 'var(--text-disabled)' }}
               title={isPinned(id) ? 'Desafixar da biblioteca' : 'Fixar na biblioteca'}
               aria-label="Fixar na biblioteca"
             >
