@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, waitFor } from '@testing-library/react'
 import React from 'react'
-import { KawarpBackground } from '@/components/Player/KawarpBackground'
+import { KawarpBackground, KAWARP_DEFAULTS } from '@/components/Player/KawarpBackground'
 
 // Espiões da API imperativa do Kawarp. Ficam fora do factory do mock para
 // poderem ser inspecionados nos testes.
@@ -47,6 +47,19 @@ describe('KawarpBackground', () => {
     kawarpApi.loadGradient.mockClear()
     kawarpApi.loadImage.mockClear()
     kawarpApi.start.mockClear()
+  })
+
+  it('mantém as configurações de Warp/Blur/Speed/Transition/etc. desejadas', () => {
+    expect(KAWARP_DEFAULTS).toEqual({
+      warpIntensity: 1.0,
+      blurPasses: 8,
+      animationSpeed: 1.0,
+      transitionDuration: 1000,
+      saturation: 1.5,
+      tintIntensity: 0.15,
+      dithering: 0.008,
+      scale: 1.0,
+    })
   })
 
   it('não renderiza nada se não houver capa nem paleta', () => {

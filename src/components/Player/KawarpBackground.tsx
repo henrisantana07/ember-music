@@ -12,6 +12,27 @@ const KawarpCanvas = dynamic(
   { ssr: false }
 )
 
+/**
+ * Configuração do Kawarp usada na hero.
+ *
+ * Equivale ao painel de ajustes da biblioteca:
+ * Warp 1.00 · Blur 8 · Speed 1.0× · Transition 1.0s · Saturation 1.50 ·
+ * Tint 15% · Dither 8.0 · Scale 1.00.
+ *
+ * `dithering` é a única que muda de escala no painel: 0.008 na API aparece
+ * como 8.0 quando a UI trabalha em milésimos (0–100).
+ */
+export const KAWARP_DEFAULTS = {
+  warpIntensity: 1.0,
+  blurPasses: 8,
+  animationSpeed: 1.0,
+  transitionDuration: 1000,
+  saturation: 1.5,
+  tintIntensity: 0.15,
+  dithering: 0.008,
+  scale: 1.0,
+} as const
+
 export interface KawarpBackgroundProps {
   /** URL da capa do álbum/vídeo (fonte de fallback quando não há paleta) */
   coverUrl?: string | null
@@ -96,14 +117,14 @@ export function KawarpBackground({
   dimLevel = 0.35,
   palette,
   gradientAngle = 135,
-  warpIntensity = 1.0,
-  blurPasses = 8,
-  animationSpeed = 1.0,
-  transitionDuration = 1000,
-  saturation = 1.5,
-  tintIntensity = 0.15,
-  dithering = 0.008,
-  scale = 1.0,
+  warpIntensity = KAWARP_DEFAULTS.warpIntensity,
+  blurPasses = KAWARP_DEFAULTS.blurPasses,
+  animationSpeed = KAWARP_DEFAULTS.animationSpeed,
+  transitionDuration = KAWARP_DEFAULTS.transitionDuration,
+  saturation = KAWARP_DEFAULTS.saturation,
+  tintIntensity = KAWARP_DEFAULTS.tintIntensity,
+  dithering = KAWARP_DEFAULTS.dithering,
+  scale = KAWARP_DEFAULTS.scale,
 }: KawarpBackgroundProps) {
   const [failedSource, setFailedSource] = useState<string | null>(null)
   const [kawarpReady, setKawarpReady] = useState(false)
