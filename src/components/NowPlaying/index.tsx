@@ -20,6 +20,8 @@ import {
   Music, Trash2, MoreHorizontal, Maximize2, Minimize2, Maximize, Minimize,
 } from 'lucide-react'
 import { extractCoverPalette, type CoverPalette } from '@/lib/color/extractCoverPalette'
+import { cacheCoverPalette, getCachedCoverPalette } from '@/lib/color/coverPaletteCache'
+import { getYouTubeVideoIdFromLink, isValidYouTubeVideoId } from '@/lib/youtube/video-id'
 import { KawarpBackground } from '@/components/Player/KawarpBackground'
 import { logKawarp } from '@/lib/debug/kawarp'
 import { getHighResCoverUrl } from '@/lib/image-utils'
@@ -324,9 +326,31 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     }
     let cancelled = false
 
-    // Um único ponto de entrada para a paleta: loga a origem (servidor ou
-    // cliente) e evita `setPalette` depois que a faixa já mudou.
-    const applyPalette = (next: CoverPalette | null, source: 'servidor' | 'cliente') => {
+    /* O ID pode vir do campo estruturado, do prefixo do id interno ou — quando
+       a faixa veio de um link colado — do próprio `youtubeUrl`/`url`. Tudo isso
+       é resolvido localmente: nenhuma chamada à YouTube Data API. */
+    const videoId =
+      currentTrack?.youtubeVideoId ||
+      (currentTrack?.id?.startsWith('youtube:') ? currentTrack.id.slice('youtube:'.length) : null) ||
+      getYouTubeVideoIdFromLink(currentTrack?.youtubeUrl) ||
+      getYouTubeVideoIdFromLink(currentTrack?.url)
+
+    const validVideoId = isValidYouTubeVideoId(videoId) ? videoId : null
+    const paletteKey = validVideoId ? `yt:${validVideoId}` : `url:${baseCover}`
+
+    // Extraída uma vez: cache em memória + localStorage evita repetir download
+    // e amostragem toda vez que a faixa volta para a fila.
+    const cached = getCachedCoverPalette(paletteKey)
+    if (cached) {
+      logKawarp('paleta reaproveitada do cache local', cached)
+      // Defere para não disparar cascata de render dentro do corpo do effect.
+      Promise.resolve().then(() => {
+        if (!cancelled) setPalette(cached)
+      })
+      return
+    }
+
+    const applyPalette = (next: CoverPalette | null, source: 'cache' | 'servidor' | 'cliente') => {
       if (cancelled || !next) return
       logKawarp(`paleta extraída (${source})`, {
         primary: next.primary,
@@ -336,39 +360,49 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       setPalette(next)
     }
 
-    const videoId =
-      currentTrack?.youtubeVideoId ||
-      (currentTrack?.id?.startsWith('youtube:') ? currentTrack.id.replace('youtube:', '') : null)
-
-    // Tenta primeiro via rota do servidor (/api/cover-palette/${videoId}) para evitar CORS
-    if (videoId && /^[A-Za-z0-9_-]{11}$/.test(videoId)) {
-      fetch(`/api/cover-palette/${videoId}`)
+    /* Etapa 1 — paleta instantânea da rota do Ember. Ela baixa a thumbnail de
+       `i.ytimg.com` e extrai as cores no servidor (sharp), sem API key/quota. */
+    if (validVideoId) {
+      fetch(`/api/cover-palette/${validVideoId}`)
         .then((r) => (r.ok ? r.json() : null))
         .then((res) => {
-          if (!cancelled && res && !res.isFallback) {
-            applyPalette(
-              {
-                primary: res.primary,
-                secondary: res.secondary,
-                tertiary: res.base,
-              },
-              'servidor'
-            )
-            return
-          }
-          extractCoverPalette(baseCover).then((next) => applyPalette(next, 'cliente'))
+          if (cancelled || !res || res.isFallback) return
+          applyPalette(
+            {
+              primary: res.primary,
+              secondary: res.secondary,
+              /* `res.base` é um quase-preto (L≈0.07). Como terceira parada do
+                 gradiente do Kawarp ele apagaria a cor; o `secondary` mantém o
+                 fundo colorido até a extração rica (3 cores) chegar. */
+              tertiary: res.secondary,
+            },
+            'servidor'
+          )
         })
         .catch(() => {
-          extractCoverPalette(baseCover).then((next) => applyPalette(next, 'cliente'))
+          /* sem paleta de servidor, a extração no cliente abaixo assume */
         })
-    } else {
-      extractCoverPalette(baseCover).then((next) => applyPalette(next, 'cliente'))
     }
+
+    /* Etapa 2 — extração rica no cliente: três matizes distintos, com fallback
+       para `/api/image-proxy` se o CDN bloquear CORS no canvas. É fonte final
+       porque é a que entrega as três cores vivas para o `loadGradient`. */
+    extractCoverPalette(baseCover).then((next) => {
+      if (!next || cancelled) return
+      applyPalette(next, 'cliente')
+      cacheCoverPalette(paletteKey, next)
+    })
 
     return () => {
       cancelled = true
     }
-  }, [baseCover, currentTrack?.id, currentTrack?.youtubeVideoId])
+  }, [
+    baseCover,
+    currentTrack?.id,
+    currentTrack?.youtubeVideoId,
+    currentTrack?.youtubeUrl,
+    currentTrack?.url,
+  ])
 
   // Só promove para a capa HD quando ela realmente carrega (evita404/flash quebrado)
   useEffect(() => {

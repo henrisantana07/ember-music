@@ -20,8 +20,18 @@ vi.mock('@kawarp/react', async () => {
     { src, className, animationSpeed }: { src?: string; className?: string; animationSpeed?: number },
     ref: React.ForwardedRef<unknown>
   ) {
+    /* O handle do @kawarp/react é entregue no layout effect, mas o núcleo
+       WebGL só existe depois do useEffect. O mock reproduz essa janela para
+       garantir que o KawarpBackground espere e tente de novo. */
+    const coreRef = React.useRef<unknown>(null)
+    React.useEffect(() => {
+      coreRef.current = {}
+    }, [])
+
     React.useImperativeHandle(ref, () => ({
-      instance: null,
+      get instance() {
+        return coreRef.current
+      },
       loadImage: kawarpApi.loadImage,
       loadBlob: vi.fn(),
       loadGradient: kawarpApi.loadGradient,

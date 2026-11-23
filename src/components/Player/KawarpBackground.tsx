@@ -203,63 +203,108 @@ export function KawarpBackground({
   // `transitionDuration`.
   useEffect(() => {
     if (!kawarpReady || !sourceKey) return
-    const instance = kawarpRef.current
-    if (!instance) return
+    const currentHandle = kawarpRef.current
+    if (!currentHandle) return
+    // Cópia explicitamente não-nula: a narrowed const se perde dentro das
+    // function declarations hoisted usadas abaixo.
+    const handle: KawarpRef = currentHandle
 
-    if (gradientColors) {
-      const source: GradientSource = {
-        kind: 'gradient',
-        colors: gradientColors,
-        angle: gradientAngle,
+    let cancelled = false
+    let frame: number | null = null
+    let attempts = 0
+    const MAX_ATTEMPTS = 60 // ~1s a 60fps antes de desistir do WebGL
+
+    function schedule(fn: () => void) {
+      if (typeof requestAnimationFrame === 'function') {
+        frame = requestAnimationFrame(fn)
+      } else {
+        frame = setTimeout(fn, 16) as unknown as number
       }
-      latestSource.current = source
-      logKawarp('gradiente aplicado', { colors: source.colors, angle: source.angle })
-      try {
-        instance.loadGradient(source.colors, source.angle)
-        // O gradiente é só a textura; quem anima é o loop de domain warping
-        // do Kawarp. `start()` é idempotente e garante o loop mesmo que a
-        // instância tenha sido criada sem `src`/`autoPlay`.
-        instance.start()
-        logKawarp('loop de animação do Kawarp ativo')
-      } catch {
-        // Contexto WebGL perdido/indisponível: esconde o canvas e deixa o
-        // gradiente CSS do `.now-cover-panel` (mesmas cores) como fundo.
-        logKawarp('falha ao aplicar o gradiente', { colors: source.colors })
-        if (aliveRef.current) setFailedSource(sourceKey)
-      }
-      return
     }
 
-    if (!proxiedSrc) {
-      latestSource.current = null
-      return
-    }
+    function apply() {
+      if (cancelled) return
 
-    const source: ImageSource = { kind: 'image', src: proxiedSrc }
-    latestSource.current = source
-    logKawarp('capa enviada ao Kawarp (sem paleta)', { src: source.src })
-
-    instance.loadImage(source.src).then(
-      () => {
-        if (!aliveRef.current) return
-        // A paleta pode ter chegado enquanto a capa carregava. Nesse caso o
-        // gradiente vence: reaplica a fonte mais recente.
-        const latest = latestSource.current
-        if (latest?.kind === 'gradient') {
-          logKawarp('gradiente reaplicado depois da capa', { colors: latest.colors })
-          try {
-            instance.loadGradient(latest.colors, latest.angle)
-          } catch {
-            if (aliveRef.current) setFailedSource(`gradient:${latest.colors.join('|')}`)
-          }
+      /* `useImperativeHandle` do @kawarp/react entrega o handle no layout
+         effect, mas o núcleo WebGL só é criado no `useEffect` dele. Se a gente
+         chamar `loadGradient()` nessa janela, o método faz optional-chain em
+         `kawarpRef.current` e não faz nada — era exatamente o caso em que o
+         canvas montava mas o gradiente nunca aparecia. Espera o núcleo. */
+      if (!handle.instance) {
+        if (attempts++ >= MAX_ATTEMPTS) {
+          logKawarp('núcleo WebGL não inicializou')
+          if (aliveRef.current) setFailedSource(sourceKey)
+          return
         }
-        instance.start()
-      },
-      () => {
-        logKawarp('falha ao carregar a capa', { src: source.src })
-        if (aliveRef.current) setFailedSource(sourceKey)
+        schedule(apply)
+        return
       }
-    )
+
+      if (gradientColors) {
+        const source: GradientSource = {
+          kind: 'gradient',
+          colors: gradientColors,
+          angle: gradientAngle,
+        }
+        latestSource.current = source
+        logKawarp('gradiente aplicado', { colors: source.colors, angle: source.angle })
+        try {
+          handle.loadGradient(source.colors, source.angle)
+          // O gradiente é só a textura; quem anima é o loop de domain warping
+          // do Kawarp. `start()` é idempotente e garante o loop mesmo que a
+          // instância tenha sido criada sem `src`/`autoPlay`.
+          handle.start()
+          logKawarp('loop de animação do Kawarp ativo')
+        } catch {
+          // Contexto WebGL perdido/indisponível: esconde o canvas e deixa o
+          // gradiente CSS do `.now-cover-panel` (mesmas cores) como fundo.
+          logKawarp('falha ao aplicar o gradiente', { colors: source.colors })
+          if (aliveRef.current) setFailedSource(sourceKey)
+        }
+        return
+      }
+
+      if (!proxiedSrc) {
+        latestSource.current = null
+        return
+      }
+
+      const source: ImageSource = { kind: 'image', src: proxiedSrc }
+      latestSource.current = source
+      logKawarp('capa enviada ao Kawarp (sem paleta)', { src: source.src })
+
+      handle.loadImage(source.src).then(
+        () => {
+          if (!aliveRef.current) return
+          // A paleta pode ter chegado enquanto a capa carregava. Nesse caso o
+          // gradiente vence: reaplica a fonte mais recente.
+          const latest = latestSource.current
+          if (latest?.kind === 'gradient') {
+            logKawarp('gradiente reaplicado depois da capa', { colors: latest.colors })
+            try {
+              handle.loadGradient(latest.colors, latest.angle)
+            } catch {
+              if (aliveRef.current) setFailedSource(`gradient:${latest.colors.join('|')}`)
+            }
+          }
+          handle.start()
+        },
+        () => {
+          logKawarp('falha ao carregar a capa', { src: source.src })
+          if (aliveRef.current) setFailedSource(sourceKey)
+        }
+      )
+    }
+
+    apply()
+
+    return () => {
+      cancelled = true
+      if (frame !== null) {
+        if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(frame)
+        else clearTimeout(frame)
+      }
+    }
   }, [kawarpReady, sourceKey, gradientColors, gradientAngle, proxiedSrc])
 
   if (!mounted || hasError) return null
