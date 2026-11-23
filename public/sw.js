@@ -50,7 +50,12 @@ self.addEventListener('fetch', (event) => {
         const clone = response.clone()
         caches.open(CACHE).then((cache) => cache.put(event.request, clone))
         return response
-      }).catch(() => caches.match(event.request))
+      }).catch(async () => {
+        const cached = await caches.match(event.request)
+        if (cached) return cached
+        const offlinePage = await caches.match('/offline')
+        return offlinePage || new Response('Offline', { status: 503, statusText: 'Service Unavailable' })
+      })
     )
     return
   }
@@ -64,7 +69,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE).then((cache) => cache.put(event.request, clone))
         }
         return response
-      }).catch(() => cached)
+      }).catch(() => cached || new Response('', { status: 504 }))
 
       return cached || fetchPromise
     })

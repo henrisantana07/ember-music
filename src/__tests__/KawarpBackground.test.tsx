@@ -24,7 +24,7 @@ describe('KawarpBackground', () => {
       const canvas = container.querySelector('[data-testid="kawarp-canvas"]')
       expect(canvas).toBeInTheDocument()
       expect(canvas?.getAttribute('data-src')).toContain('/api/image-proxy?src=')
-      expect(canvas?.getAttribute('data-speed')).toBe('0')
+      expect(canvas?.getAttribute('data-speed')).toBe('1')
     })
   })
 
@@ -34,7 +34,7 @@ describe('KawarpBackground', () => {
       const canvas = container.querySelector('[data-testid="kawarp-canvas"]')
       expect(canvas).toBeInTheDocument()
       expect(canvas?.getAttribute('data-src')).toBe('/covers/album.jpg')
-      expect(canvas?.getAttribute('data-speed')).toBe('0')
+      expect(canvas?.getAttribute('data-speed')).toBe('1')
     })
   })
 })
