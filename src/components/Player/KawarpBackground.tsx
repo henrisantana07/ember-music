@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback, useSyncExternalStore } from 'react'
 import dynamic from 'next/dynamic'
 import type { KawarpRef } from '@kawarp/react'
-import { KAWARP_DEBUG, logKawarp } from '@/lib/debug/kawarp'
+import { logKawarp } from '@/lib/debug/kawarp'
 
 // Carregamento dinâmico do Kawarp apenas no cliente (evita erros no SSR do Next.js).
 // O wrapper repassa a instância por prop, porque o `next/dynamic` reserva a
@@ -154,9 +154,11 @@ export function KawarpBackground({
     kawarpRef.current = instance
     setKawarpReady(instance !== null)
 
-    // Atalho de diagnóstico: no console do navegador,
-    // `__kawarp.instance.getOptions()` mostra a config ativa.
-    if (KAWARP_DEBUG && typeof window !== 'undefined') {
+    /* Atalho de diagnóstico disponível também em produção:
+       `__kawarp.instance.sampleSource(16)` mostra os pixels da textura atual.
+       Os logs `[ember/kawarp]` continuam só em dev/com flag, para não poluir
+       o console do usuário final. */
+    if (typeof window !== 'undefined') {
       ;(window as typeof window & { __kawarp?: KawarpRef | null }).__kawarp = instance
     }
     logKawarp(instance ? 'canvas montado' : 'canvas desmontado')
