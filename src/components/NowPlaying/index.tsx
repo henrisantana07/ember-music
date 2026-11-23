@@ -787,7 +787,10 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
           className={`now-cover-panel relative flex-1 ${wideCover ? 'md:flex-1' : 'md:flex-[3]'} flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 rounded-2xl ${showQueueOnMobile ? 'hidden md:flex' : ''} ${palette ? '' : 'now-cover-panel-empty'} transition-[flex-grow] duration-[var(--motion-duration-medium)] ease-[var(--motion-easing-surface)]`}
           style={panelStyle}
         >
-          {displayCover && <KawarpBackground coverUrl={displayCover} palette={palette} className="rounded-2xl" />}
+          {/* Sempre montado: o próprio KawarpBackground decide entre imagem da
+              capa, paleta extraída ou o gradiente padrão. O guard `displayCover &&`
+              impedia o canvas de existir justamente nas faixas sem capa. */}
+          <KawarpBackground coverUrl={displayCover} palette={palette} className="rounded-2xl" />
           <div ref={coverRef} className={`now-cover relative flex-shrink-0${queueMinimized || wideCover ? ' now-cover-min' : ''}`} style={{ aspectRatio: '1' }}>
             {baseCover && baseFailed !== currentTrack.id ? (
               <img
