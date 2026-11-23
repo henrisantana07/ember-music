@@ -225,13 +225,23 @@ export function KawarpBackground({
   // Deriva o tom do tint a partir da cor primária extraída da capa
   const derivedTintColor = palette?.primary ? hexToRgb01(palette.primary) : undefined
 
+  /* Último recurso: se a faixa não tem capa E não tem paleta (faixa local sem
+     artwork, por exemplo), ainda assim mantemos o canvas vivo com um gradiente
+     da identidade do app. Antes isso retornava `null` e a hero ficava só com o
+     CSS — era exatamente o caso em que nada do Kawarp aparecia. */
+  const effectiveGradientColors = useMemo(() => {
+    if (gradientColors) return gradientColors
+    if (proxiedSrc) return null
+    return ['#ff6a00', '#3b2a5a']
+  }, [gradientColors, proxiedSrc])
+
   // A imagem vem primeiro: é ela que o Kawarp deve amostrar. O gradiente só
   // entra na chave quando não há capa, porque a troca de faixa também troca
   // a chave e limpa um erro antigo.
   const sourceKey = proxiedSrc
     ? `image:${proxiedSrc}`
-    : gradientColors
-      ? `gradient:${gradientColors.join('|')}`
+    : effectiveGradientColors
+      ? `gradient:${effectiveGradientColors.join('|')}`
       : ''
 
   // A falha é amarrada à fonte que falhou: quando a paleta chega (ou a faixa
@@ -285,13 +295,13 @@ export function KawarpBackground({
 
       if (!proxiedSrc) {
         // Sem capa, as cores extraídas pelo Ember entram só como último recurso.
-        if (!gradientColors) {
+        if (!effectiveGradientColors) {
           latestSource.current = null
           return
         }
         const source: GradientSource = {
           kind: 'gradient',
-          colors: gradientColors,
+          colors: effectiveGradientColors,
           angle: gradientAngle,
         }
         latestSource.current = source
@@ -334,10 +344,10 @@ export function KawarpBackground({
           /* Só agora, com a imagem indisponível, entram as cores já extraídas
              pelo Ember. Assim o fundo não fica preto sem abandonar a imagem
              como fonte preferida. */
-          if (gradientColors) {
+          if (effectiveGradientColors) {
             const fallback: GradientSource = {
               kind: 'gradient',
-              colors: gradientColors,
+              colors: effectiveGradientColors,
               angle: gradientAngle,
             }
             logKawarp('usando gradiente da paleta como fallback', { colors: fallback.colors })
@@ -364,11 +374,12 @@ export function KawarpBackground({
         else clearTimeout(frame)
       }
     }
-  }, [kawarpReady, sourceKey, gradientColors, gradientAngle, proxiedSrc, setDebugStatus])
+  }, [kawarpReady, sourceKey, effectiveGradientColors, gradientAngle, proxiedSrc, setDebugStatus])
 
   if (!mounted || hasError) return null
-  // Sem capa e sem paleta não há o que desenhar; o fallback do painel cobre.
-  if (!proxiedSrc && !gradientColors) return null
+  // Sempre há uma fonte (a imagem, a paleta ou o gradiente padrão). Só some
+  // de verdade quando o WebGL falhou — e o CSS do painel assume.
+  if (!proxiedSrc && !effectiveGradientColors) return null
 
   return (
     <div

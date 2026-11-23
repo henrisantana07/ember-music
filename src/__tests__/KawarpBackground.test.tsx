@@ -73,9 +73,16 @@ describe('KawarpBackground', () => {
     })
   })
 
-  it('não renderiza nada se não houver capa nem paleta', () => {
+  it('ainda renderiza o gradiente padrão sem capa nem paleta', async () => {
     const { container } = render(<KawarpBackground coverUrl={null} />)
-    expect(container.firstChild).toBeNull()
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-testid="kawarp-canvas"]')).toBeInTheDocument()
+      expect(kawarpApi.loadGradient).toHaveBeenCalledWith(
+        ['#ff6a00', '#3b2a5a'],
+        135
+      )
+    })
   })
 
   it('usa a capa remota pelo proxy de imagem quando não há paleta', async () => {
