@@ -5,6 +5,7 @@ const withAnalyzer = withBundleAnalyzer({ enabled: process.env.ANALYZE === 'true
 
 let nextConfig: NextConfig = {
   compress: true,
+  serverExternalPackages: ['sharp'],
   logging: {
     fetches: { fullUrl: true },
   },
