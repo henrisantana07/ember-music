@@ -102,15 +102,17 @@ function hexToRgb01(hex: string): [number, number, number] | undefined {
  * Renderiza o fundo com o efeito característico do Kawarp (Kawase blur +
  * domain warping estilo Apple Music).
  *
- * A fonte preferida é a paleta extraída da capa: `loadGradient()` recebe
- * `primary`/`secondary`/`tertiary` e o Kawarp anima exatamente essas cores —
- * é o que faz o fundo “ser” a capa, e não uma cópia borrada dela. A capa em
- * si continua aparecendo na hero como `<img>`; o canvas é só o gradiente.
+ * A fonte preferida é a **imagem da capa**, não uma paleta já pronta. A URL
+ * passa pelo proxy interno (`/api/image-proxy`) e é entregue ao Kawarp via
+ * `loadImage()`: é o próprio Kawarp que amostra, borra e faz o domain
+ * warping em cima dos pixels reais da capa. A paleta extraída pelo Ember
+ * continua existindo, mas só para o CSS da hero (borda, sombra e o fallback
+ * `.now-cover-panel`) — ela não alimenta mais o canvas.
  *
- * Sem paleta (extração ainda em andamento ou falhou), a imagem passa pelo
- * proxy interno e vira a fonte do Kawarp. O `.now-cover-panel` do
- * `globals.css` fica por baixo como fallback estático enquanto o WebGL
- * inicializa.
+ * O gradiente (`loadGradient`) fica apenas como fallback: se a capa não
+ * carregar (404/CORS) e ainda houver paleta, ele assume para o fundo não
+ * ficar preto. Sem imagem e sem paleta, o CSS do painel cobre enquanto o
+ * WebGL inicializa.
  */
 export function KawarpBackground({
   coverUrl,
@@ -136,8 +138,8 @@ export function KawarpBackground({
   )
 
   const kawarpRef = useRef<KawarpRef | null>(null)
-  /* Última fonte pedida. Serve para reaplicar o gradiente caso um carregamento
-     de imagem que já estava em voo termine depois de a paleta chegar. */
+  /* Última fonte pedida. Serve para ignorar o término de um `loadImage` antigo
+     quando a faixa já trocou enquanto a imagem carregava. */
   const latestSource = useRef<KawarpSource | null>(null)
   const aliveRef = useRef(true)
 
@@ -173,9 +175,9 @@ export function KawarpBackground({
     return `/api/image-proxy?src=${encodeURIComponent(coverUrl)}`
   }, [coverUrl])
 
-  // Cores extraídas viram a fonte do Kawarp. `loadGradient` divide o espaço
-  // pelo número de cores − 1, então com uma cor só não existe gradiente:
-  // nesse caso a capa (fonte de imagem) assume.
+  /* Cores extraídas são só o fallback do canvas. `loadGradient` divide o
+     espaço pelo número de cores − 1, então com uma cor só não existe
+     gradiente — nesse caso não há fallback possível e o CSS cobre. */
   const gradientColors = useMemo(() => {
     if (!palette) return null
     const colors = [palette.primary, palette.secondary, palette.tertiary].filter(
@@ -187,10 +189,13 @@ export function KawarpBackground({
   // Deriva o tom do tint a partir da cor primária extraída da capa
   const derivedTintColor = palette?.primary ? hexToRgb01(palette.primary) : undefined
 
-  const sourceKey = gradientColors
-    ? `gradient:${gradientColors.join('|')}`
-    : proxiedSrc
-      ? `image:${proxiedSrc}`
+  // A imagem vem primeiro: é ela que o Kawarp deve amostrar. O gradiente só
+  // entra na chave quando não há capa, porque a troca de faixa também troca
+  // a chave e limpa um erro antigo.
+  const sourceKey = proxiedSrc
+    ? `image:${proxiedSrc}`
+    : gradientColors
+      ? `gradient:${gradientColors.join('|')}`
       : ''
 
   // A falha é amarrada à fonte que falhou: quando a paleta chega (ou a faixa
@@ -240,58 +245,69 @@ export function KawarpBackground({
         return
       }
 
-      if (gradientColors) {
+      if (!proxiedSrc) {
+        // Sem capa, as cores extraídas pelo Ember entram só como último recurso.
+        if (!gradientColors) {
+          latestSource.current = null
+          return
+        }
         const source: GradientSource = {
           kind: 'gradient',
           colors: gradientColors,
           angle: gradientAngle,
         }
         latestSource.current = source
-        logKawarp('gradiente aplicado', { colors: source.colors, angle: source.angle })
+        logKawarp('gradiente aplicado (sem capa)', { colors: source.colors, angle: source.angle })
         try {
           handle.loadGradient(source.colors, source.angle)
-          // O gradiente é só a textura; quem anima é o loop de domain warping
-          // do Kawarp. `start()` é idempotente e garante o loop mesmo que a
-          // instância tenha sido criada sem `src`/`autoPlay`.
           handle.start()
           logKawarp('loop de animação do Kawarp ativo')
         } catch {
-          // Contexto WebGL perdido/indisponível: esconde o canvas e deixa o
-          // gradiente CSS do `.now-cover-panel` (mesmas cores) como fundo.
           logKawarp('falha ao aplicar o gradiente', { colors: source.colors })
           if (aliveRef.current) setFailedSource(sourceKey)
         }
         return
       }
 
-      if (!proxiedSrc) {
-        latestSource.current = null
-        return
-      }
-
+      /* Caminho principal: a capa em si é a textura do Kawarp. Ela passa pelo
+         proxy interno, então é same-origin e o WebGL pode ler os pixels sem
+         problema de CORS. O Kawarp faz o sampling/blur/warp em cima da imagem. */
       const source: ImageSource = { kind: 'image', src: proxiedSrc }
       latestSource.current = source
-      logKawarp('capa enviada ao Kawarp (sem paleta)', { src: source.src })
+      logKawarp('capa enviada ao Kawarp', { src: source.src })
 
       handle.loadImage(source.src).then(
         () => {
           if (!aliveRef.current) return
-          // A paleta pode ter chegado enquanto a capa carregava. Nesse caso o
-          // gradiente vence: reaplica a fonte mais recente.
-          const latest = latestSource.current
-          if (latest?.kind === 'gradient') {
-            logKawarp('gradiente reaplicado depois da capa', { colors: latest.colors })
-            try {
-              handle.loadGradient(latest.colors, latest.angle)
-            } catch {
-              if (aliveRef.current) setFailedSource(`gradient:${latest.colors.join('|')}`)
-            }
-          }
+          // Se a faixa trocou durante o carregamento, um efeito mais novo já
+          // pediu outra imagem — não mexe no que está na tela.
+          if (latestSource.current !== source) return
           handle.start()
+          logKawarp('textura da capa ativa no Kawarp')
         },
         () => {
           logKawarp('falha ao carregar a capa', { src: source.src })
-          if (aliveRef.current) setFailedSource(sourceKey)
+          if (!aliveRef.current || latestSource.current !== source) return
+
+          /* Só agora, com a imagem indisponível, entram as cores já extraídas
+             pelo Ember. Assim o fundo não fica preto sem abandonar a imagem
+             como fonte preferida. */
+          if (gradientColors) {
+            const fallback: GradientSource = {
+              kind: 'gradient',
+              colors: gradientColors,
+              angle: gradientAngle,
+            }
+            logKawarp('usando gradiente da paleta como fallback', { colors: fallback.colors })
+            try {
+              handle.loadGradient(fallback.colors, fallback.angle)
+              handle.start()
+            } catch {
+              if (aliveRef.current) setFailedSource(`gradient:${fallback.colors.join('|')}`)
+            }
+            return
+          }
+          setFailedSource(sourceKey)
         }
       )
     }
@@ -308,8 +324,8 @@ export function KawarpBackground({
   }, [kawarpReady, sourceKey, gradientColors, gradientAngle, proxiedSrc])
 
   if (!mounted || hasError) return null
-  // Sem paleta e sem capa não há o que desenhar; o fallback do painel cobre.
-  if (!gradientColors && !proxiedSrc) return null
+  // Sem capa e sem paleta não há o que desenhar; o fallback do painel cobre.
+  if (!proxiedSrc && !gradientColors) return null
 
   return (
     <div

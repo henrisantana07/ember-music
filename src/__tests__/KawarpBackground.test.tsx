@@ -55,7 +55,8 @@ vi.mock('@kawarp/react', async () => {
 describe('KawarpBackground', () => {
   beforeEach(() => {
     kawarpApi.loadGradient.mockClear()
-    kawarpApi.loadImage.mockClear()
+    kawarpApi.loadImage.mockReset()
+    kawarpApi.loadImage.mockResolvedValue(undefined)
     kawarpApi.start.mockClear()
   })
 
@@ -104,7 +105,7 @@ describe('KawarpBackground', () => {
     expect(kawarpApi.loadGradient).not.toHaveBeenCalled()
   })
 
-  it('apresenta as cores extraídas no gradiente do Kawarp', async () => {
+  it('usa a imagem da capa como textura mesmo quando há paleta', async () => {
     const palette = {
       primary: '#e9d75d',
       secondary: '#47ff9f',
@@ -117,15 +118,31 @@ describe('KawarpBackground', () => {
 
     await waitFor(() => {
       expect(container.querySelector('[data-testid="kawarp-canvas"]')).toBeInTheDocument()
+      expect(kawarpApi.loadImage).toHaveBeenCalledWith('/covers/album.jpg')
+    })
+
+    // A paleta é só do CSS/fallback: o Kawarp amostra a imagem, não as cores.
+    expect(kawarpApi.loadGradient).not.toHaveBeenCalled()
+    expect(kawarpApi.start).toHaveBeenCalled()
+  })
+
+  it('só usa o gradiente da paleta quando a capa falha', async () => {
+    const palette = {
+      primary: '#e9d75d',
+      secondary: '#47ff9f',
+      tertiary: '#ff780a',
+    }
+    kawarpApi.loadImage.mockRejectedValueOnce(new Error('404'))
+
+    render(<KawarpBackground coverUrl="/covers/inexistente.jpg" palette={palette} />)
+
+    await waitFor(() => {
+      expect(kawarpApi.loadImage).toHaveBeenCalledWith('/covers/inexistente.jpg')
       expect(kawarpApi.loadGradient).toHaveBeenCalledWith(
         ['#e9d75d', '#47ff9f', '#ff780a'],
         135
       )
     })
-
-    // A capa é só fallback: com paleta, o gradiente é a fonte do canvas.
-    expect(kawarpApi.loadImage).not.toHaveBeenCalled()
-    // O gradiente é estático; a animação é o loop do Kawarp.
     expect(kawarpApi.start).toHaveBeenCalled()
   })
 

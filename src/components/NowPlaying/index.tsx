@@ -306,6 +306,12 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       ? `https://i.ytimg.com/vi/${currentTrack.youtubeVideoId}/hqdefault.jpg`
       : ''
 
+  // Capa efetivamente exibida: a HD quando ela carregou de verdade. É essa
+  // mesma imagem que vai para o Kawarp, para a textura do fundo bater com a
+  // capa da hero (e usar 1280px quando o vídeo tem maxresdefault).
+  const displayCover =
+    hdCover && currentTrack && hdCover.id === currentTrack.id ? hdCover.src : baseCover
+
   const coverRef = useRef<HTMLDivElement>(null)
 
   const playTrackAt = useCallback((queueIndex: number) => {
@@ -781,12 +787,12 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
           className={`now-cover-panel relative flex-1 ${wideCover ? 'md:flex-1' : 'md:flex-[3]'} flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 rounded-2xl ${showQueueOnMobile ? 'hidden md:flex' : ''} ${palette ? '' : 'now-cover-panel-empty'} transition-[flex-grow] duration-[var(--motion-duration-medium)] ease-[var(--motion-easing-surface)]`}
           style={panelStyle}
         >
-          {baseCover && <KawarpBackground coverUrl={baseCover} palette={palette} className="rounded-2xl" />}
+          {displayCover && <KawarpBackground coverUrl={displayCover} palette={palette} className="rounded-2xl" />}
           <div ref={coverRef} className={`now-cover relative flex-shrink-0${queueMinimized || wideCover ? ' now-cover-min' : ''}`} style={{ aspectRatio: '1' }}>
             {baseCover && baseFailed !== currentTrack.id ? (
               <img
                 key={currentTrack.id}
-                src={hdCover?.id === currentTrack.id ? hdCover.src : baseCover}
+                src={displayCover}
                 alt={currentTrack.name}
                 className="w-full h-full rounded-2xl object-cover animate-cover-in"
                 style={{ boxShadow: coverShadow }}
