@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { useEffect, useMemo, useState, useRef } from 'react'
+import { useEffect, useMemo, useState, useRef, useSyncExternalStore } from 'react'
 import type { ReactNode } from 'react'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { useArtistsStore } from '@/lib/artists-store'
@@ -44,6 +44,42 @@ const TYPE_FILTERS: { value: LibraryItemType; label: string }[] = [
   { value: 'artist', label: 'Artistas' },
   { value: 'album', label: 'Álbuns' },
 ]
+
+/* Largura da sidebar como store externo, igual às outras preferências locais.
+   O snapshot do servidor é sempre 320: ler localStorage durante o primer
+   render fazia a aside sair com largura diferente no HTML e no cliente, que é
+   exatamente o hydration mismatch #418 (args[]=HTML) visto em produção. */
+const WIDTH_KEY = 'ember:sidebar-width'
+const DEFAULT_WIDTH = 320
+const widthListeners = new Set<() => void>()
+
+function getWidthSnapshot(): number {
+  if (typeof window === 'undefined') return DEFAULT_WIDTH
+  try {
+    const raw = window.localStorage.getItem(WIDTH_KEY)
+    const parsed = raw ? parseInt(raw, 10) : NaN
+    if (!Number.isNaN(parsed) && parsed >= 320 && parsed <= 460) return parsed
+  } catch { /* storage indisponível */ }
+  return DEFAULT_WIDTH
+}
+
+function getServerWidthSnapshot(): number {
+  return DEFAULT_WIDTH
+}
+
+function subscribeWidth(listener: () => void) {
+  widthListeners.add(listener)
+  window.addEventListener('storage', listener)
+  return () => {
+    widthListeners.delete(listener)
+    window.removeEventListener('storage', listener)
+  }
+}
+
+function writeWidth(width: number) {
+  try { window.localStorage.setItem(WIDTH_KEY, String(width)) } catch { /* ignore */ }
+  widthListeners.forEach((listener) => listener())
+}
 
 /**
  * Anything in the rail that has no room once it is minimised.
@@ -189,17 +225,11 @@ export default function Sidebar() {
   const [likedCount, setLikedCount] = useState(0)
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
-  const [expandedWidth, setExpandedWidth] = useState<number>(() => {
-    let w = 320
-    if (typeof window !== 'undefined') {
-      try {
-        const raw = window.localStorage.getItem('ember:sidebar-width')
-        const parsed = raw ? parseInt(raw, 10) : NaN
-        if (!Number.isNaN(parsed) && parsed >= 320 && parsed <= 460) w = parsed
-      } catch { /* ignore */ }
-    }
-    return w
-  })
+  const expandedWidth = useSyncExternalStore(
+    subscribeWidth,
+    getWidthSnapshot,
+    getServerWidthSnapshot
+  )
   const [isDraggingSidebar, setIsDraggingSidebar] = useState(false)
 
   useEffect(() => {
@@ -217,11 +247,6 @@ export default function Sidebar() {
       window.removeEventListener('resize', update)
     }
   }, [collapsed])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    try { window.localStorage.setItem('ember:sidebar-width', String(expandedWidth)) } catch { /* ignore */ }
-  }, [expandedWidth])
 
   /* Curtidas + álbuns, como as fontes "antigas": a contagem vem da tabela
      `favorites` e os álbuns da API do YouTube via /api/youtube. Em falha ou
@@ -271,7 +296,7 @@ export default function Sidebar() {
     function onMove(e: MouseEvent) {
       if (e.clientX <= 120) return
       const next = Math.max(320, Math.min(460, e.clientX))
-      setExpandedWidth(next)
+      writeWidth(next)
     }
     function onUp() {
       setIsDraggingSidebar(false)

@@ -217,6 +217,10 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
         iv_load_policy: 3,
         fs: 0,
         disablekb: 1,
+        // Sem `origin`, o iframe do YouTube faz postMessage mirando
+        // `https://www.youtube.com` e o Chrome reclama que o origin não
+        // confere com o da página anfitriã. Informar a origem real resolve.
+        origin: window.location.origin,
       },
       events: {
         onReady: onPlayerReady,
