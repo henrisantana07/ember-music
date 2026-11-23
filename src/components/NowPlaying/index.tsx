@@ -20,6 +20,7 @@ import {
   Music, Trash2, MoreHorizontal, Maximize2, Minimize2, Maximize, Minimize,
 } from 'lucide-react'
 import { extractCoverPalette, type CoverPalette } from '@/lib/color/extractCoverPalette'
+import { KawarpBackground } from '@/components/Player/KawarpBackground'
 import { getHighResCoverUrl } from '@/lib/image-utils'
 import { useMenu, MenuPanel, MenuPresence } from '@/components/ui/Menu'
 import { PlaylistModal } from '@/components/PlaylistModal'
@@ -321,16 +322,43 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
       return
     }
     let cancelled = false
-    // Paleta sempre da capa base (o glow não precisa de HD; evita 404 do
-    // maxresdefault). A paleta já cai no extractDominantColor de sempre quando
-    // a imagem não pode ser lida (CORS/404), então não há segundo fallback aqui.
-    extractCoverPalette(baseCover).then((next) => {
-      if (!cancelled && next) setPalette(next)
-    })
+
+    const videoId =
+      currentTrack?.youtubeVideoId ||
+      (currentTrack?.id?.startsWith('youtube:') ? currentTrack.id.replace('youtube:', '') : null)
+
+    // Tenta primeiro via rota do servidor (/api/cover-palette/${videoId}) para evitar CORS
+    if (videoId && /^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+      fetch(`/api/cover-palette/${videoId}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((res) => {
+          if (!cancelled && res && !res.isFallback) {
+            setPalette({
+              primary: res.primary,
+              secondary: res.secondary,
+              tertiary: res.base,
+            })
+            return
+          }
+          extractCoverPalette(baseCover).then((next) => {
+            if (!cancelled && next) setPalette(next)
+          })
+        })
+        .catch(() => {
+          extractCoverPalette(baseCover).then((next) => {
+            if (!cancelled && next) setPalette(next)
+          })
+        })
+    } else {
+      extractCoverPalette(baseCover).then((next) => {
+        if (!cancelled && next) setPalette(next)
+      })
+    }
+
     return () => {
       cancelled = true
     }
-  }, [baseCover, currentTrack?.id])
+  }, [baseCover, currentTrack?.id, currentTrack?.youtubeVideoId])
 
   // Só promove para a capa HD quando ela realmente carrega (evita404/flash quebrado)
   useEffect(() => {
@@ -441,6 +469,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
      `transparent` quando não há paleta, e o CSS decide o fallback. */
   const panelStyle: CSSProperties & Record<string, string> = {
+    ...(baseCover ? { backgroundImage: 'none', backgroundColor: 'transparent' } : {}),
     ...(palette
     ? {
         /* `--hero-c1` é a cor que inunda o painel (o centro do elipse, parada
@@ -701,9 +730,10 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
              viewports curtos — numa altura normal tudo cabe e não há o que rolar.
              Sem ela a trilha apareceria colada na capa. */}
         <div
-          className={`now-cover-panel flex-1 ${wideCover ? 'md:flex-1' : 'md:flex-[3]'} flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 rounded-2xl ${showQueueOnMobile ? 'hidden md:flex' : ''} ${palette ? '' : 'now-cover-panel-empty'} transition-[flex-grow] duration-[var(--motion-duration-medium)] ease-[var(--motion-easing-surface)]`}
+          className={`now-cover-panel relative flex-1 ${wideCover ? 'md:flex-1' : 'md:flex-[3]'} flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 rounded-2xl ${showQueueOnMobile ? 'hidden md:flex' : ''} ${palette ? '' : 'now-cover-panel-empty'} transition-[flex-grow] duration-[var(--motion-duration-medium)] ease-[var(--motion-easing-surface)]`}
           style={panelStyle}
         >
+          {baseCover && <KawarpBackground coverUrl={baseCover} className="rounded-2xl" />}
           <div ref={coverRef} className={`now-cover relative flex-shrink-0${queueMinimized || wideCover ? ' now-cover-min' : ''}`} style={{ aspectRatio: '1' }}>
             {baseCover && baseFailed !== currentTrack.id ? (
               <img
