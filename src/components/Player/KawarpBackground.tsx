@@ -117,7 +117,7 @@ function hexToRgb01(hex: string): [number, number, number] | undefined {
 export function KawarpBackground({
   coverUrl,
   className = '',
-  dimLevel = 0.2,
+  dimLevel = 0.12,
   palette,
   gradientAngle = 135,
   warpIntensity = KAWARP_DEFAULTS.warpIntensity,
@@ -138,15 +138,48 @@ export function KawarpBackground({
   )
 
   const kawarpRef = useRef<KawarpRef | null>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
   /* Última fonte pedida. Serve para ignorar o término de um `loadImage` antigo
      quando a faixa já trocou enquanto a imagem carregava. */
   const latestSource = useRef<KawarpSource | null>(null)
   const aliveRef = useRef(true)
 
+  /* Diagnóstico visual: abra /reproducao?kawarpDebug=1 para ver um selo com o
+     estado do canvas e um contorno vermelho na camada do Kawarp. Fora isso o
+     app continua idêntico — nada depende da flag. */
+  const setDebugStatus = useCallback((text: string) => {
+    const badge = document.getElementById('kawarp-debug')
+    if (badge) badge.textContent = `[kawarp] ${text}`
+  }, [])
+
   useEffect(() => {
     aliveRef.current = true
+
+    let badge: HTMLDivElement | null = null
+    if (new URLSearchParams(window.location.search).has('kawarpDebug')) {
+      badge = document.createElement('div')
+      badge.id = 'kawarp-debug'
+      Object.assign(badge.style, {
+        position: 'fixed',
+        right: '12px',
+        bottom: '80px',
+        zIndex: '999999',
+        padding: '8px 12px',
+        borderRadius: '8px',
+        background: '#000c',
+        color: '#5f5',
+        font: '12px monospace',
+        pointerEvents: 'none',
+        maxWidth: '70vw',
+      })
+      badge.textContent = '[kawarp] iniciando...'
+      document.body.appendChild(badge)
+      if (wrapperRef.current) wrapperRef.current.style.outline = '2px solid #ff3b30'
+    }
+
     return () => {
       aliveRef.current = false
+      badge?.remove()
     }
   }, [])
 
@@ -158,11 +191,12 @@ export function KawarpBackground({
        `__kawarp.instance.sampleSource(16)` mostra os pixels da textura atual.
        Os logs `[ember/kawarp]` continuam só em dev/com flag, para não poluir
        o console do usuário final. */
-    if (typeof window !== 'undefined') {
-      ;(window as typeof window & { __kawarp?: KawarpRef | null }).__kawarp = instance
+    if (typeof window !== 'undefined' && instance) {
+      ;(window as typeof window & { __kawarp?: KawarpRef }).__kawarp = instance
     }
     logKawarp(instance ? 'canvas montado' : 'canvas desmontado')
-  }, [])
+    setDebugStatus(instance ? 'canvas montado' : 'canvas desmontado')
+  }, [setDebugStatus])
 
   // Roteia a URL pelo proxy de imagem interno para contornar qualquer bloqueio de CORS de WebGL
   const proxiedSrc = useMemo(() => {
@@ -238,8 +272,10 @@ export function KawarpBackground({
          `kawarpRef.current` e não faz nada — era exatamente o caso em que o
          canvas montava mas o gradiente nunca aparecia. Espera o núcleo. */
       if (!handle.instance) {
+        setDebugStatus('aguardando núcleo WebGL...')
         if (attempts++ >= MAX_ATTEMPTS) {
           logKawarp('núcleo WebGL não inicializou')
+          setDebugStatus('ERRO: WebGL não inicializou')
           if (aliveRef.current) setFailedSource(sourceKey)
           return
         }
@@ -260,6 +296,7 @@ export function KawarpBackground({
         }
         latestSource.current = source
         logKawarp('gradiente aplicado (sem capa)', { colors: source.colors, angle: source.angle })
+        setDebugStatus('gradiente da paleta (sem capa)')
         try {
           handle.loadGradient(source.colors, source.angle)
           handle.start()
@@ -277,6 +314,7 @@ export function KawarpBackground({
       const source: ImageSource = { kind: 'image', src: proxiedSrc }
       latestSource.current = source
       logKawarp('capa enviada ao Kawarp', { src: source.src })
+      setDebugStatus('carregando textura da capa...')
 
       handle.loadImage(source.src).then(
         () => {
@@ -286,9 +324,11 @@ export function KawarpBackground({
           if (latestSource.current !== source) return
           handle.start()
           logKawarp('textura da capa ativa no Kawarp')
+          setDebugStatus('textura da capa ATIVA ✓')
         },
         () => {
           logKawarp('falha ao carregar a capa', { src: source.src })
+          setDebugStatus('capa falhou — tentando gradiente')
           if (!aliveRef.current || latestSource.current !== source) return
 
           /* Só agora, com a imagem indisponível, entram as cores já extraídas
@@ -304,6 +344,7 @@ export function KawarpBackground({
             try {
               handle.loadGradient(fallback.colors, fallback.angle)
               handle.start()
+              setDebugStatus('gradiente da paleta ATIVO (fallback)')
             } catch {
               if (aliveRef.current) setFailedSource(`gradient:${fallback.colors.join('|')}`)
             }
@@ -323,7 +364,7 @@ export function KawarpBackground({
         else clearTimeout(frame)
       }
     }
-  }, [kawarpReady, sourceKey, gradientColors, gradientAngle, proxiedSrc])
+  }, [kawarpReady, sourceKey, gradientColors, gradientAngle, proxiedSrc, setDebugStatus])
 
   if (!mounted || hasError) return null
   // Sem capa e sem paleta não há o que desenhar; o fallback do painel cobre.
@@ -331,6 +372,7 @@ export function KawarpBackground({
 
   return (
     <div
+      ref={wrapperRef}
       aria-hidden
       className={`absolute inset-0 pointer-events-none overflow-hidden select-none ${className}`}
       style={{ zIndex: -1 }}
