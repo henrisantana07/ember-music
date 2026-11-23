@@ -39,7 +39,7 @@ describe('coverPaletteCache', () => {
     cacheCoverPalette('yt:outro-id', palette)
     // O cache em memória já resolveria; força o caminho do storage limpando
     // o módulo não é possível aqui, então ao menos garantimos que foi gravado.
-    expect(window.localStorage.getItem('ember:cover-palette:v1:yt:outro-id')).toContain(
+    expect(window.localStorage.getItem('ember:cover-palette:v2:yt:outro-id')).toContain(
       palette.primary
     )
   })

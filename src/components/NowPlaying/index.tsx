@@ -513,6 +513,11 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
      `transparent` quando não há paleta, e o CSS decide o fallback. */
   const panelStyle: CSSProperties & Record<string, string> = {
+    /* Deixamos o contexto de empilhamento no inline também: o CSS antigo que
+       ainda está no deploy de produção não traz `isolation: isolate`, e sem
+       ele o wrapper do Kawarp (`z-index:-1`) some atrás da hero. Assim o
+       canvas não depende de qual chunk de CSS o navegador carregou. */
+    isolation: 'isolate',
     ...(palette
     ? {
         /* `--hero-c1` é a cor que inunda o painel (o centro do elipse, parada

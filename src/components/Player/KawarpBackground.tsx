@@ -115,7 +115,7 @@ function hexToRgb01(hex: string): [number, number, number] | undefined {
 export function KawarpBackground({
   coverUrl,
   className = '',
-  dimLevel = 0.35,
+  dimLevel = 0.2,
   palette,
   gradientAngle = 135,
   warpIntensity = KAWARP_DEFAULTS.warpIntensity,

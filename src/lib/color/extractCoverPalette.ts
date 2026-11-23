@@ -159,8 +159,8 @@ export function rankPaletteCells(cells: readonly PaletteCell[]): readonly Palett
  * assim precisam ser contadas como a mesma posição da grade.
  *
  * Sem secondary não há tertiary — os dois guards são encadeados de propósito.
- * Deixar o tertiary cair na primary é o caso monocromático, e a quem chama
- * cabe decidir o que fazer com a repetição.
+ * Quando não há matiz distinto na arte, `extractCoverPalette` usa
+ * `deriveCompanionColors` para girar o matiz e ainda entregar 3 cores vivas.
  */
 export function pickDistinctHues(
   ranked: readonly PaletteCell[]
@@ -175,6 +175,28 @@ export function pickDistinctHues(
     (c) => c !== first && c !== secondary && hueDistance(c.h, first.h) > 0.05 && hueDistance(c.h, secondary.h) > 0.05
   )
   return { secondary, tertiary }
+}
+
+/**
+ * Capas monocromáticas (ou uma só cor dominante) antes devolviam
+ * `primary === secondary === tertiary`. O CSS recebia as três iguais e o
+ * Kawarp desenhava um gradiente de uma cor só — parecia que "as cores não
+ * vinham", mas vinham: eram idênticas.
+ *
+ * Gira o matiz ~47° para os lados, mantendo saturação viva e luminosidade.
+ * É o mesmo recurso que `extractPalette` (servidor) já usa no fallback.
+ */
+export function deriveCompanionColors(hex: string): { secondary: string; tertiary: string } {
+  const rgb = hexToRgb(hex)
+  if (!rgb) return { secondary: hex, tertiary: hex }
+
+  const [h, s, l] = rgbToHsl(rgb[0], rgb[1], rgb[2])
+  const vivid = Math.max(s, 0.55)
+
+  return {
+    secondary: hslToHex((h + 0.13) % 1, vivid, l),
+    tertiary: hslToHex((h + 0.87) % 1, vivid, l),
+  }
 }
 
 function loadHtmlImage(url: string): Promise<HTMLImageElement | null> {
@@ -292,29 +314,36 @@ export async function extractCoverPalette(
 
   if (!img || img.naturalWidth < 2 || img.naturalHeight < 2) {
     const fallback = await extractDominantColor(src)
-    return fallback ? { primary: fallback, secondary: fallback, tertiary: fallback } : null
+    if (!fallback) return null
+    const companions = deriveCompanionColors(fallback)
+    return { primary: fallback, ...companions }
   }
 
   const cells = sampleGrid(img, grid, cropY)
   if (cells.length === 0) {
     const fallback = await extractDominantColor(src)
-    return fallback ? { primary: fallback, secondary: fallback, tertiary: fallback } : null
+    if (!fallback) return null
+    const companions = deriveCompanionColors(fallback)
+    return { primary: fallback, ...companions }
   }
 
   const ranked = rankPaletteCells(cells)
   const first = ranked[0]
   const primary = normalizeHex(first.hex, primarySaturation, lightnessRange)
 
-  // Sem matiz distinto (capa monocromática) secondary/tertiary caem na primary:
-  // vira um radial de uma cor só, que é o que já existia antes da paleta.
+  /* Capa monocromática: em vez de repetir a primary três vezes (o que deixava
+     o gradiente do Kawarp visualmente de uma cor só), gira o matiz para obter
+     duas cores de apoio. Quando a arte TEM matizes distintos, elas continuam
+     sendo usadas — o giro é só o fallback. */
+  const companions = deriveCompanionColors(primary)
   const { secondary: secondaryCell, tertiary: tertiaryCell } = pickDistinctHues(ranked)
   const secondary = normalizeHex(
-    (secondaryCell ?? first).hex,
+    (secondaryCell?.hex ?? companions.secondary),
     secondarySaturation,
     lightnessRange
   )
   const tertiary = normalizeHex(
-    (tertiaryCell ?? secondaryCell ?? first).hex,
+    (tertiaryCell?.hex ?? companions.tertiary),
     secondarySaturation,
     lightnessRange
   )

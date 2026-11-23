@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   rankPaletteCells,
   pickDistinctHues,
+  deriveCompanionColors,
   type PaletteCell,
 } from '@/lib/color/extractCoverPalette'
 
@@ -93,5 +94,25 @@ describe('pickDistinctHues', () => {
 
   it('devolve objeto vazio para lista vazia', () => {
     expect(pickDistinctHues([])).toEqual({})
+  })
+})
+
+describe('deriveCompanionColors', () => {
+  it('gera duas cores distintas a partir de uma capa monocromática', () => {
+    const primary = '#46b946'
+    const { secondary, tertiary } = deriveCompanionColors(primary)
+
+    expect(secondary).not.toBe(primary)
+    expect(tertiary).not.toBe(primary)
+    expect(secondary).not.toBe(tertiary)
+    expect(secondary).toMatch(/^#[0-9a-f]{6}$/i)
+    expect(tertiary).toMatch(/^#[0-9a-f]{6}$/i)
+  })
+
+  it('não inventa cor quando a entrada não é um hex válido', () => {
+    expect(deriveCompanionColors('verde')).toEqual({
+      secondary: 'verde',
+      tertiary: 'verde',
+    })
   })
 })

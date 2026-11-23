@@ -11,7 +11,8 @@ import type { CoverPalette } from './extractCoverPalette'
  * (sobrevive a recarregar a página). Tudo com try/catch: se o navegador bloquear
  * storage em modo privado, o cache em memória continua funcionando.
  */
-const STORAGE_PREFIX = 'ember:cover-palette:v1:'
+// v2: as paletas v1 de capas monocromáticas guardavam as 3 cores iguais.
+const STORAGE_PREFIX = 'ember:cover-palette:v2:'
 const TTL_MS = 7 * 24 * 60 * 60 * 1000
 
 type CacheEntry = {
