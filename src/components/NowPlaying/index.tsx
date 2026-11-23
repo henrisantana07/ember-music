@@ -487,7 +487,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
            (50% álbum + 50% branco) e mantida translúcida (30%): o mesmo
            peso de antes, mas um tom que sempre fica ACIMA do flood — seja
            a capa clara ou saturada. */
-        border: `1px solid color-mix(in srgb, color-mix(in srgb, ${palette.primary} 50%, #ffffff) 30%, transparent)`,
+        border: `1px solid color-mix(in srgb, color-mix(in srgb, ${palette.primary}, rgb(255, 255, 255)) 30%, transparent 70%)`,
       }
     : { border: '1px solid var(--outline-variant)' }),
     /* Durante o arraste a capa toma o que sobra da fila — e a transição
@@ -732,7 +732,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
           className={`now-cover-panel relative flex-1 ${wideCover ? 'md:flex-1' : 'md:flex-[3]'} flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 rounded-2xl ${showQueueOnMobile ? 'hidden md:flex' : ''} ${palette ? '' : 'now-cover-panel-empty'} transition-[flex-grow] duration-[var(--motion-duration-medium)] ease-[var(--motion-easing-surface)]`}
           style={panelStyle}
         >
-          {baseCover && <KawarpBackground coverUrl={baseCover} className="rounded-2xl" />}
+          {baseCover && <KawarpBackground coverUrl={baseCover} palette={palette} className="rounded-2xl" />}
           <div ref={coverRef} className={`now-cover relative flex-shrink-0${queueMinimized || wideCover ? ' now-cover-min' : ''}`} style={{ aspectRatio: '1' }}>
             {baseCover && baseFailed !== currentTrack.id ? (
               <img

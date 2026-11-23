@@ -656,6 +656,11 @@ body {
    A curva é ease-in-out em 900ms — simétrica, sem arranco no início, que é o
    que uma transição de cor precisa pra ler como "suave" e não como "atraso". */
 .now-cover-panel {
+  /* Cria um contexto de empilhamento para o canvas do Kawarp poder ficar em
+     `z-index: -1`: ele pinta acima do gradiente de fundo do painel, mas abaixo
+     da capa, do título e dos botões. Sem o `isolation`, um z-index negativo
+     escaparia para trás do fundo da hero. */
+  isolation: isolate;
   background-image:
     linear-gradient(var(--hero-glow), var(--hero-glow)),
     radial-gradient(
