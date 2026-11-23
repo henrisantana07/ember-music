@@ -186,6 +186,10 @@ export function KawarpBackground({
       latestSource.current = source
       try {
         instance.loadGradient(source.colors, source.angle)
+        // O gradiente é só a textura; quem anima é o loop de domain warping
+        // do Kawarp. `start()` é idempotente e garante o loop mesmo que a
+        // instância tenha sido criada sem `src`/`autoPlay`.
+        instance.start()
       } catch {
         // Contexto WebGL perdido/indisponível: esconde o canvas e deixa o
         // gradiente CSS do `.now-cover-panel` (mesmas cores) como fundo.
@@ -215,6 +219,7 @@ export function KawarpBackground({
             if (aliveRef.current) setFailedSource(`gradient:${latest.colors.join('|')}`)
           }
         }
+        instance.start()
       },
       () => {
         if (aliveRef.current) setFailedSource(sourceKey)

@@ -8,6 +8,7 @@ import { KawarpBackground } from '@/components/Player/KawarpBackground'
 const kawarpApi = vi.hoisted(() => ({
   loadGradient: vi.fn(),
   loadImage: vi.fn(() => Promise.resolve()),
+  start: vi.fn(),
 }))
 
 // Mock do @kawarp/react: o wrapper real (KawarpCanvas) passa um callback ref,
@@ -24,7 +25,7 @@ vi.mock('@kawarp/react', async () => {
       loadImage: kawarpApi.loadImage,
       loadBlob: vi.fn(),
       loadGradient: kawarpApi.loadGradient,
-      start: vi.fn(),
+      start: kawarpApi.start,
       stop: vi.fn(),
     }))
 
@@ -45,6 +46,7 @@ describe('KawarpBackground', () => {
   beforeEach(() => {
     kawarpApi.loadGradient.mockClear()
     kawarpApi.loadImage.mockClear()
+    kawarpApi.start.mockClear()
   })
 
   it('não renderiza nada se não houver capa nem paleta', () => {
@@ -100,6 +102,8 @@ describe('KawarpBackground', () => {
 
     // A capa é só fallback: com paleta, o gradiente é a fonte do canvas.
     expect(kawarpApi.loadImage).not.toHaveBeenCalled()
+    // O gradiente é estático; a animação é o loop do Kawarp.
+    expect(kawarpApi.start).toHaveBeenCalled()
   })
 
   it('renderiza o gradiente da paleta mesmo sem capa', async () => {
