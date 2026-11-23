@@ -40,11 +40,29 @@ export async function GET(request: Request) {
   }
 
   try {
-    const upstream = await fetch(url.toString(), {
+    let upstream = await fetch(url.toString(), {
       redirect: 'manual',
       headers: { accept: 'image/*' },
       next: { revalidate: 86400 },
     })
+
+    // Se for thumbnail do YouTube em maxresdefault e falhar (404), tenta resoluções menores
+    if (!upstream.ok && url.hostname.includes('ytimg.com') && url.pathname.includes('maxresdefault')) {
+      for (const fallbackSize of ['sddefault.jpg', 'hqdefault.jpg', 'mqdefault.jpg']) {
+        const fallbackUrl = url.toString().replace('maxresdefault.jpg', fallbackSize)
+        try {
+          const fallbackRes = await fetch(fallbackUrl, {
+            redirect: 'manual',
+            headers: { accept: 'image/*' },
+            next: { revalidate: 86400 },
+          })
+          if (fallbackRes.ok) {
+            upstream = fallbackRes
+            break
+          }
+        } catch {}
+      }
+    }
 
     if (upstream.status >= 300 && upstream.status < 400) {
       return NextResponse.json({ error: 'Redirects not allowed' }, { status: 502 })

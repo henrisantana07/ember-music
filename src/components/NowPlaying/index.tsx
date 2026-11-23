@@ -469,7 +469,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
      `transparent` quando não há paleta, e o CSS decide o fallback. */
   const panelStyle: CSSProperties & Record<string, string> = {
-    ...(baseCover ? { backgroundImage: 'none', backgroundColor: 'transparent' } : {}),
     ...(palette
     ? {
         /* `--hero-c1` é a cor que inunda o painel (o centro do elipse, parada

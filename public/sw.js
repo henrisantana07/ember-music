@@ -30,6 +30,11 @@ self.addEventListener('fetch', (event) => {
   // senão o F5 roda código antigo (Ctrl+Shift+R funcionava só porque ignora o SW).
   if (isDev) return
 
+  // Ignora requisições cross-origin (YouTube, Google OAuth, APIs externas)
+  if (!event.request.url.startsWith(self.location.origin)) {
+    return
+  }
+
   if (event.request.url.includes('/api/') || event.request.url.includes('supabase.co')) {
     return
   }
