@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { extractCoverPalette, type CoverPalette } from '@/lib/color/extractCoverPalette'
 import { KawarpBackground } from '@/components/Player/KawarpBackground'
+import { logKawarp } from '@/lib/debug/kawarp'
 import { getHighResCoverUrl } from '@/lib/image-utils'
 import { useMenu, MenuPanel, MenuPresence } from '@/components/ui/Menu'
 import { PlaylistModal } from '@/components/PlaylistModal'
@@ -323,6 +324,18 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     }
     let cancelled = false
 
+    // Um único ponto de entrada para a paleta: loga a origem (servidor ou
+    // cliente) e evita `setPalette` depois que a faixa já mudou.
+    const applyPalette = (next: CoverPalette | null, source: 'servidor' | 'cliente') => {
+      if (cancelled || !next) return
+      logKawarp(`paleta extraída (${source})`, {
+        primary: next.primary,
+        secondary: next.secondary,
+        tertiary: next.tertiary,
+      })
+      setPalette(next)
+    }
+
     const videoId =
       currentTrack?.youtubeVideoId ||
       (currentTrack?.id?.startsWith('youtube:') ? currentTrack.id.replace('youtube:', '') : null)
@@ -333,26 +346,23 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
         .then((r) => (r.ok ? r.json() : null))
         .then((res) => {
           if (!cancelled && res && !res.isFallback) {
-            setPalette({
-              primary: res.primary,
-              secondary: res.secondary,
-              tertiary: res.base,
-            })
+            applyPalette(
+              {
+                primary: res.primary,
+                secondary: res.secondary,
+                tertiary: res.base,
+              },
+              'servidor'
+            )
             return
           }
-          extractCoverPalette(baseCover).then((next) => {
-            if (!cancelled && next) setPalette(next)
-          })
+          extractCoverPalette(baseCover).then((next) => applyPalette(next, 'cliente'))
         })
         .catch(() => {
-          extractCoverPalette(baseCover).then((next) => {
-            if (!cancelled && next) setPalette(next)
-          })
+          extractCoverPalette(baseCover).then((next) => applyPalette(next, 'cliente'))
         })
     } else {
-      extractCoverPalette(baseCover).then((next) => {
-        if (!cancelled && next) setPalette(next)
-      })
+      extractCoverPalette(baseCover).then((next) => applyPalette(next, 'cliente'))
     }
 
     return () => {

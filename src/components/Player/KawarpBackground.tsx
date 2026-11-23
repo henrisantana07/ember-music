@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback, useSyncExternalStore } from 'react'
 import dynamic from 'next/dynamic'
 import type { KawarpRef } from '@kawarp/react'
+import { KAWARP_DEBUG, logKawarp } from '@/lib/debug/kawarp'
 
 // Carregamento dinâmico do Kawarp apenas no cliente (evita erros no SSR do Next.js).
 // O wrapper repassa a instância por prop, porque o `next/dynamic` reserva a
@@ -150,6 +151,13 @@ export function KawarpBackground({
   const handleInstance = useCallback((instance: KawarpRef | null) => {
     kawarpRef.current = instance
     setKawarpReady(instance !== null)
+
+    // Atalho de diagnóstico: no console do navegador,
+    // `__kawarp.instance.getOptions()` mostra a config ativa.
+    if (KAWARP_DEBUG && typeof window !== 'undefined') {
+      ;(window as typeof window & { __kawarp?: KawarpRef | null }).__kawarp = instance
+    }
+    logKawarp(instance ? 'canvas montado' : 'canvas desmontado')
   }, [])
 
   // Roteia a URL pelo proxy de imagem interno para contornar qualquer bloqueio de CORS de WebGL
@@ -205,15 +213,18 @@ export function KawarpBackground({
         angle: gradientAngle,
       }
       latestSource.current = source
+      logKawarp('gradiente aplicado', { colors: source.colors, angle: source.angle })
       try {
         instance.loadGradient(source.colors, source.angle)
         // O gradiente é só a textura; quem anima é o loop de domain warping
         // do Kawarp. `start()` é idempotente e garante o loop mesmo que a
         // instância tenha sido criada sem `src`/`autoPlay`.
         instance.start()
+        logKawarp('loop de animação do Kawarp ativo')
       } catch {
         // Contexto WebGL perdido/indisponível: esconde o canvas e deixa o
         // gradiente CSS do `.now-cover-panel` (mesmas cores) como fundo.
+        logKawarp('falha ao aplicar o gradiente', { colors: source.colors })
         if (aliveRef.current) setFailedSource(sourceKey)
       }
       return
@@ -226,6 +237,7 @@ export function KawarpBackground({
 
     const source: ImageSource = { kind: 'image', src: proxiedSrc }
     latestSource.current = source
+    logKawarp('capa enviada ao Kawarp (sem paleta)', { src: source.src })
 
     instance.loadImage(source.src).then(
       () => {
@@ -234,6 +246,7 @@ export function KawarpBackground({
         // gradiente vence: reaplica a fonte mais recente.
         const latest = latestSource.current
         if (latest?.kind === 'gradient') {
+          logKawarp('gradiente reaplicado depois da capa', { colors: latest.colors })
           try {
             instance.loadGradient(latest.colors, latest.angle)
           } catch {
@@ -243,6 +256,7 @@ export function KawarpBackground({
         instance.start()
       },
       () => {
+        logKawarp('falha ao carregar a capa', { src: source.src })
         if (aliveRef.current) setFailedSource(sourceKey)
       }
     )
