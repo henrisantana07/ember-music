@@ -168,19 +168,10 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
     player.setVolume(100)
     setState(s => ({ ...s, player, isReady: true, duration: player.getDuration(), volume: 1 }))
     startPolling()
-
-    /* Caminho mais confiável para voltar de onde parou: re-cue o vídeo já com
-       `startSeconds`. Um `seekTo` depois do play pode ser ignorado se o vídeo
-       ainda não tiver carregado — era o que fazia a retomada falhar às vezes. */
-    const store = usePlayerStore.getState()
-    if (videoId && store.currentTrack?.youtubeVideoId === videoId && store.progress > 1) {
-      try {
-        player.cueVideoById({ videoId, startSeconds: store.progress })
-        restoredRef.current = videoId
-        setState((s) => ({ ...s, currentTime: store.progress }))
-      } catch { /* o fallback do onReady abaixo ainda tenta */ }
-    }
-  }, [videoId, startPolling])
+    /* Não re-cue aqui: isso reiniciava o carregamento e competia com o CUED
+       do vídeo original, fazendo o play ser ignorado. A posição é aplicada no
+       CUED (ou no fallback do efeito abaixo), quando o player está pronto. */
+  }, [startPolling])
 
   const onPlayerStateChange = useCallback((event: YTPlayerEvent) => {
     const PlayerState = window.YT?.PlayerState
@@ -341,11 +332,16 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
     const tryRestore = () => {
       const player = playerRef.current
       if (!player) return
-      // Mesmo que o cue do onReady já tenha posicionado, ainda precisamos
-      // consumir o RESUME_KEY — ele é o que decide se volta tocando.
-      let hasMetadata = false
-      try { hasMetadata = player.getDuration() > 0 } catch { /* ainda carregando */ }
-      if (hasMetadata || attempts >= 12) {
+
+      let playState = -1
+      let currentTime = 0
+      try { playState = player.getPlayerState() } catch { /* ainda carregando */ }
+      try { currentTime = player.getCurrentTime() } catch { /* ainda carregando */ }
+
+      /* Nunca consome o RESUME_KEY antes do vídeo estar efetivamente pronto
+         (CUED = 5): um playVideo() chamado antes disso é ignorado pelo YouTube.
+         Era o que acontecia quando o fallback do onReady corria primeiro. */
+      if (playState === 5 || currentTime > 0 || attempts >= 20) {
         restorePosition(player)
         maybeResume(player)
         return
