@@ -369,7 +369,9 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     /* Etapa 1 — paleta instantânea da rota do Ember. Ela baixa a thumbnail de
        `i.ytimg.com` e extrai as cores no servidor (sharp), sem API key/quota. */
     if (validVideoId) {
-      fetch(`/api/cover-palette/${validVideoId}`)
+      /* `?v=3` quebra o cache da CDN (s-maxage=24h) da rota: até o deploy
+         anterior, capas pretas devolviam uma paleta de cor inventada. */
+      fetch(`/api/cover-palette/${validVideoId}?v=3`)
         .then((r) => (r.ok ? r.json() : null))
         .then((res) => {
           if (cancelled || !res || res.isFallback) return

@@ -39,8 +39,17 @@ describe('coverPaletteCache', () => {
     cacheCoverPalette('yt:outro-id', palette)
     // O cache em memória já resolveria; força o caminho do storage limpando
     // o módulo não é possível aqui, então ao menos garantimos que foi gravado.
-    expect(window.localStorage.getItem('ember:cover-palette:v2:yt:outro-id')).toContain(
+    expect(window.localStorage.getItem('ember:cover-palette:v3:yt:outro-id')).toContain(
       palette.primary
     )
+  })
+
+  it('descarta paletas das versões antigas (cor inventada para capas pretas)', () => {
+    window.localStorage.setItem(
+      'ember:cover-palette:v2:yt:antiga',
+      JSON.stringify({ at: Date.now(), palette: { primary: '#ff00aa', secondary: '#00aaff', tertiary: '#aa5500' } })
+    )
+    expect(getCachedCoverPalette('yt:antiga')).toBeNull()
+    expect(window.localStorage.getItem('ember:cover-palette:v2:yt:antiga')).toBeNull()
   })
 })

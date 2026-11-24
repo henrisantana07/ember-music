@@ -11,8 +11,25 @@ import type { CoverPalette } from './extractCoverPalette'
  * (sobrevive a recarregar a página). Tudo com try/catch: se o navegador bloquear
  * storage em modo privado, o cache em memória continua funcionando.
  */
-// v2: as paletas v1 de capas monocromáticas guardavam as 3 cores iguais.
-const STORAGE_PREFIX = 'ember:cover-palette:v2:'
+/* v3: as versões anteriores descartavam preto/cinza e guardavam uma cor
+   inventada para capas monocromáticas. Sem trocar o prefixo, a paleta antiga
+   sobrevivia 7 dias no localStorage e mascarava a correção. */
+const STORAGE_PREFIX = 'ember:cover-palette:v3:'
+const LEGACY_PREFIXES = ['ember:cover-palette:v1:', 'ember:cover-palette:v2:']
+
+function purgeLegacy(): void {
+  if (typeof window === 'undefined') return
+  try {
+    // `key(i)` em vez de Object.keys: some ambientes (jsdom, WebViews) não
+    // enumeram as chaves do Storage como propriedades do objeto.
+    for (let i = window.localStorage.length - 1; i >= 0; i -= 1) {
+      const key = window.localStorage.key(i)
+      if (key && LEGACY_PREFIXES.some((prefix) => key.startsWith(prefix))) {
+        window.localStorage.removeItem(key)
+      }
+    }
+  } catch { /* storage indisponível */ }
+}
 const TTL_MS = 7 * 24 * 60 * 60 * 1000
 
 type CacheEntry = {
@@ -43,6 +60,7 @@ function isFresh(entry: CacheEntry | null | undefined): entry is CacheEntry {
 
 export function getCachedCoverPalette(key?: string | null): CoverPalette | null {
   if (!key) return null
+  purgeLegacy()
 
   const inMemory = memory.get(key)
   if (isFresh(inMemory)) return inMemory.palette
