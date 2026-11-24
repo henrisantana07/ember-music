@@ -25,8 +25,20 @@ export async function POST(request: Request) {
     )
   }
 
+  /* Sem `emailRedirectTo`, o Supabase usa a Site URL cadastrada no Dashboard —
+     que pode apontar para um deploy antigo e devolver o usuário a uma versão
+     desatualizada do app. Segue a origem da requisição, que é o domínio que o
+     usuário está usando agora (o allowlist do Dashboard continua obrigatório). */
+  const origin =
+    request.headers.get('origin') ??
+    `https://${request.headers.get('host') ?? ''}`
+
   const supabase = await createClient()
-  const { data, error } = await supabase.auth.signUp({ email, password })
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: `${origin}/auth/callback` },
+  })
 
   if (error) {
     return Response.json({ error: error.message }, { status: 400 })
