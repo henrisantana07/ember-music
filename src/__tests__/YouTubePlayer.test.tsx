@@ -10,6 +10,7 @@ interface FakePlayer {
   playVideo: ReturnType<typeof vi.fn>
   pauseVideo: ReturnType<typeof vi.fn>
   seekTo: ReturnType<typeof vi.fn>
+  cueVideoById: ReturnType<typeof vi.fn>
   setVolume: ReturnType<typeof vi.fn>
   getCurrentTime: ReturnType<typeof vi.fn>
   getDuration: ReturnType<typeof vi.fn>
@@ -21,6 +22,7 @@ const { fakePlayer, playerCtor, state } = vi.hoisted(() => {
     playVideo: vi.fn(),
     pauseVideo: vi.fn(),
     seekTo: vi.fn(),
+    cueVideoById: vi.fn(),
     setVolume: vi.fn(),
     getCurrentTime: vi.fn(() => 42),
     getDuration: vi.fn(() => 180),
@@ -42,6 +44,7 @@ beforeEach(() => {
   fakePlayer.playVideo.mockClear()
   fakePlayer.pauseVideo.mockClear()
   fakePlayer.seekTo.mockClear()
+  fakePlayer.cueVideoById.mockClear()
   fakePlayer.destroy.mockClear()
   fakePlayer.getCurrentTime.mockClear()
   vi.stubGlobal('YT', { Player: playerCtor, PlayerState: state })
@@ -175,7 +178,10 @@ describe('useYouTubePlayer', () => {
 
     const { unmount } = render(<HookProbe videoId="abc123" />)
 
-    await waitFor(() => expect(fakePlayer.seekTo).toHaveBeenCalledWith(42, true))
+    await waitFor(() => expect(fakePlayer.cueVideoById).toHaveBeenCalledWith({
+      videoId: 'abc123',
+      startSeconds: 42,
+    }))
     await waitFor(() => expect(fakePlayer.playVideo).toHaveBeenCalled())
 
     unmount()

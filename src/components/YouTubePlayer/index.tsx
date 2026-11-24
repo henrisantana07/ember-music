@@ -168,7 +168,19 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
     player.setVolume(100)
     setState(s => ({ ...s, player, isReady: true, duration: player.getDuration(), volume: 1 }))
     startPolling()
-  }, [startPolling])
+
+    /* Caminho mais confiável para voltar de onde parou: re-cue o vídeo já com
+       `startSeconds`. Um `seekTo` depois do play pode ser ignorado se o vídeo
+       ainda não tiver carregado — era o que fazia a retomada falhar às vezes. */
+    const store = usePlayerStore.getState()
+    if (videoId && store.currentTrack?.youtubeVideoId === videoId && store.progress > 1) {
+      try {
+        player.cueVideoById({ videoId, startSeconds: store.progress })
+        restoredRef.current = videoId
+        setState((s) => ({ ...s, currentTime: store.progress }))
+      } catch { /* o fallback do onReady abaixo ainda tenta */ }
+    }
+  }, [videoId, startPolling])
 
   const onPlayerStateChange = useCallback((event: YTPlayerEvent) => {
     const PlayerState = window.YT?.PlayerState
@@ -328,7 +340,9 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
 
     const tryRestore = () => {
       const player = playerRef.current
-      if (!player || restoredRef.current === videoId) return
+      if (!player) return
+      // Mesmo que o cue do onReady já tenha posicionado, ainda precisamos
+      // consumir o RESUME_KEY — ele é o que decide se volta tocando.
       let hasMetadata = false
       try { hasMetadata = player.getDuration() > 0 } catch { /* ainda carregando */ }
       if (hasMetadata || attempts >= 12) {
