@@ -70,8 +70,9 @@ export async function extractPalette(input: Buffer): Promise<Palette> {
   const buckets = new Map<number, { r: number; g: number; b: number; w: number; n: number }>();
   for (let i = 0; i < data.length; i += 3) {
     const r = data[i], g = data[i + 1], b = data[i + 2];
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    if (max < 24 || min > 235) continue; // ignora quase preto / quase branco
+    /* Não descartamos mais preto/branco: capas monocromáticas são válidas e
+       antes caíam no fallback de cor inventada. O crop 16:9 acima já tira as
+       tarjas do hqdefault, então não é necessário filtrar por luminosidade. */
     const [, s] = rgbToHsl({ r, g, b });
     const weight = 0.5 + s;
     const key = ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4);
@@ -91,18 +92,28 @@ export async function extractPalette(input: Buffer): Promise<Palette> {
   const second = ranked.find((c) => distance(c.rgb, first) > 80)?.rgb ?? null;
 
   const [h1, s1, l1] = rgbToHsl(first);
-  const primary = hslToHex(h1, clamp(s1, 0.35, 0.9), clamp(l1, 0.28, 0.5));
+  const isNeutral = s1 < 0.12 || l1 < 0.12;
+  const primary = isNeutral
+    ? hslToHex(h1, s1, l1)
+    : hslToHex(h1, clamp(s1, 0.35, 0.9), clamp(l1, 0.28, 0.5));
 
   let secondary: string;
   if (second) {
     const [h2, s2, l2] = rgbToHsl(second);
-    secondary = hslToHex(h2, clamp(s2, 0.3, 0.85), clamp(l2, 0.2, 0.42));
+    secondary = s2 < 0.12 || l2 < 0.12
+      ? hslToHex(h2, s2, l2)
+      : hslToHex(h2, clamp(s2, 0.3, 0.85), clamp(l2, 0.2, 0.42));
+  } else if (isNeutral) {
+    // monocromático escuro: mantém a escala de cinza, sem matiz inventado
+    secondary = hslToHex(0, 0, clamp(l1 + 0.06, 0, 1));
   } else {
-    // capa quase monocromática: gira o matiz para criar profundidade
+    // capa quase monocromática colorida: gira o matiz para criar profundidade
     secondary = hslToHex((h1 + 0.08) % 1, clamp(s1, 0.3, 0.8), 0.22);
   }
 
-  const base = hslToHex(h1, 0.3, 0.07);
+  const base = isNeutral
+    ? hslToHex(0, 0, Math.min(l1, 0.07))
+    : hslToHex(h1, 0.3, 0.07);
 
   return { primary, secondary, base, isFallback: false };
 }

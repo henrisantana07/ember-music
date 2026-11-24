@@ -27,6 +27,11 @@ export function vibrateColor(hex: string): string {
     else h = ((r - g) / d + 4) / 6
   }
 
+  /* Capas pretras/cinzentas são arte legítima: vibrar aqui inventava um matiz
+     (h=0.075 => laranja) e clareava até 50%, trocando o preto por uma cor
+     aleatória. Preservamos acromáticos e escuros; coloridos seguem vibrando. */
+  if (s < 0.12 || l < 0.12) return hex
+
   if (s < 0.12) h = 0.075
   const S = Math.max(s, 0.45)
   const L = Math.max(l, 0.5)

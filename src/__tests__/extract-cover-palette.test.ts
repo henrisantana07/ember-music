@@ -115,4 +115,12 @@ describe('deriveCompanionColors', () => {
       tertiary: 'verde',
     })
   })
+
+  it('mantém a escala de cinza em capas pretas', () => {
+    const { secondary, tertiary } = deriveCompanionColors('#000000')
+    expect(secondary).toMatch(/^#([0-9a-f]{2})\1\1$/i)
+    expect(tertiary).toMatch(/^#([0-9a-f]{2})\1\1$/i)
+    expect(parseInt(secondary.slice(1, 3), 16)).toBeLessThan(40)
+    expect(parseInt(tertiary.slice(1, 3), 16)).toBeLessThan(40)
+  })
 })

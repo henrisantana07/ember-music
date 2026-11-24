@@ -23,15 +23,18 @@ function saturation(hex: string): number {
 }
 
 describe('vibrateColor', () => {
-  it('levanta a luminosidade de cores muito escuras', () => {
-    const out = vibrateColor('#020302')
-    expect(luminance(out)).toBeGreaterThanOrEqual(0.45)
-    expect(out).not.toBe('#020302')
+  it('preserva cores muito escuras em vez de inventar uma cor viva', () => {
+    expect(vibrateColor('#020302')).toBe('#020302')
   })
 
-  it('garante saturação mínima para cores lavadas', () => {
-    const out = vibrateColor('#8a8a8a')
+  it('preserva cinzas neutros em vez de inventar saturação', () => {
+    expect(vibrateColor('#8a8a8a')).toBe('#8a8a8a')
+  })
+
+  it('ainda vibra cores lavadas que têm matiz', () => {
+    const out = vibrateColor('#b39a8a')
     expect(saturation(out)).toBeGreaterThanOrEqual(0.4)
+    expect(luminance(out)).toBeGreaterThanOrEqual(0.45)
   })
 
   it('não altera cores já vibrantes', () => {

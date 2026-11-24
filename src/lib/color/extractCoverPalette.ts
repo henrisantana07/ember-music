@@ -101,6 +101,9 @@ function normalizeHex(
   const rgb = hexToRgb(hex)
   if (!rgb) return hex
   const [h, s, l] = rgbToHsl(rgb[0], rgb[1], rgb[2])
+  /* Preto, cinza e quase-preto não ganham saturação nem clareamento forçado —
+     é isso que fazia a capa preta virar rosa/azul/marrom na hero. */
+  if (s < 0.12 || l < 0.12) return hex
   const clamped = (v: number) => Math.min(1, Math.max(0, v))
   return hslToHex(
     h,
@@ -191,6 +194,15 @@ export function deriveCompanionColors(hex: string): { secondary: string; tertiar
   if (!rgb) return { secondary: hex, tertiary: hex }
 
   const [h, s, l] = rgbToHsl(rgb[0], rgb[1], rgb[2])
+
+  /* Monocromático escuro: girar o matiz criaria cores inventadas a partir do
+     preto. Mantém a escala de cinza, só com uma leve variação de luminosidade
+     para o fallback do CSS não ficar um bloco plano. */
+  if (s < 0.12 || l < 0.12) {
+    const shade = (delta: number) => hslToHex(0, 0, Math.min(1, Math.max(0, l + delta)))
+    return { secondary: shade(0.05), tertiary: shade(0.1) }
+  }
+
   const vivid = Math.max(s, 0.55)
 
   return {
@@ -270,11 +282,10 @@ function sampleGrid(img: HTMLImageElement, grid: number, cropY: number): Palette
       const rgb = hexToRgb(hex)
       if (!rgb) continue
       const [hue, sat, lig] = rgbToHsl(rgb[0], rgb[1], rgb[2])
-      // Remove letterbox (quase preto) e realces/áreas lavadas (quase branco).
-      if (lig < 0.1 || lig > 0.92) continue
-      // Remove cinzas neutros: não carregam matiz pro gradiente.
-      if (sat < 0.12) continue
-
+      /* Antes descartávamos preto, branco e cinza aqui. Isso resolvia o
+         letterbox do hqdefault, mas também jogava fora capas inteiramente
+         pretas — o grid ficava vazio e o fallback inventava uma cor. O corte
+         das barras já é feito por `cropY`, então a amostra real da arte vale. */
       out.push({ h: hue, s: sat, l: lig, hex })
     }
   }
