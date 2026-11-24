@@ -65,6 +65,23 @@ export function Player() {
    */
   const toggleExpanded = () => (isExpandedOpen ? closeExpanded() : openExpanded())
 
+  /**
+   * Abre/fecha a hero **em tela cheia** — mesma ação do ⛶ do rodapé.
+   * Compartilhado pelo botão combinado e pela capa do player: clicar na capa
+   * tem de levar ao mesmo lugar de clicar no ícone de expandir ao lado da
+   * fila, sem depender de qual dos dois estados (hero/immersive) já está ligado.
+   */
+  const toggleExpandedFullscreen = () => {
+    const combinedOn = isExpandedOpen && immersive
+    if (combinedOn) {
+      if (isExpandedOpen) closeExpanded()
+      if (immersive) toggleImmersive()
+    } else {
+      if (!isExpandedOpen) openExpanded()
+      if (!immersive) toggleImmersive()
+    }
+  }
+
   const isYouTubeTrack = currentTrack?.source === 'youtube' && !!currentTrack.youtubeVideoId
 
   const yt = useYouTube()
@@ -397,7 +414,7 @@ export function Player() {
         <audio ref={audioRef} />
         <footer className="player-footer h-14 md:hidden flex-shrink-0 relative z-[70] flex items-center px-3 gap-3 border-t border-outline-variant"
         >
-          <button onClick={openExpanded} className="flex-shrink-0" aria-label="Abrir player expandido">
+          <button onClick={toggleExpandedFullscreen} className="flex-shrink-0" aria-label={isExpandedOpen && immersive ? 'Sair da tela cheia' : 'Abrir player em tela cheia'}>
             <img src={currentTrack.image} alt="" className="w-9 h-9 rounded object-cover flex-shrink-0" />
           </button>
           <div className="min-w-0 flex-1">
@@ -464,7 +481,7 @@ export function Player() {
         className="player-footer h-20 flex-shrink-0 relative z-[70] flex items-center px-4 border-t border-outline-variant"
       >
         <div className="flex items-center gap-3 w-40 md:w-72">
-          <button onClick={openExpanded} className="flex-shrink-0" aria-label="Abrir player expandido">
+          <button onClick={toggleExpandedFullscreen} className="flex-shrink-0" aria-label={isExpandedOpen && immersive ? 'Sair da tela cheia' : 'Abrir player em tela cheia'}>
             <img src={currentTrack.image} alt={currentTrack.name} className="w-12 h-12 rounded object-cover flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer" />
           </button>
           <div className="min-w-0">
@@ -635,16 +652,7 @@ export function Player() {
               `hidden md:inline-flex`: no mobile a hero já abre cobrindo tudo —
               o Chevron logo abaixo (md:hidden) segue sendo o acesso rápido. */}
           <button
-            onClick={() => {
-              const combinedOn = isExpandedOpen && immersive
-              if (combinedOn) {
-                if (isExpandedOpen) closeExpanded()
-                if (immersive) toggleImmersive()
-              } else {
-                if (!isExpandedOpen) openExpanded()
-                if (!immersive) toggleImmersive()
-              }
-            }}
+            onClick={toggleExpandedFullscreen}
             className={`h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full transition-colors state-layer ${
               isExpandedOpen && immersive ? 'text-[var(--accent-from)]' : ''
             }`}
