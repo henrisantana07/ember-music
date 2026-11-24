@@ -1,4 +1,7 @@
-const CACHE = 'ember-music-v3'
+/* Bump de versão: um SW antigo pode servir HTML de um deploy anterior junto
+   com o bundle novo, causando erro de hidratação (#418) no React. O `activate`
+   abaixo apaga automaticamente os caches com versão anterior. */
+const CACHE = 'ember-music-v4'
 
 const PRECACHE_URLS = ['/', '/buscar', '/biblioteca', '/login', '/offline']
 
