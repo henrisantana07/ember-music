@@ -1,8 +1,10 @@
+import { decodeHtmlEntities } from '@/lib/html-entities'
+
 const NOISE_PATTERN =
   /^(?:official\s+)?(?:music\s+)?(?:video|audio)$|^official\s+video$|^lyric(?:s|\s+video)$|^visuali[sz]er$|^performance(?:\s+video)?$|^m\/v$|^hd$|^4k$/i
 
 export function cleanDisplayTitle(title: string, artistName?: string): string {
-  let out = title.replace(/\s*[([{]([^)\]}]{1,80})[)\]}]\s*/g, (match, inner: string) =>
+  let out = decodeHtmlEntities(title).replace(/\s*[([{]([^)\]}]{1,80})[)\]}]\s*/g, (match, inner: string) =>
     NOISE_PATTERN.test(inner.trim()) ? ' ' : match
   )
   out = out.replace(/\s{2,}/g, ' ').trim()
@@ -18,14 +20,15 @@ export function cleanDisplayTitle(title: string, artistName?: string): string {
   }
 
   out = out.replace(/\s*[-–—|]\s*$/, '').trim()
-  return out || title
+  return out || decodeHtmlEntities(title)
 }
 
 export function cleanArtistName(name: string): string {
-  const cleaned = name
+  const decoded = decodeHtmlEntities(name)
+  const cleaned = decoded
     .replace(/\s*-\s*Topic$/i, '')
     .replace(/\s+@\S+$/, '')
     .replace(/\s{2,}/g, ' ')
     .trim()
-  return cleaned || name
+  return cleaned || decoded
 }

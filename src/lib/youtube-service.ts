@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { cleanArtistName } from '@/lib/clean-title'
+import { decodeHtmlEntities } from '@/lib/html-entities'
 import type { Json } from '@/types/database'
 import type { Album, Artist, Track } from '@/types/music'
 
@@ -226,10 +227,10 @@ function mapYouTubeTrack(item: YouTubeRawItem, duration: number): YouTubeTrack {
   const thumb = item.snippet.thumbnails.high ?? item.snippet.thumbnails.medium ?? item.snippet.thumbnails.default
   return {
     id: getYouTubeTrackId(videoId),
-    name: item.snippet.title,
+    name: decodeHtmlEntities(item.snippet.title),
     duration,
     artist_id: item.snippet.channelId,
-    artist_name: item.snippet.channelTitle,
+    artist_name: decodeHtmlEntities(item.snippet.channelTitle),
     album_id: '',
     album_name: '',
     image: thumb?.url ?? '',
@@ -266,19 +267,19 @@ export async function searchYouTube(
   const memEntry = getFromMemoryCache(cacheKey)
   if (memEntry && !pageToken) {
     logEvent('cache_hit', { key: cacheKey, source: 'memory' })
-    return { tracks: memEntry.results.slice(0, requestedLimit), nextPageToken: memEntry.nextPageToken }
+    return { tracks: decodeTracks(memEntry.results.slice(0, requestedLimit)), nextPageToken: memEntry.nextPageToken }
   }
 
   const sbEntry = await fetchFromSupabaseCache(cacheKey)
   if (sbEntry && !pageToken) {
     setMemoryCache(cacheKey, sbEntry.results, sbEntry.nextPageToken)
-    return { tracks: sbEntry.results.slice(0, requestedLimit), nextPageToken: sbEntry.nextPageToken }
+    return { tracks: decodeTracks(sbEntry.results.slice(0, requestedLimit)), nextPageToken: sbEntry.nextPageToken }
   }
 
   const existingPromise = inFlight.get(cacheKey)
   if (existingPromise && !pageToken) {
     logEvent('dedup', { key: cacheKey })
-    return existingPromise.then((entry) => ({ tracks: entry.tracks.slice(0, requestedLimit), nextPageToken: entry.nextPageToken }))
+    return existingPromise.then((entry) => ({ tracks: decodeTracks(entry.tracks.slice(0, requestedLimit)), nextPageToken: entry.nextPageToken }))
   }
 
   logEvent('api_request', { query: normalized })
@@ -300,7 +301,25 @@ export async function searchYouTube(
   })()
 
   inFlight.set(cacheKey, promise)
-  return promise.then((entry) => ({ tracks: entry.tracks.slice(0, requestedLimit), nextPageToken: entry.nextPageToken }))
+  return promise.then((entry) => ({ tracks: decodeTracks(entry.tracks.slice(0, requestedLimit)), nextPageToken: entry.nextPageToken }))
+}
+
+/* O cache de busca (memória + Supabase, 6h) guarda os títulos como vieram da
+   API, então uma faixa buscada antes da correção continua devolvendo `&#39;`.
+   Decodificar na saída cobre tanto o cache antigo quanto o novo. */
+function decodeTracks<T extends { name?: string; artist_name?: string; album_name?: string }>(tracks: T[]): T[] {
+  return tracks.map((track) => {
+    const out: Record<string, unknown> = { ...track }
+    for (const key of ['name', 'artist_name', 'album_name'] as const) {
+      const value = track[key]
+      // Só toca em campos existentes: o objeto do cache precisa voltar igual
+      // ao original quando não há entidade nenhuma (os testes cobrem isso).
+      if (typeof value === 'string' && value !== decodeHtmlEntities(value)) {
+        out[key] = decodeHtmlEntities(value)
+      }
+    }
+    return out as T
+  })
 }
 
 export function clearRateLimits(): void {
@@ -391,7 +410,7 @@ function mapPlaylistToAlbum(item: YouTubeJson): Album {
   const playlistId = item.id?.playlistId ?? item.id ?? ''
   return {
     id: playlistId,
-    name: item.snippet?.title ?? '',
+    name: decodeHtmlEntities(item.snippet?.title ?? ''),
     artist_id: item.snippet?.channelId ?? '',
     artist_name: cleanArtistName(item.snippet?.channelTitle ?? ''),
     image: pickThumb(item.snippet?.thumbnails),
@@ -405,7 +424,7 @@ function mapVideoItemToTrack(item: YouTubeJson, duration: number, albumId = '', 
   const videoId = item.id?.videoId ?? item.contentDetails?.videoId ?? ''
   return {
     id: getYouTubeTrackId(videoId),
-    name: item.snippet?.title ?? '',
+    name: decodeHtmlEntities(item.snippet?.title ?? ''),
     duration,
     artist_id: item.snippet?.channelId ?? item.snippet?.videoOwnerChannelId ?? '',
     artist_name: cleanArtistName(item.snippet?.channelTitle ?? item.snippet?.videoOwnerChannelTitle ?? ''),
@@ -581,7 +600,7 @@ export async function getYouTubeChannel(
   const baseArtist = mapChannelToArtist({ id: { channelId }, snippet: item.snippet })
   const banner = item.brandingSettings?.image?.bannerExternalUrl ?? ''
   const artist = banner ? { ...baseArtist, image_xl: banner } : baseArtist
-  const title = item.snippet?.title ?? ''
+  const title = decodeHtmlEntities(item.snippet?.title ?? '')
 
   // Buscas secundárias são best-effort: se o bucket diário de search.list
   // esgotar, a página do artista degrada (header + listas vazias) em vez de falhar.

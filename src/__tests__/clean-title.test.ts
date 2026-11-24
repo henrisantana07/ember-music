@@ -46,6 +46,11 @@ describe('cleanDisplayTitle', () => {
   it('devolve o título original se a limpeza zerar tudo', () => {
     expect(cleanDisplayTitle('(Official Video)', 'Adele')).toBe('(Official Video)')
   })
+
+  it('decodifica entidades HTML do YouTube', () => {
+    expect(cleanDisplayTitle("What&#39;s Up? (Official Video)")).toBe("What's Up?")
+    expect(cleanDisplayTitle('S&amp;M (Lyrics)')).toBe('S&M')
+  })
 })
 
 describe('cleanArtistName', () => {

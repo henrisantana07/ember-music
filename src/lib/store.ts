@@ -3,6 +3,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Track } from '@/types/music'
+import { decodeHtmlEntities } from '@/lib/html-entities'
 
 export type RepeatMode = 'none' | 'one' | 'all'
 
@@ -67,6 +68,16 @@ interface PlayerState {
   setWideCover: (wide: boolean) => void
 }
 
+/** Normaliza títulos que podem ter vindo codificados da API/cache antigo. */
+function decodeTrackFields(track: Track): Track {
+  return {
+    ...track,
+    name: decodeHtmlEntities(track.name),
+    artist_name: decodeHtmlEntities(track.artist_name ?? ''),
+    album_name: decodeHtmlEntities(track.album_name ?? ''),
+  }
+}
+
 function generateShuffleOrder(length: number, currentIndex: number): number[] {
   const indices = Array.from({ length }, (_, i) => i).filter((i) => i !== currentIndex)
   for (let i = indices.length - 1; i > 0; i--) {
@@ -110,7 +121,11 @@ export const usePlayerStore = create<PlayerState>()(
       : (opt1 as Track[] | undefined)
         ?? (prev.queue.some((t) => t.id === arg.id) ? prev.queue : [arg])
     const index = Array.isArray(arg) ? (opt1 as number | undefined) ?? 0 : tracks.findIndex((t) => t.id === arg.id)
-    const track = Array.isArray(arg) ? (tracks[index] ?? tracks[0]) : arg
+    /* Títulos vêm codificados da API do YouTube (`&#39;`) e também podem vir
+       assim do cache/localStorage de versões anteriores. Decodifica na entrada
+       do player para a hero, a fila e o estado persistido ficarem limpos. */
+    const decodedTracks = tracks.map(decodeTrackFields)
+    const track = decodeTrackFields(Array.isArray(arg) ? (tracks[index] ?? tracks[0]) : arg)
     const playlistId = Array.isArray(arg) ? (opt2 as string | undefined) : (opt2 as string | undefined)
     const playlistName = Array.isArray(arg) ? (opt3 as string | undefined) : (opt3 as string | undefined)
 
@@ -123,8 +138,8 @@ export const usePlayerStore = create<PlayerState>()(
       isPlaying: true,
       progress: isSameTrack ? prev.progress : 0,
       duration: isSameTrack ? prev.duration : 0,
-      queue: tracks,
-      originalQueue: tracks,
+      queue: decodedTracks,
+      originalQueue: decodedTracks,
       currentPlaylistId: playlistId ?? null,
       currentPlaylistName: playlistName ?? null,
       shuffleOrder: shuffle ? generateShuffleOrder(tracks.length, Math.max(0, currentIndex)) : [],
@@ -300,11 +315,19 @@ export const usePlayerStore = create<PlayerState>()(
         progress: state.progress,
         duration: state.duration,
       }),
-      merge: (persisted, current) => ({
-        ...current,
-        ...(persisted as Partial<PlayerState>),
-        isPlaying: false,
-      }),
+      merge: (persisted, current) => {
+        const merged = {
+          ...current,
+          ...(persisted as Partial<PlayerState>),
+          isPlaying: false,
+        }
+        return {
+          ...merged,
+          currentTrack: merged.currentTrack ? decodeTrackFields(merged.currentTrack) : null,
+          queue: merged.queue.map(decodeTrackFields),
+          originalQueue: merged.originalQueue.map(decodeTrackFields),
+        }
+      },
     }
   )
 )
