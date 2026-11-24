@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, act, waitFor } from '@testing-library/react'
-import { YouTubePlayer, useYouTubePlayer } from '@/components/YouTubePlayer'
+import { YouTubePlayer, useYouTubePlayer, RESUME_KEY } from '@/components/YouTubePlayer'
+import { usePlayerStore } from '@/lib/store'
+import type { Track } from '@/types/music'
 
 type FakeEvent = { target: FakePlayer; data: number }
 
@@ -156,5 +158,28 @@ describe('useYouTubePlayer', () => {
     expect(hookApi?.isReady).toBe(false)
 
     unmount()
+  })
+
+  it('restaura a posição salva e retoma após reload, sem depender do CUED', async () => {
+    const track = {
+      id: 'youtube:abc123',
+      name: 'Faixa',
+      artist_name: 'Artista',
+      youtubeVideoId: 'abc123',
+      source: 'youtube',
+      duration: 180,
+    } as unknown as Track
+
+    usePlayerStore.setState({ currentTrack: track, progress: 42, isPlaying: false })
+    localStorage.setItem(RESUME_KEY, String(Date.now()))
+
+    const { unmount } = render(<HookProbe videoId="abc123" />)
+
+    await waitFor(() => expect(fakePlayer.seekTo).toHaveBeenCalledWith(42, true))
+    await waitFor(() => expect(fakePlayer.playVideo).toHaveBeenCalled())
+
+    unmount()
+    usePlayerStore.setState({ currentTrack: null, progress: 0, isPlaying: false })
+    localStorage.removeItem(RESUME_KEY)
   })
 })

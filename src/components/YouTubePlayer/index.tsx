@@ -116,6 +116,52 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
   }, [])
 
   const seekDoneRef = useRef(false)
+  /* Restauração de posição/auto-resume após reload. Antes tudo dependia do
+     evento CUED do player — quando ele não chega, a faixa voltava do zero.
+     Agora o restore também roda no onReady, com retry até o metadata existir. */
+  const restoredRef = useRef<string | null>(null)
+  const resumeTriedRef = useRef(false)
+
+  const restorePosition = useCallback((player: YTPlayer) => {
+    if (!videoId || restoredRef.current === videoId) return
+    const store = usePlayerStore.getState()
+    if (store.currentTrack?.youtubeVideoId !== videoId) return
+    restoredRef.current = videoId
+
+    const saved = store.progress
+    if (saved > 1) {
+      seekUntilRef.current = Date.now() + 800
+      try { player.seekTo(saved, true) } catch { /* player ainda inicializando */ }
+      setState((s) => ({ ...s, currentTime: saved }))
+    }
+  }, [videoId])
+
+  const maybeResume = useCallback((player: YTPlayer) => {
+    if (resumeTriedRef.current || !videoId) return
+    resumeTriedRef.current = true
+
+    let shouldResume = false
+    try {
+      const ts = Number(localStorage.getItem(RESUME_KEY) ?? '0')
+      shouldResume = ts > 0 && Date.now() - ts < 24 * 60 * 60 * 1000
+      localStorage.setItem(RESUME_KEY, '0')
+    } catch { /* storage indisponível */ }
+
+    if (!shouldResume || usePlayerStore.getState().currentTrack?.youtubeVideoId !== videoId) return
+
+    usePlayerStore.getState().resume()
+    try { player.playVideo() } catch { /* autoplay pode ser bloqueado */ }
+    setTimeout(() => {
+      try {
+        const p = playerRef.current
+        if (!p) return
+        const st = p.getPlayerState()
+        // 1 = PLAYING, 3 = BUFFERING. Se não saiu do lugar, o autoplay foi
+        // bloqueado pelo navegador: volta ao estado pausado, sem travar a UI.
+        if (st !== 1 && st !== 3) usePlayerStore.getState().pause()
+      } catch { /* player descartado */ }
+    }, 3000)
+  }, [videoId])
 
   const onPlayerReady = useCallback((event: YTPlayerEvent) => {
     const player = event.target
@@ -128,39 +174,12 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
     const PlayerState = window.YT?.PlayerState
     if (!PlayerState) return
 
-    if (event.data === PlayerState.CUED && !seekDoneRef.current) {
+    if (event.data === PlayerState.CUED) {
       seekDoneRef.current = true
-      const store = usePlayerStore.getState()
-      const savedProgress = store.progress
-      const sameTrack = store.currentTrack?.youtubeVideoId === videoId
-      if (sameTrack && savedProgress > 1) {
-        seekUntilRef.current = Date.now() + 600
-        event.target.seekTo(savedProgress, true)
-        setState(s => ({ ...s, currentTime: savedProgress }))
-      }
-
-      // Auto-resume (padrão YouTube Music/Spotify): se a última sessão terminou
-      // tocando, volta a tocar sozinho na posição salva. Se o navegador bloquear
-      // o autoplay, volta ao estado pausado em 3s (1 clique para continuar).
-      let shouldResume = false
-      try {
-        const raw = localStorage.getItem(RESUME_KEY)
-        const ts = raw ? Number(raw) : 0
-        shouldResume = !!sameTrack && ts > 0 && Date.now() - ts < 24 * 60 * 60 * 1000
-        localStorage.setItem(RESUME_KEY, '0')
-      } catch { /* storage indisponível */ }
-
-      if (shouldResume) {
-        usePlayerStore.getState().resume()
-        event.target.playVideo()
-        setTimeout(() => {
-          const p = playerRef.current
-          if (!p) return
-          const st = p.getPlayerState()
-          // 1 = PLAYING, 3 = BUFFERING — se não começou, autoplay foi bloqueado
-          if (st !== 1 && st !== 3) usePlayerStore.getState().pause()
-        }, 3000)
-      }
+      /* CUED é o caminho preferencial (metadata já disponível). O restore no
+         onReady abaixo cobre o caso em que este evento não dispara. */
+      restorePosition(event.target)
+      maybeResume(event.target)
       return
     }
 
@@ -191,7 +210,7 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
         event.target.playVideo()
       }
     }
-  }, [videoId])
+  }, [videoId, restorePosition, maybeResume])
 
   const onPlayerError = useCallback((event: YTPlayerEvent) => {
     console.error('YouTube player error:', event.data)
@@ -205,6 +224,8 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
     if (token !== createTokenRef.current || !containerRef.current) return
 
     seekDoneRef.current = false
+    restoredRef.current = null
+    resumeTriedRef.current = false
 
     playerRef.current = new window.YT.Player(containerRef.current, {
       videoId,
@@ -296,6 +317,32 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
     }
     return () => destroy()
   }, [videoId, createPlayer, destroy])
+
+  /* Caminho alternativo de restauração: não depende do CUED. Assim que o
+     player fica pronto, tentamos aplicar a posição salva; se o metadata ainda
+     não carregou, repetimos por até ~3,6s. */
+  useEffect(() => {
+    if (!state.isReady || !videoId) return
+    let attempts = 0
+    let timer: ReturnType<typeof setTimeout> | null = null
+
+    const tryRestore = () => {
+      const player = playerRef.current
+      if (!player || restoredRef.current === videoId) return
+      let hasMetadata = false
+      try { hasMetadata = player.getDuration() > 0 } catch { /* ainda carregando */ }
+      if (hasMetadata || attempts >= 12) {
+        restorePosition(player)
+        maybeResume(player)
+        return
+      }
+      attempts += 1
+      timer = setTimeout(tryRestore, 300)
+    }
+
+    tryRestore()
+    return () => { if (timer) clearTimeout(timer) }
+  }, [state.isReady, videoId, restorePosition, maybeResume])
 
   return {
     ...state,
