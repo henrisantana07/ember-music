@@ -394,7 +394,7 @@ export default function ConfiguracoesPage() {
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={avatarUploading}
-                    className="absolute -bottom-2 -right-2 h-11 w-11 rounded-full flex items-center justify-center shadow-elevation-2 transition-transform hover:scale-105 state-layer"
+                    className="absolute! -bottom-2 -right-2 h-11 w-11 rounded-full flex items-center justify-center shadow-elevation-2 transition-transform hover:scale-105 state-layer"
                     style={{ backgroundColor: 'var(--surface-container-highest)', color: 'var(--text-primary)', outlineColor: 'var(--accent-solid)' }}
                     aria-label="Trocar foto de perfil"
                     title="Trocar foto"

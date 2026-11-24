@@ -1039,7 +1039,12 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                   setWideCover(true)
                 }
               }}
-              className={`absolute -left-20 top-1 z-10 h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full border border-outline-variant transition-colors state-layer ${
+              /* `absolute!` pelo mesmo motivo do botão de "Mais opções": a
+                 regra `.state-layer` do CSS global é unlayered e vence o
+                 utility `.absolute`, deixando o botão como item de fluxo da
+                 coluna — ele saía do canto superior direito e deixava de ser
+                 acionável na tela cheia. */
+              className={`absolute! -left-20 top-1 z-10 h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full border border-outline-variant transition-colors state-layer ${
                 wideCover ? 'text-[var(--accent-from)]' : 'text-[var(--text-secondary)]'
               }`}
               style={{ backgroundColor: 'var(--bg-surface)' }}
