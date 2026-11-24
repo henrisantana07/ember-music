@@ -1,7 +1,7 @@
-/* Bump de versão: um SW antigo pode servir HTML de um deploy anterior junto
-   com o bundle novo, causando erro de hidratação (#418) no React. O `activate`
-   abaixo apaga automaticamente os caches com versão anterior. */
-const CACHE = 'ember-music-v4'
+/* v5: os assets passam a ser network-first (ver handler de fetch abaixo), para
+   que o botão de recarregar do navegador traga código novo sem depender do
+   Ctrl+Shift+R. O `activate` apaga os caches das versões anteriores. */
+const CACHE = 'ember-music-v5'
 
 const PRECACHE_URLS = ['/', '/buscar', '/biblioteca', '/login', '/offline']
 
@@ -68,18 +68,20 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Assets: cache-first (/_next/static/ tem hash no prod; em dev já não cacheamos).
+  /* Assets: network-first. Assim, ao clicar no botão de recarregar do
+     navegador, o SW busca a versão mais recente no servidor antes de usar o
+     cache — o reload normal passa a se comportar como um hard reload. O cache
+     continua como fallback offline, então o app não quebra sem rede.
+     Custo: uma requisição a mais por asset em cada carregamento. */
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const fetchPromise = fetch(event.request).then((response) => {
+    fetch(event.request)
+      .then((response) => {
         if (response.ok && response.type === 'basic') {
           const clone = response.clone()
           caches.open(CACHE).then((cache) => cache.put(event.request, clone))
         }
         return response
-      }).catch(() => cached || new Response('', { status: 504 }))
-
-      return cached || fetchPromise
-    })
+      })
+      .catch(async () => (await caches.match(event.request)) || new Response('', { status: 504 }))
   )
 })
