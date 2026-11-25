@@ -161,7 +161,9 @@
   --nav-h: 64px;
   --player-h: 80px;          /* rodapé completo (desktop) */
   --player-mobile-h: 112px;  /* rodapé mobile: metadados + transporte */
-  --player-mini-h: 64px;     /* rodapé só com metadados (hero aberta) */
+  --player-mini-h: 64px;     /* rodapé só com metadados (hero aberta/mini) */
+  /* Com a hero aberta a nav some: o rodapé cola na safe area, não na borda. */
+  --player-hero-pad: calc(var(--player-mini-h) + var(--safe-bottom));
 
   /* Altura ocupada apenas pela navegação fixa; vira 0 no desktop. O rodapé
      do player usa isto como `margin-bottom` para não pintar por cima da nav. */
@@ -212,6 +214,7 @@
     --content-bottom-pad: var(--player-h);
     --hero-bottom-pad: var(--player-h);
     --hero-bottom-pad-mini: var(--player-h);
+    --player-hero-pad: var(--player-h);
   }
 }
 

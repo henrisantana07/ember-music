@@ -17,7 +17,7 @@ import { playerAudioRef, progressDragState } from '@/lib/player-audio'
 import { useTrackSeek, useTrackPrev } from '@/hooks/use-player-transport'
 import { TrackProgress } from '@/components/Player/TrackProgress'
 import Link from 'next/link'
-import { ChevronDown, ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause, Maximize, Minimize } from 'lucide-react'
+import { ChevronDown, ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause, Maximize, Minimize, Music } from 'lucide-react'
 
 export function Player() {
   /* Referência compartilhada: a hero e o rodapé fazem seek no MESMO `<audio>`. */
@@ -27,6 +27,7 @@ export function Player() {
   const [playlistOpen, setPlaylistOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [failedCoverId, setFailedCoverId] = useState<string | null>(null)
   const [sleepRemaining, setSleepRemaining] = useState<string | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -361,29 +362,50 @@ export function Player() {
         </div>
       )}
 
-      {/* Rodapé mobile: `fixed` na altura da bottom nav; com a hero aberta ele
-          assume o lugar da nav (que é escondida na Sidebar). `miniPlayer`
-          reduz ainda mais o rodapé, sem esconder o player. */}
+      {/* Mini-player mobile: `fixed` acima da bottom nav; com a hero aberta ele
+          assume o lugar da nav (escondida na Sidebar) e respeita a safe area.
+          `miniPlayer` reduz o rodapé a capa + metadados + play/pause. */}
       <footer
         className="player-footer fixed left-0 right-0 z-[70] flex flex-col justify-center border-t border-outline-variant px-3 md:hidden"
         style={{
-          /* Com a hero aberta a bottom nav some: o rodapé desce para o lugar
-             dela, em vez de ficar flutuando 64px acima da base da tela. */
-          bottom: isExpandedOpen ? 0 : 'var(--chrome-bottom)',
-          height: isExpandedOpen ? 'var(--player-mini-h)' : 'var(--player-mobile-h)',
+          bottom: isExpandedOpen ? 'var(--safe-bottom)' : 'var(--chrome-bottom)',
+          height: isExpandedOpen || miniPlayer ? 'var(--player-mini-h)' : 'var(--player-mobile-h)',
         }}
       >
         {!isExpandedOpen && !miniPlayer && <TrackProgress compact className="max-w-none" />}
         <div className="flex w-full min-h-0 items-center gap-3">
           <button onClick={toggleExpandedFullscreen} className="flex-shrink-0" aria-label={isExpandedOpen && immersive ? 'Sair da tela cheia' : 'Abrir player em tela cheia'}>
-            <img src={currentTrack.image} alt="" className="h-9 w-9 rounded object-cover" />
+            {failedCoverId !== currentTrack.id && currentTrack.image ? (
+              <img src={currentTrack.image} alt="" className="h-9 w-9 rounded object-cover"
+                onError={() => setFailedCoverId(currentTrack.id)} />
+            ) : (
+              <span className="flex h-9 w-9 items-center justify-center rounded" style={{ backgroundColor: 'var(--surface-container-highest)' }}>
+                <Music className="h-4 w-4" style={{ color: 'var(--text-disabled)' }} aria-hidden="true" />
+              </span>
+            )}
           </button>
-          <div className="min-w-0 flex-1">
+          <button
+            onClick={() => { if (!isExpandedOpen) openExpanded() }}
+            className="min-w-0 flex-1 text-left state-layer rounded-lg"
+            aria-label="Abrir player expandido"
+          >
             <p className="truncate text-body-medium font-semibold">{currentTrack.name}</p>
             <p className="truncate text-body-medium" style={{ color: 'var(--text-secondary)' }}>{currentTrack.artist_name}</p>
-          </div>
+          </button>
+          {miniPlayer && !isExpandedOpen && (
+            <button onClick={togglePlay}
+              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer"
+              style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
+              aria-label={isPlaying ? 'Pausar' : 'Tocar'}>
+              {isPlaying ? (
+                <Pause className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+              ) : (
+                <Play className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+              )}
+            </button>
+          )}
           {!isExpandedOpen && !miniPlayer && (
-            <button onClick={toggleMiniPlayer} className="hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer sm:inline-flex" style={{ color: 'var(--text-secondary)' }} aria-label="Reduzir player" title="Reduzir player">
+            <button onClick={toggleMiniPlayer} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} aria-label="Reduzir player" title="Reduzir player">
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
@@ -400,7 +422,7 @@ export function Player() {
         </div>
         {/* Transporte completo no rodapé mobile: shuffle e repeat tomaram o
             lugar do sleep timer, e prev/next o lugar das tags "YT". */}
-        {!isExpandedOpen && (
+        {!isExpandedOpen && !miniPlayer && (
           <div className="flex w-full items-center justify-around gap-1 pt-1">
             <button onClick={toggleShuffle}
               className="inline-flex h-11 w-11 items-center justify-center rounded-full state-layer"
