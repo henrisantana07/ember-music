@@ -8,6 +8,7 @@ import type { ReactNode } from 'react'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { useArtistsStore } from '@/lib/artists-store'
 import { useSidebarStore } from '@/lib/sidebar-store'
+import { usePlayerStore } from '@/lib/store'
 import { useUser } from '@/hooks/use-user'
 import { useAvatar } from '@/hooks/use-avatar'
 import { useLibraryPreferences } from '@/hooks/use-library-preferences'
@@ -206,6 +207,8 @@ export default function Sidebar() {
   const pathname = usePathname()
   const collapsed = useSidebarStore((s) => s.collapsed)
   const immersive = useSidebarStore((s) => s.immersive)
+  /* Com a hero aberta, o rodapé do player ocupa o lugar da bottom nav. */
+  const playerExpanded = usePlayerStore((s) => s.isExpandedOpen)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const supabase = createClient()
   const router = useRouter()
@@ -626,7 +629,7 @@ useEffect(() => {
         aria-label="Navegação principal"
         className="fixed bottom-0 left-0 right-0 z-50 flex items-stretch justify-around border-t border-outline-variant bg-[var(--bg-base)] md:hidden"
         style={{
-          display: immersive ? 'none' : undefined,
+          display: immersive || playerExpanded ? 'none' : undefined,
           height: 'var(--chrome-bottom)',
           paddingBottom: 'var(--safe-bottom)',
         }}

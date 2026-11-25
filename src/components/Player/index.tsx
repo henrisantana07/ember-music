@@ -361,12 +361,15 @@ export function Player() {
         </div>
       )}
 
-      {/* Rodapé mobile: `fixed` na altura da bottom nav (incluindo safe area),
-          para não flutuar quando a barra de URL do browser aparece/desaparece.
-          `miniPlayer` reduz ainda mais o rodapé, sem esconder o player. */}
+      {/* Rodapé mobile: `fixed` na altura da bottom nav; com a hero aberta ele
+          assume o lugar da nav (que é escondida na Sidebar). `miniPlayer`
+          reduz ainda mais o rodapé, sem esconder o player. */}
       <footer
-        className="player-footer fixed bottom-[var(--chrome-bottom)] left-0 right-0 z-[70] flex flex-col justify-center border-t border-outline-variant px-3 md:hidden"
+        className="player-footer fixed left-0 right-0 z-[70] flex flex-col justify-center border-t border-outline-variant px-3 md:hidden"
         style={{
+          /* Com a hero aberta a bottom nav some: o rodapé desce para o lugar
+             dela, em vez de ficar flutuando 64px acima da base da tela. */
+          bottom: isExpandedOpen ? 0 : 'var(--chrome-bottom)',
           height: miniPlayer ? 'var(--player-mini-h)' : 'var(--player-mobile-h)',
         }}
       >

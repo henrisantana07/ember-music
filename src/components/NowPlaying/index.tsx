@@ -746,7 +746,11 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
         /* A reserva inferior acompanha o chrome real (nav + player + safe
            area) em vez dos antigos `pb-14`/`pb-20` fixos, que deixavam o
            conteúdo encoberto pelo rodapé e pela nav. */
-        paddingBottom: miniPlayer ? 'var(--hero-bottom-pad-mini)' : 'var(--hero-bottom-pad)',
+        /* No modal o rodapé ocupa o lugar da nav; na rota /reproducao a nav
+           continua visível, então a reserva inclui os dois. */
+        paddingBottom: isExpandedOpen
+          ? (miniPlayer ? 'var(--player-mini-h)' : 'var(--player-mobile-h)')
+          : (miniPlayer ? 'var(--hero-bottom-pad-mini)' : 'var(--hero-bottom-pad)'),
         /* O gradiente saiu daqui. Morava nesta raiz em `inset-0` de sangria e
            sumia por baixo do painel da fila, que é opaco; sobrava dele só a
            faixa da capa e o vão do rodapé. Agora ele é o background da coluna
