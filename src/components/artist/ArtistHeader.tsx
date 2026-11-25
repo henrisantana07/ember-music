@@ -9,6 +9,8 @@ import type { Artist } from '@/types/music'
 interface ArtistHeaderProps {
   artist: Artist
   onPlay: () => void
+  /** Sem faixas indexadas, "Tocar" não pode fazer nada — desabilita com feedback. */
+  canPlay?: boolean
 }
 
 function formatFollowers(count: number): string {
@@ -17,7 +19,7 @@ function formatFollowers(count: number): string {
   return count.toLocaleString('pt-BR')
 }
 
-export function ArtistHeader({ artist, onPlay }: ArtistHeaderProps) {
+export function ArtistHeader({ artist, onPlay, canPlay = true }: ArtistHeaderProps) {
   const backgroundUrl = artist.image_xl || artist.image
   const photoUrl = artist.image || artist.image_xl
 
@@ -37,7 +39,9 @@ export function ArtistHeader({ artist, onPlay }: ArtistHeaderProps) {
         <div className="flex items-center gap-3 flex-wrap justify-center">
           <button
             onClick={onPlay}
-            className="min-h-[48px] px-8 rounded-full text-label-large font-bold transition-transform hover:scale-105 active:scale-95 state-layer"
+            disabled={!canPlay}
+            title={canPlay ? undefined : 'Nenhuma faixa disponível para tocar'}
+            className="min-h-[48px] px-8 rounded-full text-label-large font-bold transition-transform hover:scale-105 active:scale-95 state-layer disabled:cursor-not-allowed disabled:opacity-50"
             style={{
               background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))',
               color: 'var(--text-on-accent)',

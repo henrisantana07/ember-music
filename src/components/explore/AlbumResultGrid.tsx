@@ -136,7 +136,7 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
               <div className="absolute bottom-3 right-3 z-10">
                 <button
                   onClick={(e) => handleSaveAlbum(e, album)}
-                  disabled={!user || isSaving || isSaved}
+                  disabled={isSaving || isSaved}
                   className="w-12 h-12 rounded-full flex items-center justify-center shadow-elevation-3 transition-transform duration-150 hover:scale-105 disabled:opacity-70"
                   style={{
                     background: isSaved
@@ -145,7 +145,7 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
                     color: 'white',
                   }}
                   aria-label={isSaved ? `${album.name} salvo` : `Salvar álbum ${album.name} como playlist`}
-                  title={isSaved ? 'Salvo' : 'Salvar álbum como playlist'}
+                  title={isSaved ? 'Salvo' : user ? 'Salvar álbum como playlist' : 'Faça login para salvar álbuns'}
                 >
                   {isSaving ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -173,7 +173,7 @@ export function AlbumResultGrid({ albums, loading, maxItems }: AlbumResultGridPr
       })}
     </div>
       {toast && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl text-body-medium shadow-elevation-3 animate-slide-up" style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
+        <div className="fixed left-1/2 z-[80] -translate-x-1/2 rounded-xl px-5 py-3 text-body-medium shadow-elevation-3 animate-slide-up" style={{ bottom: 'var(--toast-bottom)', backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
           {toast}
         </div>
       )}

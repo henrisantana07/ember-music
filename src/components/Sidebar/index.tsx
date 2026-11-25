@@ -765,7 +765,11 @@ useEffect(() => {
               {user && (
               <div className="flex-none border-t border-outline-variant px-2 py-1">
                 <div className="relative">
-                  <button className="flex items-center gap-3 w-full px-2 min-h-[48px] rounded-lg text-body-medium transition-colors duration-200 hover:bg-state-hover state-layer" style={{ color: 'var(--text-secondary)' }}>
+                  <button
+                    onClick={() => { router.push('/configuracoes'); setDrawerOpen(false) }}
+                    aria-label="Abrir configurações da conta"
+                    className="flex w-full items-center gap-3 px-2 min-h-[48px] rounded-lg text-body-medium transition-colors duration-200 hover:bg-state-hover state-layer" style={{ color: 'var(--text-secondary)' }}>
+
                     {avatarUrl ? (
                       <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
                     ) : (

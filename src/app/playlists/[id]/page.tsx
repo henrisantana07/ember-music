@@ -635,8 +635,8 @@ function PlaylistContent() {
 
       {toast && (
         <div
-          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-5 py-3 rounded-xl shadow-elevation-3 text-body-medium"
-          style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}
+          className="fixed left-1/2 z-[80] flex -translate-x-1/2 items-center gap-4 rounded-xl px-5 py-3 text-body-medium shadow-elevation-3"
+          style={{ bottom: 'var(--toast-bottom)', backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}
         >
           <span>{toast.message}</span>
           {toast.action && (
@@ -685,19 +685,23 @@ function SortableTrackRow({
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onClick()}
     >
-      <button
-        {...attributes}
-        {...listeners}
-        className="h-11 w-11 -ml-1 inline-flex items-center justify-center rounded-full cursor-grab active:cursor-grabbing touch-none state-layer"
-        style={{ color: 'var(--text-disabled)' }}
-        onClick={(e) => e.stopPropagation()}
-        title="Arrastar"
-        aria-label={`Reordenar ${track.name}`}
-      >
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
-        </svg>
-      </button>
+      {/* Sem sessão de dono o dnd está desabilitado: mostrar a alça e ainda
+          interceptar o clique impedia de tocar a faixa. */}
+      {isOwner && (
+        <button
+          {...attributes}
+          {...listeners}
+          className="h-11 w-11 -ml-1 inline-flex items-center justify-center rounded-full cursor-grab active:cursor-grabbing touch-none state-layer"
+          style={{ color: 'var(--text-disabled)' }}
+          onClick={(e) => e.stopPropagation()}
+          title="Arrastar"
+          aria-label={`Reordenar ${track.name}`}
+        >
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+          </svg>
+        </button>
+      )}
 
       <span className="w-7 text-center text-body-medium" style={{ color: 'var(--text-disabled)' }}>
         {isActive ? (

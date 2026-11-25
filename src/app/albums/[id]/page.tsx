@@ -121,8 +121,10 @@ export default function AlbumPage() {
           </p>
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
             <button
-              onClick={() => album.tracks.length > 0 && play(album.tracks, 0)}
-              className="min-h-[48px] px-6 rounded-full text-label-large font-bold transition-transform hover:scale-105 state-layer"
+              onClick={() => play(album.tracks, 0)}
+              disabled={album.tracks.length === 0}
+              title={album.tracks.length === 0 ? 'Este álbum não tem faixas disponíveis' : undefined}
+              className="min-h-[48px] px-6 rounded-full text-label-large font-bold transition-transform hover:scale-105 state-layer disabled:cursor-not-allowed disabled:opacity-50"
               style={{ background: 'linear-gradient(to right, var(--accent-from), var(--accent-to))', color: 'var(--text-on-accent)' }}
             >
               Tocar tudo

@@ -58,8 +58,8 @@ export function PwaRegister() {
   if (!showInstall) return null
 
   return (
-    <motion.div className="fixed bottom-28 left-4 right-4 md:left-auto md:right-4 md:w-80 z-50 rounded-xl p-4 shadow-xl border border-outline-variant"
-      style={{ backgroundColor: 'var(--bg-elevated)' }}
+    <motion.div className="fixed left-4 right-4 z-[80] rounded-xl border border-outline-variant p-4 shadow-xl md:left-auto md:right-4 md:w-80"
+      style={{ bottom: 'var(--toast-bottom)', backgroundColor: 'var(--bg-elevated)' }}
       variants={fadeVariants}
       initial="hidden"
       animate="visible">

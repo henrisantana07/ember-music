@@ -90,7 +90,7 @@ export default function ArtistPage() {
 
   return (
     <div className="mx-auto w-full">
-      <ArtistHeader artist={artist} onPlay={handlePlay} />
+      <ArtistHeader artist={artist} onPlay={handlePlay} canPlay={tracks.length > 0} />
 
       {tracks.length > 0 && (
         <section className="mt-10">

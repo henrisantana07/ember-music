@@ -979,6 +979,21 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 : {}),
             }}
           >
+            {/* No mobile a fila substitui a capa: sem esta saída o estado
+                `showQueueOnMobile` só era ligado, nunca desligado. */}
+            {showQueueOnMobile && (
+              <button
+                onClick={() => setShowQueueOnMobile(false)}
+                className="flex min-h-[48px] items-center gap-2 px-4 text-label-large state-layer md:hidden"
+                style={{ color: 'var(--text-primary)' }}
+                aria-label="Voltar à capa do player"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+                Voltar
+              </button>
+            )}
             {/* Tela cheia na divisa entre a capa e a fila: `-left-14` (−56px)
                 passa da largura do botão (48px), então ele fica inteiramente
                 fora do painel com 8px de respiro da borda do #121212 — 16px

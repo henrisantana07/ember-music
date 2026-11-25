@@ -548,7 +548,7 @@ export default function ConfiguracoesPage() {
 
               {/* Delete modal */}
               {deleteModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim" onClick={() => setDeleteModalOpen(false)}>
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-scrim" onClick={() => setDeleteModalOpen(false)}>
                   <div
                     className="p-6 rounded-xl max-w-sm w-full mx-4"
                     style={{ backgroundColor: 'var(--bg-elevated)' }}

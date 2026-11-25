@@ -647,7 +647,7 @@ function BibliotecaContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>Nenhum artista seguido ainda</p>
-                <button onClick={() => router.push('/buscar?filtro=artistas')} className="btn-primary text-label-large min-h-[48px] px-6">Explorar artistas</button>
+                <button onClick={() => router.push('/buscar?tab=artistas')} className="btn-primary text-label-large min-h-[48px] px-6">Explorar artistas</button>
               </div>
             ) : (
               <div className={LIBRARY_GRID}>

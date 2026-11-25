@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useArtistsStore } from '@/lib/artists-store'
 import type { Json } from '@/types/database'
@@ -13,6 +14,7 @@ interface ArtistFollowButtonProps {
 export function ArtistFollowButton({ artistId, artistData }: ArtistFollowButtonProps) {
   const [following, setFollowing] = useState(false)
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
   const supabase = createClient()
   const { addArtist, removeArtist } = useArtistsStore()
 
@@ -32,7 +34,9 @@ export function ArtistFollowButton({ artistId, artistData }: ArtistFollowButtonP
   async function handleClick(e: React.MouseEvent) {
     e.stopPropagation()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    /* Sem sessão o clique precisa responder: levar ao login é melhor que
+       silenciosamente não fazer nada. */
+    if (!user) { router.push('/login'); return }
 
     setLoading(true)
     if (following) {
