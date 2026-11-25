@@ -361,15 +361,13 @@ export function Player() {
         </div>
       )}
 
-      {/* Rodapé mobile: sempre compacto e ancorado acima da bottom nav. O
-          `margin-bottom` usa a mesma altura da nav (incluindo safe area),
-          então os dois elementos nunca disputam a mesma faixa da viewport.
+      {/* Rodapé mobile: `fixed` na altura da bottom nav (incluindo safe area),
+          para não flutuar quando a barra de URL do browser aparece/desaparece.
           `miniPlayer` reduz ainda mais o rodapé, sem esconder o player. */}
       <footer
-        className="player-footer relative z-[70] flex flex-shrink-0 flex-col justify-center border-t border-outline-variant px-3 md:hidden"
+        className="player-footer fixed bottom-[var(--chrome-bottom)] left-0 right-0 z-[70] flex flex-col justify-center border-t border-outline-variant px-3 md:hidden"
         style={{
           height: miniPlayer ? 'var(--player-mini-h)' : 'var(--player-mobile-h)',
-          marginBottom: 'var(--chrome-bottom)',
         }}
       >
         {!isExpandedOpen && !miniPlayer && <TrackProgress compact className="max-w-none" />}

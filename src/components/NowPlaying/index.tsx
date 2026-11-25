@@ -795,7 +795,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
              viewports curtos — numa altura normal tudo cabe e não há o que rolar.
              Sem ela a trilha apareceria colada na capa. */}
         <div
-          className={`now-cover-panel relative flex-1 ${wideCover ? 'md:flex-1' : 'md:flex-[3]'} flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 rounded-2xl ${showQueueOnMobile ? 'hidden md:flex' : ''} ${palette ? '' : 'now-cover-panel-empty'} md:transition-[flex-grow] md:duration-[var(--motion-duration-medium)] md:ease-[var(--motion-easing-surface)]`}
+          className={`now-cover-panel relative flex-1 ${wideCover ? 'md:flex-1' : 'md:flex-[3]'} flex flex-col items-center [justify-content:safe_center] gap-2 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 rounded-2xl ${showQueueOnMobile ? 'hidden md:flex' : ''} ${palette ? '' : 'now-cover-panel-empty'} md:transition-[flex-grow] md:duration-[var(--motion-duration-medium)] md:ease-[var(--motion-easing-surface)]`}
           style={panelStyle}
         >
           {/* Sempre montado: o próprio KawarpBackground decide entre imagem da
@@ -931,7 +931,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
           {/* Transporte da hero no mobile. O rodapé esconde os dele enquanto a
               hero está aberta, então existe um único conjunto de controles —
               todos ligados à store e ao mesmo `<audio>` do Player. */}
-          <div className="mt-auto w-full max-w-[560px] space-y-4 pt-4 md:hidden">
+          <div className="w-full max-w-[560px] space-y-3 pt-1 md:hidden">
             <TrackProgress />
             <div className="flex items-center justify-center gap-4">
               <button onClick={handlePrev} className="inline-flex h-12 w-12 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} aria-label="Faixa anterior">

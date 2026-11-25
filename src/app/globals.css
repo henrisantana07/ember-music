@@ -602,8 +602,10 @@ body {
 }
 
 @media (max-width: 767px) {
+  /* 200px deixava a capa pequena demais e abria um vão no meio da hero.
+     Cresce até 260px respeitando telas estreitas (72vw em 320px). */
   .now-cover {
-    width: min(200px, 60vw);
+    width: min(260px, 72vw);
   }
 }
 
