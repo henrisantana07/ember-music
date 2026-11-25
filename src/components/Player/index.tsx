@@ -10,6 +10,7 @@ import type { Track } from '@/types/music'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { savePlaybackHistory } from '@/lib/playback-history'
+import { useIsFavorite, useFavoritesStore, useEnsureFavorites, useFavoritesSync } from '@/lib/favorites-store'
 import { ExpandedPlayerModal } from '@/components/ExpandedPlayerModal'
 import { PlaylistModal } from '@/components/PlaylistModal'
 import { useYouTube } from '@/components/YouTubePlayer/context'
@@ -17,7 +18,8 @@ import { playerAudioRef, progressDragState } from '@/lib/player-audio'
 import { useTrackSeek, useTrackPrev } from '@/hooks/use-player-transport'
 import { TrackProgress } from '@/components/Player/TrackProgress'
 import Link from 'next/link'
-import { ChevronDown, ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause, Maximize, Minimize, Music } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ChevronDown, ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause, Maximize, Minimize, Music, Heart, ListMusic } from 'lucide-react'
 
 export function Player() {
   /* Referência compartilhada: a hero e o rodapé fazem seek no MESMO `<audio>`. */
@@ -26,6 +28,7 @@ export function Player() {
   // já usado na tabela de faixas e no menu da fila.
   const [playlistOpen, setPlaylistOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
+  const router = useRouter()
   const [toast, setToast] = useState<string | null>(null)
   const [failedCoverId, setFailedCoverId] = useState<string | null>(null)
   const [sleepRemaining, setSleepRemaining] = useState<string | null>(null)
@@ -45,6 +48,12 @@ export function Player() {
     openExpanded, closeExpanded, isExpandedOpen, queueMinimized, setQueueMinimized, setQueueWidth,
     wideCover, setWideCover,
   } = usePlayerStore()
+
+  /* Ação de biblioteca/favorito real, sem estado paralelo. */
+  const isFavorite = useIsFavorite(currentTrack?.id ?? '')
+  const toggleFavorite = useFavoritesStore((s) => s.toggle)
+  useFavoritesSync(user?.id)
+  useEnsureFavorites([currentTrack?.id])
 
   // Tela cheia: mesma store da sidebar/topbar (irmãos no layout, sem props).
   // A cópia do rodapé existe porque a hero só está no DOM quando aberta — aqui
@@ -372,14 +381,14 @@ export function Player() {
           height: isExpandedOpen || miniPlayer ? 'var(--player-mini-h)' : 'var(--player-mobile-h)',
         }}
       >
-        {!isExpandedOpen && !miniPlayer && <TrackProgress compact className="max-w-none" />}
-        <div className="flex w-full min-h-0 items-center gap-3">
+        {/* Região 1 — capa à esquerda, metadados e ação de biblioteca no topo. */}
+        <div className="flex w-full min-h-0 items-center gap-2.5 pt-1.5">
           <button onClick={toggleExpandedFullscreen} className="flex-shrink-0" aria-label={isExpandedOpen && immersive ? 'Sair da tela cheia' : 'Abrir player em tela cheia'}>
             {failedCoverId !== currentTrack.id && currentTrack.image ? (
-              <img src={currentTrack.image} alt="" className="h-9 w-9 rounded object-cover"
+              <img src={currentTrack.image} alt="" className="h-10 w-10 rounded-md object-cover"
                 onError={() => setFailedCoverId(currentTrack.id)} />
             ) : (
-              <span className="flex h-9 w-9 items-center justify-center rounded" style={{ backgroundColor: 'var(--surface-container-highest)' }}>
+              <span className="flex h-10 w-10 items-center justify-center rounded-md" style={{ backgroundColor: 'var(--surface-container-highest)' }}>
                 <Music className="h-4 w-4" style={{ color: 'var(--text-disabled)' }} aria-hidden="true" />
               </span>
             )}
@@ -392,6 +401,22 @@ export function Player() {
             <p className="truncate text-body-medium font-semibold">{currentTrack.name}</p>
             <p className="truncate text-body-medium" style={{ color: 'var(--text-secondary)' }}>{currentTrack.artist_name}</p>
           </button>
+          {!miniPlayer && !isExpandedOpen && (
+            <button
+              onClick={async (e) => {
+                e.stopPropagation()
+                if (!user) { router.push('/login'); return }
+                await toggleFavorite(currentTrack)
+              }}
+              className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer"
+              style={{ color: isFavorite ? 'var(--accent-from)' : 'var(--text-secondary)' }}
+              aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+              aria-pressed={isFavorite}
+              title={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+            >
+              <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
+            </button>
+          )}
           {miniPlayer && !isExpandedOpen && (
             <button onClick={togglePlay}
               className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer"
@@ -420,10 +445,14 @@ export function Player() {
             {isExpandedOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
           </button>
         </div>
-        {/* Transporte completo no rodapé mobile: shuffle e repeat tomaram o
-            lugar do sleep timer, e prev/next o lugar das tags "YT". */}
+
+        {/* Região 2 — progresso fino entre metadados e controles. */}
+        {!isExpandedOpen && !miniPlayer && <TrackProgress compact className="py-1" />}
+
+        {/* Região 3 — controles inferiores distribuídos: shuffle, anterior,
+            play/pause em destaque, próxima, repeat e fila. */}
         {!isExpandedOpen && !miniPlayer && (
-          <div className="flex w-full items-center justify-around gap-1 pt-1">
+          <div className="flex w-full items-center justify-around gap-0.5 pb-1">
             <button onClick={toggleShuffle}
               className="inline-flex h-11 w-11 items-center justify-center rounded-full state-layer"
               style={{ color: shuffle ? 'var(--accent-from)' : 'var(--text-secondary)' }}
@@ -436,7 +465,7 @@ export function Player() {
               <SkipBack className="h-5 w-5" fill="currentColor" />
             </button>
             <button onClick={togglePlay}
-              className="flex h-11 w-11 items-center justify-center rounded-full state-layer"
+              className="flex h-12 w-12 items-center justify-center rounded-full state-layer"
               style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
               aria-label={isPlaying ? 'Pausar' : 'Tocar'}>
               {isPlaying ? (
@@ -457,6 +486,13 @@ export function Player() {
               title={repeatLabel[repeat]}
               aria-label={repeatLabel[repeat]}>
               {repeat === 'one' ? <Repeat1 className="h-5 w-5" /> : <Repeat className="h-5 w-5" />}
+            </button>
+            <button onClick={() => { setQueueMinimized(false); if (!isExpandedOpen) openExpanded() }}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full state-layer"
+              style={{ color: 'var(--text-secondary)' }}
+              title="Fila"
+              aria-label="Abrir fila">
+              <ListMusic className="h-5 w-5" />
             </button>
           </div>
         )}

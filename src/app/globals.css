@@ -160,7 +160,7 @@
   --topbar-h: 64px;
   --nav-h: 64px;
   --player-h: 80px;          /* rodapé completo (desktop) */
-  --player-mobile-h: 112px;  /* rodapé mobile: metadados + transporte */
+  --player-mobile-h: 132px;  /* rodapé mobile: metadados + progresso + transporte */
   --player-mini-h: 64px;     /* rodapé só com metadados (hero aberta/mini) */
   /* Com a hero aberta a nav some: o rodapé cola na safe area, não na borda. */
   --player-hero-pad: calc(var(--player-mini-h) + var(--safe-bottom));

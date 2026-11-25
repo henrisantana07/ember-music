@@ -1,17 +1,42 @@
 ---
 name: ember-mobile-footer-miniplayer
-description: Audita e corrige o footer/player inferior da versão web mobile do Ember Music para oferecer uma experiência compacta, persistente e funcional inspirada no mini-player do Spotify Mobile.
+description: Audita e corrige o footer/player inferior da versão web mobile do Ember Music com layout de mini-player inspirado na referência visual enviada, preservando integralmente a identidade visual e as cores do Ember Music.
 ---
 
 # Ember Mobile Footer — Mini-player inferior
 
 ## Objetivo
 
-Corrigir a experiência do footer/player na parte inferior da aplicação web mobile do Ember Music. O resultado deve funcionar como uma barra compacta de reprodução persistente, inspirada nos padrões de interação do Spotify Mobile, mas mantendo a identidade visual, os tokens, a marca e a arquitetura do Ember Music.
+Corrigir a experiência do footer/player na parte inferior da aplicação web mobile do Ember Music. O resultado deve adotar a composição visual da referência enviada pelo usuário: um painel horizontal de reprodução com capa à esquerda, metadados na área superior, ação de adicionar no canto superior direito, progresso no meio e controles distribuídos na parte inferior.
+
+A referência serve para orientar **estrutura, hierarquia e disposição dos controles**, não para copiar a identidade visual do Spotify. O resultado deve preservar as cores, tokens, tipografia, marca, ícones e arquitetura já existentes no Ember Music.
 
 O alvo é a **versão web responsiva em navegador/PWA**. Não altere automaticamente o aplicativo nativo em `apps/mobile`; só faça isso se a solicitação mencionar explicitamente o app nativo.
 
 Esta skill orienta a implementação/correção do código. Não se limita a criar um mockup.
+
+## Direção visual obrigatória — novo modelo
+
+Use a imagem enviada na conversa como referência principal de composição. O mini-player deve ter aparência de um painel horizontal compacto, com hierarquia visual semelhante à referência:
+
+1. **Capa à esquerda:** imagem quadrada do álbum/faixa, com cantos arredondados e tamanho proporcional ao painel.
+2. **Cabeçalho/metadados:** título da música em destaque e nome do artista abaixo, alinhados à esquerda da capa e ocupando a região superior.
+3. **Ação no canto superior direito:** botão de adicionar/remover da biblioteca ou favoritos, conforme a ação real já existente no projeto. Use ícone e estado do Ember Music; não invente uma ação.
+4. **Progresso:** trilho horizontal fino abaixo dos metadados, com indicador de posição e tempos decorrido/total em escala discreta. Só apresentar duração/progresso quando os dados forem válidos.
+5. **Controles inferiores:** distribuir os controles em uma linha visualmente equilibrada, seguindo a referência: aleatório, faixa anterior, play/pause em destaque, próxima faixa e fila/mais opções. Mostrar apenas ações que já existam e sejam funcionais no Ember Music.
+6. **Play/pause:** controle central com maior destaque visual e alvo de toque confortável; o estilo deve usar os tokens e cores do Ember Music, sem reproduzir o botão circular claro da referência se isso conflitar com a identidade do produto.
+
+A composição deve continuar reconhecível em larguras pequenas. Em telas estreitas, reduza espaçamentos e dimensões de forma responsiva, sem remover a hierarquia principal. Se não houver espaço para todos os controles, priorize play/pause, anterior, próxima e ações secundárias já disponíveis; não permita overflow horizontal nem controles sobrepostos.
+
+### Cores e identidade do Ember Music
+
+- Antes de estilizar, inspecione os tokens e estilos globais atuais do Ember Music, incluindo variáveis CSS, tema, cores de superfície, texto, bordas, estados e gradientes usados nos componentes próximos ao player.
+- Reutilize as cores reais já adotadas no projeto para background do painel, texto primário/secundário, trilho de progresso, thumb, botões e estados hover/pressed/focus.
+- Preserve o contraste e a hierarquia da referência, mas **não use o verde do Spotify como cor de destaque** nem introduza paleta Spotify.
+- Não copie o logotipo, os ícones proprietários, a tipografia ou outros elementos de marca do Spotify.
+- Não invente novos valores hexadecimais quando houver tokens existentes adequados. Se faltar um token necessário, proponha uma extensão coerente com o tema atual e explique a decisão.
+- Não altere a paleta global do aplicativo apenas para estilizar o mini-player.
+- Mantenha consistência entre tema claro/escuro, se ambos forem suportados pelo projeto.
 
 ## Princípio de implementação
 
@@ -42,42 +67,38 @@ Observações verificadas na implementação consultada:
 
 Essas observações são pontos de partida, não substituem a leitura atual dos componentes e stores.
 
-## Referência de experiência
-
-Use o padrão de mini-player do Spotify Mobile como referência funcional, não como cópia literal:
-- Mini-player persistente e visualmente distinto do conteúdo rolável.
-- Posicionado imediatamente acima da navegação inferior quando a navegação inferior estiver visível.
-- Capa quadrada pequena à esquerda.
-- Título da faixa e artista em duas linhas compactas, com truncamento seguro.
-- Play/pause sempre acessível à direita.
-- Progresso da faixa opcional, discreto e fino, integrado à borda superior ou inferior da barra se não competir com a informação principal.
-- A barra inteira pode abrir o player expandido; controles internos devem executar suas próprias ações sem propagar o clique.
-- Transição visual fluida entre mini-player e player expandido.
-- Contraste e estados de foco/pressed claros.
-- Aparência coerente com os tokens do Ember Music. Não introduza o verde, logotipo, ícones proprietários ou identidade do Spotify.
-
-Referências de leitura:
-- Spotify Design Guidelines: https://developer.spotify.com/documentation/design
-- Exemplo de estrutura de mini-player: https://www.floow.design/blog/how-to-design-a-music-streaming-app
-- Referência de interação com Now Playing inferior: https://community.spotify.com/forum/en/discussion/5491365/android-ux-consistency-for-android-spotify-and-ios
-
 ## Diagnóstico obrigatório
 
 Antes de editar:
 
 1. Leia `src/app/layout.tsx`, `src/components/Player/index.tsx`, `src/components/Sidebar/index.tsx`, stores relacionadas e player expandido.
-2. Identifique qual elemento controla a navegação inferior mobile e se ela usa `fixed`, `sticky` ou fluxo normal.
-3. Mapeie alturas reais, `position`, `z-index`, stacking contexts, bordas, backgrounds, safe areas e espaços reservados no conteúdo.
-4. Verifique como `miniPlayer`, `isExpandedOpen`, `immersive` e `currentTrack` afetam a renderização.
-5. Verifique os estados sem faixa carregada, carregando, tocando, pausado, erro e mudança de faixa.
-6. Inspecione os breakpoints usados no projeto; não presuma que `md` corresponde ao comportamento desejado sem verificar.
-7. Registre o diagnóstico e um plano curto antes de modificar arquivos.
+2. Inspecione tokens de cor, tema, estilos globais e componentes que já definem superfícies, bordas e botões.
+3. Identifique qual elemento controla a navegação inferior mobile e se ela usa `fixed`, `sticky` ou fluxo normal.
+4. Mapeie alturas reais, `position`, `z-index`, stacking contexts, bordas, backgrounds, safe areas e espaços reservados no conteúdo.
+5. Verifique como `miniPlayer`, `isExpandedOpen`, `immersive` e `currentTrack` afetam a renderização.
+6. Verifique os estados sem faixa carregada, carregando, tocando, pausado, erro e mudança de faixa.
+7. Confirme quais ações já estão implementadas: favorito/adicionar, shuffle, anterior, próxima, play/pause, fila e expansão. Não crie controles sem ação real.
+8. Inspecione os breakpoints usados no projeto; não presuma que `md` corresponde ao comportamento desejado sem verificar.
+9. Registre o diagnóstico e um plano curto antes de modificar arquivos.
 
 Se o problema não estiver claro visualmente, peça screenshot da versão mobile ou use o navegador disponível para inspecionar o site. Não invente defeitos que não foram observados.
 
 ## Diretrizes de layout mobile
 
-### Composição e posicionamento
+### Estrutura do painel
+
+- O painel deve seguir a composição da referência: capa à esquerda; título/artista e ação de biblioteca na região superior; progresso no eixo horizontal; controles na região inferior.
+- A capa deve permanecer visualmente separada dos controles, sem sobrepor texto ou trilho.
+- Metadados devem ocupar a largura restante com `min-width: 0`, truncamento seguro e espaçamento consistente.
+- O botão de biblioteca deve ficar no canto superior direito do bloco de metadados, sem reduzir excessivamente a largura do título.
+- O progresso deve atravessar a área útil do painel, respeitando o espaço da capa conforme a composição responsiva escolhida.
+- Os controles inferiores devem ser distribuídos de forma equilibrada. O play/pause deve ser o foco visual central.
+- A altura do painel pode ser maior que a do mini-player anterior para acomodar as três regiões (metadados, progresso e controles). Defina a altura com base em testes reais, não mantenha obrigatoriamente o antigo `h-14`.
+- Em larguras muito estreitas, adapte o tamanho da capa, espaçamentos, ícones e tipografia; mantenha todos os elementos dentro do painel.
+- Não deixe o painel ocupar uma área desproporcional da viewport nem prejudicar a leitura do conteúdo.
+
+### Posicionamento e navegação
+
 - Mini-player deve ficar diretamente acima da bottom navigation, sem cobri-la nem deixar um vão artificial.
 - Bottom navigation permanece independente e clicável.
 - Não deixe o mini-player sobrepor conteúdo, botões de ação, campos, listas ou o player expandido.
@@ -89,14 +110,16 @@ Se o problema não estiver claro visualmente, peça screenshot da versão mobile
 - Mantenha o footer visível em rotas que devem preservar a reprodução, inclusive durante navegação.
 
 ### Conteúdo e hierarquia
+
 - Capa: proporção 1:1, sem distorção, com fallback quando imagem ausente.
-- Título e artista: `min-width: 0`, truncamento por linha, sem empurrar o botão de play para fora.
-- Play/pause: estado derivado do store real, com nome acessível dinâmico.
-- Barra de progresso: só exiba se os dados de progresso/duração forem confiáveis e a interação não comprometer a ergonomia. Se for interativa, preserve seek, teclado e pointer handling existentes.
-- Botões adicionais (like, próximo, dispositivo, fila) só entram se houver espaço e ação real já implementada; priorize capa, metadados e play/pause.
+- Título e artista: duas linhas compactas, `min-width: 0`, truncamento por linha, sem empurrar a ação superior para fora.
+- Botão de biblioteca: estado visual sincronizado com a store real; use nome acessível dinâmico.
+- Barra de progresso: exiba apenas se os dados de progresso/duração forem confiáveis. Se for interativa, preserve seek, teclado e pointer handling existentes.
+- Controles inferiores: shuffle, anterior, play/pause, próxima e fila/mais opções, conforme ações existentes. Não simule funcionalidades ausentes.
 - A área clicável para abrir o player expandido não pode interceptar os controles internos.
 
 ### Estados
+
 Defina explicitamente a apresentação para:
 - Nenhuma faixa: não renderizar mini-player vazio, a menos que exista estado de produto intencional.
 - Faixa carregada e pausada.
@@ -105,14 +128,16 @@ Defina explicitamente a apresentação para:
 - Mudança de faixa e troca de fonte (YouTube / áudio).
 - Imagem ausente ou quebrada.
 - Título/artista muito longos.
+- Favorito/adicionado e não adicionado.
 - Player expandido aberto, immersive/fullscreen e drawer/menu abertos.
 
 ## Interação e acessibilidade
 
 - Toda ação deve ser funcional, sem handlers decorativos.
 - Play/pause deve chamar a ação existente da store.
+- Shuffle, anterior, próxima, fila e favorito devem acionar exclusivamente os métodos já implementados e respeitar seus estados disponíveis.
 - Tocar na área de conteúdo/capa abre o player expandido conforme o fluxo atual.
-- Cliques em play/pause e outros botões internos não devem abrir/fechar o player por propagação acidental.
+- Cliques nos controles internos não devem abrir/fechar o player por propagação acidental.
 - Forneça `aria-label`, `aria-pressed` quando aplicável, foco visível e semântica de botão.
 - Alvos de toque de preferência com pelo menos 44 × 44 CSS px.
 - Não dependa de hover para revelar controles.
@@ -136,7 +161,7 @@ Não misture GSAP e Motion controlando simultaneamente a mesma propriedade/eleme
 ## Desktop e tablet
 
 - Preserve a experiência desktop existente, incluindo os clusters de metadados, controles centrais, progresso, volume, fila e expansão.
-- Não transforme o footer desktop em mini-player mobile.
+- Não transforme o footer desktop no painel mobile de três regiões.
 - Use breakpoints para compor variantes sem duplicar lógica de reprodução.
 - Teste larguras intermediárias para evitar colunas comprimidas ou controles quebrados.
 - Não altere a lógica de layout da Sidebar desktop sem necessidade.
@@ -153,12 +178,15 @@ Teste no mínimo:
 - tablet e desktop (incluindo 768px, 1024px e 1440px quando possível)
 
 Verifique:
+- painel com capa, metadados, botão de biblioteca, progresso e controles;
+- adaptação da composição em telas estreitas;
+- cores e contraste usando tokens reais do Ember Music;
 - mini-player imediatamente acima da navegação inferior;
 - safe area em iOS/PWA e Android;
 - ausência de sobreposição com conteúdo e controles;
 - navegação inferior continua clicável;
 - abrir/fechar player expandido;
-- play/pause e troca de faixa reais;
+- play/pause, shuffle, anterior, próxima e favorito reais, quando disponíveis;
 - progresso/seek, se presente;
 - mudança de rota sem desmontar indevidamente a reprodução;
 - drawer, modais, toast e sleep timer sem conflito de camadas;
@@ -169,11 +197,11 @@ Use browser/Firecrawl para inspeção visual quando possível. Se um estado exig
 
 ## Critérios de aceite
 
-- Footer mobile compacto, persistente e visualmente organizado.
+- Footer mobile adota a nova composição da referência: capa à esquerda, metadados e ação de biblioteca no topo, progresso no meio e controles na parte inferior.
+- Aparência usa exclusivamente a identidade visual e as cores do Ember Music; não imita a paleta ou marca do Spotify.
+- Painel responsivo, sem overflow, sobreposição ou perda de legibilidade.
 - Posicionado sem lacuna sobre a bottom navigation.
-- Capa, título, artista e play/pause legíveis e acessíveis.
-- Nenhum conflito de z-index, safe area, scroll ou hit-area.
-- Estado visual sincronizado com a reprodução real.
+- Ações e estado visual sincronizados com a reprodução real.
 - Player expandido continua acessível e funcional.
 - Desktop permanece intacto.
 - Sem lógica duplicada, dependências desnecessárias ou animações concorrentes.
@@ -184,8 +212,9 @@ Ao terminar, informe:
 1. causa raiz dos problemas encontrados;
 2. arquivos alterados;
 3. decisões de layout e interação;
-4. uso de Motion/GSAP e skills secundárias acionadas;
-5. viewports e estados realmente testados;
-6. limitações que ainda dependem de teste manual.
+4. tokens/cores do Ember Music reutilizados;
+5. uso de Motion/GSAP e skills secundárias acionadas;
+6. viewports e estados realmente testados;
+7. limitações que ainda dependem de teste manual.
 
-Não faça commit, merge ou deploy sem autorização explícita. Se o pedido for apenas para criar esta skill, não modifique os componentes da aplicação.
+Não faça commit, merge ou deploy sem autorização explícita. Se o pedido for apenas para criar ou atualizar esta skill, não modifique os componentes da aplicação.
