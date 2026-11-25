@@ -11,6 +11,7 @@ import { useUser } from '@/hooks/use-user'
 import type { Track, Album } from '@/types/music'
 import { ErrorState } from '@/components/ui/states'
 import { extractDominantColor } from '@/lib/color/extractDominantColor'
+import { TRACK_GRID } from '@/components/ui/grid'
 
 export default function AlbumPage() {
   const { user } = useUser()
@@ -136,7 +137,7 @@ export default function AlbumPage() {
 
       <div className="mt-8">
         <h2 className="text-xl font-bold mb-4">Faixas</h2>
-        <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
+        <div className={TRACK_GRID}>
           {album.tracks.map((track, index) => (
             <TrackCard key={track.id} track={track} tracks={album.tracks} user={user} index={index} />
           ))}

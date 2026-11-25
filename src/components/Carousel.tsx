@@ -108,7 +108,11 @@ export function Carousel({ children, className = '', cardWidth = 176 }: Carousel
     state.current.direction = direction
     state.current.driven = true
 
-    const delta = direction === 'left' ? -cardWidth : cardWidth
+    /* O passo vem da largura REAL do primeiro card: os slots variam entre
+       128, 144, 176 e 208px conforme a seção, e um passo fixo de 176px
+       avançava 0,84 ou 1,38 card. `cardWidth` continua como fallback. */
+    const firstCardWidth = el.firstElementChild?.getBoundingClientRect().width ?? cardWidth
+    const delta = direction === 'left' ? -firstCardWidth : firstCardWidth
 
     // Which cards does this click actually carry in? Decided here, from real
     // geometry, instead of waiting to see whether an observer happens to catch
@@ -184,7 +188,7 @@ function Edge({ direction, onTravel }: EdgeProps) {
         onTravel()
       }}
       aria-label={left ? 'Anterior' : 'Próximo'}
-      className={`absolute top-0 bottom-0 z-10 w-16 flex items-center opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300 ${
+      className={`hover-reveal absolute top-0 bottom-0 z-10 flex w-16 items-center opacity-0 transition-opacity duration-300 group-hover/carousel:opacity-100 focus-visible:opacity-100 ${
         left ? 'left-0 justify-start pl-1' : 'right-0 justify-end pr-1'
       }`}
       style={{

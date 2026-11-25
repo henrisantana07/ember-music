@@ -18,6 +18,7 @@ import type { Track } from '@/types/music'
 import type { Json } from '@/types/database'
 import { Suspense } from 'react'
 import { LocalLibraryView } from '@/features/local-library/components/LocalLibraryView'
+import { LIBRARY_GRID } from '@/components/ui/grid'
 
 type TabId = 'favoritos' | 'artistas' | 'playlists' | 'recentes' | 'local'
 
@@ -479,7 +480,7 @@ function BibliotecaContent() {
             : 'none',
         }}
       />
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold">Biblioteca</h1>
         {activeTab === 'playlists' && (
           <button
@@ -494,7 +495,7 @@ function BibliotecaContent() {
         )}
         {activeTab === 'recentes' && history.length > 0 && (
           confirmClear ? (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>Limpar histórico?</span>
               <button
                 onClick={async () => {
@@ -557,7 +558,7 @@ function BibliotecaContent() {
         })}
       </div>
 
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <span className="text-body-medium" style={{ color: 'var(--text-disabled)' }}>
           {activeTab === 'favoritos' && `${favoriteList.length} ${favoriteList.length === 1 ? 'favorito' : 'favoritos'}`}
           {activeTab === 'artistas' && `${artists.length} ${artists.length === 1 ? 'artista' : 'artistas'}`}
@@ -572,9 +573,9 @@ function BibliotecaContent() {
             borda outline-variant. O X de limpar só entra com texto.
             Na aba Local não entra: lá já existe busca própria da feature
             (que também casa gênero e caminho do arquivo). */}
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
           {(activeTab === 'favoritos' || activeTab === 'recentes') && (
-            <div role="search" className="relative w-52 md:w-72">
+            <div role="search" className="relative w-full min-w-0 sm:w-64 md:w-72">
               <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--text-secondary)' }} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
               </svg>
@@ -607,7 +608,7 @@ function BibliotecaContent() {
       </div>
 
       {loading ? (
-        <div className="grid [grid-template-columns:repeat(auto-fill,minmax(180px,1fr))] gap-3" role="status" aria-label="Carregando biblioteca">
+        <div className={LIBRARY_GRID} role="status" aria-label="Carregando biblioteca">
           {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : loadError ? (
@@ -649,7 +650,7 @@ function BibliotecaContent() {
                 <button onClick={() => router.push('/buscar?filtro=artistas')} className="btn-primary text-label-large min-h-[48px] px-6">Explorar artistas</button>
               </div>
             ) : (
-              <div className="grid [grid-template-columns:repeat(auto-fill,minmax(180px,1fr))] gap-4">
+              <div className={LIBRARY_GRID}>
                 {getSortedArtists().map((a) => (
                   <div
                     key={a.artist_id}
@@ -704,7 +705,7 @@ function BibliotecaContent() {
                 </button>
               </div>
             ) : (
-              <div className="grid [grid-template-columns:repeat(auto-fill,minmax(180px,1fr))] gap-4">
+              <div className={LIBRARY_GRID}>
                 {getSortedPlaylists().map((pl) => (
                   <div
                     key={pl.id}

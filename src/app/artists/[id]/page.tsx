@@ -11,6 +11,7 @@ import { SaveAlbumButton } from '@/components/SaveAlbumButton'
 import { usePlayerStore } from '@/lib/store'
 import { useUser } from '@/hooks/use-user'
 import type { Artist, Track, Album } from '@/types/music'
+import { TRACK_GRID } from '@/components/ui/grid'
 
 export default function ArtistPage() {
   const { user } = useUser()
@@ -94,7 +95,7 @@ export default function ArtistPage() {
       {tracks.length > 0 && (
         <section className="mt-10">
           <h2 className="text-xl font-bold mb-4">Top Músicas</h2>
-          <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
+          <div className={TRACK_GRID}>
             {tracks.map((track, index) => (
               <TrackCard key={track.id} track={track} tracks={tracks} user={user} index={index} />
             ))}

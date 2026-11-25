@@ -111,10 +111,10 @@ function GenrePage({ genero, genreId }: { genero: string; genreId: string }) {
       className="w-full space-y-8"
     >
       <div
-        className="rounded-2xl p-8"
+        className="min-w-0 rounded-2xl p-5 sm:p-8"
         style={{ background: `linear-gradient(135deg, ${gradient.from}, ${gradient.to})` }}
       >
-        <h1 className="text-4xl font-bold capitalize" style={{ color: 'var(--text-on-accent)', textShadow: '0 2px 6px rgba(0,0,0,0.3)' }}>
+        <h1 className="truncate text-3xl font-bold capitalize sm:text-4xl" style={{ color: 'var(--text-on-accent)', textShadow: '0 2px 6px rgba(0,0,0,0.3)' }}>
           {genero}
         </h1>
         <p className="text-body-medium mt-1" style={{ color: 'rgba(245,241,237,0.7)' }}>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { FollowButton } from '@/components/FollowButton'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { ARTIST_GRID } from '@/components/ui/grid'
 
 interface FollowedArtist {
   artist_id: string
@@ -56,7 +57,7 @@ export default function ArtistsPage() {
           Você ainda não segue nenhum artista.
         </div>
       ) : (
-        <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(320px,1fr))]">
+        <div className={ARTIST_GRID}>
           {artists.map((a) => (
             <div key={a.artist_id}
               className="flex items-center gap-4 p-4 rounded-xl transition-colors hover:bg-state-hover"

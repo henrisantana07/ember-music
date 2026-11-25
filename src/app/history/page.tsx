@@ -7,6 +7,7 @@ import type { Track } from '@/types/music'
 import { getPlaybackHistory } from '@/lib/playback-history'
 import { useUser } from '@/hooks/use-user'
 import { ErrorState, EmptyState } from '@/components/ui/states'
+import { TRACK_GRID } from '@/components/ui/grid'
 
 function groupByDate(items: { played_at: string; track_data: Track }[]) {
   const groups: Record<string, typeof items> = {}
@@ -107,7 +108,7 @@ export default function HistoryPage() {
             <h2 className="text-label-medium font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-secondary)' }}>
               {date}
             </h2>
-            <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
+            <div className={TRACK_GRID}>
               {group.map((item, index) => (
                 <TrackCard
                   key={`${item.track_data.id}-${item.played_at}`}

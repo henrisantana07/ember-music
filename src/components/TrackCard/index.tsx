@@ -85,7 +85,7 @@ export function TrackCard({ track, tracks, user, index }: TrackCardProps) {
             onClick={(e) => { e.stopPropagation(); handlePlay() }}
             aria-label={isPlayingThis ? `Pausar ${track.name}` : `Tocar ${track.name}`}
             aria-pressed={isPlayingThis}
-            className="absolute bottom-3 right-3 w-14 h-14 rounded-full flex items-center justify-center shadow-elevation-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="absolute bottom-2 right-2 flex h-12 w-12 items-center justify-center rounded-full shadow-elevation-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 sm:bottom-3 sm:right-3 sm:h-14 sm:w-14"
             whileHover={{ scale: 1.05 }}
             whileTap={whileTap}
             transition={TRANSITION.press}
@@ -98,11 +98,11 @@ export function TrackCard({ track, tracks, user, index }: TrackCardProps) {
             }}
           >
             {isPlayingThis ? (
-              <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="h-6 w-6 sm:h-7 sm:w-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M6 4h4v16H6zM14 4h4v16h-4z" />
               </svg>
             ) : (
-              <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="h-6 w-6 sm:h-7 sm:w-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M8 5v14l11-7z" />
               </svg>
             )}

@@ -132,10 +132,10 @@ export function ExploreFilters({ tracks, albums, artists }: ExploreFiltersProps)
               key={f.key}
               onClick={() => updateParam(f.key, '')}
               aria-label={`Remover filtro ${f.label}`}
-              className="flex items-center gap-1.5 rounded-full px-3 min-h-[40px] text-label-medium font-medium"
+              className="flex max-w-full items-center gap-1.5 rounded-full px-3 min-h-[44px] text-label-medium font-medium"
               style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-solid)' }}
             >
-              {f.label}
+              <span className="truncate">{f.label}</span>
               <span aria-hidden className="text-body-medium">×</span>
             </button>
           ))}

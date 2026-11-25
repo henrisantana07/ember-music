@@ -5,6 +5,7 @@ import { usePlayerStore } from '@/lib/store'
 import type { LocalMusicFile } from '@/features/local-library/types'
 import { formatDuration } from '@/lib/spotify'
 import { TrackActionsMenu } from '@/features/local-library/components/TrackActionsMenu'
+import { LIBRARY_GRID } from '@/components/ui/grid'
 
 interface LocalTrackGridProps {
   tracks: LocalMusicFile[]
@@ -24,7 +25,7 @@ export function LocalTrackGrid({ tracks }: LocalTrackGridProps) {
   }
 
   return (
-    <div className="grid [grid-template-columns:repeat(auto-fill,minmax(180px,1fr))] gap-4">
+    <div className={LIBRARY_GRID}>
       {tracks.map((track) => {
         const isActive = currentTrack?.id === track.id
         return (

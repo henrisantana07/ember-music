@@ -163,7 +163,19 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
   }
 
   if (!hasResults && !loading) {
-    return <ExploreNoResults query={query} activeFilterCount={activeFilterCount} onClearFilters={onClearFilters} />
+    /* Mesmo com zero resultados, tabs e filtros continuam disponíveis: sem
+       eles o usuário não consegue ajustar a busca a partir do estado vazio. */
+    return (
+      <div className="w-full space-y-6">
+        <div>
+          <p className="text-body-medium mb-1" style={{ color: 'var(--text-disabled)' }}>Resultados para</p>
+          <h1 className="truncate text-2xl font-bold sm:text-3xl">&ldquo;{query}&rdquo;</h1>
+        </div>
+        <ExploreTabs activeTab={activeTab} onTabChange={onTabChange} counts={counts} />
+        <ExploreFilters tracks={tracks} albums={albums} artists={artists} />
+        <ExploreNoResults query={query} activeFilterCount={activeFilterCount} onClearFilters={onClearFilters} />
+      </div>
+    )
   }
 
   return (
@@ -172,11 +184,25 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
     >
       <div>
         <p className="text-body-medium mb-1" style={{ color: 'var(--text-disabled)' }}>Resultados para</p>
-        <h1 className="text-3xl font-bold">&ldquo;{query}&rdquo;</h1>
+        <h1 className="truncate text-2xl font-bold sm:text-3xl">&ldquo;{query}&rdquo;</h1>
       </div>
 
       <ExploreTabs activeTab={activeTab} onTabChange={onTabChange} counts={counts} />
       <ExploreFilters tracks={tracks} albums={albums} artists={artists} />
+
+      {/* O fetch demora e, sem skeleton, a página mostrava só cabeçalho, tabs e
+          filtros vazios. O placeholder usa a MESMA grade do resultado final. */}
+      {loading && !hasResults && (
+        <div className={CATALOG_GRID} role="status" aria-label="Carregando resultados">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="min-w-0 space-y-2">
+              <div className="aspect-square w-full animate-pulse rounded-[var(--shape-large)] bg-surface-container-highest" />
+              <div className="h-4 w-3/4 animate-pulse rounded bg-surface-container-highest" />
+              <div className="h-3 w-1/2 animate-pulse rounded bg-surface-container-highest" />
+            </div>
+          ))}
+        </div>
+      )}
 
       {activeTab === 'tudo' && (
         <div className="space-y-10">
@@ -265,7 +291,7 @@ export function ExploreResults({ query, onTabChange, activeTab, artistFilter, ge
                   href={`/artists/${artist.id}`}
                   className="flex flex-col items-center gap-2 p-3 rounded-xl transition-colors hover:bg-state-hover group"
                 >
-                  <div className="w-[120px] h-[120px] rounded-full overflow-hidden border-2 transition-colors group-hover:border-transparent" style={{ borderColor: 'var(--bg-elevated)' }}>
+                  <div className="aspect-square w-full max-w-[120px] rounded-full overflow-hidden border-2 transition-colors group-hover:border-transparent" style={{ borderColor: 'var(--bg-elevated)' }}>
                     <CoverImage src={artist.image} alt={artist.name} className="w-full h-full object-cover" />
                   </div>
                   <p className="text-body-large font-semibold text-center truncate w-full">{artist.name}</p>
