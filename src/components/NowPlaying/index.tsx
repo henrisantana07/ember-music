@@ -912,11 +912,19 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
           )}
 
           <button
-            onClick={() => setShowQueueOnMobile(true)}
-            className="md:hidden flex items-center gap-2 min-h-[48px] px-5 rounded-full text-label-large transition-colors state-layer"
-            style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}
+            /* O ícone alterna a fila mesmo com a hero em tela cheia: antes
+               só ligava o estado, então um segundo toque não fazia nada. */
+            onClick={() => setShowQueueOnMobile((open) => !open)}
+            className="flex min-h-[48px] items-center gap-2 rounded-full px-5 text-label-large transition-colors state-layer md:hidden"
+            style={{
+              backgroundColor: showQueueOnMobile ? 'var(--accent-muted)' : 'var(--bg-elevated)',
+              color: showQueueOnMobile ? 'var(--accent-from)' : 'var(--text-primary)',
+            }}
+            aria-label={showQueueOnMobile ? 'Ocultar fila' : 'Mostrar fila'}
+            aria-pressed={showQueueOnMobile}
+            title={showQueueOnMobile ? 'Ocultar fila' : 'Mostrar fila'}
           >
-            <Music className="w-5 h-5" />
+            <Music className="h-5 w-5" />
             Fila
           </button>
 

@@ -1,12 +1,51 @@
 'use client'
 
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
 import type { Track } from '@/types/music'
 import { decodeHtmlEntities } from '@/lib/html-entities'
 import { useSidebarStore } from '@/lib/sidebar-store'
 
 export type RepeatMode = 'none' | 'one' | 'all'
+
+/* O catálogo da Início pode passar centenas de faixas para `play()`. Salvar
+   duas cópias inteiras da fila estourava o limite de 5MB do localStorage e
+   lançava QuotaExceededError (que aparecia como erro não capturado). */
+const PERSIST_QUEUE_LIMIT = 40
+const PERSISTED_TRACK_KEYS: (keyof Track)[] = [
+  'id', 'name', 'duration', 'artist_id', 'artist_name',
+  'album_id', 'album_name', 'image', 'audio', 'url',
+  'source', 'youtubeVideoId', 'youtubeChannelId', 'youtubeUrl',
+]
+
+function compactTrack(track: Track): Track {
+  const out = {} as Track
+  for (const key of PERSISTED_TRACK_KEYS) {
+    const value = track[key]
+    if (value !== undefined) (out as unknown as Record<string, unknown>)[key] = value
+  }
+  if (typeof out.image === 'string' && out.image.length > 2000) out.image = ''
+  if (typeof out.audio === 'string' && out.audio.length > 4000) out.audio = null
+  return out
+}
+
+function compactQueue(queue: Track[]): Track[] {
+  return queue.slice(0, PERSIST_QUEUE_LIMIT).map(compactTrack)
+}
+
+/* Mesmo com os dados reduzidos, um storage cheio ou bloqueado não pode
+   derrubar a reprodução: falha silenciosamente e mantém o estado em memória. */
+const safeStorage = createJSONStorage(() => ({
+  getItem: (name) => {
+    try { return localStorage.getItem(name) } catch { return null }
+  },
+  setItem: (name, value) => {
+    try { localStorage.setItem(name, value) } catch { /* quota/privacidade */ }
+  },
+  removeItem: (name) => {
+    try { localStorage.removeItem(name) } catch { /* quota/privacidade */ }
+  },
+}))
 
 interface PlayerState {
   currentTrack: Track | null
@@ -307,11 +346,12 @@ export const usePlayerStore = create<PlayerState>()(
 }),
     {
       name: 'player-storage',
+      storage: safeStorage,
       partialize: (state) => ({
-        currentTrack: state.currentTrack,
-        queue: state.queue,
-        originalQueue: state.originalQueue,
-        shuffleOrder: state.shuffleOrder,
+        currentTrack: state.currentTrack ? compactTrack(state.currentTrack) : null,
+        queue: compactQueue(state.queue),
+        originalQueue: compactQueue(state.originalQueue),
+        shuffleOrder: state.shuffleOrder.slice(0, PERSIST_QUEUE_LIMIT),
         currentShuffleIndex: state.currentShuffleIndex,
         currentPlaylistId: state.currentPlaylistId,
         currentPlaylistName: state.currentPlaylistName,

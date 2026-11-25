@@ -325,6 +325,9 @@ export function Player() {
   if (!currentTrack) return null
 
   const repeatLabel: Record<RepeatMode, string> = { none: 'Sem repeat', one: 'Repeat 1', all: 'Repeat tudo' }
+  /* O ícone fica ativo quando a fila está de fato visível — não quando ela
+     está minimizada ou escondida pelo modo capa. */
+  const queueVisible = isExpandedOpen && !queueMinimized && !wideCover
 
   return (
     <>
@@ -533,12 +536,12 @@ export function Player() {
               }
             }}
             className={`h-12 w-12 hidden md:inline-flex items-center justify-center rounded-full transition-colors state-layer ${
-              isExpandedOpen && queueMinimized ? 'text-[var(--accent-from)]' : ''
+              queueVisible ? 'text-[var(--accent-from)]' : ''
             }`}
-            style={isExpandedOpen && queueMinimized ? undefined : { color: 'var(--text-secondary)' }}
+            style={queueVisible ? undefined : { color: 'var(--text-secondary)' }}
             title="Fila"
             aria-label="Alternar fila"
-            aria-pressed={isExpandedOpen && queueMinimized}
+            aria-pressed={queueVisible}
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h10M4 18h13" />
