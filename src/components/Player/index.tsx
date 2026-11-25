@@ -7,27 +7,21 @@ import { AnimatePresence, motion } from 'motion/react'
 import { popoverVariants, whileTap, TRANSITION, fadeVariants } from '@/lib/motion'
 import type { RepeatMode } from '@/lib/store'
 import type { Track } from '@/types/music'
-import { formatDuration } from '@/lib/spotify'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { savePlaybackHistory } from '@/lib/playback-history'
 import { ExpandedPlayerModal } from '@/components/ExpandedPlayerModal'
 import { PlaylistModal } from '@/components/PlaylistModal'
-import { useYouTube, useYouTubeTime } from '@/components/YouTubePlayer/context'
+import { useYouTube } from '@/components/YouTubePlayer/context'
+import { playerAudioRef } from '@/lib/player-audio'
+import { useTrackSeek, useTrackPrev } from '@/hooks/use-player-transport'
+import { TrackProgress } from '@/components/Player/TrackProgress'
 import Link from 'next/link'
 import { ChevronDown, ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause, Maximize, Minimize } from 'lucide-react'
 
 export function Player() {
-  const audioRef = useRef<HTMLAudioElement>(null)
-  const progressRef = useRef<HTMLDivElement>(null)
-  // `isDragging` trava o timeupdate para a música não puxar a barra de volta
-  // no meio do arraste. O listener é registrado uma única vez no efeito do
-  // áudio, então lê o ref: o estado sozinho ficaria preso no valor do closure.
-  const [isDragging, setIsDragging] = useState(false)
-  const isDraggingRef = useRef(false)
-  // Posição do cursor enquanto arrasta. A barra desenha o destino antes do
-  // seek acontecer, em vez de esperar o soltar.
-  const [seekPreview, setSeekPreview] = useState<number | null>(null)
+  /* Referência compartilhada: a hero e o rodapé fazem seek no MESMO `<audio>`. */
+  const audioRef = playerAudioRef
   // "Add Button" do cluster esquerdo da barra (spec) — o mesmo PlaylistModal
   // já usado na tabela de faixas e no menu da fila.
   const [playlistOpen, setPlaylistOpen] = useState(false)
@@ -250,26 +244,10 @@ export function Player() {
     if (audioRef.current) audioRef.current.volume = volume
   }, [volume])
 
-  const handleSeek = useCallback((seconds: number) => {
-    if (isYouTubeTrack) {
-      ytSeek(seconds)
-    } else {
-      const audio = audioRef.current
-      if (audio) {
-        audio.currentTime = seconds
-        setProgress(seconds)
-      }
-    }
-  }, [isYouTubeTrack, ytSeek])
-
-  const handlePrev = useCallback(() => {
-    const currentTime = isYouTubeTrack ? ytGetCurrentTime() : (audioRef.current?.currentTime ?? 0)
-    if (currentTime > 3) {
-      handleSeek(0)
-    } else {
-      prev()
-    }
-  }, [isYouTubeTrack, ytGetCurrentTime, handleSeek, prev])
+  /* Mesmos handlers da hero — `useTrackSeek`/`useTrackPrev` leem a store e
+     o elemento de áudio compartilhado, sem estado paralelo. */
+  const handleSeek = useTrackSeek()
+  const handlePrev = useTrackPrev()
 
   const showToast = useCallback((msg: string) => {
     setToast(msg)
