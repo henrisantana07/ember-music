@@ -28,6 +28,163 @@ Use a imagem enviada na conversa como referência principal de composição. O m
 
 A composição deve continuar reconhecível em larguras pequenas. Em telas estreitas, reduza espaçamentos e dimensões de forma responsiva, sem remover a hierarquia principal. Se não houver espaço para todos os controles, priorize play/pause, anterior, próxima e ações secundárias já disponíveis; não permita overflow horizontal nem controles sobrepostos.
 
+### Extração estrutural da referência — JSON sem cores
+
+O JSON abaixo registra somente a estrutura visual e a hierarquia observadas na imagem enviada. Valores cromáticos foram deliberadamente omitidos: a implementação deve buscar as cores nos tokens existentes do Ember Music. As proporções são orientativas, não medidas rígidas em pixels.
+
+```json
+{
+  "component": "mobile_music_mini_player",
+  "layout": {
+    "orientation": "horizontal",
+    "container": {
+      "shape": "rounded_rectangle",
+      "width": "full",
+      "height": "content_driven",
+      "padding": "compact",
+      "position": "fixed_above_mobile_bottom_navigation"
+    },
+    "main_content": {
+      "display": "horizontal",
+      "alignment": "center",
+      "sections": [
+        {
+          "id": "cover",
+          "type": "album_artwork",
+          "position": "left",
+          "aspect_ratio": "1:1",
+          "shape": "rounded_square",
+          "fit": "cover"
+        },
+        {
+          "id": "player_information",
+          "type": "vertical_stack",
+          "position": "right_of_cover",
+          "width": "remaining_space",
+          "sections": [
+            {
+              "id": "metadata_row",
+              "type": "horizontal",
+              "alignment": "center",
+              "items": [
+                {
+                  "id": "track_metadata",
+                  "type": "vertical_stack",
+                  "items": [
+                    {
+                      "id": "track_title",
+                      "type": "text",
+                      "hierarchy": "primary",
+                      "max_lines": 1,
+                      "overflow": "ellipsis"
+                    },
+                    {
+                      "id": "artist_name",
+                      "type": "text",
+                      "hierarchy": "secondary",
+                      "max_lines": 1,
+                      "overflow": "ellipsis"
+                    }
+                  ]
+                },
+                {
+                  "id": "library_action",
+                  "type": "icon_button",
+                  "position": "top_right",
+                  "alignment": "end",
+                  "action": "toggle_library_or_favorite"
+                }
+              ]
+            },
+            {
+              "id": "playback_progress",
+              "type": "progress_timeline",
+              "orientation": "horizontal",
+              "track": {
+                "type": "thin_line",
+                "interactive": true
+              },
+              "time_labels": {
+                "elapsed": "left",
+                "remaining_or_total": "right",
+                "hierarchy": "tertiary"
+              }
+            },
+            {
+              "id": "transport_controls",
+              "type": "horizontal_control_group",
+              "alignment": "space_evenly",
+              "items": [
+                {
+                  "id": "shuffle",
+                  "type": "icon_button",
+                  "action": "toggle_shuffle"
+                },
+                {
+                  "id": "previous",
+                  "type": "icon_button",
+                  "action": "play_previous_track"
+                },
+                {
+                  "id": "play_pause",
+                  "type": "primary_icon_button",
+                  "emphasis": "highest",
+                  "action": "toggle_playback"
+                },
+                {
+                  "id": "next",
+                  "type": "icon_button",
+                  "action": "play_next_track"
+                },
+                {
+                  "id": "queue",
+                  "type": "icon_button",
+                  "action": "open_queue"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "responsive_behavior": {
+    "small_screens": {
+      "keep_cover_visible": true,
+      "reduce_gaps": true,
+      "scale_controls": true,
+      "preserve_play_pause_emphasis": true,
+      "prevent_horizontal_overflow": true,
+      "allow_secondary_controls_to_be_hidden_when_necessary": true
+    },
+    "desktop": {
+      "preserve_existing_desktop_player": true
+    }
+  },
+  "interaction": {
+    "tap_metadata_or_cover": "open_expanded_player",
+    "internal_controls_stop_event_propagation": true,
+    "playback_state_source": "existing_player_store",
+    "only_render_supported_actions": true,
+    "progress_requires_valid_duration": true
+  },
+  "accessibility": {
+    "semantic_buttons": true,
+    "dynamic_aria_labels": true,
+    "visible_focus": true,
+    "minimum_touch_target_px": 44,
+    "respect_reduced_motion": true
+  },
+  "design_tokens": {
+    "colors": "inherit_from_ember_music_theme",
+    "typography": "inherit_from_ember_music",
+    "icons": "use_existing_ember_music_icon_system",
+    "spacing": "use_existing_design_tokens",
+    "radius": "use_existing_design_tokens"
+  }
+}
+```
+
 ### Cores e identidade do Ember Music
 
 - Antes de estilizar, inspecione os tokens e estilos globais atuais do Ember Music, incluindo variáveis CSS, tema, cores de superfície, texto, bordas, estados e gradientes usados nos componentes próximos ao player.
