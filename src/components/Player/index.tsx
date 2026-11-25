@@ -370,53 +370,74 @@ export function Player() {
           /* Com a hero aberta a bottom nav some: o rodapé desce para o lugar
              dela, em vez de ficar flutuando 64px acima da base da tela. */
           bottom: isExpandedOpen ? 0 : 'var(--chrome-bottom)',
-          height: miniPlayer ? 'var(--player-mini-h)' : 'var(--player-mobile-h)',
+          height: isExpandedOpen ? 'var(--player-mini-h)' : 'var(--player-mobile-h)',
         }}
       >
         {!isExpandedOpen && !miniPlayer && <TrackProgress compact className="max-w-none" />}
         <div className="flex w-full min-h-0 items-center gap-3">
-        <button onClick={toggleExpandedFullscreen} className="flex-shrink-0" aria-label={isExpandedOpen && immersive ? 'Sair da tela cheia' : 'Abrir player em tela cheia'}>
-          <img src={currentTrack.image} alt="" className="h-9 w-9 rounded object-cover" />
-        </button>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
+          <button onClick={toggleExpandedFullscreen} className="flex-shrink-0" aria-label={isExpandedOpen && immersive ? 'Sair da tela cheia' : 'Abrir player em tela cheia'}>
+            <img src={currentTrack.image} alt="" className="h-9 w-9 rounded object-cover" />
+          </button>
+          <div className="min-w-0 flex-1">
             <p className="truncate text-body-medium font-semibold">{currentTrack.name}</p>
-            {isYouTubeTrack && <YouTubeBadge />}
+            <p className="truncate text-body-medium" style={{ color: 'var(--text-secondary)' }}>{currentTrack.artist_name}</p>
           </div>
-          <p className="truncate text-body-medium" style={{ color: 'var(--text-secondary)' }}>{currentTrack.artist_name}</p>
+          {!isExpandedOpen && !miniPlayer && (
+            <button onClick={toggleMiniPlayer} className="hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer sm:inline-flex" style={{ color: 'var(--text-secondary)' }} aria-label="Reduzir player" title="Reduzir player">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          )}
+          {miniPlayer && !isExpandedOpen && (
+            <button onClick={toggleMiniPlayer} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} aria-label="Expandir player compacto">
+              <ChevronUp className="h-5 w-5" />
+            </button>
+          )}
+          <button onClick={toggleExpanded} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} title={isExpandedOpen ? 'Recolher player' : 'Abrir player'} aria-label={isExpandedOpen ? 'Recolher player expandido' : 'Abrir player expandido'}>
+            {isExpandedOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
+          </button>
         </div>
-        {/* Com a hero aberta, o transporte vive nela: o rodapé vira só
-            metadados + botão de recolher. Nunca dois conjuntos de controles
-            competindo pela mesma faixa da tela. */}
+        {/* Transporte completo no rodapé mobile: shuffle e repeat tomaram o
+            lugar do sleep timer, e prev/next o lugar das tags "YT". */}
         {!isExpandedOpen && (
-          <button onClick={togglePlay}
-            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer"
-            style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
-            aria-label={isPlaying ? 'Pausar' : 'Tocar'}>
-            {isPlaying ? (
-              <Pause className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
-            ) : (
-              <Play className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
-            )}
-          </button>
+          <div className="flex w-full items-center justify-around gap-1 pt-1">
+            <button onClick={toggleShuffle}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full state-layer"
+              style={{ color: shuffle ? 'var(--accent-from)' : 'var(--text-secondary)' }}
+              title={shuffle ? 'Desativar shuffle' : 'Ativar shuffle'}
+              aria-label={shuffle ? 'Desativar shuffle' : 'Ativar shuffle'}
+              aria-pressed={shuffle}>
+              <Shuffle className="h-5 w-5" />
+            </button>
+            <button onClick={handlePrev} className="inline-flex h-11 w-11 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} title="Anterior" aria-label="Faixa anterior">
+              <SkipBack className="h-5 w-5" fill="currentColor" />
+            </button>
+            <button onClick={togglePlay}
+              className="flex h-11 w-11 items-center justify-center rounded-full state-layer"
+              style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
+              aria-label={isPlaying ? 'Pausar' : 'Tocar'}>
+              {isPlaying ? (
+                <Pause className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+              ) : (
+                <Play className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+              )}
+            </button>
+            <button onClick={next} className="inline-flex h-11 w-11 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} title="Próxima" aria-label="Próxima faixa">
+              <SkipForward className="h-5 w-5" fill="currentColor" />
+            </button>
+            <button onClick={() => {
+              const modes: RepeatMode[] = ['none', 'all', 'one']
+              setRepeat(modes[(modes.indexOf(repeat) + 1) % modes.length])
+            }}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full state-layer"
+              style={{ color: repeat !== 'none' ? 'var(--accent-from)' : 'var(--text-secondary)' }}
+              title={repeatLabel[repeat]}
+              aria-label={repeatLabel[repeat]}>
+              {repeat === 'one' ? <Repeat1 className="h-5 w-5" /> : <Repeat className="h-5 w-5" />}
+            </button>
+          </div>
         )}
-        {!miniPlayer && !isExpandedOpen && <SleepTimerDropdown />}
-        {miniPlayer && !isExpandedOpen && (
-          <button onClick={toggleMiniPlayer} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} aria-label="Expandir player compacto">
-            <ChevronUp className="h-5 w-5" />
-          </button>
-        )}
-        {!miniPlayer && !isExpandedOpen && (
-          <button onClick={toggleMiniPlayer} className="hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer sm:inline-flex" style={{ color: 'var(--text-secondary)' }} aria-label="Reduzir player" title="Reduzir player">
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-        )}
-        <button onClick={toggleExpanded} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} title={isExpandedOpen ? 'Recolher player' : 'Abrir player'} aria-label={isExpandedOpen ? 'Recolher player expandido' : 'Abrir player expandido'}>
-          {isExpandedOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
-        </button>
-        </div>
       </footer>
 
       {/* Rodapé completo: desktop. Os controles que antes eram `md:hidden`
@@ -431,7 +452,6 @@ export function Player() {
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <p className="text-body-large font-semibold truncate">{currentTrack.name}</p>
-              {isYouTubeTrack && <YouTubeBadge />}
             </div>
             <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{currentTrack.artist_name}</p>
             {currentPlaylistId && (
@@ -591,17 +611,6 @@ export function Player() {
 
       <ExpandedPlayerModal />
     </>
-  )
-}
-
-function YouTubeBadge() {
-  return (
-    <span
-      className="flex-shrink-0 text-label-medium font-semibold px-1.5 py-0.5 rounded"
-      style={{ backgroundColor: 'color-mix(in srgb, var(--error) 15%, transparent)', color: 'var(--error)' }}
-    >
-      YT
-    </span>
   )
 }
 

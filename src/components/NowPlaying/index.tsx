@@ -749,7 +749,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
         /* No modal o rodapé ocupa o lugar da nav; na rota /reproducao a nav
            continua visível, então a reserva inclui os dois. */
         paddingBottom: isExpandedOpen
-          ? (miniPlayer ? 'var(--player-mini-h)' : 'var(--player-mobile-h)')
+          ? 'var(--player-mini-h)'
           : (miniPlayer ? 'var(--hero-bottom-pad-mini)' : 'var(--hero-bottom-pad)'),
         /* O gradiente saiu daqui. Morava nesta raiz em `inset-0` de sangria e
            sumia por baixo do painel da fila, que é opaco; sobrava dele só a

@@ -160,8 +160,8 @@
   --topbar-h: 64px;
   --nav-h: 64px;
   --player-h: 80px;          /* rodapé completo (desktop) */
-  --player-mobile-h: 64px;   /* rodapé compacto (mobile) */
-  --player-mini-h: 48px;     /* rodapé reduzido (mobile) */
+  --player-mobile-h: 112px;  /* rodapé mobile: metadados + transporte */
+  --player-mini-h: 64px;     /* rodapé só com metadados (hero aberta) */
 
   /* Altura ocupada apenas pela navegação fixa; vira 0 no desktop. O rodapé
      do player usa isto como `margin-bottom` para não pintar por cima da nav. */
