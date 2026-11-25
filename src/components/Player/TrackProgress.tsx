@@ -5,6 +5,7 @@ import { usePlayerStore } from '@/lib/store'
 import { useYouTubeTime } from '@/components/YouTubePlayer/context'
 import { formatDuration } from '@/lib/spotify'
 import { useTrackSeek } from '@/hooks/use-player-transport'
+import { progressDragState } from '@/lib/player-audio'
 
 /**
  * Uma única barra de progresso, usada pelo rodapé e pela hero. O arraste,
@@ -12,7 +13,7 @@ import { useTrackSeek } from '@/hooks/use-player-transport'
  * o comprimento do recipiente. Nenhum estado de reprodução é duplicado: tudo
  * vem da store e do mesmo elemento `<audio>`.
  */
-export function TrackProgress({ className = '' }: { className?: string }) {
+export function TrackProgress({ className = '', compact = false }: { className?: string; compact?: boolean }) {
   const progressRef = useRef<HTMLDivElement>(null)
   const isDraggingRef = useRef(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -39,6 +40,7 @@ export function TrackProgress({ className = '' }: { className?: string }) {
 
   function beginProgressDrag(clientX: number) {
     isDraggingRef.current = true
+    progressDragState.current = true
     setIsDragging(true)
     setSeekPreview(progressTimeFromClientX(clientX))
   }
@@ -47,6 +49,7 @@ export function TrackProgress({ className = '' }: { className?: string }) {
   // a faixa quando o sistema roubar o toque.
   function endProgressDrag(clientX: number | null) {
     isDraggingRef.current = false
+    progressDragState.current = false
     setIsDragging(false)
     setSeekPreview(null)
     if (clientX !== null) seek(progressTimeFromClientX(clientX))
@@ -93,7 +96,7 @@ export function TrackProgress({ className = '' }: { className?: string }) {
 
   return (
     <div className={`flex w-full max-w-[560px] items-center gap-2 text-label-medium ${className}`} style={{ color: 'var(--text-disabled)' }}>
-      <span className="w-8 text-right">{formatDuration(Math.floor(currentProgress))}</span>
+      {!compact && <span className="w-8 text-right">{formatDuration(Math.floor(currentProgress))}</span>}
       <div ref={progressRef}
         role="slider"
         tabIndex={0}
@@ -118,7 +121,7 @@ export function TrackProgress({ className = '' }: { className?: string }) {
           className={`pointer-events-none absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full transition-[opacity,translate,scale] duration-[var(--motion-duration-fast)] ease-[var(--motion-easing-standard)] ${isDragging ? 'scale-100 opacity-100' : 'scale-50 opacity-0 group-hover:scale-100 group-hover:opacity-100 group-focus-visible:scale-100 group-focus-visible:opacity-100'}`}
           style={{ left: `calc(${progressPercent}% - 6px)`, backgroundColor: 'var(--accent-from)' }} />
       </div>
-      <span className="w-8 text-left">{formatDuration(Math.floor(currentDuration))}</span>
+      {!compact && <span className="w-8 text-left">{formatDuration(Math.floor(currentDuration))}</span>}
     </div>
   )
 }

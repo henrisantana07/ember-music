@@ -16,9 +16,11 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from 
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  Play, Pause,
+  Play, Pause, SkipBack, SkipForward,
   Music, Trash2, MoreHorizontal, Maximize2, Minimize2, Maximize, Minimize,
 } from 'lucide-react'
+import { TrackProgress } from '@/components/Player/TrackProgress'
+import { useTrackPrev } from '@/hooks/use-player-transport'
 import { extractCoverPalette, type CoverPalette } from '@/lib/color/extractCoverPalette'
 import { cacheCoverPalette, getCachedCoverPalette } from '@/lib/color/coverPaletteCache'
 import { getYouTubeVideoIdFromLink, isValidYouTubeVideoId } from '@/lib/youtube/video-id'
@@ -257,6 +259,9 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
 
   const currentTrack = usePlayerStore((s) => s.currentTrack)
   const isPlaying = usePlayerStore((s) => s.isPlaying)
+  const togglePlay = usePlayerStore((s) => s.togglePlay)
+  const next = usePlayerStore((s) => s.next)
+  const handlePrev = useTrackPrev()
   const queue = usePlayerStore((s) => s.queue)
   const isExpandedOpen = usePlayerStore((s) => s.isExpandedOpen)
   const queueMinimized = usePlayerStore((s) => s.queueMinimized)
@@ -914,6 +919,32 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
             <Music className="w-5 h-5" />
             Fila
           </button>
+
+          {/* Transporte da hero no mobile. O rodapé esconde os dele enquanto a
+              hero está aberta, então existe um único conjunto de controles —
+              todos ligados à store e ao mesmo `<audio>` do Player. */}
+          <div className="mt-auto w-full max-w-[560px] space-y-4 pt-4 md:hidden">
+            <TrackProgress />
+            <div className="flex items-center justify-center gap-4">
+              <button onClick={handlePrev} className="inline-flex h-12 w-12 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} aria-label="Faixa anterior">
+                <SkipBack className="h-6 w-6" fill="currentColor" />
+              </button>
+              <motion.button onClick={togglePlay}
+                className="inline-flex h-14 w-14 items-center justify-center rounded-full state-layer"
+                style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
+                aria-label={isPlaying ? 'Pausar' : 'Tocar'}
+                whileTap={{ scale: 0.96 }}>
+                {isPlaying ? (
+                  <Pause className="h-6 w-6" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+                ) : (
+                  <Play className="h-6 w-6" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+                )}
+              </motion.button>
+              <button onClick={next} className="inline-flex h-12 w-12 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} aria-label="Próxima faixa">
+                <SkipForward className="h-6 w-6" fill="currentColor" />
+              </button>
+            </div>
+          </div>
         </div>
 
           {/* Painel flush na borda, como a fila do Spotify: `#121212` — o

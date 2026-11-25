@@ -98,9 +98,27 @@ export function Topbar() {
     /* 30 fica acima do conteúdo (10–20) e abaixo de nav (50), hero (60),
        player (70) e dos overlays (80+). Antes era 100 e cobria os modais. */
     <header
-      className="h-16 flex items-center justify-center px-6 flex-shrink-0 relative z-30 border-b border-outline-variant"
-      style={{ backgroundColor: 'var(--bg-base)', display: immersive ? 'none' : undefined }}
+      className="flex flex-shrink-0 items-center justify-center border-b border-outline-variant px-4 relative z-30 md:px-6"
+      style={{
+        backgroundColor: 'var(--bg-base)',
+        display: immersive ? 'none' : undefined,
+        height: 'calc(var(--topbar-h) + var(--safe-top))',
+        paddingTop: 'var(--safe-top)',
+      }}
     >
+      {/* Mobile: marca compacta à esquerda. A busca não é um segundo input —
+          um botão leva à experiência de busca já existente em /buscar. */}
+      <Link
+        href="/"
+        aria-label="Ember Music — Início"
+        className="absolute left-4 top-1/2 flex min-w-0 -translate-y-1/2 items-center gap-2 md:hidden"
+      >
+        <img src="/branding/icon.svg" alt="" className="h-8 w-8 flex-shrink-0 object-cover pointer-events-none" />
+        <span className="truncate text-base font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+          <span className="gradient-accent-text">Ember</span> Music
+        </span>
+      </Link>
+
       {/* Left cluster: sidebar toggle + branding. */}
       <div
         className={`absolute top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 transition-[left] duration-[var(--motion-duration-standard)] ease-[var(--motion-easing-standard)] ${sidebarCollapsed ? 'left-[14px]' : 'left-2'}`}
@@ -216,7 +234,18 @@ export function Topbar() {
         </form>
       </div>
 
-      <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-1">
+      <div className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-1 md:right-6">
+        <button
+          onClick={() => router.push('/buscar')}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer md:hidden"
+          style={{ color: 'var(--text-secondary)' }}
+          aria-label="Buscar"
+          title="Buscar"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
         <button
           onClick={() => router.back()}
           className="hidden md:inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer"
@@ -246,10 +275,10 @@ export function Topbar() {
               className="flex items-center gap-2 focus-ring rounded-full"
             >
               {avatarUrl ? (
-                <img src={avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover" />
+                <img src={avatarUrl} alt="" className="h-11 w-11 rounded-full object-cover" />
               ) : (
                 <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
+                  className="h-11 w-11 rounded-full flex items-center justify-center text-sm font-bold"
                   style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))', color: 'var(--bg-base)' }}
                 >
                   {user.email?.[0].toUpperCase()}

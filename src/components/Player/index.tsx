@@ -13,7 +13,7 @@ import { savePlaybackHistory } from '@/lib/playback-history'
 import { ExpandedPlayerModal } from '@/components/ExpandedPlayerModal'
 import { PlaylistModal } from '@/components/PlaylistModal'
 import { useYouTube } from '@/components/YouTubePlayer/context'
-import { playerAudioRef } from '@/lib/player-audio'
+import { playerAudioRef, progressDragState } from '@/lib/player-audio'
 import { useTrackSeek, useTrackPrev } from '@/hooks/use-player-transport'
 import { TrackProgress } from '@/components/Player/TrackProgress'
 import Link from 'next/link'
@@ -82,8 +82,6 @@ export function Player() {
   const isYouTubeTrack = currentTrack?.source === 'youtube' && !!currentTrack.youtubeVideoId
 
   const yt = useYouTube()
-  const { seek: ytSeek, getCurrentTime: ytGetCurrentTime } = yt
-  const { currentTime: ytCurrentTime, duration: ytDuration } = useYouTubeTime()
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
@@ -172,7 +170,7 @@ export function Player() {
       }
 
       const onTimeUpdate = () => {
-        if (!isDraggingRef.current) setProgress(audio.currentTime)
+        if (!progressDragState.current) setProgress(audio.currentTime)
       }
 
       const onLoadedMetadata = () => {
@@ -318,76 +316,7 @@ export function Player() {
 
   if (!currentTrack) return null
 
-  const currentDuration = isYouTubeTrack ? (ytDuration || duration) : duration
-  const liveProgress = isYouTubeTrack ? (ytCurrentTime || progress) : progress
-  // Durante o arraste a barra segue o cursor, não a posição real da música.
-  const currentProgress = isDragging && seekPreview !== null ? seekPreview : liveProgress
-  const progressPercent = currentDuration > 0 ? (currentProgress / currentDuration) * 100 : 0
-
   const repeatLabel: Record<RepeatMode, string> = { none: 'Sem repeat', one: 'Repeat 1', all: 'Repeat tudo' }
-
-  function progressTimeFromClientX(clientX: number) {
-    const rect = progressRef.current?.getBoundingClientRect()
-    if (!rect || rect.width === 0) return 0
-    const ratio = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1)
-    return ratio * currentDuration
-  }
-
-  function beginProgressDrag(clientX: number) {
-    isDraggingRef.current = true
-    setIsDragging(true)
-    setSeekPreview(progressTimeFromClientX(clientX))
-  }
-
-  // `clientX === null` significa gesto interrompido (pointercancel): solta sem
-  // buscar, para não pular a faixa quando o sistema roubar o toque.
-  function endProgressDrag(clientX: number | null) {
-    isDraggingRef.current = false
-    setIsDragging(false)
-    setSeekPreview(null)
-    if (clientX !== null) handleSeek(progressTimeFromClientX(clientX))
-  }
-
-  function handleProgressPointerDown(e: React.PointerEvent<HTMLDivElement>) {
-    if (e.pointerType === 'mouse' && e.button !== 0) return
-    // Captura o ponteiro: a barra continua acompanhando o cursor mesmo quando
-    // ele sai da faixa, e a rolagem não intercepta o gesto no toque.
-    progressRef.current?.setPointerCapture(e.pointerId)
-    beginProgressDrag(e.clientX)
-  }
-
-  function handleProgressPointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    if (!isDraggingRef.current) return
-    setSeekPreview(progressTimeFromClientX(e.clientX))
-  }
-
-  function handleProgressPointerUp(e: React.PointerEvent<HTMLDivElement>) {
-    if (!isDraggingRef.current) return
-    if (progressRef.current?.hasPointerCapture(e.pointerId)) {
-      progressRef.current.releasePointerCapture(e.pointerId)
-    }
-    endProgressDrag(e.clientX)
-  }
-
-  function handleProgressPointerCancel(e: React.PointerEvent<HTMLDivElement>) {
-    if (!isDraggingRef.current) return
-    if (progressRef.current?.hasPointerCapture(e.pointerId)) {
-      progressRef.current.releasePointerCapture(e.pointerId)
-    }
-    endProgressDrag(null)
-  }
-
-  function handleProgressKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
-    const step = e.shiftKey ? 15 : 5
-    let target: number
-    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') target = currentProgress + step
-    else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') target = currentProgress - step
-    else if (e.key === 'Home') target = 0
-    else if (e.key === 'End') target = currentDuration
-    else return
-    e.preventDefault()
-    handleSeek(Math.min(Math.max(target, 0), currentDuration))
-  }
 
   return (
     <>
@@ -423,12 +352,14 @@ export function Player() {
           então os dois elementos nunca disputam a mesma faixa da viewport.
           `miniPlayer` reduz ainda mais o rodapé, sem esconder o player. */}
       <footer
-        className="player-footer relative z-[70] flex flex-shrink-0 items-center gap-3 border-t border-outline-variant px-3 md:hidden"
+        className="player-footer relative z-[70] flex flex-shrink-0 flex-col justify-center border-t border-outline-variant px-3 md:hidden"
         style={{
           height: miniPlayer ? 'var(--player-mini-h)' : 'var(--player-mobile-h)',
           marginBottom: 'var(--chrome-bottom)',
         }}
       >
+        {!isExpandedOpen && !miniPlayer && <TrackProgress compact className="max-w-none" />}
+        <div className="flex w-full min-h-0 items-center gap-3">
         <button onClick={toggleExpandedFullscreen} className="flex-shrink-0" aria-label={isExpandedOpen && immersive ? 'Sair da tela cheia' : 'Abrir player em tela cheia'}>
           <img src={currentTrack.image} alt="" className="h-9 w-9 rounded object-cover" />
         </button>
@@ -439,33 +370,38 @@ export function Player() {
           </div>
           <p className="truncate text-body-medium" style={{ color: 'var(--text-secondary)' }}>{currentTrack.artist_name}</p>
         </div>
-        <button onClick={togglePlay}
-          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer"
-          style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
-          aria-label={isPlaying ? 'Pausar' : 'Tocar'}>
-          {isPlaying ? (
-            <Pause className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
-          ) : (
-            <Play className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
-          )}
-        </button>
-        {!miniPlayer && <SleepTimerDropdown />}
-        {miniPlayer ? (
+        {/* Com a hero aberta, o transporte vive nela: o rodapé vira só
+            metadados + botão de recolher. Nunca dois conjuntos de controles
+            competindo pela mesma faixa da tela. */}
+        {!isExpandedOpen && (
+          <button onClick={togglePlay}
+            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer"
+            style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
+            aria-label={isPlaying ? 'Pausar' : 'Tocar'}>
+            {isPlaying ? (
+              <Pause className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+            ) : (
+              <Play className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+            )}
+          </button>
+        )}
+        {!miniPlayer && !isExpandedOpen && <SleepTimerDropdown />}
+        {miniPlayer && !isExpandedOpen && (
           <button onClick={toggleMiniPlayer} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} aria-label="Expandir player compacto">
             <ChevronUp className="h-5 w-5" />
           </button>
-        ) : (
-          <>
-            <button onClick={toggleMiniPlayer} className="hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer sm:inline-flex" style={{ color: 'var(--text-secondary)' }} aria-label="Reduzir player" title="Reduzir player">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            <button onClick={toggleExpanded} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} title={isExpandedOpen ? 'Recolher player' : 'Abrir player'} aria-label={isExpandedOpen ? 'Recolher player expandido' : 'Abrir player expandido'}>
-              {isExpandedOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
-            </button>
-          </>
         )}
+        {!miniPlayer && !isExpandedOpen && (
+          <button onClick={toggleMiniPlayer} className="hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer sm:inline-flex" style={{ color: 'var(--text-secondary)' }} aria-label="Reduzir player" title="Reduzir player">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        )}
+        <button onClick={toggleExpanded} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} title={isExpandedOpen ? 'Recolher player' : 'Abrir player'} aria-label={isExpandedOpen ? 'Recolher player expandido' : 'Abrir player expandido'}>
+          {isExpandedOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
+        </button>
+        </div>
       </footer>
 
       {/* Rodapé completo: desktop. Os controles que antes eram `md:hidden`
@@ -561,42 +497,8 @@ export function Player() {
             </button>
           </div>
 
-          {/* `max-w` porque a row era `w-full` dentro de um cluster `flex-1`:
-              as extremidades (o label de tempo de cada lado) corriam do fim do
-              cluster esquerdo ao início do direito, ocupando a largura inteira
-              do rodapé. O cluster pai é `items-center`, então o recuo vira
-              simétrico dos dois lados sem `mx-auto`. O `getBoundingClientRect`
-              do seek continua válido — ele mede o próprio elemento. */}
-          <div className="w-full max-w-[560px] flex items-center gap-2 text-label-medium" style={{ color: 'var(--text-disabled)' }}>
-            <span className="w-8 text-right">{formatDuration(Math.floor(currentProgress))}</span>
-            <div ref={progressRef}
-              role="slider"
-              tabIndex={0}
-              aria-label="Progresso da faixa"
-              aria-valuemin={0}
-              aria-valuemax={Math.max(1, Math.round(currentDuration))}
-              aria-valuenow={Math.round(currentProgress)}
-              aria-valuetext={`${formatDuration(Math.floor(currentProgress))} de ${formatDuration(Math.floor(currentDuration))}`}
-              onPointerDown={handleProgressPointerDown}
-              onPointerMove={handleProgressPointerMove}
-              onPointerUp={handleProgressPointerUp}
-              onPointerCancel={handleProgressPointerCancel}
-              onKeyDown={handleProgressKeyDown}
-              className={`group relative flex h-3 flex-1 touch-none items-center ${isDragging ? 'cursor-grabbing' : 'cursor-pointer'}`}>
-              {/* Trilha fixa de 12px: é o alvo de clique e não muda de tamanho,
-                  então crescer a faixa não desloca nada ao redor. */}
-              <div className={`h-1 w-full rounded-full transition-[height] duration-[var(--motion-duration-fast)] ease-[var(--motion-easing-standard)] ${isDragging ? 'h-2' : 'group-hover:h-2'}`}
-                style={{ backgroundColor: 'var(--text-disabled)' }}>
-                <div className="h-full rounded-full"
-                  style={{ width: `${progressPercent}%`, background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }} />
-              </div>
-              {/* Thumb fora da faixa, senão ele sobe e desce quando ela cresce. */}
-              <div aria-hidden="true"
-                className={`pointer-events-none absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full transition-[opacity,translate,scale] duration-[var(--motion-duration-fast)] ease-[var(--motion-easing-standard)] ${isDragging ? 'scale-100 opacity-100' : 'scale-50 opacity-0 group-hover:scale-100 group-hover:opacity-100 group-focus-visible:scale-100 group-focus-visible:opacity-100'}`}
-                style={{ left: `calc(${progressPercent}% - 6px)`, backgroundColor: 'var(--accent-from)' }} />
-            </div>
-            <span className="w-8 text-left">{formatDuration(Math.floor(currentDuration))}</span>
-          </div>
+          {/* Uma só implementação de seek: a mesma barra é usada pela hero. */}
+          <TrackProgress />
         </div>
 
         <div className="w-auto md:w-72 flex items-center justify-end gap-2">

@@ -157,6 +157,7 @@
      `env()` com fallback mantém o layout idêntico em desktop sem notch. */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --topbar-h: 64px;
   --nav-h: 64px;
   --player-h: 80px;          /* rodapé completo (desktop) */
   --player-mobile-h: 64px;   /* rodapé compacto (mobile) */
