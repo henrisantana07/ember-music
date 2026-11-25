@@ -4,6 +4,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Track } from '@/types/music'
 import { decodeHtmlEntities } from '@/lib/html-entities'
+import { useSidebarStore } from '@/lib/sidebar-store'
 
 export type RepeatMode = 'none' | 'one' | 'all'
 
@@ -290,7 +291,16 @@ export const usePlayerStore = create<PlayerState>()(
   toggleMiniPlayer: () => set((s) => ({ miniPlayer: !s.miniPlayer })),
 
   openExpanded: () => set({ isExpandedOpen: true }),
-  closeExpanded: () => set({ isExpandedOpen: false }),
+  closeExpanded: () => {
+    set({ isExpandedOpen: false })
+    /* Fechar a hero por swipe ou chevron também precisa devolver Topbar,
+       sidebar e bottom nav. Sem isto o mobile ficava sem navegação visível,
+       porque o único botão de sair da tela cheia morava dentro da própria
+       hero e era `md:hidden`. */
+    if (useSidebarStore.getState().immersive) {
+      useSidebarStore.getState().setImmersive(false)
+    }
+  },
   setQueueMinimized: (minimized) => set({ queueMinimized: minimized }),
   setQueueWidth: (width) => set({ queueWidth: width }),
   setWideCover: (wide) => set({ wideCover: wide }),

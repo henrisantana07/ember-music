@@ -15,8 +15,10 @@ export function MainContainer({ children }: { children: React.ReactNode }) {
     // div interno que tem `overflow-y-auto` e é o alvo do `scrollTo(0, 0)`
     // que o PageTransition dispara ao navegar. No wrapper o scrollTo seria
     // no-op, porque o wrapper não rola.
+    /* `pb-24` era um palpite de 96px: não cobria nav (64) + player (64) +
+       safe area. O token centraliza a reserva com o chrome real. */
     <CustomScroll
-      className="main-container px-4 md:px-6 py-5 flex flex-col pb-24 md:pb-5"
+      className="main-container px-4 md:px-6 py-5 flex flex-col pb-[var(--content-bottom-pad)] md:pb-5"
       wrapperClassName="flex-1 min-h-0 min-w-0"
     >
       {children}

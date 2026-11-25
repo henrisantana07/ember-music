@@ -153,6 +153,31 @@
 
   --sidebar-w: 0px;
 
+  /* Chrome fixo do mobile: uma única fonte de verdade para alturas e offsets.
+     `env()` com fallback mantém o layout idêntico em desktop sem notch. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --nav-h: 64px;
+  --player-h: 80px;          /* rodapé completo (desktop) */
+  --player-mobile-h: 64px;   /* rodapé compacto (mobile) */
+  --player-mini-h: 48px;     /* rodapé reduzido (mobile) */
+
+  /* Altura ocupada apenas pela navegação fixa; vira 0 no desktop. O rodapé
+     do player usa isto como `margin-bottom` para não pintar por cima da nav. */
+  --chrome-bottom: calc(var(--nav-h) + var(--safe-bottom));
+  /* Toasts e avisos ficam acima de nav + player; no desktop, só do player. */
+  --toast-bottom: calc(var(--nav-h) + var(--player-mobile-h) + var(--safe-bottom) + 16px);
+  /* Reserva de espaço no conteúdo e na hero para o chrome inferior. A hero
+     cobre a nav, mas o rodapé do player continua por cima dela — por isso o
+     padding dela soma `chrome-bottom` + altura do player. */
+  --content-bottom-pad: calc(var(--nav-h) + var(--player-mobile-h) + var(--safe-bottom) + 16px);
+  --hero-bottom-pad: calc(var(--chrome-bottom) + var(--player-mobile-h));
+  --hero-bottom-pad-mini: calc(var(--chrome-bottom) + var(--player-mini-h));
+
+  /* Escala de camadas (menor → maior): conteúdo/sticky 10–20, topbar 30,
+     bottom nav 50, hero 60, player 70, scrim e modais 80, drawer 90.
+     Nada de `z-index: 9999` como paliativo. */
+
   /* Motion tokens (M3-inspired durations & easings).
      New animations below consume these instead of hardcoding durations;
      the prefers-reduced-motion block zeroes them out. */
@@ -175,6 +200,18 @@
      sai com velocidade, viaja num ritmo legível e assenta sem quicar. É a que
      faz a subida da hero ser visível do começo ao fim. Espelha `EASE.surface`. */
   --motion-easing-surface: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Desktop: a bottom nav não existe, então os offsets voltam a considerar
+   apenas o rodapé completo do player. */
+@media (min-width: 768px) {
+  :root {
+    --chrome-bottom: 0px;
+    --toast-bottom: calc(var(--player-h) + 16px);
+    --content-bottom-pad: var(--player-h);
+    --hero-bottom-pad: var(--player-h);
+    --hero-bottom-pad-mini: var(--player-h);
+  }
 }
 
 * {

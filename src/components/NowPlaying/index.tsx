@@ -736,8 +736,12 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
          mesmo gesto do player expandido (o modal anima o `y` de 100% para 0).
          No modal esta raiz não anima — o `motion.div` de fora já faz isso, e
          dois gestos juntos dariam um salto duplo. */
-      className={`now-playing h-full relative flex flex-col overflow-hidden ${miniPlayer ? 'pb-14 md:pb-0' : 'pb-20'} ${onClose ? '' : 'animate-hero-rise'}`}
+      className={`now-playing h-full relative flex flex-col overflow-hidden ${onClose ? '' : 'animate-hero-rise'}`}
       style={{
+        /* A reserva inferior acompanha o chrome real (nav + player + safe
+           area) em vez dos antigos `pb-14`/`pb-20` fixos, que deixavam o
+           conteúdo encoberto pelo rodapé e pela nav. */
+        paddingBottom: miniPlayer ? 'var(--hero-bottom-pad-mini)' : 'var(--hero-bottom-pad)',
         /* O gradiente saiu daqui. Morava nesta raiz em `inset-0` de sangria e
            sumia por baixo do painel da fila, que é opaco; sobrava dele só a
            faixa da capa e o vão do rodapé. Agora ele é o background da coluna
@@ -883,19 +887,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 no caso da tela cheia, também a única saída: não existe Esc
                 em tela pequena e as outras duas cópias são `md:`. */}
             <button
-              onClick={() => setShowQueueOnMobile(!showQueueOnMobile)}
-              className={`md:hidden h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer ${
-                showQueueOnMobile ? 'text-[var(--accent-from)]' : ''
-              }`}
-              style={showQueueOnMobile ? undefined : { color: 'var(--text-secondary)' }}
-              aria-label="Fila"
-              aria-pressed={showQueueOnMobile}
-              title="Fila"
-            >
-              <Music className="w-5 h-5" />
-            </button>
-
-            <button
               onClick={toggleImmersive}
               className={`md:hidden h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer ${
                 immersive ? 'text-[var(--accent-from)]' : ''
@@ -910,7 +901,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
           </div>
 
           {toast && (
-            <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl text-body-medium shadow-elevation-3 animate-slide-up" style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
+            <div className="fixed left-1/2 z-50 -translate-x-1/2 rounded-xl px-5 py-3 text-body-medium shadow-elevation-3 animate-slide-up" style={{ bottom: 'var(--toast-bottom)', backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
               {toast}
             </div>
           )}

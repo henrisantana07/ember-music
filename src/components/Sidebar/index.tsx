@@ -30,11 +30,16 @@ import type { LibraryItem, LibraryItemType } from '@/lib/library/types'
 import type { Album } from '@/types/music'
 
 const NAV_SECTION1 = [
-  { href: '/', label: 'Início', outline: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', fill: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-  { href: '/buscar', label: 'Explorar', outline: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z', fill: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z' },
-  { href: '/biblioteca', label: 'Biblioteca', outline: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', fill: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
-  { href: '/biblioteca/local', label: 'Biblioteca Local', outline: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z', fill: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z' },
+  { href: '/', label: 'Início', outline: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+  { href: '/buscar', label: 'Explorar', outline: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z' },
+  { href: '/biblioteca', label: 'Biblioteca', outline: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
+  { href: '/biblioteca/local', label: 'Biblioteca Local', outline: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z' },
 ]
+
+/* A barra inferior tem três destinos, não quatro: "Biblioteca Local" fica
+   disponível no drawer, onde há espaço para o rótulo inteiro. Dois botões que
+   abriam o mesmo drawer só duplicavam o alvo e pintavam `active` juntos. */
+const MOBILE_NAV_ITEMS = NAV_SECTION1.filter((item) => item.href !== '/biblioteca/local')
 
 // Quantidade máxima de itens exibidos no rail recolhido
 const RAIL_LIMIT = 5
@@ -189,7 +194,7 @@ function PinnedBadge() {
   )
 }
 
-function NavIcon({ icon, active }: { icon: { outline: string; fill: string }; active: boolean }) {
+function NavIcon({ icon, active }: { icon: { outline: string }; active: boolean }) {
   return (
     <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d={icon.outline} />
@@ -291,6 +296,27 @@ export default function Sidebar() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  /* O drawer é um modal: Escape fecha, a navegação de fundo para de rolar e
+     trocar de rota sempre o dispensa (inclusive os links de dentro dele). */
+  useEffect(() => {
+    if (!drawerOpen) return
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setDrawerOpen(false)
+    }
+    const scrollers = Array.from(document.querySelectorAll<HTMLElement>('.main-container'))
+    const previousOverflow = scrollers.map((el) => el.style.overflowY)
+    scrollers.forEach((el) => { el.style.overflowY = 'hidden' })
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      scrollers.forEach((el, i) => { el.style.overflowY = previousOverflow[i] })
+    }
+  }, [drawerOpen])
+
+  useEffect(() => {
+    setDrawerOpen(false)
+  }, [pathname])
+
   useEffect(() => {
     if (!isDraggingSidebar) return
     function onMove(e: MouseEvent) {
@@ -327,7 +353,10 @@ useEffect(() => {
   }, [user, fetchPlaylists, fetchArtists])
   function isActive(href: string) {
     if (href === '/') return pathname === '/'
-    return pathname.startsWith(href)
+    /* `/biblioteca` e `/biblioteca/local` são destinos distintos: o
+       `startsWith` antigo pintava os dois como ativos na rota local. */
+    if (href === '/biblioteca') return pathname === '/biblioteca'
+    return pathname === href || pathname.startsWith(`${href}/`)
   }
 
   /* Coleção normalizada das fontes reais → busca + filtro de tipo + ordenação
@@ -589,25 +618,36 @@ useEffect(() => {
         )}
       </aside>
 
-      {/* Navegação inferior existente: uma única barra, sem segunda barra nova (§7). */}
-      <nav className="fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around bg-[var(--bg-base)] border-t border-outline-variant z-50 md:hidden safe-area-bottom" style={{ display: immersive ? 'none' : undefined }}>
-        {NAV_SECTION1.map(item => {
+      {/* Navegação inferior existente: uma única barra, sem segunda barra nova (§7).
+          A altura inclui o safe area, então o ícone nunca fica sob o home
+          indicator; o rodapé do player usa `--chrome-bottom` para assentar
+          exatamente em cima desta barra em vez de pintar por cima dela. */}
+      <nav
+        aria-label="Navegação principal"
+        className="fixed bottom-0 left-0 right-0 z-50 flex items-stretch justify-around border-t border-outline-variant bg-[var(--bg-base)] md:hidden"
+        style={{
+          display: immersive ? 'none' : undefined,
+          height: 'var(--chrome-bottom)',
+          paddingBottom: 'var(--safe-bottom)',
+        }}
+      >
+        {MOBILE_NAV_ITEMS.map(item => {
           const active = isActive(item.href)
-          const isLibrary = item.href === '/biblioteca' || item.href === '/biblioteca/local'
           return (
             <button
               key={item.href}
               onClick={() => {
-                if (isLibrary) { setDrawerOpen(true); return }
+                if (item.href === '/biblioteca') { setDrawerOpen(true); return }
                 router.push(item.href)
               }}
-              className="flex flex-col items-center justify-center gap-0.5 w-full h-full pt-2"
+              className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1"
               aria-current={active ? 'page' : undefined}
+              aria-label={item.label === 'Biblioteca' ? 'Abrir biblioteca' : item.label}
             >
-              <svg className={`w-5 h-5 ${active ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
+              <svg className={`h-6 w-6 flex-shrink-0 ${active ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d={item.outline} />
               </svg>
-              <span className={`text-label-medium ${active ? 'font-bold text-[var(--text-secondary)]' : 'text-[var(--text-secondary)]'}`}>{item.label}</span>
+              <span className={`text-label-medium w-full truncate text-center leading-none ${active ? 'font-bold text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>{item.label}</span>
             </button>
           )
         })}
@@ -618,7 +658,7 @@ useEffect(() => {
         {drawerOpen && (
           <motion.div
             key="drawer-scrim"
-            className="fixed inset-0 bg-scrim backdrop-blur-sm z-40 md:hidden"
+            className="fixed inset-0 z-[80] bg-scrim backdrop-blur-sm md:hidden"
             variants={scrimVariants}
             initial="hidden"
             animate="visible"
@@ -629,7 +669,11 @@ useEffect(() => {
         {drawerOpen && (
           <motion.aside
             key="drawer-panel"
-            className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-[300px] bg-[var(--bg-surface)] z-50 flex flex-col md:hidden shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Biblioteca"
+            style={{ paddingTop: 'var(--safe-top)', paddingBottom: 'var(--safe-bottom)' }}
+            className="fixed left-0 top-0 bottom-0 z-[90] flex w-[85vw] max-w-[300px] flex-col bg-[var(--bg-surface)] shadow-2xl md:hidden"
             variants={drawerVariants}
             initial="hidden"
             animate="visible"
@@ -662,7 +706,7 @@ useEffect(() => {
                         : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
                     }`}
                   >
-                    <NavIcon icon={{ outline: item.outline, fill: item.fill }} active={active} />
+                    <NavIcon icon={{ outline: item.outline }} active={active} />
                     <span>{item.label}</span>
                   </Link>
                 )
@@ -671,7 +715,7 @@ useEffect(() => {
 
             <hr className="mx-4 my-2 border-outline-variant flex-none" />
 
-            <div className="flex gap-1 px-2 py-1 min-w-0 overflow-x-auto flex-none">
+            <div className="hide-scrollbar flex flex-none gap-1 overflow-x-auto px-2 py-1 min-w-0">
               {TYPE_FILTERS.map(filter => (
                 <FilterChip
                   key={filter.value}

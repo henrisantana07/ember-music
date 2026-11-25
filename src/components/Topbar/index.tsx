@@ -95,8 +95,10 @@ export function Topbar() {
   }
 
   return (
+    /* 30 fica acima do conteúdo (10–20) e abaixo de nav (50), hero (60),
+       player (70) e dos overlays (80+). Antes era 100 e cobria os modais. */
     <header
-      className="h-16 flex items-center justify-center px-6 flex-shrink-0 relative z-[100] border-b border-outline-variant"
+      className="h-16 flex items-center justify-center px-6 flex-shrink-0 relative z-30 border-b border-outline-variant"
       style={{ backgroundColor: 'var(--bg-base)', display: immersive ? 'none' : undefined }}
     >
       {/* Left cluster: sidebar toggle + branding. */}
@@ -267,7 +269,7 @@ export function Topbar() {
             {showDropdown && user && (
               <motion.div
                 key="user-menu"
-                className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-elevation-2 border border-outline-variant py-1 z- 50"
+                className="absolute right-0 top-full z-50 mt-2 w-56 rounded-xl border border-outline-variant py-1 shadow-elevation-2"
                 style={{ backgroundColor: 'var(--bg-elevated)', transformOrigin: 'top right' }}
                 variants={popoverVariants}
                 initial="hidden"

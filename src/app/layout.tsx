@@ -35,6 +35,10 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: '#FF6A00',
+  /* Sem `viewport-fit=cover` o browser ignora `env(safe-area-inset-*)` e o
+     conteúdo encosta no notch/home indicator. É o que falta para que os
+     tokens de safe area do globals.css tenham efeito. */
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -51,7 +55,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
-      <body className="flex flex-col h-screen overflow-hidden">
+      {/* `100dvh` acompanha a barra de URL dinâmica do mobile; `h-screen`
+          permanece como fallback para browsers sem suporte a dvh. */}
+      <body className="flex flex-col h-screen h-[100dvh] overflow-hidden">
         <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeScript }} />
         {/* `reducedMotion="user"` drops every transform/layout animation Motion
             would otherwise run when the OS asks for reduced motion, while

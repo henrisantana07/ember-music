@@ -55,6 +55,7 @@ export function Player() {
   // o controle fica sempre à mão.
   const immersive = useSidebarStore((s) => s.immersive)
   const toggleImmersive = useSidebarStore((s) => s.toggleImmersive)
+  const setImmersive = useSidebarStore((s) => s.setImmersive)
 
   /**
    * Um único botão no rodapé abre e fecha a hero.
@@ -74,8 +75,10 @@ export function Player() {
   const toggleExpandedFullscreen = () => {
     const combinedOn = isExpandedOpen && immersive
     if (combinedOn) {
+      /* `closeExpanded` já devolve a navegação; `setImmersive(false)` é
+         idempotente e cobre o caso de a hero ter sido fechada por outro caminho. */
       if (isExpandedOpen) closeExpanded()
-      if (immersive) toggleImmersive()
+      if (immersive) setImmersive(false)
     } else {
       if (!isExpandedOpen) openExpanded()
       if (!immersive) toggleImmersive()
@@ -408,53 +411,13 @@ export function Player() {
     handleSeek(Math.min(Math.max(target, 0), currentDuration))
   }
 
-  if (miniPlayer) {
-    return (
-      <>
-        <audio ref={audioRef} />
-        <footer className="player-footer h-14 md:hidden flex-shrink-0 relative z-[70] flex items-center px-3 gap-3 border-t border-outline-variant"
-        >
-          <button onClick={toggleExpandedFullscreen} className="flex-shrink-0" aria-label={isExpandedOpen && immersive ? 'Sair da tela cheia' : 'Abrir player em tela cheia'}>
-            <img src={currentTrack.image} alt="" className="w-9 h-9 rounded object-cover flex-shrink-0" />
-          </button>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <p className="text-body-medium font-semibold truncate">{currentTrack.name}</p>
-              {isYouTubeTrack && <YouTubeBadge />}
-            </div>
-            <p className="text-body-medium truncate" style={{ color: 'var(--text-secondary)' }}>{currentTrack.artist_name}</p>
-          </div>
-          <button onClick={(e) => { e.stopPropagation(); togglePlay() }}
-            className="h-11 w-11 rounded-full flex items-center justify-center state-layer"
-            style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
-            aria-label={isPlaying ? 'Pausar' : 'Tocar'}>
-            {isPlaying ? (
-              <Pause className="w-5 h-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
-            ) : (
-              <Play className="w-5 h-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
-            )}
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); toggleMiniPlayer() }} className="h-11 w-11 inline-flex items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-disabled)' }} aria-label="Minimizar player">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-            </svg>
-          </button>
-          <button onClick={toggleExpanded} className="h-11 w-11 inline-flex items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-disabled)' }} title={isExpandedOpen ? 'Recolher player' : 'Abrir player'} aria-label={isExpandedOpen ? 'Recolher player expandido' : 'Abrir player expandido'}>
-            {isExpandedOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
-          </button>
-        </footer>
-        <ExpandedPlayerModal />
-      </>
-    )
-  }
-
   return (
     <>
       <audio ref={audioRef} />
 
       {toast && (
-        <motion.div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-sm shadow-lg"
-          style={{ backgroundColor: 'var(--success)', color: 'var(--text-on-accent)' }}
+        <motion.div className="fixed left-1/2 z-50 -translate-x-1/2 px-4 py-2 text-sm shadow-lg"
+          style={{ bottom: 'var(--toast-bottom)', backgroundColor: 'var(--success)', color: 'var(--text-on-accent)' }}
           variants={fadeVariants}
           initial="hidden"
           animate="visible">
@@ -463,8 +426,8 @@ export function Player() {
       )}
 
       {sleepRemaining && (
-        <div className="fixed bottom-28 right-4 z-50 px-4 py-2 rounded-xl text-body-medium shadow-elevation-3 flex items-center gap-2"
-          style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}>
+        <div className="fixed right-4 z-50 flex items-center gap-2 rounded-xl px-4 py-2 text-body-medium shadow-elevation-3"
+          style={{ bottom: 'var(--toast-bottom)', backgroundColor: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}>
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -477,10 +440,62 @@ export function Player() {
         </div>
       )}
 
+      {/* Rodapé mobile: sempre compacto e ancorado acima da bottom nav. O
+          `margin-bottom` usa a mesma altura da nav (incluindo safe area),
+          então os dois elementos nunca disputam a mesma faixa da viewport.
+          `miniPlayer` reduz ainda mais o rodapé, sem esconder o player. */}
       <footer
-        className="player-footer h-20 flex-shrink-0 relative z-[70] flex items-center px-4 border-t border-outline-variant"
+        className="player-footer relative z-[70] flex flex-shrink-0 items-center gap-3 border-t border-outline-variant px-3 md:hidden"
+        style={{
+          height: miniPlayer ? 'var(--player-mini-h)' : 'var(--player-mobile-h)',
+          marginBottom: 'var(--chrome-bottom)',
+        }}
       >
-        <div className="flex items-center gap-3 w-40 md:w-72">
+        <button onClick={toggleExpandedFullscreen} className="flex-shrink-0" aria-label={isExpandedOpen && immersive ? 'Sair da tela cheia' : 'Abrir player em tela cheia'}>
+          <img src={currentTrack.image} alt="" className="h-9 w-9 rounded object-cover" />
+        </button>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <p className="truncate text-body-medium font-semibold">{currentTrack.name}</p>
+            {isYouTubeTrack && <YouTubeBadge />}
+          </div>
+          <p className="truncate text-body-medium" style={{ color: 'var(--text-secondary)' }}>{currentTrack.artist_name}</p>
+        </div>
+        <button onClick={togglePlay}
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer"
+          style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
+          aria-label={isPlaying ? 'Pausar' : 'Tocar'}>
+          {isPlaying ? (
+            <Pause className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+          ) : (
+            <Play className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+          )}
+        </button>
+        {!miniPlayer && <SleepTimerDropdown />}
+        {miniPlayer ? (
+          <button onClick={toggleMiniPlayer} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} aria-label="Expandir player compacto">
+            <ChevronUp className="h-5 w-5" />
+          </button>
+        ) : (
+          <>
+            <button onClick={toggleMiniPlayer} className="hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer sm:inline-flex" style={{ color: 'var(--text-secondary)' }} aria-label="Reduzir player" title="Reduzir player">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <button onClick={toggleExpanded} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} title={isExpandedOpen ? 'Recolher player' : 'Abrir player'} aria-label={isExpandedOpen ? 'Recolher player expandido' : 'Abrir player expandido'}>
+              {isExpandedOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
+            </button>
+          </>
+        )}
+      </footer>
+
+      {/* Rodapé completo: desktop. Os controles que antes eram `md:hidden`
+          dentro dele foram movidos para o rodapé mobile acima. */}
+      <footer
+        className="player-footer relative z-[70] hidden h-20 flex-shrink-0 items-center border-t border-outline-variant px-4 md:flex"
+      >
+        <div className="flex items-center gap-3 w-72">
           <button onClick={toggleExpandedFullscreen} className="flex-shrink-0" aria-label={isExpandedOpen && immersive ? 'Sair da tela cheia' : 'Abrir player em tela cheia'}>
             <img src={currentTrack.image} alt={currentTrack.name} className="w-12 h-12 rounded object-cover flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer" />
           </button>
@@ -676,18 +691,6 @@ export function Player() {
               className="w-14 md:w-20 h-1 accent-[var(--accent-from)]" />
           </div>
 
-          <button onClick={toggleMiniPlayer} className="md:hidden h-11 w-11 inline-flex items-center justify-center rounded-full transition-colors state-layer" style={{ color: 'var(--text-secondary)' }} title="Mini player" aria-label="Ativar mini player">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-
-          {/* No mobile este é o único acesso rápido ao player expandido a
-              partir do footer normal — o botão combinado é desktop-only.
-              Mesmo comportamento de antes: só abre/recolhe, sem tela cheia. */}
-          <button onClick={toggleExpanded} className="h-12 w-12 md:hidden inline-flex items-center justify-center rounded-full transition-colors state-layer" style={{ color: 'var(--text-secondary)' }} title={isExpandedOpen ? 'Recolher player' : 'Abrir player'} aria-label={isExpandedOpen ? 'Recolher player expandido' : 'Abrir player expandido'}>
-            {isExpandedOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
-          </button>
         </div>
       </footer>
 
