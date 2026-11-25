@@ -27,6 +27,7 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
   const supabase = createClient()
   const cropperRef = useRef<HTMLImageElement>(null)
   const cropperInstance = useRef<Cropper | null>(null)
+  const cropperTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Reset on the way in: AnimatePresence keeps this component mounted through
@@ -47,6 +48,7 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
   // noticeable under the scrim fade.
   useEffect(() => {
     if (open) return
+    if (cropperTimerRef.current) clearTimeout(cropperTimerRef.current)
     cropperInstance.current?.destroy()
     cropperInstance.current = null
   }, [open])
@@ -61,7 +63,8 @@ export function PlaylistCoverModal({ open, onClose, playlistId, currentCoverSour
     reader.onload = () => {
       setCropImage(reader.result as string)
       setCoverFile(null)
-      setTimeout(() => {
+      if (cropperTimerRef.current) clearTimeout(cropperTimerRef.current)
+      cropperTimerRef.current = setTimeout(() => {
         if (cropperRef.current) {
           if (cropperInstance.current) cropperInstance.current.destroy()
           cropperInstance.current = new Cropper(cropperRef.current, {

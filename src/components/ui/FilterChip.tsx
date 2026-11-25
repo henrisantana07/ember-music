@@ -1,7 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { motion } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 import { TRANSITION, whileTap } from '@/lib/motion'
 
 interface FilterChipProps {
@@ -19,24 +19,28 @@ interface FilterChipProps {
 }
 
 /**
- * Slot that holds the checkmark so it can grow from nothing instead of
- * appearing at full width — the chip's own width then eases open rather than
- * snapping. It stays mounted at width 0 purely so there is something to
- * interpolate.
+ * O check entra/sai com opacity + scale. Animar `width`/`marginRight`
+ * refluidava o chip e os irmãos a cada toggle — e `marginRight` não é
+ * neutralizado pelo `reducedMotion="user"` do Motion.
  */
 function ChipCheck({ selected }: { selected: boolean }) {
   return (
-    <motion.span
-      aria-hidden="true"
-      className="inline-flex items-center overflow-hidden flex-none"
-      initial={false}
-      animate={{ width: selected ? 14 : 0, marginRight: selected ? 6 : 0 }}
-      transition={TRANSITION.enter}
-    >
-      <svg className="w-3.5 h-3.5 flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-      </svg>
-    </motion.span>
+    <AnimatePresence initial={false}>
+      {selected && (
+        <motion.span
+          aria-hidden="true"
+          className="mr-1.5 inline-flex w-3.5 flex-none items-center"
+          initial={{ opacity: 0, scale: 0.6 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.6 }}
+          transition={TRANSITION.enter}
+        >
+          <svg className="h-3.5 w-3.5 flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </motion.span>
+      )}
+    </AnimatePresence>
   )
 }
 

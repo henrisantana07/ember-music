@@ -795,7 +795,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
              viewports curtos — numa altura normal tudo cabe e não há o que rolar.
              Sem ela a trilha apareceria colada na capa. */}
         <div
-          className={`now-cover-panel relative flex-1 ${wideCover ? 'md:flex-1' : 'md:flex-[3]'} flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 rounded-2xl ${showQueueOnMobile ? 'hidden md:flex' : ''} ${palette ? '' : 'now-cover-panel-empty'} transition-[flex-grow] duration-[var(--motion-duration-medium)] ease-[var(--motion-easing-surface)]`}
+          className={`now-cover-panel relative flex-1 ${wideCover ? 'md:flex-1' : 'md:flex-[3]'} flex flex-col items-center [justify-content:safe_center] gap-3 md:gap-4 min-h-0 overflow-y-auto overflow-x-hidden hide-scrollbar pt-1 md:pt-2 pb-4 rounded-2xl ${showQueueOnMobile ? 'hidden md:flex' : ''} ${palette ? '' : 'now-cover-panel-empty'} md:transition-[flex-grow] md:duration-[var(--motion-duration-medium)] md:ease-[var(--motion-easing-surface)]`}
           style={panelStyle}
         >
           {/* Sempre montado: o próprio KawarpBackground decide entre imagem da
@@ -964,7 +964,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
               da tela; agora a proporção sobrevive a qualquer viewport. */}
           <div
             ref={queueColRef}
-            className={`w-full -ml-4 -mr-4 -mb-4 md:ml-0 md:-mr-6 ${wideCover ? 'md:w-0 md:grow-0 md:shrink-0 md:min-w-0' : queueMinimized ? 'md:w-[calc(20%_+_9.6px)]' : 'md:w-auto md:flex-[2]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none transition-[flex-grow,width] duration-[var(--motion-duration-medium)] ease-[var(--motion-easing-surface)] ${showQueueOnMobile ? '' : 'hidden md:flex'}`}
+            className={`w-full -ml-4 -mr-4 -mb-4 md:ml-0 md:-mr-6 ${wideCover ? 'md:w-0 md:grow-0 md:shrink-0 md:min-w-0' : queueMinimized ? 'md:w-[calc(20%_+_9.6px)]' : 'md:w-auto md:flex-[2]'} flex flex-col min-h-[calc(100vh-12rem)] md:min-h-0 relative max-h-[calc(100vh-12rem)] md:max-h-none md:transition-[flex-grow,width] md:duration-[var(--motion-duration-medium)] md:ease-[var(--motion-easing-surface)] ${showQueueOnMobile ? '' : 'hidden md:flex'}`}
             style={{
               backgroundColor: 'var(--bg-elevated)',
               /* Largura vinda do arraste da divisória: em px e com o

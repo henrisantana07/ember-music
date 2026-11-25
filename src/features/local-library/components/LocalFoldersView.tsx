@@ -68,7 +68,7 @@ export function LocalFoldersView({ filter = 'all' }: LocalFoldersViewProps) {
             </p>
           </div>
 
-          <div className={`flex items-center gap-2 opacity-0 transition-opacity ${hoveredFolder === folder.id ? 'opacity-100' : ''}`}>
+          <div className={`hover-reveal flex items-center gap-2 opacity-0 transition-opacity ${hoveredFolder === folder.id ? 'opacity-100' : ''}`}>
             <button
               onClick={(e) => { e.stopPropagation(); playFolder(folder.id) }}
               disabled={folder.needsReconnect}

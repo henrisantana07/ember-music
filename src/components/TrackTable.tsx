@@ -256,7 +256,9 @@ export function TrackTable({
 
             return (
               <motion.tr
-                key={`${track.id}-${index}`}
+                /* O índice mudava ao ordenar e remontava todas as linhas,
+                   reiniciando o stagger e derrubando o foco do teclado. */
+                key={track.id}
                 variants={rowVariants}
                 custom={index}
                 initial="hidden"

@@ -29,6 +29,7 @@ export function Player() {
   const [toast, setToast] = useState<string | null>(null)
   const [sleepRemaining, setSleepRemaining] = useState<string | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sleepIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const retryingId = useRef<string | null>(null)
   const supabase = createClient()
@@ -248,8 +249,15 @@ export function Player() {
   const handlePrev = useTrackPrev()
 
   const showToast = useCallback((msg: string) => {
+    /* Um aviso novo substitui o anterior; sem isso o timer antigo apagava
+       o novo antes dos 2s e também disparava após o unmount. */
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     setToast(msg)
-    setTimeout(() => setToast(null), 2000)
+    toastTimerRef.current = setTimeout(() => setToast(null), 2000)
+  }, [])
+
+  useEffect(() => () => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
   }, [])
 
   useEffect(() => {
@@ -322,15 +330,18 @@ export function Player() {
     <>
       <audio ref={audioRef} />
 
-      {toast && (
-        <motion.div className="fixed left-1/2 z-50 -translate-x-1/2 px-4 py-2 text-sm shadow-lg"
-          style={{ bottom: 'var(--toast-bottom)', backgroundColor: 'var(--success)', color: 'var(--text-on-accent)' }}
-          variants={fadeVariants}
-          initial="hidden"
-          animate="visible">
-          {toast}
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {toast && (
+          <motion.div className="fixed left-1/2 z-50 -translate-x-1/2 px-4 py-2 text-sm shadow-lg"
+            style={{ bottom: 'var(--toast-bottom)', backgroundColor: 'var(--success)', color: 'var(--text-on-accent)' }}
+            variants={fadeVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit">
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {sleepRemaining && (
         <div className="fixed right-4 z-50 flex items-center gap-2 rounded-xl px-4 py-2 text-body-medium shadow-elevation-3"

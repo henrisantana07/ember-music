@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { motion } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 import { fadeVariants } from '@/lib/motion'
 
 export function PwaRegister() {
@@ -55,28 +55,31 @@ export function PwaRegister() {
     setDeferredPrompt(null)
   }
 
-  if (!showInstall) return null
-
   return (
-    <motion.div className="fixed left-4 right-4 z-[80] rounded-xl border border-outline-variant p-4 shadow-xl md:left-auto md:right-4 md:w-80"
-      style={{ bottom: 'var(--toast-bottom)', backgroundColor: 'var(--bg-elevated)' }}
-      variants={fadeVariants}
-      initial="hidden"
-      animate="visible">
-      <p className="text-sm font-semibold mb-1">Instale o Ember Music</p>
-      <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
-        Adicione à tela inicial para uma experiência completa.
-      </p>
-      <div className="flex gap-2">
-        <button onClick={handleInstall}
-          className="btn-primary text-xs flex-1 justify-center py-2">
-          Instalar
-        </button>
-        <button onClick={() => setShowInstall(false)}
-          className="btn-secondary text-xs flex-1 justify-center py-2">
-          Agora não
-        </button>
-      </div>
-    </motion.div>
+    <AnimatePresence>
+      {showInstall && (
+        <motion.div className="fixed left-4 right-4 z-[80] rounded-xl border border-outline-variant p-4 shadow-xl md:left-auto md:right-4 md:w-80"
+          style={{ bottom: 'var(--toast-bottom)', backgroundColor: 'var(--bg-elevated)' }}
+          variants={fadeVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit">
+          <p className="text-sm font-semibold mb-1">Instale o Ember Music</p>
+          <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
+            Adicione à tela inicial para uma experiência completa.
+          </p>
+          <div className="flex gap-2">
+            <button onClick={handleInstall}
+              className="btn-primary text-xs flex-1 justify-center py-2">
+              Instalar
+            </button>
+            <button onClick={() => setShowInstall(false)}
+              className="btn-secondary text-xs flex-1 justify-center py-2">
+              Agora não
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }

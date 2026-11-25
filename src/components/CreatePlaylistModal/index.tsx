@@ -29,6 +29,7 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
   const router = useRouter()
   const cropperRef = useRef<HTMLImageElement>(null)
   const cropperInstance = useRef<Cropper | null>(null)
+  const cropperTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -45,7 +46,10 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
     if (!open) return
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      if (cropperTimerRef.current) clearTimeout(cropperTimerRef.current)
+    }
   }, [open, onClose])
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -58,7 +62,8 @@ export function CreatePlaylistModal({ open, onClose }: CreatePlaylistModalProps)
     reader.onload = () => {
       setCropImage(reader.result as string)
       setCoverFile(null)
-      setTimeout(() => {
+      if (cropperTimerRef.current) clearTimeout(cropperTimerRef.current)
+      cropperTimerRef.current = setTimeout(() => {
         if (cropperRef.current) {
           if (cropperInstance.current) cropperInstance.current.destroy()
           cropperInstance.current = new Cropper(cropperRef.current, {

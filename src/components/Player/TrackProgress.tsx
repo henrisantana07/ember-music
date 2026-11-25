@@ -111,15 +111,20 @@ export function TrackProgress({ className = '', compact = false }: { className?:
         onPointerCancel={handlePointerCancel}
         onKeyDown={handleKeyDown}
         className={`group relative flex h-4 flex-1 touch-none items-center ${isDragging ? 'cursor-grabbing' : 'cursor-pointer'}`}>
-        {/* Trilha de 12px: alvo de clique estável; crescer a faixa não desloca nada. */}
-        <div className={`h-1 w-full rounded-full transition-[height] duration-[var(--motion-duration-fast)] ease-[var(--motion-easing-standard)] ${isDragging ? 'h-2' : 'group-hover:h-2 group-focus-visible:h-2'}`}
+        {/* Trilha de altura fixa: o engrosse no hover é `scaleY`, não `height`.
+            O preenchimento usa `scaleX` — nenhuma escrita de largura por tick. */}
+        <div className={`h-1 w-full origin-center rounded-full transition-transform duration-[var(--motion-duration-fast)] ease-[var(--motion-easing-standard)] ${isDragging ? 'scale-y-200' : 'group-hover:scale-y-200 group-focus-visible:scale-y-200'}`}
           style={{ backgroundColor: 'var(--text-disabled)' }}>
-          <div className="h-full rounded-full"
-            style={{ width: `${progressPercent}%`, background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }} />
+          <div className="h-full w-full origin-left rounded-full"
+            style={{ transform: `scaleX(${progressPercent / 100})`, background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }} />
         </div>
-        <div aria-hidden="true"
-          className={`pointer-events-none absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full transition-[opacity,translate,scale] duration-[var(--motion-duration-fast)] ease-[var(--motion-easing-standard)] ${isDragging ? 'scale-100 opacity-100' : 'scale-50 opacity-0 group-hover:scale-100 group-hover:opacity-100 group-focus-visible:scale-100 group-focus-visible:opacity-100'}`}
-          style={{ left: `calc(${progressPercent}% - 6px)`, backgroundColor: 'var(--accent-from)' }} />
+        {/* Wrapper da largura da trilha: `translateX(%)` move o thumb pela
+            porcentagem correta sem escrever `left` a cada frame. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 transition-transform duration-[var(--motion-duration-fast)] ease-[var(--motion-easing-standard)]"
+          style={{ transform: `translateX(${progressPercent}%)` }}>
+          <div className={`absolute left-0 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full transition-[opacity,scale] duration-[var(--motion-duration-fast)] ease-[var(--motion-easing-standard)] ${isDragging ? 'scale-100 opacity-100' : 'scale-50 opacity-0 group-hover:scale-100 group-hover:opacity-100 group-focus-visible:scale-100 group-focus-visible:opacity-100'}`}
+            style={{ backgroundColor: 'var(--accent-from)' }} />
+        </div>
       </div>
       {!compact && <span className="w-8 text-left">{formatDuration(Math.floor(currentDuration))}</span>}
     </div>

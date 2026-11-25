@@ -656,9 +656,11 @@ useEffect(() => {
       {/* Drawer mobile existente: biblioteca integra-se à navegação móvel atual (§7). */}
       <AnimatePresence>
         {drawerOpen && (
+          /* Sem blur no scrim que faz fade: o `backdrop-filter` era
+             recalculado a cada frame dos 160ms de entrada/saída. */
           <motion.div
             key="drawer-scrim"
-            className="fixed inset-0 z-[80] bg-scrim backdrop-blur-sm md:hidden"
+            className="fixed inset-0 z-[80] bg-scrim md:hidden"
             variants={scrimVariants}
             initial="hidden"
             animate="visible"

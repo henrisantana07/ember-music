@@ -5,7 +5,7 @@ import type { ReactNode, RefObject } from 'react'
 import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import { usePlayerStore } from '@/lib/store'
-import { motion } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 import { popoverVariants } from '@/lib/motion'
 import {
   clearSearchHistory,
@@ -185,9 +185,11 @@ export function SearchSuggestions({ query, onSelect, onClose, onSearch, inputRef
 
   const hasSuggestions = tracks.length > 0 || albums.length > 0 || artists.length > 0
   const showHistory = visible && cleanQuery.length < 2 && history.length > 0
-  if (!visible || (!showHistory && cleanQuery.length < 2) || (!loading && cleanQuery.length >= 2 && !hasSuggestions)) return null
+  const canShow = !((!showHistory && cleanQuery.length < 2) || (!loading && cleanQuery.length >= 2 && !hasSuggestions))
 
   return (
+    <AnimatePresence>
+      {visible && canShow && (
     <motion.div
       ref={panelRef}
       className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-xl overflow-hidden z-50 border border-outline-variant"
@@ -195,6 +197,7 @@ export function SearchSuggestions({ query, onSelect, onClose, onSearch, inputRef
       variants={popoverVariants}
       initial="hidden"
       animate="visible"
+      exit="exit"
     >
       {showHistory && (
         <>
@@ -272,6 +275,8 @@ export function SearchSuggestions({ query, onSelect, onClose, onSearch, inputRef
         </>
       )}
     </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 

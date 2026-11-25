@@ -24,6 +24,7 @@ export function Topbar() {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const libraryMenuRef = useRef<HTMLDivElement>(null)
+  const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { user } = useUser()
   const avatarUrl = useAvatar(user?.id)
@@ -64,6 +65,10 @@ export function Topbar() {
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  useEffect(() => () => {
+    if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
   }, [])
 
   async function handleLogout() {
@@ -173,8 +178,15 @@ export function Topbar() {
               inputMode="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+              onFocus={() => {
+                /* Refocar em menos de 200ms (clicar numa sugestão) não deve
+                   ser fechado pelo timer do blur anterior. */
+                if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
+                setSearchFocused(true)
+              }}
+              onBlur={() => {
+                blurTimerRef.current = setTimeout(() => setSearchFocused(false), 200)
+              }}
               placeholder="O que você quer ouvir?"
               aria-label="Buscar músicas, álbuns ou artistas"
               className="block w-full h-10 pl-10 py-0 leading-none bg-surface-container-highest border-none rounded-full text-sm appearance-none focus:outline-none focus:ring-2 transition-all [&::-webkit-search-cancel-button]:hidden"

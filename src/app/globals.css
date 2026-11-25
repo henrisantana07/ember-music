@@ -385,7 +385,8 @@ body {
   :not(.animate-spin),
   :not(.animate-spin)::before,
   :not(.animate-spin)::after {
-    animation-duration: -1.01ms !important;
+    /* Valor negativo é inválido e era descartado: animações continuavam. */
+    animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
 
@@ -638,10 +639,15 @@ body {
    Com a transição, ela desliza até a nova posição. O que o Motion anima (o
    `y` da entrada e da saída) continua sendo transform; aqui o que se move é
    a posição da caixa, e por isso a transição vive em `top`/`left`. */
-.expanded-player {
-  transition:
-    top var(--motion-duration-long) var(--motion-easing-surface),
-    left var(--motion-duration-long) var(--motion-easing-surface);
+/* Só desktop e só sem preferência de redução: animar top/left reflui a hero
+   inteira (canvas WebGL + fila) a cada frame. No mobile as classes de
+   posição caem, então a transição não teria efeito algum. */
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .expanded-player {
+    transition:
+      top var(--motion-duration-long) var(--motion-easing-surface),
+      left var(--motion-duration-long) var(--motion-easing-surface);
+  }
 }
 
 /* ── Cores da capa na hero ───────────────────────────────────────────────────

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback, useSyncExternalStore } from 'react'
 import dynamic from 'next/dynamic'
 import type { KawarpRef } from '@kawarp/react'
+import { useReducedMotion } from 'motion/react'
 import { logKawarp } from '@/lib/debug/kawarp'
 
 // Carregamento dinâmico do Kawarp apenas no cliente (evita erros no SSR do Next.js).
@@ -131,6 +132,7 @@ export function KawarpBackground({
 }: KawarpBackgroundProps) {
   const [failedSource, setFailedSource] = useState<string | null>(null)
   const [kawarpReady, setKawarpReady] = useState(false)
+  const reducedMotion = useReducedMotion()
   const mounted = useSyncExternalStore(
     subscribeToClient,
     getClientSnapshot,
@@ -197,6 +199,23 @@ export function KawarpBackground({
     logKawarp(instance ? 'canvas montado' : 'canvas desmontado')
     setDebugStatus(instance ? 'canvas montado' : 'canvas desmontado')
   }, [setDebugStatus])
+
+  /* O loop WebGL custa GPU/bateria. Ele não deve rodar com reduced motion
+     nem com a aba em segundo plano, e precisa parar ao desmontar. */
+  useEffect(() => {
+    const onVisibility = () => {
+      const handle = kawarpRef.current
+      if (!handle) return
+      if (reducedMotion || document.hidden) handle.stop()
+      else handle.start()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    onVisibility()
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      kawarpRef.current?.stop()
+    }
+  }, [reducedMotion])
 
   // Roteia a URL pelo proxy de imagem interno para contornar qualquer bloqueio de CORS de WebGL
   const proxiedSrc = useMemo(() => {
@@ -273,6 +292,11 @@ export function KawarpBackground({
       }
     }
 
+    function run(handle: KawarpRef) {
+      if (reducedMotion || document.hidden) handle.stop()
+      else handle.start()
+    }
+
     function apply() {
       if (cancelled) return
 
@@ -309,7 +333,7 @@ export function KawarpBackground({
         setDebugStatus('gradiente da paleta (sem capa)')
         try {
           handle.loadGradient(source.colors, source.angle)
-          handle.start()
+          run(handle)
           logKawarp('loop de animação do Kawarp ativo')
         } catch {
           logKawarp('falha ao aplicar o gradiente', { colors: source.colors })
@@ -332,7 +356,7 @@ export function KawarpBackground({
           // Se a faixa trocou durante o carregamento, um efeito mais novo já
           // pediu outra imagem — não mexe no que está na tela.
           if (latestSource.current !== source) return
-          handle.start()
+          run(handle)
           logKawarp('textura da capa ativa no Kawarp')
           setDebugStatus('textura da capa ATIVA ✓')
         },
@@ -353,7 +377,7 @@ export function KawarpBackground({
             logKawarp('usando gradiente da paleta como fallback', { colors: fallback.colors })
             try {
               handle.loadGradient(fallback.colors, fallback.angle)
-              handle.start()
+              run(handle)
               setDebugStatus('gradiente da paleta ATIVO (fallback)')
             } catch {
               if (aliveRef.current) setFailedSource(`gradient:${fallback.colors.join('|')}`)
@@ -374,7 +398,7 @@ export function KawarpBackground({
         else clearTimeout(frame)
       }
     }
-  }, [kawarpReady, sourceKey, effectiveGradientColors, gradientAngle, proxiedSrc, setDebugStatus])
+  }, [kawarpReady, sourceKey, effectiveGradientColors, gradientAngle, proxiedSrc, reducedMotion, setDebugStatus])
 
   if (!mounted || hasError) return null
   // Sempre há uma fonte (a imagem, a paleta ou o gradiente padrão). Só some
