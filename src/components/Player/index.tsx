@@ -375,127 +375,136 @@ export function Player() {
           assume o lugar da nav (escondida na Sidebar) e respeita a safe area.
           `miniPlayer` reduz o rodapé a capa + metadados + play/pause. */}
       <footer
-        className="player-footer fixed left-0 right-0 z-[70] flex flex-col justify-center border-t border-outline-variant px-3 md:hidden"
+        className="player-footer fixed left-0 right-0 z-[70] flex flex-col justify-center rounded-t-[var(--shape-large)] border-t border-outline-variant px-3 md:hidden"
         style={{
           bottom: isExpandedOpen ? 'var(--safe-bottom)' : 'var(--chrome-bottom)',
           height: isExpandedOpen || miniPlayer ? 'var(--player-mini-h)' : 'var(--player-mobile-h)',
         }}
       >
-        {/* Região 1 — capa à esquerda, metadados e ação de biblioteca no topo. */}
-        <div className="flex w-full min-h-0 items-center gap-2.5 pt-1.5">
-          <button onClick={toggleExpandedFullscreen} className="flex-shrink-0" aria-label={isExpandedOpen && immersive ? 'Sair da tela cheia' : 'Abrir player em tela cheia'}>
+        {/* Estrutura extraída da referência: capa à esquerda; à direita, um
+            stack com metadados/ação, progresso e controles. */}
+        <div className="flex w-full min-w-0 flex-row items-center gap-3 py-1.5">
+          <button onClick={toggleExpandedFullscreen} className="h-12 w-12 flex-shrink-0" aria-label={isExpandedOpen && immersive ? 'Sair da tela cheia' : 'Abrir player em tela cheia'}>
             {failedCoverId !== currentTrack.id && currentTrack.image ? (
-              <img src={currentTrack.image} alt="" className="h-10 w-10 rounded-md object-cover"
+              <img src={currentTrack.image} alt="" className="h-12 w-12 rounded-md object-cover"
                 onError={() => setFailedCoverId(currentTrack.id)} />
             ) : (
-              <span className="flex h-10 w-10 items-center justify-center rounded-md" style={{ backgroundColor: 'var(--surface-container-highest)' }}>
-                <Music className="h-4 w-4" style={{ color: 'var(--text-disabled)' }} aria-hidden="true" />
+              <span className="flex h-12 w-12 items-center justify-center rounded-md" style={{ backgroundColor: 'var(--surface-container-highest)' }}>
+                <Music className="h-5 w-5" style={{ color: 'var(--text-disabled)' }} aria-hidden="true" />
               </span>
             )}
           </button>
-          <button
-            onClick={() => { if (!isExpandedOpen) openExpanded() }}
-            className="min-w-0 flex-1 text-left state-layer rounded-lg"
-            aria-label="Abrir player expandido"
-          >
-            <p className="truncate text-body-medium font-semibold">{currentTrack.name}</p>
-            <p className="truncate text-body-medium" style={{ color: 'var(--text-secondary)' }}>{currentTrack.artist_name}</p>
-          </button>
-          {!miniPlayer && !isExpandedOpen && (
-            <button
-              onClick={async (e) => {
-                e.stopPropagation()
-                if (!user) { router.push('/login'); return }
-                await toggleFavorite(currentTrack)
-              }}
-              className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer"
-              style={{ color: isFavorite ? 'var(--accent-from)' : 'var(--text-secondary)' }}
-              aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-              aria-pressed={isFavorite}
-              title={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-            >
-              <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
-            </button>
-          )}
-          {miniPlayer && !isExpandedOpen && (
-            <button onClick={togglePlay}
-              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer"
-              style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
-              aria-label={isPlaying ? 'Pausar' : 'Tocar'}>
-              {isPlaying ? (
-                <Pause className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
-              ) : (
-                <Play className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
-              )}
-            </button>
-          )}
-          {!isExpandedOpen && !miniPlayer && (
-            <button onClick={toggleMiniPlayer} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} aria-label="Reduzir player" title="Reduzir player">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-          )}
-          {miniPlayer && !isExpandedOpen && (
-            <button onClick={toggleMiniPlayer} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} aria-label="Expandir player compacto">
-              <ChevronUp className="h-5 w-5" />
-            </button>
-          )}
-          <button onClick={toggleExpanded} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} title={isExpandedOpen ? 'Recolher player' : 'Abrir player'} aria-label={isExpandedOpen ? 'Recolher player expandido' : 'Abrir player expandido'}>
-            {isExpandedOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
-          </button>
-        </div>
 
-        {/* Região 2 — progresso fino entre metadados e controles. */}
-        {!isExpandedOpen && !miniPlayer && <TrackProgress compact className="py-1" />}
-
-        {/* Região 3 — controles inferiores distribuídos: shuffle, anterior,
-            play/pause em destaque, próxima, repeat e fila. */}
-        {!isExpandedOpen && !miniPlayer && (
-          <div className="flex w-full items-center justify-around gap-0.5 pb-1">
-            <button onClick={toggleShuffle}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full state-layer"
-              style={{ color: shuffle ? 'var(--accent-from)' : 'var(--text-secondary)' }}
-              title={shuffle ? 'Desativar shuffle' : 'Ativar shuffle'}
-              aria-label={shuffle ? 'Desativar shuffle' : 'Ativar shuffle'}
-              aria-pressed={shuffle}>
-              <Shuffle className="h-5 w-5" />
-            </button>
-            <button onClick={handlePrev} className="inline-flex h-11 w-11 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} title="Anterior" aria-label="Faixa anterior">
-              <SkipBack className="h-5 w-5" fill="currentColor" />
-            </button>
-            <button onClick={togglePlay}
-              className="flex h-12 w-12 items-center justify-center rounded-full state-layer"
-              style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
-              aria-label={isPlaying ? 'Pausar' : 'Tocar'}>
-              {isPlaying ? (
-                <Pause className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
-              ) : (
-                <Play className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            {/* Metadados + ação de biblioteca no canto superior direito. */}
+            <div className="flex min-w-0 items-center gap-2">
+              <button
+                onClick={() => { if (!isExpandedOpen) openExpanded() }}
+                className="min-w-0 flex-1 text-left state-layer rounded-lg"
+                aria-label="Abrir player expandido"
+              >
+                <p className="truncate text-body-medium font-semibold">{currentTrack.name}</p>
+                <p className="truncate text-body-medium" style={{ color: 'var(--text-secondary)' }}>{currentTrack.artist_name}</p>
+              </button>
+              {!miniPlayer && !isExpandedOpen && (
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation()
+                    if (!user) { router.push('/login'); return }
+                    await toggleFavorite(currentTrack)
+                  }}
+                  className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer"
+                  style={{ color: isFavorite ? 'var(--accent-from)' : 'var(--text-secondary)' }}
+                  aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                  aria-pressed={isFavorite}
+                  title={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                >
+                  <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
+                </button>
               )}
-            </button>
-            <button onClick={next} className="inline-flex h-11 w-11 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} title="Próxima" aria-label="Próxima faixa">
-              <SkipForward className="h-5 w-5" fill="currentColor" />
-            </button>
-            <button onClick={() => {
-              const modes: RepeatMode[] = ['none', 'all', 'one']
-              setRepeat(modes[(modes.indexOf(repeat) + 1) % modes.length])
-            }}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full state-layer"
-              style={{ color: repeat !== 'none' ? 'var(--accent-from)' : 'var(--text-secondary)' }}
-              title={repeatLabel[repeat]}
-              aria-label={repeatLabel[repeat]}>
-              {repeat === 'one' ? <Repeat1 className="h-5 w-5" /> : <Repeat className="h-5 w-5" />}
-            </button>
-            <button onClick={() => { setQueueMinimized(false); if (!isExpandedOpen) openExpanded() }}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full state-layer"
-              style={{ color: 'var(--text-secondary)' }}
-              title="Fila"
-              aria-label="Abrir fila">
-              <ListMusic className="h-5 w-5" />
-            </button>
+              {miniPlayer && !isExpandedOpen && (
+                <button onClick={togglePlay}
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer"
+                  style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
+                  aria-label={isPlaying ? 'Pausar' : 'Tocar'}>
+                  {isPlaying ? (
+                    <Pause className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+                  ) : (
+                    <Play className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+                  )}
+                </button>
+              )}
+              {!isExpandedOpen && !miniPlayer && (
+                <button onClick={toggleMiniPlayer} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} aria-label="Reduzir player" title="Reduzir player">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              )}
+              {miniPlayer && !isExpandedOpen && (
+                <button onClick={toggleMiniPlayer} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} aria-label="Expandir player compacto">
+                  <ChevronUp className="h-5 w-5" />
+                </button>
+              )}
+              <button onClick={toggleExpanded} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} title={isExpandedOpen ? 'Recolher player' : 'Abrir player'} aria-label={isExpandedOpen ? 'Recolher player expandido' : 'Abrir player expandido'}>
+                {isExpandedOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
+              </button>
+            </div>
+
+            {/* Progresso apenas com duração válida. */}
+            {!isExpandedOpen && !miniPlayer && duration > 0 && (
+              <TrackProgress compact className="py-0.5" />
+            )}
+
+            {/* Controles inferiores: shuffle, anterior, play/pause, próxima e
+                fila. Repeat é secundário e só aparece quando há largura. */}
+            {!isExpandedOpen && !miniPlayer && (
+              <div className="flex w-full items-center justify-between gap-0.5">
+                <button onClick={toggleShuffle}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full state-layer"
+                  style={{ color: shuffle ? 'var(--accent-from)' : 'var(--text-secondary)' }}
+                  title={shuffle ? 'Desativar shuffle' : 'Ativar shuffle'}
+                  aria-label={shuffle ? 'Desativar shuffle' : 'Ativar shuffle'}
+                  aria-pressed={shuffle}>
+                  <Shuffle className="h-5 w-5" />
+                </button>
+                <button onClick={handlePrev} className="inline-flex h-11 w-11 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} title="Anterior" aria-label="Faixa anterior">
+                  <SkipBack className="h-5 w-5" fill="currentColor" />
+                </button>
+                <button onClick={togglePlay}
+                  className="flex h-12 w-12 items-center justify-center rounded-full state-layer"
+                  style={{ background: 'linear-gradient(135deg, var(--accent-from), var(--accent-to))' }}
+                  aria-label={isPlaying ? 'Pausar' : 'Tocar'}>
+                  {isPlaying ? (
+                    <Pause className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+                  ) : (
+                    <Play className="h-5 w-5" style={{ color: 'var(--bg-base)' }} fill="currentColor" />
+                  )}
+                </button>
+                <button onClick={next} className="inline-flex h-11 w-11 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} title="Próxima" aria-label="Próxima faixa">
+                  <SkipForward className="h-5 w-5" fill="currentColor" />
+                </button>
+                <button onClick={() => {
+                  const modes: RepeatMode[] = ['none', 'all', 'one']
+                  setRepeat(modes[(modes.indexOf(repeat) + 1) % modes.length])
+                }}
+                  className="hidden min-[400px]:inline-flex h-11 w-11 items-center justify-center rounded-full state-layer"
+                  style={{ color: repeat !== 'none' ? 'var(--accent-from)' : 'var(--text-secondary)' }}
+                  title={repeatLabel[repeat]}
+                  aria-label={repeatLabel[repeat]}>
+                  {repeat === 'one' ? <Repeat1 className="h-5 w-5" /> : <Repeat className="h-5 w-5" />}
+                </button>
+                <button onClick={() => { setQueueMinimized(false); if (!isExpandedOpen) openExpanded() }}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full state-layer"
+                  style={{ color: 'var(--text-secondary)' }}
+                  title="Fila"
+                  aria-label="Abrir fila">
+                  <ListMusic className="h-5 w-5" />
+                </button>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </footer>
 
       {/* Rodapé completo: desktop. Os controles que antes eram `md:hidden`
