@@ -78,6 +78,30 @@ export function useYouTubePlayer(videoId: string | null): UseYouTubePlayerReturn
   const seekUntilRef = useRef(0)
   const createTokenRef = useRef(0)
 
+  /* Em mobile o YouTube pausa o iframe quando a aba perde foco e emite
+     PAUSED. A store continua "tocando", então nada voltava a chamar
+     playVideo() ao retornar — só um toggle de play/pause resolvia.
+     Ao voltar para a aba, retomamos se a store ainda pede reprodução. */
+  useEffect(() => {
+    const resumeIfPlaying = () => {
+      if (document.visibilityState !== 'visible') return
+      const store = usePlayerStore.getState()
+      if (!store.isPlaying || store.currentTrack?.youtubeVideoId !== videoId) return
+      const player = playerRef.current
+      if (!player) return
+      try {
+        const paused = window.YT?.PlayerState?.PAUSED ?? 2
+        if (player.getPlayerState() === paused) player.playVideo()
+      } catch { /* player ainda inicializando */ }
+    }
+    document.addEventListener('visibilitychange', resumeIfPlaying)
+    window.addEventListener('pageshow', resumeIfPlaying)
+    return () => {
+      document.removeEventListener('visibilitychange', resumeIfPlaying)
+      window.removeEventListener('pageshow', resumeIfPlaying)
+    }
+  }, [videoId])
+
   const loadAPI = useCallback(() => {
     if (window.YT && window.YT.Player) return Promise.resolve()
     if (document.getElementById(YT_API_LOADED)) {

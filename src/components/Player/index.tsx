@@ -249,6 +249,24 @@ export function Player() {
     }
   }, [isPlaying, isYouTubeTrack])
 
+  /* Alguns browsers mobile suspendem o <audio> em segundo plano. Ao voltar,
+     se a store ainda pede reprodução, retomamos sem exigir novo clique. */
+  useEffect(() => {
+    const resumeIfPlaying = () => {
+      if (document.visibilityState !== 'visible') return
+      const store = usePlayerStore.getState()
+      if (!store.isPlaying || !store.currentTrack || store.currentTrack.source === 'youtube') return
+      const audio = audioRef.current
+      if (audio && audio.paused) audio.play().catch(() => {})
+    }
+    document.addEventListener('visibilitychange', resumeIfPlaying)
+    window.addEventListener('pageshow', resumeIfPlaying)
+    return () => {
+      document.removeEventListener('visibilitychange', resumeIfPlaying)
+      window.removeEventListener('pageshow', resumeIfPlaying)
+    }
+  }, [])
+
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume
   }, [volume])
