@@ -1,0 +1,25 @@
+[     575ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[     678ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[     887ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[     979ms] [LOG] [Fast Refresh] done in 193ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[    1254ms] [WARNING] [lottie-react] this animation starts by itself and moves for more than five seconds, which needs a way to pause it whenever anything else shares the page (WCAG 2.2.2, level A). <LottieControls> is one; any pause affordance satisfies it. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[   54319ms] [WARNING] Failed to execute 'postMessage' on 'DOMWindow': The target origin provided ('https://www.youtube.com') does not match the recipient window's origin ('http://localhost:3000'). @ https://www.youtube.com/s/player/b485e332/www-widgetapi.vflset/www-widgetapi.js:164
+[   54523ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[   54586ms] [LOG] [Fast Refresh] done in 165ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[   56194ms] [WARNING] The powerPreference option is currently ignored when calling requestAdapter() on Windows. See https://crbug.com/369219127 @ :1
+[   69795ms] [INFO] [ember/kawarp] paleta extraída (cliente) {primary: #010103, secondary: #0f0f0f, tertiary: #1c1c1c} @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[   69943ms] [INFO] [ember/kawarp] canvas montado @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[   70412ms] [INFO] [ember/kawarp] canvas desmontado @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[   70412ms] [INFO] [ember/kawarp] canvas montado @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[   70427ms] [INFO] [ember/kawarp] capa enviada ao Kawarp {src: /api/image-proxy?src=https%3A%2F%2Fi.ytimg.com%2Fvi%2F1lOvAvBlzSM%2Fmaxresdefault.jpg} @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[   70494ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[   70496ms] [LOG] [Fast Refresh] done in 813ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[   70668ms] [INFO] [ember/kawarp] textura da capa ativa no Kawarp @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[   70680ms] [INFO] [ember/kawarp] paleta extraída (servidor) {primary: #010104, secondary: #393538, tertiary: #393538} @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[   70715ms] [INFO] [ember/kawarp] capa enviada ao Kawarp {src: /api/image-proxy?src=https%3A%2F%2Fi.ytimg.com%2Fvi%2F1lOvAvBlzSM%2Fmaxresdefault.jpg} @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[   70769ms] [INFO] [ember/kawarp] textura da capa ativa no Kawarp @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[   71749ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[   71758ms] [LOG] [Fast Refresh] done in 132ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[   84414ms] [INFO] [ember/kawarp] canvas desmontado @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[   84746ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478
+[   84763ms] [LOG] [Fast Refresh] done in 126ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2478

@@ -1,0 +1,2 @@
+[    1921ms] [ERROR] Failed to load resource: the server responded with a status of 503 () @ https://ember-music-1bfkycbgx-henrisantana07-7527s-projects.vercel.app/api/youtube?endpoint=charts/artists&limit=12:1
+[    2021ms] [INFO] Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner. @ https://ember-music-1bfkycbgx-henrisantana07-7527s-projects.vercel.app/:1

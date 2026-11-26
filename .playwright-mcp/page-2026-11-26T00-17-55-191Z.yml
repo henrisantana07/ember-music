@@ -1,0 +1,237 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - link "Ember Music — Início" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]: Ember Music
+      - generic [ref=e6]:
+        - button "Buscar" [ref=e7] [cursor=pointer]
+        - button "Entrar" [ref=e11] [cursor=pointer]
+    - generic [ref=e12]:
+      - navigation "Navegação principal" [ref=e13]:
+        - button "Início" [ref=e14] [cursor=pointer]
+        - button "Explorar" [ref=e18] [cursor=pointer]
+        - button "Abrir biblioteca" [ref=e22] [cursor=pointer]:
+          - generic [ref=e25]: Biblioteca
+      - generic [ref=e26]:
+        - generic [ref=e28]:
+          - generic [ref=e32]:
+            - heading "Bem-vindo ao Ember Music" [level=1] [ref=e33]
+            - paragraph [ref=e34]: Descubra música com Ember Music!
+          - generic [ref=e35]:
+            - heading "Em alta" [level=2] [ref=e36]
+            - generic [ref=e37]:
+              - generic [ref=e38]:
+                - generic [ref=e40] [cursor=pointer]:
+                  - button "Pausar Anuel AA | SE TOCO EL T*TITO CON MI GL*CK (Video Oficial)" [pressed] [ref=e343]
+                  - heading "SE TOCO EL T*TITO CON MI GL*CK (Video Oficial)" [level=3] [ref=e46]
+                  - paragraph [ref=e47]: Anuel AA
+                  - generic [ref=e48]: 4:25
+                - generic [ref=e51] [cursor=pointer]:
+                  - button "Tocar Taylor Swift - I Knew It, I Knew You x Our Song (Live From The 60th CMA Awards)" [ref=e54]
+                  - heading "I Knew It, I Knew You x Our Song (Live From The 60th CMA Awards)" [level=3] [ref=e57]
+                  - paragraph [ref=e58]: Taylor Swift
+                  - generic [ref=e59]: 3:09
+                - generic [ref=e62] [cursor=pointer]:
+                  - button "Tocar Quando Rondo - HEAD GONE [Official Video]" [ref=e65]
+                  - heading "HEAD GONE" [level=3] [ref=e68]
+                  - paragraph [ref=e69]: Quando Rondo
+                  - generic [ref=e70]: 2:53
+                - generic [ref=e73] [cursor=pointer]:
+                  - button "Tocar YFN Lucci - part III. [Official Music Video]" [ref=e76]
+                  - heading "part III." [level=3] [ref=e79]
+                  - paragraph [ref=e80]: YFN Lucci
+                  - generic [ref=e81]: 2:43
+                - generic [ref=e84] [cursor=pointer]:
+                  - 'button "Tocar Burn This Shit Down (from GTAVI: The Album)" [ref=e87]'
+                  - 'heading "Burn This Shit Down (from GTAVI: The Album)" [level=3] [ref=e90]'
+                  - paragraph [ref=e91]: Travis Scott
+                  - generic [ref=e92]: 4:20
+                - generic [ref=e95] [cursor=pointer]:
+                  - button "Tocar One Last Breath (Remastered 2026)" [ref=e98]
+                  - heading "One Last Breath (Remastered 2026)" [level=3] [ref=e101]
+                  - paragraph [ref=e102]: Creed
+                  - generic [ref=e103]: 3:59
+                - generic [ref=e106] [cursor=pointer]:
+                  - button "Tocar Foogiano - Gang Talk [Official Music Video]" [ref=e109]
+                  - heading "Gang Talk" [level=3] [ref=e112]
+                  - paragraph [ref=e113]: Foogiano
+                  - generic [ref=e114]: 3:15
+                - generic [ref=e117] [cursor=pointer]:
+                  - button "Tocar Hurricane Wisdom - BRABUS MUSIC (Official Music Video)" [ref=e120]
+                  - heading "BRABUS MUSIC" [level=3] [ref=e123]
+                  - paragraph [ref=e124]: Hurricane Wisdom
+                  - generic [ref=e125]: 2:08
+                - generic [ref=e128] [cursor=pointer]:
+                  - button "Tocar Plies - \"I Went\" (Official Music Video)" [ref=e131]
+                  - heading "Plies - \"I Went\"" [level=3] [ref=e134]
+                  - paragraph [ref=e135]: PliesWorld
+                  - generic [ref=e136]: 3:13
+                - generic [ref=e139] [cursor=pointer]:
+                  - button "Tocar Lil Baby - Aint Goin (Official Music Video)" [ref=e142]
+                  - heading "Lil Baby - Aint Goin" [level=3] [ref=e145]
+                  - paragraph [ref=e146]: Lil Baby Official
+                  - generic [ref=e147]: 2:41
+                - generic [ref=e150] [cursor=pointer]:
+                  - button "Tocar CG5 - I'm The Big Bad (Calling All Villains Song Animation)" [ref=e153]
+                  - heading "I'm The Big Bad (Calling All Villains Song Animation)" [level=3] [ref=e156]
+                  - paragraph [ref=e157]: CG5
+                  - generic [ref=e158]: 3:03
+                - generic [ref=e161] [cursor=pointer]:
+                  - button "Tocar Stray Kids 『SUIATSU』 Music Video" [ref=e164]
+                  - heading "Stray Kids 『SUIATSU』 Music Video" [level=3] [ref=e167]
+                  - paragraph [ref=e168]: Stray Kids Japan Official YouTube
+                  - generic [ref=e169]: 2:54
+              - button "Próximo" [ref=e171] [cursor=pointer]
+          - generic [ref=e180]:
+            - heading "Gêneros musicais" [level=2] [ref=e181]
+            - generic [ref=e182]:
+              - generic [ref=e183]:
+                - link [ref=e185] [cursor=pointer]:
+                  - /url: /buscar?q=Pop
+                  - paragraph [ref=e187]: Pop
+                - link [ref=e189] [cursor=pointer]:
+                  - /url: /buscar?q=Rock
+                  - paragraph [ref=e191]: Rock
+                - link [ref=e193] [cursor=pointer]:
+                  - /url: /buscar?q=Hip-Hop
+                  - paragraph [ref=e195]: Hip-Hop
+                - link [ref=e197] [cursor=pointer]:
+                  - /url: /buscar?q=Eletr%C3%B4nica
+                  - paragraph [ref=e199]: Eletrônica
+                - link [ref=e201] [cursor=pointer]:
+                  - /url: /buscar?q=Sertanejo
+                  - paragraph [ref=e203]: Sertanejo
+                - link [ref=e205] [cursor=pointer]:
+                  - /url: /buscar?q=Funk
+                  - paragraph [ref=e207]: Funk
+                - link [ref=e209] [cursor=pointer]:
+                  - /url: /buscar?q=MPB
+                  - paragraph [ref=e211]: MPB
+                - link [ref=e213] [cursor=pointer]:
+                  - /url: /buscar?q=Rap
+                  - paragraph [ref=e215]: Rap
+                - link [ref=e217] [cursor=pointer]:
+                  - /url: /buscar?q=Indie
+                  - paragraph [ref=e219]: Indie
+                - link [ref=e221] [cursor=pointer]:
+                  - /url: /buscar?q=Cl%C3%A1ssica
+                  - paragraph [ref=e223]: Clássica
+                - link [ref=e225] [cursor=pointer]:
+                  - /url: /buscar?q=Jazz
+                  - paragraph [ref=e227]: Jazz
+                - link [ref=e229] [cursor=pointer]:
+                  - /url: /buscar?q=Reggae
+                  - paragraph [ref=e231]: Reggae
+                - link [ref=e233] [cursor=pointer]:
+                  - /url: /buscar?q=Country
+                  - paragraph [ref=e235]: Country
+                - link [ref=e237] [cursor=pointer]:
+                  - /url: /buscar?q=Metal
+                  - paragraph [ref=e239]: Metal
+                - link [ref=e241] [cursor=pointer]:
+                  - /url: /buscar?q=Lo-fi
+                  - paragraph [ref=e243]: Lo-fi
+                - link [ref=e245] [cursor=pointer]:
+                  - /url: /buscar?q=Samba
+                  - paragraph [ref=e247]: Samba
+              - button "Próximo" [ref=e248] [cursor=pointer]
+          - generic [ref=e257]:
+            - heading "Artistas do momento" [level=2] [ref=e258]
+            - generic [ref=e259]:
+              - generic [ref=e260]:
+                - generic [ref=e261]:
+                  - link [ref=e262] [cursor=pointer]:
+                    - /url: /artists/UCcTVMTUwW6x1uSMzmnNGWDQ
+                    - img "All about Pop Music!" [ref=e263]
+                    - paragraph [ref=e264]: All about Pop Music!
+                  - button "Seguir" [ref=e265] [cursor=pointer]
+                - generic [ref=e266]:
+                  - link [ref=e267] [cursor=pointer]:
+                    - /url: /artists/UCTFFPzHv1VZiVww1siqJi9Q
+                    - img "Popular Music" [ref=e268]
+                    - paragraph [ref=e269]: Popular Music
+                  - button "Seguir" [ref=e270] [cursor=pointer]
+                - generic [ref=e271]:
+                  - link [ref=e272] [cursor=pointer]:
+                    - /url: /artists/UCgVFFeocq3hmfQo0u54v-5A
+                    - img "UNIVERSO POPULAR MUSICAL" [ref=e273]
+                    - paragraph [ref=e274]: UNIVERSO POPULAR MUSICAL
+                  - button "Seguir" [ref=e275] [cursor=pointer]
+                - generic [ref=e276]:
+                  - link [ref=e277] [cursor=pointer]:
+                    - /url: /artists/UCzCVZuTHXEfch2qiZBQwdew
+                    - img "Popular Songs" [ref=e278]
+                    - paragraph [ref=e279]: Popular Songs
+                  - button "Seguir" [ref=e280] [cursor=pointer]
+                - generic [ref=e281]:
+                  - link [ref=e282] [cursor=pointer]:
+                    - /url: /artists/UC2enGKhoKuSo5fIRxybMgdA
+                    - img "Popular Music" [ref=e283]
+                    - paragraph [ref=e284]: Popular Music
+                  - button "Seguir" [ref=e285] [cursor=pointer]
+                - generic [ref=e286]:
+                  - link [ref=e287] [cursor=pointer]:
+                    - /url: /artists/UCOHzW12tBdt_KWyTkLbbdag
+                    - img "POP Music PRO" [ref=e288]
+                    - paragraph [ref=e289]: POP Music PRO
+                  - button "Seguir" [ref=e290] [cursor=pointer]
+                - generic [ref=e291]:
+                  - link [ref=e292] [cursor=pointer]:
+                    - /url: /artists/UCDa3K1g2FhULif8mqwABUBw
+                    - img "D.G Top Music" [ref=e293]
+                    - paragraph [ref=e294]: D.G Top Music
+                  - button "Seguir" [ref=e295] [cursor=pointer]
+                - generic [ref=e296]:
+                  - link [ref=e297] [cursor=pointer]:
+                    - /url: /artists/UCYLRrp2-hzkC5Xwk-3tbSyw
+                    - img "Vitrine pop music" [ref=e298]
+                    - paragraph [ref=e299]: Vitrine pop music
+                  - button "Seguir" [ref=e300] [cursor=pointer]
+                - generic [ref=e301]:
+                  - link [ref=e302] [cursor=pointer]:
+                    - /url: /artists/UCB5Ffui515qxsUZNFIEbRRQ
+                    - img "Clean Pop Songs" [ref=e303]
+                    - paragraph [ref=e304]: Clean Pop Songs
+                  - button "Seguir" [ref=e305] [cursor=pointer]
+                - generic [ref=e306]:
+                  - link [ref=e307] [cursor=pointer]:
+                    - /url: /artists/UCWRd8D4M6HpwQmJ6WzTj-eg
+                    - img "Pop Music Workshop" [ref=e308]
+                    - paragraph [ref=e309]: Pop Music Workshop
+                  - button "Seguir" [ref=e310] [cursor=pointer]
+                - generic [ref=e311]:
+                  - link [ref=e312] [cursor=pointer]:
+                    - /url: /artists/UCFK3-4M7yGKRbU8Co80ks9Q
+                    - img "Acoustic Guitar Songs & Instrumental Pop Songs" [ref=e313]
+                    - paragraph [ref=e314]: Acoustic Guitar Songs & Instrumental Pop Songs
+                  - button "Seguir" [ref=e315] [cursor=pointer]
+                - generic [ref=e316]:
+                  - link [ref=e317] [cursor=pointer]:
+                    - /url: /artists/UChB0UDO5UDTsXHXhIBkeUvA
+                    - img "DSM Top Music" [ref=e318]
+                    - paragraph [ref=e319]: DSM Top Music
+                  - button "Seguir" [ref=e320] [cursor=pointer]
+              - button "Próximo" [ref=e321] [cursor=pointer]
+        - generic [ref=e331] [cursor=pointer]
+  - contentinfo [ref=e344]:
+    - generic [ref=e345]:
+      - button "Abrir player em tela cheia" [ref=e346] [cursor=pointer]
+      - generic [ref=e347]:
+        - generic [ref=e348]:
+          - button "Abrir player expandido" [active] [ref=e420] [cursor=pointer]:
+            - paragraph [ref=e350]: Anuel AA | SE TOCO EL T*TITO CON MI GL*CK (Video Oficial)
+            - paragraph [ref=e351]: Anuel AA
+          - button "Adicionar aos favoritos" [ref=e421] [cursor=pointer]
+        - slider "Progresso da faixa" [ref=e425] [cursor=pointer]
+        - generic [ref=e428]:
+          - button "Ativar shuffle" [ref=e429] [cursor=pointer]
+          - button "Faixa anterior" [ref=e436] [cursor=pointer]
+          - button "Pausar" [ref=e439] [cursor=pointer]
+          - button "Próxima faixa" [ref=e443] [cursor=pointer]
+  - iframe [ref=e373]:
+    - generic [ref=f1e1]:
+      - generic "Player de vídeo do YouTube" [ref=f1e3]
+      - button "Mostrar controles do player" [ref=f1e6] [cursor=pointer]
+  - button "Open Next.js Dev Tools" [ref=e338] [cursor=pointer]
+  - alert [ref=e342]

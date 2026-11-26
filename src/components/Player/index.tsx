@@ -19,7 +19,7 @@ import { useTrackSeek, useTrackPrev } from '@/hooks/use-player-transport'
 import { TrackProgress } from '@/components/Player/TrackProgress'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronDown, ChevronUp, Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause, Maximize, Minimize, Music, Heart, ListMusic } from 'lucide-react'
+import { Shuffle, SkipBack, SkipForward, Repeat, Repeat1, Play, Pause, Maximize, Minimize, Music, Heart } from 'lucide-react'
 
 export function Player() {
   /* Referência compartilhada: a hero e o rodapé fazem seek no MESMO `<audio>`. */
@@ -44,7 +44,7 @@ export function Player() {
     crossfadeDuration, sleepTimerMinutes, miniPlayer,
     pause, resume, next, prev, togglePlay,
     setVolume, setProgress, setDuration,
-    setRepeat, toggleShuffle, setSleepTimer, toggleMiniPlayer,
+    setRepeat, toggleShuffle, setSleepTimer,
     openExpanded, closeExpanded, isExpandedOpen, queueMinimized, setQueueMinimized, setQueueWidth,
     wideCover, setWideCover,
   } = usePlayerStore()
@@ -399,9 +399,10 @@ export function Player() {
             {/* Metadados + ação de biblioteca no canto superior direito. */}
             <div className="flex min-w-0 items-center gap-2">
               <button
-                onClick={() => { if (!isExpandedOpen) openExpanded() }}
+                /* Sem as setas, os metadados alternam a hero: abrir e fechar. */
+                onClick={toggleExpanded}
                 className="min-w-0 flex-1 text-left state-layer rounded-lg"
-                aria-label="Abrir player expandido"
+                aria-label={isExpandedOpen ? 'Recolher player expandido' : 'Abrir player expandido'}
               >
                 <p className="truncate text-body-medium font-semibold">{currentTrack.name}</p>
                 <p className="truncate text-body-medium" style={{ color: 'var(--text-secondary)' }}>{currentTrack.artist_name}</p>
@@ -434,21 +435,6 @@ export function Player() {
                   )}
                 </button>
               )}
-              {!isExpandedOpen && !miniPlayer && (
-                <button onClick={toggleMiniPlayer} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} aria-label="Reduzir player" title="Reduzir player">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              )}
-              {miniPlayer && !isExpandedOpen && (
-                <button onClick={toggleMiniPlayer} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} aria-label="Expandir player compacto">
-                  <ChevronUp className="h-5 w-5" />
-                </button>
-              )}
-              <button onClick={toggleExpanded} className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer" style={{ color: 'var(--text-secondary)' }} title={isExpandedOpen ? 'Recolher player' : 'Abrir player'} aria-label={isExpandedOpen ? 'Recolher player expandido' : 'Abrir player expandido'}>
-                {isExpandedOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
-              </button>
             </div>
 
             {/* Progresso apenas com duração válida. */}
@@ -493,13 +479,6 @@ export function Player() {
                   title={repeatLabel[repeat]}
                   aria-label={repeatLabel[repeat]}>
                   {repeat === 'one' ? <Repeat1 className="h-5 w-5" /> : <Repeat className="h-5 w-5" />}
-                </button>
-                <button onClick={() => { setQueueMinimized(false); if (!isExpandedOpen) openExpanded() }}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full state-layer"
-                  style={{ color: 'var(--text-secondary)' }}
-                  title="Fila"
-                  aria-label="Abrir fila">
-                  <ListMusic className="h-5 w-5" />
                 </button>
               </div>
             )}

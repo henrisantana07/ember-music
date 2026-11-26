@@ -1,0 +1,16 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - link "Ember Music — Início" [ref=e4] [cursor=pointer]:
+      - /url: /
+      - generic [ref=e5]: Ember Music
+    - generic [ref=e6]:
+      - button "Buscar" [ref=e7] [cursor=pointer]
+      - button "Entrar" [ref=e11] [cursor=pointer]
+  - generic [ref=e12]:
+    - navigation "Navegação principal" [ref=e13]:
+      - button "Início" [ref=e14] [cursor=pointer]
+      - button "Explorar" [ref=e18] [cursor=pointer]
+      - button "Abrir biblioteca" [ref=e22] [cursor=pointer]:
+        - generic [ref=e25]: Biblioteca
+    - status [ref=e29]:
+      - paragraph [ref=e31]: Carregando sua seleção…

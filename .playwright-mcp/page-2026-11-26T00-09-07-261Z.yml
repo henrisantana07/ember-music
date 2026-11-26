@@ -1,0 +1,44 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - button "Recolher barra lateral" [expanded] [ref=e5] [cursor=pointer]
+        - link "Ember Music" [ref=e8] [cursor=pointer]:
+          - /url: /
+      - generic [ref=e9]:
+        - link "Início" [ref=e10] [cursor=pointer]:
+          - /url: /
+        - generic [ref=e14]:
+          - textbox "Buscar músicas, álbuns ou artistas" [ref=e15]:
+            - /placeholder: O que você quer ouvir?
+          - button "Explorar" [ref=e16] [cursor=pointer]
+      - generic [ref=e19]:
+        - button "Voltar" [ref=e20] [cursor=pointer]
+        - button "Avançar" [ref=e23] [cursor=pointer]
+        - button "Entrar" [ref=e27] [cursor=pointer]
+    - generic [ref=e28]:
+      - complementary [ref=e29]:
+        - generic [ref=e31]:
+          - generic [ref=e32]:
+            - link "Sua Biblioteca" [ref=e33] [cursor=pointer]:
+              - /url: /biblioteca
+            - button "Criar playlist" [ref=e34] [cursor=pointer]
+          - generic [ref=e37]:
+            - button "Playlists" [ref=e38] [cursor=pointer]
+            - button "Artistas" [ref=e39] [cursor=pointer]
+            - button "Álbuns" [ref=e40] [cursor=pointer]
+          - generic [ref=e41]:
+            - textbox "Buscar músicas, álbuns ou artistas" [ref=e43]:
+              - /placeholder: Buscar na biblioteca
+            - group "Classificação e visualização" [ref=e44]:
+              - generic "Abrir classificação e visualização" [ref=e45] [cursor=pointer]
+          - list "Itens da biblioteca" [ref=e50]:
+            - generic [ref=e52]:
+              - heading "Biblioteca vazia" [level=2] [ref=e53]
+              - paragraph [ref=e54]: Crie playlists e siga artistas para vê-los aqui.
+              - button "Criar playlist" [ref=e56] [cursor=pointer]
+        - separator [ref=e58]
+        - separator "Redimensionar a barra lateral" [ref=e59]
+      - status [ref=e63]:
+        - paragraph [ref=e92]: Carregando sua seleção…
+  - alert [ref=e93]
