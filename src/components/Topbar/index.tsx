@@ -17,6 +17,8 @@ export function Topbar() {
   const [showDropdown, setShowDropdown] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
+  const mobileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -71,6 +73,10 @@ export function Topbar() {
     if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
   }, [])
 
+  useEffect(() => {
+    if (mobileSearchOpen) mobileInputRef.current?.focus()
+  }, [mobileSearchOpen])
+
   async function handleLogout() {
     await supabase.auth.signOut()
     router.push('/login')
@@ -111,18 +117,70 @@ export function Topbar() {
         paddingTop: 'var(--safe-top)',
       }}
     >
-      {/* Mobile: marca compacta à esquerda. A busca não é um segundo input —
-          um botão leva à experiência de busca já existente em /buscar. */}
-      <Link
-        href="/"
-        aria-label="Ember Music — Início"
-        className="absolute left-4 top-1/2 flex min-w-0 -translate-y-1/2 items-center gap-2 md:hidden"
-      >
-        <img src="/branding/icon.svg" alt="" className="h-8 w-8 flex-shrink-0 object-cover pointer-events-none" />
-        <span className="truncate text-base font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-          <span className="gradient-accent-text">Ember</span> Music
-        </span>
-      </Link>
+      {/* Mobile: marca compacta. A lupa abre um campo real de busca na própria
+          Topbar — antes ela só navegava para /buscar, onde não havia input. */}
+      {!mobileSearchOpen ? (
+        <Link
+          href="/"
+          aria-label="Ember Music — Início"
+          className="absolute left-4 top-1/2 flex min-w-0 -translate-y-1/2 items-center gap-2 md:hidden"
+        >
+          <img src="/branding/icon.svg" alt="" className="h-8 w-8 flex-shrink-0 object-cover pointer-events-none" />
+          <span className="truncate text-base font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+            <span className="gradient-accent-text">Ember</span> Music
+          </span>
+        </Link>
+      ) : (
+        <div className="flex w-full min-w-0 items-center gap-2 md:hidden">
+          <button
+            onClick={() => { setMobileSearchOpen(false); setSearchFocused(false) }}
+            className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer"
+            style={{ color: 'var(--text-secondary)' }}
+            aria-label="Fechar busca"
+            title="Fechar busca"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              if (searchQuery.trim()) void submitSearch()
+              else void router.push('/buscar')
+              setMobileSearchOpen(false)
+            }}
+            className="min-w-0 flex-1"
+          >
+            <input
+              ref={mobileInputRef}
+              type="text"
+              inputMode="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="O que você quer ouvir?"
+              aria-label="Buscar músicas, álbuns ou artistas"
+              className="block h-10 w-full rounded-full bg-surface-container-highest px-4 text-sm appearance-none outline-none focus:ring-2"
+              style={{ color: 'var(--text-primary)', '--tw-ring-color': 'var(--accent-solid)' } as React.CSSProperties}
+            />
+          </form>
+          <button
+            onClick={() => {
+              if (searchQuery.trim()) void submitSearch()
+              else void router.push('/buscar')
+              setMobileSearchOpen(false)
+            }}
+            className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full state-layer"
+            style={{ color: 'var(--text-primary)' }}
+            aria-label="Buscar"
+            title="Buscar"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Left cluster: sidebar toggle + branding. */}
       <div
@@ -246,9 +304,9 @@ export function Topbar() {
         </form>
       </div>
 
-      <div className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-1 md:right-6">
+      <div className={`absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-1 md:right-6 ${mobileSearchOpen ? 'hidden md:flex' : ''}`}>
         <button
-          onClick={() => router.push('/buscar')}
+          onClick={() => setMobileSearchOpen(true)}
           className="inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-state-hover state-layer md:hidden"
           style={{ color: 'var(--text-secondary)' }}
           aria-label="Buscar"
