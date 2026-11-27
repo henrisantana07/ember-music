@@ -129,7 +129,11 @@ export async function savePlaybackHistory(user: User | null, track: Track): Prom
 
 /** Soma segundos reais de escuta de uma faixa ao histórico. */
 export async function saveListeningTime(user: User | null, track: Track, seconds: number): Promise<void> {
-  if (!user || seconds <= 0) return
+  if (seconds <= 0) return
+  if (!user) {
+    saveLocalListeningSeconds(track.id, seconds)
+    return
+  }
   const supabase = createClient()
   const { error } = await supabase.rpc('add_listening_seconds', {
     p_user_id: user.id,

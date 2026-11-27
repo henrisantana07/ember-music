@@ -152,6 +152,19 @@ describe('tracksFromHistory', () => {
     expect(tracks.map((t) => t.id)).toEqual(['t3', 't2', 't1'])
   })
 
+  it('prioriza tempo acumulado de escuta, não recência', () => {
+    const recente = makeTrack({ id: 'recente', name: 'Recente' })
+    const antiga = makeTrack({ id: 'antiga', name: 'Mais ouvida' })
+    const items = history(
+      [recente, '2026-11-27T10:00:00Z'],
+      [antiga, '2026-11-20T10:00:00Z'],
+    )
+    items[0].listened_seconds = 60
+    items[1].listened_seconds = 3600
+
+    expect(tracksFromHistory(items).map((t) => t.id)).toEqual(['antiga', 'recente'])
+  })
+
   it('lista vazia devolve lista vazia', () => {
     expect(tracksFromHistory([])).toEqual([])
   })

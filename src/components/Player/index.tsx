@@ -36,6 +36,9 @@ export function Player() {
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sleepIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const retryingId = useRef<string | null>(null)
+  /* Tempo real de escuta por faixa: soma apenas avanços pequenos e contínuos
+     de `progress`, ignorando seeks. */
+  const listenedRef = useRef<{ id: string | null; last: number; total: number }>({ id: null, last: 0, total: 0 })
   const supabase = createClient()
 
   const {
@@ -270,6 +273,39 @@ export function Player() {
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume
   }, [volume])
+
+  const flushListening = useCallback(() => {
+    const entry = listenedRef.current
+    const seconds = entry.total
+    if (!entry.id || seconds < 1) return
+    const store = usePlayerStore.getState()
+    const track = store.queue.find((t) => t.id === entry.id) ?? store.currentTrack
+    if (track?.id === entry.id) void saveListeningTime(user, track, seconds)
+    entry.total = 0
+  }, [user])
+
+  /* Só soma avanços pequenos e progressivos — seek não conta como escuta. */
+  useEffect(() => {
+    const entry = listenedRef.current
+    if (!currentTrack?.id) {
+      if (entry.id) flushListening()
+      return
+    }
+    if (entry.id !== currentTrack.id) {
+      flushListening()
+      listenedRef.current = { id: currentTrack.id, last: progress, total: 0 }
+      return
+    }
+    const delta = progress - entry.last
+    if (isPlaying && delta > 0 && delta < 15) entry.total += delta
+    entry.last = progress
+  }, [progress, currentTrack?.id, isPlaying, flushListening])
+
+  useEffect(() => {
+    if (!isPlaying) flushListening()
+  }, [isPlaying, flushListening])
+
+  useEffect(() => () => { flushListening() }, [flushListening])
 
   /* Mesmos handlers da hero — `useTrackSeek`/`useTrackPrev` leem a store e
      o elemento de áudio compartilhado, sem estado paralelo. */
