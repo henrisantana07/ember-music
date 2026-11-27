@@ -168,9 +168,24 @@ function ItemCover({
         onClick={onPlay}
         aria-label={`Reproduzir ${item.title}`}
         title={`Reproduzir ${item.title}`}
-        className={`${frame} flex-shrink-0 overflow-hidden inline-flex items-center justify-center bg-surface-container-highest ${shape} cursor-pointer`}
+        className={`${frame} relative group/cover flex-shrink-0 overflow-hidden inline-flex items-center justify-center bg-surface-container-highest ${shape} cursor-pointer`}
       >
         {visual}
+        {/* Indicador de play no hover: a capa continua sendo a única área que
+            toca; o resto do item permanece como link para /biblioteca. */}
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 flex items-center justify-center bg-black/35 opacity-0 transition-opacity duration-200 group-hover/cover:opacity-100 group-focus-visible/cover:opacity-100"
+        >
+          <span
+            className="flex h-7 w-7 items-center justify-center rounded-full shadow-lg"
+            style={{ background: 'var(--accent-solid)', color: 'var(--bg-base)' }}
+          >
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </span>
+        </span>
       </button>
     )
   }
@@ -496,9 +511,20 @@ export default function Sidebar() {
                       onClick={(e) => playFavorite(e, item)}
                       aria-label={`Reproduzir ${item.title}`}
                       title={`Reproduzir ${item.title}`}
-                      className={`w-14 h-14 overflow-hidden cursor-pointer ${item.type === 'artist' ? 'rounded-full' : 'rounded-md'}`}
+                      className={`relative group/cover w-14 h-14 overflow-hidden cursor-pointer ${item.type === 'artist' ? 'rounded-full' : 'rounded-md'}`}
                     >
                       <CoverImage src={item.imageUrl} alt="" className="w-14 h-14 object-cover" />
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-0 flex items-center justify-center bg-black/35 opacity-0 transition-opacity duration-200 group-hover/cover:opacity-100 group-focus-visible/cover:opacity-100"
+                      >
+                        <span
+                          className="flex h-7 w-7 items-center justify-center rounded-full shadow-lg"
+                          style={{ background: 'var(--accent-solid)', color: 'var(--bg-base)' }}
+                        >
+                          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                        </span>
+                      </span>
                     </button>
                   ) : item.imageUrl ? (
                     <CoverImage src={item.imageUrl} alt="" className={`w-14 h-14 object-cover ${item.type === "artist" ? "rounded-full" : "rounded-md"}`} />
