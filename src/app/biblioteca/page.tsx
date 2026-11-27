@@ -247,29 +247,31 @@ function BibliotecaContent() {
 
   const storePlaylists = usePlaylistsStore((s) => s.playlists)
 
+  /* Espelha a store compartilhada com a sidebar. Sem o guard de `length > 0`,
+     um logout (store esvaziada) também limpa a lista local. */
   useEffect(() => {
-    if (storePlaylists.length > 0) {
-      setPlaylists(storePlaylists.map((p) => ({
-        id: p.id,
-        name: p.name,
-        description: p.description,
-        cover_url: p.cover_url,
-        cover_source: p.cover_source as string,
-        custom_cover_url: p.custom_cover_url,
-        last_track_cover_url: p.last_track_cover_url,
-        created_at: p.created_at,
-        updated_at: p.updated_at,
-        track_count: p.track_count,
-      })))
-    }
+    setPlaylists(storePlaylists.map((p) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      cover_url: p.cover_url,
+      cover_source: p.cover_source as string,
+      custom_cover_url: p.custom_cover_url,
+      last_track_cover_url: p.last_track_cover_url,
+      created_at: p.created_at,
+      updated_at: p.updated_at,
+      track_count: p.track_count,
+    })))
   }, [storePlaylists])
 
   useEffect(() => {
     if (!user) return
     setTracks([])
     setArtists([])
-    setPlaylists([])
     setHistory([])
+    /* playlists NÃO é limpa aqui: ela vem da store compartilhada com a
+       sidebar. Limpar ao trocar de aba deixava a aba vazia quando a store
+       já estava carregada (o fetch agora é idempotente). */
 
     /* "Local" não mora no Supabase — vive no IndexedDB do dispositivo e o
        LocalLibraryView tem seu próprio spinner (initialized/loading). Sem
@@ -289,7 +291,11 @@ function BibliotecaContent() {
         fetchArtists()
         break
       case 'playlists':
+        /* Os dados vêm da store (já carregada pela sidebar); o fetch é
+           idempotente e não altera o `loading` local desta página. */
         usePlaylistsStore.getState().fetchPlaylists()
+        setLoading(false)
+        setLoadError(false)
         break
       case 'recentes':
         fetchHistory()
