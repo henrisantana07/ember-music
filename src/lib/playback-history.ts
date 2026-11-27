@@ -9,8 +9,32 @@ export interface PlaybackHistoryItem {
   track_id: string
   track_data: Track
   played_at: string
-  /** Presente depois da migration `add_listening_history_play_count`. */
+  /** Presente depois das migrations de contagem e tempo acumulado. */
   play_count?: number
+  listened_seconds?: number
+}
+
+/* Tempo acumulado neste dispositivo enquanto a migration não é aplicada. */
+const LOCAL_SECONDS_KEY = 'ember:listening-seconds'
+
+export function getLocalListeningSeconds(): Record<string, number> {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem(LOCAL_SECONDS_KEY)
+    const parsed: unknown = raw ? JSON.parse(raw) : {}
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, number>) : {}
+  } catch {
+    return {}
+  }
+}
+
+export function saveLocalListeningSeconds(trackId: string, seconds: number): void {
+  if (typeof window === 'undefined' || seconds <= 0) return
+  const all = getLocalListeningSeconds()
+  all[trackId] = (all[trackId] ?? 0) + seconds
+  try {
+    window.localStorage.setItem(LOCAL_SECONDS_KEY, JSON.stringify(all))
+  } catch { /* storage indisponível */ }
 }
 
 /* Enquanto a migration não é aplicada, o contador vive neste dispositivo.
@@ -101,4 +125,18 @@ export async function savePlaybackHistory(user: User | null, track: Track): Prom
   if (error) {
     console.error('Error saving playback history:', error)
   }
+}
+
+/** Soma segundos reais de escuta de uma faixa ao histórico. */
+export async function saveListeningTime(user: User | null, track: Track, seconds: number): Promise<void> {
+  if (!user || seconds <= 0) return
+  const supabase = createClient()
+  const { error } = await supabase.rpc('add_listening_seconds', {
+    p_user_id: user.id,
+    p_track_id: track.id,
+    p_seconds: Math.floor(seconds),
+    p_track_data: track as unknown as Json,
+  })
+  /* Sem a migration, o tempo vive neste dispositivo e já ordena a fileira. */
+  if (error) saveLocalListeningSeconds(track.id, seconds)
 }

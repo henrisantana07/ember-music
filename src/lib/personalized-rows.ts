@@ -1,4 +1,4 @@
-import { getLocalPlayCounts, type PlaybackHistoryItem } from '@/lib/playback-history'
+import { getLocalListeningSeconds, getLocalPlayCounts, type PlaybackHistoryItem } from '@/lib/playback-history'
 import type { Track, Album, Artist } from '@/types/music'
 
 // ---------------------------------------------------------------------------
@@ -62,13 +62,14 @@ export function applyFollowedArtistImages(
   })
 }
 
-/** "Mais tocadas" = maior contagem de reproduções, com recência como desempate.
- *  usa `play_count` do banco quando a migration existe e o contador local
- *  enquanto ela não é aplicada. */
+/** "Mais ouvidas" = maior TEMPO ACUMULADO de escuta, com contagem de
+ *  reproduções e recência apenas como desempate. Usa `listened_seconds` do
+ *  banco quando a migration existe e o acumulado local enquanto não existe. */
 export function tracksFromHistory(history: PlaybackHistoryItem[]): Track[] {
+  const localSeconds = getLocalListeningSeconds()
   const localCounts = getLocalPlayCounts()
   const seen = new Set<string>()
-  const ranked: { track: Track; count: number; played: number }[] = []
+  const ranked: { track: Track; seconds: number; count: number; played: number }[] = []
 
   for (const item of history) {
     const track = item.track_data as unknown as Track | null
@@ -77,13 +78,14 @@ export function tracksFromHistory(history: PlaybackHistoryItem[]): Track[] {
     const played = Date.parse(item.played_at ?? '')
     ranked.push({
       track,
+      seconds: Math.max(item.listened_seconds ?? 0, localSeconds[track.id] ?? 0),
       count: Math.max(item.play_count ?? 0, localCounts[track.id] ?? 0),
       played: Number.isFinite(played) ? played : 0,
     })
   }
 
   return ranked
-    .sort((a, b) => b.count - a.count || b.played - a.played)
+    .sort((a, b) => b.seconds - a.seconds || b.count - a.count || b.played - a.played)
     .map((entry) => entry.track)
 }
 

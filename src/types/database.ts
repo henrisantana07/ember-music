@@ -63,6 +63,7 @@ export type Database = {
       listening_history: {
         Row: {
           id: string
+          listened_seconds: number
           played_at: string | null
           play_count: number
           track_data: Json | null
@@ -71,6 +72,7 @@ export type Database = {
         }
         Insert: {
           id?: string
+          listened_seconds?: number
           played_at?: string | null
           play_count?: number
           track_data?: Json | null
@@ -79,6 +81,7 @@ export type Database = {
         }
         Update: {
           id?: string
+          listened_seconds?: number
           played_at?: string | null
           play_count?: number
           track_data?: Json | null
@@ -369,6 +372,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_listening_seconds: {
+        Args: { p_user_id: string; p_track_id: string; p_seconds: number; p_track_data: Json }
+        Returns: void
+      }
       increment_listening_play: {
         Args: { p_user_id: string; p_track_id: string; p_track_data: Json }
         Returns: void
