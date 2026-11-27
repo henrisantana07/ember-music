@@ -153,6 +153,33 @@ describe('buildLibraryItems', () => {
       href: '/albums/al1',
     })
   })
+
+  it('mapeia faixas favoritas reais para o filtro Favoritos', () => {
+    const track = {
+      id: 't1',
+      name: 'Música curtida',
+      duration: 180,
+      artist_id: 'a1',
+      artist_name: 'Artista',
+      album_id: '',
+      album_name: '',
+      image: 'https://example.com/fav.jpg',
+      audio: null,
+      url: '',
+    }
+    const result = buildLibraryItems([], [], [], 1, '', [
+      { track, createdAt: '2025-03-01T00:00:00Z' },
+    ])
+    const favorite = result.find((r) => r.type === 'favorite')
+    expect(favorite).toMatchObject({
+      id: 'favorite:t1',
+      title: 'Música curtida',
+      subtitle: 'Artista',
+      imageUrl: 'https://example.com/fav.jpg',
+      createdAt: '2025-03-01T00:00:00Z',
+      href: '/biblioteca?tab=favoritos',
+    })
+  })
 })
 
 describe('pinLikedFirst', () => {

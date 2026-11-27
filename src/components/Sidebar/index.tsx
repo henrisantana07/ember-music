@@ -24,12 +24,12 @@ import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
 import { SaveAlbumButton } from '@/components/SaveAlbumButton'
 import { EmptyState } from '@/components/ui/states'
 import { LibraryRailSkeleton } from '@/components/Skeleton'
-import { buildLibraryItems, isLikedItem, pinLikedFirst } from '@/lib/library/types'
+import { buildLibraryItems, isLikedItem, pinLikedFirst, type FavoriteLibraryItem } from '@/lib/library/types'
 import { filterLibraryItems } from '@/lib/library/filterLibraryItems'
 import { sortLibraryItems } from '@/lib/library/sortLibraryItems'
 import { orderPinnedFirst } from '@/lib/library/pinLibraryItems'
 import type { LibraryItem, LibraryItemType } from '@/lib/library/types'
-import type { Album } from '@/types/music'
+import type { Album, Track } from '@/types/music'
 
 const NAV_SECTION1 = [
   { href: '/', label: 'Início', outline: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -49,7 +49,7 @@ const RAIL_LIMIT = 5
 const TYPE_FILTERS: { value: LibraryItemType; label: string }[] = [
   { value: 'playlist', label: 'Playlists' },
   { value: 'artist', label: 'Artistas' },
-  { value: 'album', label: 'Álbuns' },
+  { value: 'favorite', label: 'Favoritos' },
 ]
 
 /* Largura da sidebar como store externo, igual às outras preferências locais.
@@ -227,10 +227,9 @@ export default function Sidebar() {
   const [typeFilter, setTypeFilter] = useState<LibraryItemType | null>(null)
   const [query, setQuery] = useState('')
 
-  /* Fontes reais complementares:
-     - curtidas: contagem na mesma tabela `favorites` que a aba favoritos de /biblioteca;
-     - álbuns: /api/youtube (searchYouTubePlaylists, cache no servidor). */
-  const [youtubeAlbums, setYoutubeAlbums] = useState<Album[]>([])
+  /* Favoritos reais da tabela `favorites` — a sidebar mostra as faixas, não
+     só a contagem do atalho "Músicas curtidas". */
+  const [favoriteTracks, setFavoriteTracks] = useState<FavoriteLibraryItem[]>([])
   const [likedCount, setLikedCount] = useState(0)
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
@@ -257,37 +256,38 @@ export default function Sidebar() {
     }
   }, [collapsed])
 
-  /* Curtidas + álbuns, como as fontes "antigas": a contagem vem da tabela
-     `favorites` e os álbuns da API do YouTube via /api/youtube. Em falha ou
-     sem chave configurada, o painel se degrada sem a seção de álbuns (a
-     resposta 503/429 é tratada como ausência — nada de conteúdo falso).
-     Sem usuário, não há escrita de estado aqui: playlists/artistas do
-     zustand se comportam igual (nada é limpo no logout até o próximo login). */
+  /* Favoritos: mesma tabela usada pela aba "favoritos" de /biblioteca.
+     Em falha, o painel degrada para lista vazia — nada de conteúdo falso. */
   useEffect(() => {
-    if (!user) return
+    if (!user) {
+      setFavoriteTracks([])
+      setLikedCount(0)
+      return
+    }
     const supabase = createClient()
-    const controller = new AbortController()
     let cancelled = false
     ;(async () => {
-      const { count } = await supabase
+      const { data, error } = await supabase
         .from('favorites')
-        .select('track_id', { count: 'exact', head: true })
+        .select('track_data, created_at')
         .eq('user_id', user.id)
-      if (!cancelled && typeof count === 'number') setLikedCount(count)
-      try {
-        const res = await fetch('/api/youtube?endpoint=albums&limit=12', { signal: controller.signal })
-        const data: unknown = await res.json()
-        const results = (data as { results?: unknown })?.results
-        if (!cancelled && Array.isArray(results)) setYoutubeAlbums(results as Album[])
-        else if (!cancelled) setYoutubeAlbums([])
-      } catch (err) {
-        if (!cancelled && (err as Error)?.name !== 'AbortError') setYoutubeAlbums([])
+        .order('created_at', { ascending: false })
+      if (cancelled) return
+      if (error) {
+        setFavoriteTracks([])
+        setLikedCount(0)
+        return
       }
+      const items: FavoriteLibraryItem[] = (data ?? [])
+        .map((row) => ({
+          track: row.track_data as unknown as Track,
+          createdAt: row.created_at ?? null,
+        }))
+        .filter((item) => !!item.track?.id && !!item.track?.name)
+      setFavoriteTracks(items)
+      setLikedCount(items.length)
     })()
-    return () => {
-      cancelled = true
-      controller.abort()
-    }
+    return () => { cancelled = true }
   }, [user])
 
   useEffect(() => {
@@ -367,8 +367,8 @@ export default function Sidebar() {
   /* Coleção normalizada das fontes reais → busca + filtro de tipo + ordenação
      (§5.1/§5.2, funções puras em lib/library). */
   const libraryItems = useMemo(
-    () => buildLibraryItems(playlists, artists, youtubeAlbums, likedCount),
-    [playlists, artists, youtubeAlbums, likedCount],
+    () => buildLibraryItems(playlists, artists, [], likedCount, user?.email ?? '', favoriteTracks),
+    [playlists, artists, likedCount, user?.email, favoriteTracks],
   )
 
   const visibleItems = useMemo(() => {

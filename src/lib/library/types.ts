@@ -1,6 +1,6 @@
-﻿import type { PlaylistItem } from '@/lib/playlists-store'
+import type { PlaylistItem } from '@/lib/playlists-store'
 import type { FollowedArtist } from '@/lib/artists-store'
-import type { Album } from '@/types/music'
+import type { Album, Track } from '@/types/music'
 import { resolveCover } from '@/lib/playlist/resolveCover'
 
 /**
@@ -12,10 +12,11 @@ import { resolveCover } from '@/lib/playlist/resolveCover'
  * - `artist`: tabela `followed_artists` (store do Supabase).
  * - `album`: resultado de `/api/youtube?endpoint=albums` (searchYouTubePlaylists,
  *   API do YouTube com cache no servidor) — aberto em /albums/[id].
- * - `liked`: coleção da tabela `favorites` — a "Músicas curtidas", que mora
- *   na aba `favoritos` de /biblioteca.
+ * - `liked`: atalho fixo "Músicas curtidas" na aba `favoritos` de /biblioteca.
+ * - `favorite`: faixas reais da tabela `favorites`, exibidas pelo filtro
+ *   "Favoritos" da sidebar.
  */
-export type LibraryItemType = 'playlist' | 'artist' | 'album' | 'liked'
+export type LibraryItemType = 'playlist' | 'artist' | 'album' | 'liked' | 'favorite'
 
 export type LibraryView = 'compact' | 'list' | 'grid'
 
@@ -114,6 +115,24 @@ function likedToLibraryItem(likedCount: number): LibraryItem {
   }
 }
 
+export interface FavoriteLibraryItem {
+  track: Track
+  createdAt?: string | null
+}
+
+function favoriteToLibraryItem({ track, createdAt }: FavoriteLibraryItem): LibraryItem {
+  return {
+    id: `favorite:${track.id}`,
+    type: 'favorite',
+    title: track.name,
+    subtitle: track.artist_name || undefined,
+    imageUrl: track.image || null,
+    createdAt: createdAt ?? null,
+    creator: track.artist_name || null,
+    href: '/biblioteca?tab=favoritos',
+  }
+}
+
 /**
  * Normaliza as fontes reais em um único modelo de UI.
  *
@@ -126,6 +145,7 @@ export function buildLibraryItems(
   albums: Album[] = [],
   likedCount: number = 0,
   creatorDisplayName: string = '',
+  favorites: FavoriteLibraryItem[] = [],
 ): LibraryItem[] {
   const items: LibraryItem[] = []
 
@@ -137,6 +157,7 @@ export function buildLibraryItems(
     ...playlists.map((playlist) => playlistToLibraryItem(playlist, creatorDisplayName)),
     ...albums.map(albumToLibraryItem),
     ...artists.map(artistToLibraryItem),
+    ...favorites.map(favoriteToLibraryItem),
   )
   return items
 }
