@@ -40,6 +40,8 @@ export interface LibraryItem {
   createdAt?: string | null
   creator?: string | null
   href: string
+  /** Faixa real por trás de um favorito — permite tocar pela capa sem navegar. */
+  track?: Track
 }
 
 /** A coleção de curtidas é um atalho fixo (como a "Músicas curtidas" do guia
@@ -130,6 +132,7 @@ function favoriteToLibraryItem({ track, createdAt }: FavoriteLibraryItem): Libra
     createdAt: createdAt ?? null,
     creator: track.artist_name || null,
     href: '/biblioteca?tab=favoritos',
+    track,
   }
 }
 

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useMemo, useState, useRef, useSyncExternalStore } from 'react'
-import type { ReactNode } from 'react'
+import type { ReactNode, MouseEvent as ReactMouseEvent } from 'react'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { useArtistsStore } from '@/lib/artists-store'
 import { useSidebarStore } from '@/lib/sidebar-store'
@@ -125,7 +125,15 @@ function RailItem({ show, children, className = '' }: { show: boolean; children:
 /** Tile de capa normalizado: curtidas (coração sobre gradação de acento),
  *  imagem, ou inicial sobre a superfície mais alta. Mesmo padrão na lista,
  *  na grade, no drawer e no rail. */
-function ItemCover({ item, size }: { item: LibraryItem; size: 'row' | 'grid' }) {
+function ItemCover({
+  item,
+  size,
+  onPlay,
+}: {
+  item: LibraryItem
+  size: 'row' | 'grid'
+  onPlay?: (e: ReactMouseEvent) => void
+}) {
   const frame = size === 'row' ? 'w-14 h-14' : 'w-full aspect-square'
   if (isLikedItem(item)) {
     return (
@@ -140,18 +148,36 @@ function ItemCover({ item, size }: { item: LibraryItem; size: 'row' | 'grid' }) 
       </span>
     )
   }
-  if (item.imageUrl) {
+
+  const shape = item.type === 'artist' ? 'rounded-full' : 'rounded-md'
+  const visual = item.imageUrl
+    ? <CoverImage src={item.imageUrl} alt="" className="w-full h-full object-cover" />
+    : (
+        <span className="text-label-medium font-bold" style={{ color: 'var(--text-primary)' }}>
+          {item.title.charAt(0).toUpperCase()}
+        </span>
+      )
+
+  /* Favoritos são faixas reais: a capa vira botão de play e o evento é
+     interrompido para o Link ao redor não navegar. Demais tipos seguem
+     apenas capa decorativa. */
+  if (item.track && onPlay) {
     return (
-      <span className={`${frame} flex-shrink-0 overflow-hidden inline-block bg-surface-container-highest ${item.type === 'artist' ? 'rounded-full' : 'rounded-md'}`}>
-        <CoverImage src={item.imageUrl} alt="" className="w-full h-full object-cover" />
-      </span>
+      <button
+        type="button"
+        onClick={onPlay}
+        aria-label={`Reproduzir ${item.title}`}
+        title={`Reproduzir ${item.title}`}
+        className={`${frame} flex-shrink-0 overflow-hidden inline-flex items-center justify-center bg-surface-container-highest ${shape} cursor-pointer`}
+      >
+        {visual}
+      </button>
     )
   }
+
   return (
-    <span className={`${frame} flex-shrink-0 inline-flex items-center justify-center bg-surface-container-highest ${item.type === 'artist' ? 'rounded-full' : 'rounded-md'}`}>
-      <span className="text-label-medium font-bold" style={{ color: 'var(--text-primary)' }}>
-        {item.title.charAt(0).toUpperCase()}
-      </span>
+    <span className={`${frame} flex-shrink-0 overflow-hidden inline-flex items-center justify-center bg-surface-container-highest ${shape}`}>
+      {visual}
     </span>
   )
 }
@@ -210,6 +236,7 @@ export default function Sidebar() {
   const immersive = useSidebarStore((s) => s.immersive)
   /* Com a hero aberta, o rodapé do player ocupa o lugar da bottom nav. */
   const playerExpanded = usePlayerStore((s) => s.isExpandedOpen)
+  const play = usePlayerStore((s) => s.play)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const supabase = createClient()
   const router = useRouter()
@@ -396,6 +423,15 @@ export default function Sidebar() {
   const noResults = !libraryLoading && visibleItems.length === 0 && (query !== '' || typeFilter !== null)
   const emptyLibrary = !libraryLoading && libraryItems.length === 0
 
+  /* A capa dos favoritos toca a faixa no lugar: o clique na capa não deve
+     navegar para /biblioteca, ao contrário do clique no nome. */
+  function playFavorite(e: ReactMouseEvent, item: LibraryItem) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!item.track) return
+    play(item.track, favoriteTracks.map((f) => f.track), 'favorites', 'Favoritos')
+  }
+
   function renderLibraryRow(item: (typeof libraryItems)[number], compact: boolean) {
     const active = pathname === item.href
     return (
@@ -409,7 +445,7 @@ export default function Sidebar() {
             : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
         }`}
       >
-        {!compact && <ItemCover item={item} size="row" />}
+        {!compact && <ItemCover item={item} size="row" onPlay={(e) => playFavorite(e, item)} />}
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5 min-w-0">
             <span className="truncate">{item.title}</span>
@@ -454,6 +490,16 @@ export default function Sidebar() {
                     <svg className="w-10 h-10" viewBox="0 0 24 24" fill="currentColor" style={{ color: "var(--accent-solid)" }}>
                       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                     </svg>
+                  ) : item.imageUrl && item.track ? (
+                    <button
+                      type="button"
+                      onClick={(e) => playFavorite(e, item)}
+                      aria-label={`Reproduzir ${item.title}`}
+                      title={`Reproduzir ${item.title}`}
+                      className={`w-14 h-14 overflow-hidden cursor-pointer ${item.type === 'artist' ? 'rounded-full' : 'rounded-md'}`}
+                    >
+                      <CoverImage src={item.imageUrl} alt="" className="w-14 h-14 object-cover" />
+                    </button>
                   ) : item.imageUrl ? (
                     <CoverImage src={item.imageUrl} alt="" className={`w-14 h-14 object-cover ${item.type === "artist" ? "rounded-full" : "rounded-md"}`} />
                   ) : (
@@ -563,7 +609,7 @@ export default function Sidebar() {
                             : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
                         }`}
                       >
-                        <ItemCover item={item} size="grid" />
+                        <ItemCover item={item} size="grid" onPlay={(e) => playFavorite(e, item)} />
                         <span className="flex items-center gap-1.5 min-w-0">
                           <span className="truncate text-body-medium">{item.title}</span>
                           {(item.type === 'liked' || isPinned(item.id)) && <PinnedBadge />}
@@ -750,7 +796,7 @@ export default function Sidebar() {
                         : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
                     }`}
                   >
-                    <ItemCover item={item} size="row" />
+                    <ItemCover item={item} size="row" onPlay={(e) => playFavorite(e, item)} />
                     <span className="min-w-0">
                       <span className="flex items-center gap-1.5 min-w-0">
                         <span className="truncate">{item.title}</span>
