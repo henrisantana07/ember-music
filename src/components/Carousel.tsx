@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { ReactNode, RefObject } from 'react'
 import { motion, useAnimationControls } from 'motion/react'
 import { TRANSITION, rowStaggerDelay } from '@/lib/motion'
 import { Lottie } from '@/components/ui/LottieLazy'
@@ -31,6 +31,11 @@ interface CarouselApi {
    * three presses to the right, the next card comes in from the right.
    */
   state: { current: CarouselState }
+  /**
+   * The scroller itself. Observing against it instead of the viewport keeps a
+   * card from re-entering just because the sidebar grew and clipped it.
+   */
+  root: RefObject<HTMLDivElement | null>
 }
 
 const CarouselContext = createContext<CarouselApi | null>(null)
@@ -63,6 +68,7 @@ export function Carousel({ children, className = '', cardWidth = 176 }: Carousel
       return () => { items.current.delete(handle) }
     },
     state,
+    root: ref,
   }), [])
 
   // Everything the check needs is local to the row, so it lives in the effect
@@ -259,18 +265,27 @@ interface CarouselItemProps {
  *   marks the slot visible, so the observer below does not replay the same
  *   slide a frame later.
  * - The **observer** owns what the row cannot predict: the first paint, and
- *   any drag or scrollbar the arrows never touched. It re-arms the moment the
- *   slot leaves the row, which is what lets the slide play again on the next
- *   pass.
+ *   any drag or scrollbar the arrows never touched. It re-arms only when the
+ *   slot is fully outside the scroller, which is what lets the slide play again
+ *   on the next pass — a partially clipped card is still considered present.
  */
 export function CarouselItem({ children, className = '', index = 0 }: CarouselItemProps) {
   const api = useContext(CarouselContext)
   const controls = useAnimationControls()
   const ref = useRef<HTMLDivElement>(null)
   const visible = useRef(false)
+  /** While a slide is running, the observer must not arm a second one. */
+  const animatingUntil = useRef(0)
 
   const play = useCallback(
-    (direction: 'left' | 'right', delay: number) =>
+    (direction: 'left' | 'right', delay: number) => {
+      // The staggered first paint can wait up to 12 * 30ms before starting.
+      // Ignore observer callbacks for the whole run, plus a small margin for
+      // the frame in which Motion writes the final value.
+      animatingUntil.current =
+        performance.now() +
+        (TRANSITION.reveal.duration + delay) * 1000 +
+        100
       void controls.start(
         {
           // Keyframes, not plain values: the slot may still be holding the end
@@ -279,7 +294,8 @@ export function CarouselItem({ children, className = '', index = 0 }: CarouselIt
           x: [direction === 'right' ? REVEAL_OFFSET : -REVEAL_OFFSET, 0],
         },
         { ...TRANSITION.reveal, delay },
-      ),
+      )
+    },
     [controls],
   )
 
@@ -307,10 +323,15 @@ export function CarouselItem({ children, className = '', index = 0 }: CarouselIt
     }
 
     const io = new IntersectionObserver(([entry]) => {
+      // The slide changes this slot's own geometry. Without this guard the
+      // observer would see it cross its threshold mid-animation and start the
+      // slide again — an endless "resurfacing" loop on partially clipped cards.
+      if (performance.now() < animatingUntil.current) return
+
       if (!entry?.isIntersecting) {
-        // Off the edge again, which is what arms it for the next pass. The
-        // pixels it goes out on are already clipped, so there is nothing to
-        // fade — leaving the flag alone keeps the handoff invisible.
+        // Fully outside the row — the only state that arms the next pass. A
+        // card merely clipped by the sidebar is still intersecting, so it is
+        // never mistaken for a new arrival.
         visible.current = false
         return
       }
@@ -322,15 +343,19 @@ export function CarouselItem({ children, className = '', index = 0 }: CarouselIt
         // scroll has already waited its turn.
         api.state.current.driven ? 0 : rowStaggerDelay(index),
       )
-    }, { threshold: 0.2 })
+    }, { root: api.root.current, threshold: 0 })
 
+    // Observe the wrapper, never the animated element: the wrapper keeps its
+    // geometry while `x`/`opacity` move inside it.
     io.observe(el)
     return () => io.disconnect()
   }, [api, controls, index, play])
 
   return (
-    <motion.div ref={ref} animate={controls} initial={{ opacity: 0 }} className={className}>
-      {children}
-    </motion.div>
+    <div ref={ref} className={className}>
+      <motion.div animate={controls} initial={{ opacity: 0 }}>
+        {children}
+      </motion.div>
+    </div>
   )
 }
