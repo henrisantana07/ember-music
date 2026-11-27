@@ -14,6 +14,7 @@ import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
 import { formatDuration } from '@/lib/spotify'
 import { resolveCover, type CoverSource } from '@/lib/playlist/resolveCover'
 import { extractDominantColor } from '@/lib/color/extractDominantColor'
+import { DetailHeaderSkeleton, TrackListSkeleton } from '@/components/Skeleton'
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -375,8 +376,9 @@ function PlaylistContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-48" role="status" aria-label="Carregando playlist">
-        <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--accent-from)', borderTopColor: 'transparent' }} />
+      <div className="py-6">
+        <DetailHeaderSkeleton />
+        <div className="mt-8"><TrackListSkeleton rows={5} /></div>
       </div>
     )
   }
@@ -751,8 +753,9 @@ function SortableTrackRow({
 export default function PlaylistPage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center h-48">
-        <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--accent-from)', borderTopColor: 'transparent' }} />
+      <div className="py-6">
+        <DetailHeaderSkeleton />
+        <div className="mt-8"><TrackListSkeleton rows={5} /></div>
       </div>
     }>
       <PlaylistContent />

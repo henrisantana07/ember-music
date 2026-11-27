@@ -5,6 +5,7 @@ import { FollowButton } from '@/components/FollowButton'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { ARTIST_GRID } from '@/components/ui/grid'
+import { ArtistRowSkeleton } from '@/components/Skeleton'
 
 interface FollowedArtist {
   artist_id: string
@@ -42,11 +43,7 @@ export default function ArtistsPage() {
   }, [])
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--accent-from)', borderTopColor: 'transparent' }} />
-      </div>
-    )
+    return <ArtistRowSkeleton />
   }
 
   return (

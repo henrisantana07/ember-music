@@ -22,7 +22,8 @@ import { CoverImage } from '@/components/ui/CoverImage'
 import { CustomScroll } from '@/components/CustomScroll'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
 import { SaveAlbumButton } from '@/components/SaveAlbumButton'
-import { EmptyState, LoadingState } from '@/components/ui/states'
+import { EmptyState } from '@/components/ui/states'
+import { LibraryRailSkeleton } from '@/components/Skeleton'
 import { buildLibraryItems, isLikedItem, pinLikedFirst } from '@/lib/library/types'
 import { filterLibraryItems } from '@/lib/library/filterLibraryItems'
 import { sortLibraryItems } from '@/lib/library/sortLibraryItems'
@@ -529,7 +530,7 @@ export default function Sidebar() {
           </div>
 
           <CustomScroll className="px-2 pb-2 space-y-0.5" wrapperClassName="flex-1 min-h-0" role="list" ariaLabel="Itens da biblioteca">
-            {libraryLoading && <LoadingState title="Carregando biblioteca…" />}
+            {libraryLoading && <LibraryRailSkeleton />}
             {!libraryLoading && noResults && (
               <EmptyState
                 title="Sem resultados"

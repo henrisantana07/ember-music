@@ -12,6 +12,7 @@ import type { Track, Album } from '@/types/music'
 import { ErrorState } from '@/components/ui/states'
 import { extractDominantColor } from '@/lib/color/extractDominantColor'
 import { TRACK_GRID } from '@/components/ui/grid'
+import { DetailHeaderSkeleton, TrackListSkeleton } from '@/components/Skeleton'
 
 export default function AlbumPage() {
   const { user } = useUser()
@@ -76,8 +77,9 @@ export default function AlbumPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16" role="status" aria-label="Carregando álbum">
-        <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--accent-from)', borderTopColor: 'transparent' }} />
+      <div className="py-6">
+        <DetailHeaderSkeleton />
+        <div className="mt-8"><TrackListSkeleton rows={5} /></div>
       </div>
     )
   }

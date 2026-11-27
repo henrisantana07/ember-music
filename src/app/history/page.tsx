@@ -8,6 +8,7 @@ import { getPlaybackHistory } from '@/lib/playback-history'
 import { useUser } from '@/hooks/use-user'
 import { ErrorState, EmptyState } from '@/components/ui/states'
 import { TRACK_GRID } from '@/components/ui/grid'
+import { TrackListSkeleton } from '@/components/Skeleton'
 
 function groupByDate(items: { played_at: string; track_data: Track }[]) {
   const groups: Record<string, typeof items> = {}
@@ -56,11 +57,7 @@ export default function HistoryPage() {
   const stillLoading = userLoading || (!!user && loading)
 
   if (stillLoading) {
-    return (
-      <div className="flex items-center justify-center py-16" role="status" aria-label="Carregando histórico">
-        <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--accent-from)', borderTopColor: 'transparent' }} />
-      </div>
-    )
+    return <TrackListSkeleton rows={6} />
   }
 
   if (error) {

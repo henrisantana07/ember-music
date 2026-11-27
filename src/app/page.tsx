@@ -6,9 +6,9 @@ import Link from 'next/link'
 import { SectionRow } from '@/components/SectionRow'
 import { ArtistRow } from '@/components/ArtistRow'
 import { AlbumRow } from '@/components/AlbumRow'
-import { TrackCardSkeleton } from '@/components/Skeleton'
+import { TrackCardSkeleton, HomeSkeleton, SectionSkeleton, TrackListSkeleton } from '@/components/Skeleton'
 import { Carousel, CarouselItem } from '@/components/Carousel'
-import { EmptyState, LoadingState } from '@/components/ui/states'
+import { EmptyState } from '@/components/ui/states'
 import { Lottie } from '@/components/ui/LottieLazy'
 import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
 import { useUser } from '@/hooks/use-user'
@@ -92,7 +92,7 @@ function SearchResults({ query }: { query: string }) {
       </p>
 
       {loading ? (
-        <LoadingState title="Buscando resultados…" />
+        <SectionSkeleton cards={4} />
       ) : (
         <>
           {tracks.length > 0 && <SectionRow title="Músicas" tracks={tracks} />}
@@ -305,7 +305,7 @@ function HomeContent() {
   const { sentinelRef } = useInfiniteScroll({ onLoadMore: loadMore, hasMore, loading: moreLoading })
 
   if (initialLoading) {
-    return <LoadingState title="Carregando sua seleção…" />
+    return <HomeSkeleton />
   }
 
   return (
@@ -329,7 +329,7 @@ function HomeContent() {
           action={{ label: 'Carregar recomendações', onClick: loadPicks }}
         />
       )}
-      {picksLoading && <LoadingState title="Buscando recomendações…" />}
+      {picksLoading && <SectionSkeleton cards={4} />}
 
       {/* Personalizadas dos seus mais ouvidos — chegam juntas num lote só.
           Só a escolha do artista vem do histórico: o conteúdo é o que o canal
@@ -376,11 +376,7 @@ function HomeContent() {
         <SectionRow title="Descubra mais" tracks={moreTracks} />
       )}
 
-      {moreLoading && (
-        <div className="flex items-center justify-center py-8">
-          <div className="w-6 h-6 border-2 border-[var(--accent-from)] border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
+      {moreLoading && <TrackListSkeleton rows={3} />}
 
       <div ref={sentinelRef} className="h-4" />
     </>

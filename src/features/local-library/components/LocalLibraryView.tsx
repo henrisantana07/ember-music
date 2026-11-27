@@ -11,6 +11,7 @@ import { SortMenu } from '@/components/ui/SortMenu'
 import { SegmentedToggle } from '@/components/ui/SegmentedToggle'
 import { Modal } from '@/components/ui/Modal'
 import { Snackbar } from '@/components/ui/Snackbar'
+import { TrackListSkeleton } from '@/components/Skeleton'
 
 /* Vista completa da biblioteca local (antes embutida só em /biblioteca/local).
    Usada pela página dedicada E pela aba "Local" da Biblioteca — mesma fonte
@@ -323,11 +324,7 @@ export function LocalLibraryView() {
   }
 
   if (!initialized) {
-    return (
-      <div className="flex items-center justify-center h-48">
-        <div className="w-8 h-8 border-2 border-[var(--accent-from)] border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
+    return <TrackListSkeleton rows={6} />
   }
 
   return (

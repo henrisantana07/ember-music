@@ -19,6 +19,7 @@ import type { Json } from '@/types/database'
 import { Suspense } from 'react'
 import { LocalLibraryView } from '@/features/local-library/components/LocalLibraryView'
 import { LIBRARY_GRID } from '@/components/ui/grid'
+import { TrackListSkeleton } from '@/components/Skeleton'
 
 type TabId = 'favoritos' | 'artistas' | 'playlists' | 'recentes' | 'local'
 
@@ -784,12 +785,7 @@ function BibliotecaContent() {
 
 export default function BibliotecaPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center gap-3 py-10">
-        <div className="w-5 h-5 border-2 border-[var(--accent-from)] border-t-transparent rounded-full animate-spin" />
-        <span style={{ color: 'var(--text-secondary)' }}>Carregando...</span>
-      </div>
-    }>
+    <Suspense fallback={<TrackListSkeleton rows={6} />}>
       <BibliotecaContent />
     </Suspense>
   )

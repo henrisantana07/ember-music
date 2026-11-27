@@ -3,7 +3,8 @@
 import type { Artist } from '@/types/music'
 import { Carousel, CarouselItem } from '@/components/Carousel'
 import { CoverImage } from '@/components/ui/CoverImage'
-import { EmptyState, LoadingState } from '@/components/ui/states'
+import { EmptyState } from '@/components/ui/states'
+import { ArtistRowSkeleton } from '@/components/Skeleton'
 import { Lottie } from '@/components/ui/LottieLazy'
 import Link from 'next/link'
 
@@ -15,7 +16,7 @@ interface ArtistResultCarouselProps {
 
 export function ArtistResultCarousel({ artists, loading, maxItems }: ArtistResultCarouselProps) {
   if (loading) {
-    return <LoadingState title="Carregando artistas…" />
+    return <ArtistRowSkeleton />
   }
 
   const displayArtists = maxItems ? artists.slice(0, maxItems) : artists
