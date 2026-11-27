@@ -94,7 +94,16 @@ function BibliotecaContent() {
 
   const { user, loading: userLoading } = useUser()
   const paramTab = searchParams.get('tab') as TabId | null
-  const activeTab = paramTab && VALID_TABS.includes(paramTab) ? paramTab : 'favoritos'
+  const urlTab = paramTab && VALID_TABS.includes(paramTab) ? paramTab : 'favoritos'
+  /* A URL continua sendo a fonte persistente, mas o clique troca de aba na hora.
+     Antes, se o router não refletisse a mudança de query, as abas pareciam
+     mortas e o usuário ficava preso na seção atual. */
+  const [tabOverride, setTabOverride] = useState<TabId | null>(null)
+  const activeTab = tabOverride ?? urlTab
+
+  useEffect(() => {
+    setTabOverride(null)
+  }, [paramTab])
 
   const [artistSort, setArtistSort] = useState<'recent' | 'a-z'>('recent')
   const [playlistSort, setPlaylistSort] = useState<'recent' | 'updated' | 'a-z' | 'tracks'>('recent')
@@ -304,6 +313,7 @@ function BibliotecaContent() {
   }, [user, activeTab, loadAttempt])
 
   function setTab(tab: TabId) {
+    setTabOverride(tab)
     const params = new URLSearchParams(searchParams.toString())
     if (tab === 'favoritos') {
       params.delete('tab')
@@ -311,7 +321,7 @@ function BibliotecaContent() {
       params.set('tab', tab)
     }
     const qs = params.toString()
-    router.push(qs ? `/biblioteca?${qs}` : '/biblioteca')
+    router.replace(qs ? `/biblioteca?${qs}` : '/biblioteca', { scroll: false })
   }
 
   function getSortedTracks(list: Track[] = tracks): Track[] {
