@@ -1,4 +1,4 @@
-import type { PlaybackHistoryItem } from '@/lib/playback-history'
+import { getLocalPlayCounts, type PlaybackHistoryItem } from '@/lib/playback-history'
 import type { Track, Album, Artist } from '@/types/music'
 
 // ---------------------------------------------------------------------------
@@ -62,16 +62,29 @@ export function applyFollowedArtistImages(
   })
 }
 
+/** "Mais tocadas" = maior contagem de reproduções, com recência como desempate.
+ *  usa `play_count` do banco quando a migration existe e o contador local
+ *  enquanto ela não é aplicada. */
 export function tracksFromHistory(history: PlaybackHistoryItem[]): Track[] {
+  const localCounts = getLocalPlayCounts()
   const seen = new Set<string>()
-  const tracks: Track[] = []
+  const ranked: { track: Track; count: number; played: number }[] = []
+
   for (const item of history) {
     const track = item.track_data as unknown as Track | null
     if (!track?.id || seen.has(track.id)) continue
     seen.add(track.id)
-    tracks.push(track)
+    const played = Date.parse(item.played_at ?? '')
+    ranked.push({
+      track,
+      count: Math.max(item.play_count ?? 0, localCounts[track.id] ?? 0),
+      played: Number.isFinite(played) ? played : 0,
+    })
   }
-  return tracks
+
+  return ranked
+    .sort((a, b) => b.count - a.count || b.played - a.played)
+    .map((entry) => entry.track)
 }
 
 export function albumsFromHistory(history: PlaybackHistoryItem[]): Album[] {

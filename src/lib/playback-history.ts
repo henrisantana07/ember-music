@@ -9,6 +9,32 @@ export interface PlaybackHistoryItem {
   track_id: string
   track_data: Track
   played_at: string
+  /** Presente depois da migration `add_listening_history_play_count`. */
+  play_count?: number
+}
+
+/* Enquanto a migration não é aplicada, o contador vive neste dispositivo.
+   Assim "mais tocadas" já reflete repetições mesmo sem o campo no banco. */
+const LOCAL_COUNT_KEY = 'ember:play-counts'
+
+export function getLocalPlayCounts(): Record<string, number> {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem(LOCAL_COUNT_KEY)
+    const parsed: unknown = raw ? JSON.parse(raw) : {}
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, number>) : {}
+  } catch {
+    return {}
+  }
+}
+
+function bumpLocalPlayCount(trackId: string): Record<string, number> {
+  const counts = getLocalPlayCounts()
+  counts[trackId] = (counts[trackId] ?? 0) + 1
+  try {
+    window.localStorage.setItem(LOCAL_COUNT_KEY, JSON.stringify(counts))
+  } catch { /* storage indisponível */ }
+  return counts
 }
 
 // `maxRows` limita quantas linhas são buscadas. A home precisa só das mais
@@ -50,6 +76,19 @@ export async function savePlaybackHistory(user: User | null, track: Track): Prom
   
   const supabase = createClient()
   const now = new Date().toISOString()
+
+  /* Caminho preferencial: incremento atômico no banco (migration aplicada). */
+  const { error: rpcError } = await supabase.rpc('increment_listening_play', {
+    p_user_id: user.id,
+    p_track_id: track.id,
+    p_track_data: track as unknown as Json,
+  })
+
+  if (!rpcError) return
+
+  /* Compatibilidade: banco sem a migration ainda conta no dispositivo e
+     mantém o upsert antigo de `played_at`. */
+  bumpLocalPlayCount(track.id)
   const { error } = await supabase
     .from('listening_history')
     .upsert({
@@ -58,7 +97,7 @@ export async function savePlaybackHistory(user: User | null, track: Track): Prom
       track_data: track as unknown as Json,
       played_at: now,
     }, { onConflict: 'user_id,track_id', ignoreDuplicates: false })
-  
+
   if (error) {
     console.error('Error saving playback history:', error)
   }

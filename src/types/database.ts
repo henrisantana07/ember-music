@@ -64,6 +64,7 @@ export type Database = {
         Row: {
           id: string
           played_at: string | null
+          play_count: number
           track_data: Json | null
           track_id: string
           user_id: string
@@ -71,6 +72,7 @@ export type Database = {
         Insert: {
           id?: string
           played_at?: string | null
+          play_count?: number
           track_data?: Json | null
           track_id: string
           user_id: string
@@ -78,6 +80,7 @@ export type Database = {
         Update: {
           id?: string
           played_at?: string | null
+          play_count?: number
           track_data?: Json | null
           track_id?: string
           user_id?: string
@@ -366,6 +369,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      increment_listening_play: {
+        Args: { p_user_id: string; p_track_id: string; p_track_data: Json }
+        Returns: void
+      }
       youtube_cache_get: {
         Args: { p_key: string }
         Returns: Json | null
