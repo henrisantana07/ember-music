@@ -24,7 +24,9 @@ export function PlaylistModal({ open, onClose, track }: PlaylistModalProps) {
 
   useEffect(() => {
     if (!open) return
-    fetchPlaylists()
+    /* Ao adicionar uma faixa, a lista de playlists pode ter mudado fora da
+       store — aqui sim queremos refrescar mesmo com dados já carregados. */
+    fetchPlaylists(true)
   }, [open])
 
   useEffect(() => {

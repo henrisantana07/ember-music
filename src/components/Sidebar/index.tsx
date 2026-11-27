@@ -215,7 +215,7 @@ export default function Sidebar() {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const desktopAsideRef = useRef<HTMLElement>(null)
   const [showDropdown, setShowDropdown] = useState(false)
-  const { playlists, loading: playlistsLoading, fetchPlaylists } = usePlaylistsStore()
+  const { playlists, loading: playlistsLoading, fetchPlaylists, reset: resetPlaylists } = usePlaylistsStore()
   const { artists, loading: artistsLoading, fetchArtists } = useArtistsStore()
   const { user, loading: userLoading } = useUser()
   const avatarUrl = useAvatar(user?.id)
@@ -348,12 +348,13 @@ export default function Sidebar() {
     setShowDropdown(false)
   }
 
-useEffect(() => {
-    if (user) {
-      fetchPlaylists()
-      fetchArtists()
-    }
-  }, [user, fetchPlaylists, fetchArtists])
+  useEffect(() => {
+    if (!user) return
+    /* Só limpa o cache quando a conta muda de fato. */
+    resetPlaylists()
+    fetchPlaylists()
+    fetchArtists()
+  }, [user?.id, resetPlaylists, fetchPlaylists, fetchArtists])
   function isActive(href: string) {
     if (href === '/') return pathname === '/'
     /* `/biblioteca` e `/biblioteca/local` são destinos distintos: o

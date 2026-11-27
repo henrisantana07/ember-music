@@ -24,7 +24,11 @@ export interface PlaylistItem {
 interface PlaylistsState {
   playlists: PlaylistItem[]
   loading: boolean
-  fetchPlaylists: () => Promise<void>
+  /** Evita refetch (e o skeleton da sidebar) quando os dados já estão na store. */
+  loaded: boolean
+  fetchPlaylists: (force?: boolean) => Promise<void>
+  /** Limpa o cache quando a conta muda (logout/login de outro usuário). */
+  reset: () => void
   addPlaylist: (playlist: PlaylistItem) => void
   removePlaylist: (id: string) => void
   updatePlaylist: (id: string, data: Partial<PlaylistItem>) => void
@@ -34,16 +38,23 @@ interface PlaylistsState {
   ) => void
 }
 
-export const usePlaylistsStore = create<PlaylistsState>((set) => ({
+export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
   playlists: [],
   loading: false,
+  loaded: false,
 
-  fetchPlaylists: async () => {
+  reset: () => set({ playlists: [], loading: false, loaded: false }),
+
+  fetchPlaylists: async (force = false) => {
+    /* A sidebar e a aba Playlists da biblioteca compartilham esta store.
+       Sem o guard, trocar de filtro marcava loading de novo e a sidebar
+       voltava a mostrar "Carregando biblioteca…" com dados já prontos. */
+    if (get().loaded && !force) return
     set({ loading: true })
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      set({ playlists: [], loading: false })
+      set({ playlists: [], loading: false, loaded: false })
       return
     }
     const { data, error } = await supabase
@@ -64,7 +75,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set) => ({
         ...p,
         track_count: p.playlist_tracks?.[0]?.count ?? 0,
       }))
-      set({ playlists: mapped })
+      set({ playlists: mapped, loaded: true })
     }
     set({ loading: false })
   },
