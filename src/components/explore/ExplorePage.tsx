@@ -226,6 +226,9 @@ export function ExplorePage() {
 
   return (
     <div className="transition-opacity duration-200" key={isSearching ? 'results' : 'empty'}>
+      <h1 className="text-display-small mb-6">
+        {isSearching ? `Resultados para “${query}”` : 'Explorar'}
+      </h1>
       {isSearching ? (
         <ExploreResults
           query={query}

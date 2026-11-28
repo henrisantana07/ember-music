@@ -134,8 +134,18 @@ export async function GET(request: NextRequest) {
       }
 
       case 'charts/artists': {
-        const { artists } = await searchYouTubeChannels(q ?? 'popular music', Math.min(limit, 12))
-        return json({ results: artists })
+        try {
+          const { artists } = await searchYouTubeChannels(q ?? 'popular music', Math.min(limit, 12))
+          return json({ results: artists })
+        } catch (cause) {
+          const message = String(cause instanceof Error ? cause.message : cause)
+          /* Cota diária esgotada não é falha da página: devolve lista vazia
+             com cache curto para a home seguir sem erro no console. */
+          if (/quota|429|RATE_LIMIT/i.test(message)) {
+            return json({ results: [], stale: true }, 0)
+          }
+          throw cause
+        }
       }
 
       case 'related': {
