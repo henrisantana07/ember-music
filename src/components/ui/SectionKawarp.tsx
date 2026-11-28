@@ -9,6 +9,18 @@ interface SectionKawarpProps {
   className?: string
   /** Escurecimento sobre o canvas para manter o texto legível. */
   dimLevel?: number
+  /** Saturação da cor dominante extraída da capa. */
+  saturation?: number
+  /** Força do tint nas áreas escuras da capa. */
+  tintIntensity?: number
+  /** Escala do warp — acima de 1 preenche mais da área com a capa. */
+  scale?: number
+  /** Scrim funcional de contraste; cada seção decide quanto da cor guarda. */
+  scrim?: string
+  /** Tint explícito (cor dominante extraída) quando a capa é escura. */
+  palette?: { primary: string; secondary: string; tertiary?: string; base?: string } | null
+  /** Realce de brilho/saturação para capas escuras — usar só na hero. */
+  boost?: boolean
 }
 
 /**
@@ -20,6 +32,12 @@ export function SectionKawarp({
   coverUrl,
   className = '',
   dimLevel = 0.32,
+  saturation = 1.2,
+  tintIntensity = 0.12,
+  scale = 1,
+  scrim = 'linear-gradient(to bottom, transparent 30%, var(--bg-base) 100%)',
+  palette,
+  boost = false,
 }: SectionKawarpProps) {
   if (!coverUrl) return null
 
@@ -27,7 +45,7 @@ export function SectionKawarp({
     <div
       aria-hidden="true"
       className={`pointer-events-none absolute isolate overflow-hidden select-none ${className}`}
-      style={{ zIndex: -1 }}
+      style={{ zIndex: -1, filter: boost ? 'brightness(1.55) saturate(1.5)' : undefined }}
     >
       <KawarpBackground
         coverUrl={coverUrl}
@@ -35,14 +53,13 @@ export function SectionKawarp({
         warpIntensity={0.42}
         blurPasses={14}
         animationSpeed={0.45}
-        saturation={1.2}
-        tintIntensity={0.12}
+        saturation={saturation}
+        tintIntensity={tintIntensity}
+        scale={scale}
+        palette={palette}
       />
       {/* Scrim funcional: não é decoração, é o que garante contraste do texto. */}
-      <div
-        className="absolute inset-0"
-        style={{ background: 'linear-gradient(to bottom, transparent 30%, var(--bg-base) 100%)' }}
-      />
+      <div className="absolute inset-0" style={{ background: scrim }} />
     </div>
   )
 }

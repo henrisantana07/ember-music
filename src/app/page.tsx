@@ -27,6 +27,7 @@ import {
 import type { Track, Album, Artist, Genre } from '@/types/music'
 import { GenreArt } from '@/components/explore/GenreArt'
 import { SectionKawarp } from '@/components/ui/SectionKawarp'
+import { extractDominantColor } from '@/lib/color/extractDominantColor'
 
 const GENRE_NAMES = ['pop', 'rock', 'electronic', 'jazz', 'hip hop', 'classical', 'reggae', 'blues', 'metal', 'folk', 'country', 'soul', 'punk', 'alternative', 'indie', 'r&b', 'latin', 'dance', 'ambient', 'funk']
 
@@ -313,6 +314,18 @@ function HomeContent() {
   const heroTrack = topTracks[0] ?? trending[0]
   const heroQueue = topTracks.length > 0 ? topTracks : trending
 
+  /* Capas escuras quase não tingem o warp sozinhas: a cor dominante entra
+     como tint explícito para o "Toque agora" ficar preenchido pela faixa. */
+  const [heroColor, setHeroColor] = useState<string | null>(null)
+  useEffect(() => {
+    if (!heroTrack?.image) return
+    let cancelled = false
+    extractDominantColor(heroTrack.image).then((color) => {
+      if (!cancelled) setHeroColor(color)
+    })
+    return () => { cancelled = true }
+  }, [heroTrack?.image])
+
   if (initialLoading) {
     return <HomeSkeleton />
   }
@@ -321,7 +334,20 @@ function HomeContent() {
     <>
       {heroTrack && (
         <section className="home-hero relative mb-10 overflow-hidden rounded-[var(--shape-extra-large)]">
-          <SectionKawarp coverUrl={heroTrack.image} className="inset-0" dimLevel={0.28} />
+          {/* A hero é o único lugar onde gastamos o movimento/cor com mais
+              presença: o Kawarp recebe a capa em escala maior e o scrim só
+              fecha no rodapé, para o texto continuar legível. */}
+          <SectionKawarp
+            coverUrl={heroTrack.image}
+            className="inset-0"
+            dimLevel={0.05}
+            saturation={1.7}
+            tintIntensity={0.42}
+            scale={1.12}
+            boost
+            scrim="linear-gradient(to bottom, transparent 78%, color-mix(in srgb, var(--bg-base) 75%, transparent) 100%)"
+            palette={heroColor ? { primary: heroColor, secondary: heroColor, tertiary: heroColor } : null}
+          />
           <div
             aria-hidden="true"
             className="absolute inset-0"
