@@ -678,7 +678,7 @@ export default function Sidebar() {
       <aside
         ref={desktopAsideRef}
         style={{ width: collapsed ? undefined : `${expandedWidth}px` }}
-        className={`hidden md:flex flex-col h-full overflow-hidden bg-[var(--bg-surface)] flex-shrink-0 relative ${
+        className={`hidden md:flex flex-col h-full overflow-hidden bg-[var(--bg-surface)] flex-shrink-0 relative pt-[calc(var(--topbar-h)+var(--safe-top))] ${
           collapsed ? 'w-[72px]' : (isDraggingSidebar ? '' : 'transition-[width] duration-[var(--motion-duration-standard)] ease-[var(--motion-easing-standard)]')
         }`}
       >

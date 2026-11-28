@@ -74,9 +74,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <MotionConfig reducedMotion="user">
           <YouTubePlayerProvider>
             <KeyboardShortcuts />
-            <div className="flex flex-col flex-1 overflow-hidden">
-              <Suspense fallback={<div className="h-16 flex-shrink-0 border-b border-outline-variant" />}><Topbar /></Suspense>
-              <div className="flex flex-1 overflow-hidden">
+            {/* O topbar fica absoluto sobre a área de scroll: assim o conteúdo
+                passa atrás dele e o glass tem o que desfocar. O padding que
+                antes vinha do fluxo agora vive na sidebar e no main. */}
+            <div className="relative flex-1 overflow-hidden">
+              <Suspense fallback={<div className="absolute top-0 left-0 right-0 z-30 h-16 border-b border-outline-variant bg-[var(--bg-base)]" />}><Topbar /></Suspense>
+              <div className="flex h-full overflow-hidden">
                 <Sidebar />
                 <MainContainer>
                   <PageTransition>

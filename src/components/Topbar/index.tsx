@@ -119,7 +119,7 @@ export function Topbar() {
     /* 30 fica acima do conteúdo (10–20) e abaixo de nav (50), hero (60),
        player (70) e dos overlays (80+). Antes era 100 e cobria os modais. */
     <header
-      className="flex flex-shrink-0 items-center justify-center border-b border-outline-variant px-4 relative z-30 md:px-6"
+      className="absolute top-0 left-0 right-0 z-30 flex items-center justify-center border-b border-outline-variant px-4 md:px-6"
       style={{
         /* Glass leve só depois que o conteúdo começa a rolar: no topo o
            header continua sólido e não disputa com a hero/Kawarp. */
