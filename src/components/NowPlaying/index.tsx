@@ -31,7 +31,7 @@ import { useMenu, MenuPanel, MenuPresence } from '@/components/ui/Menu'
 import { PlaylistModal } from '@/components/PlaylistModal'
 import { MenuAddToPlaylistItem, MenuShareItem, MenuArtistItem, MenuRemoveItem } from '@/components/TrackMenuItems'
 import { motion } from 'motion/react'
-import { confirmPopProps } from '@/lib/motion'
+import { confirmPopProps, TRANSITION } from '@/lib/motion'
 import { useConfirmAnimation } from '@/lib/motion-hooks'
 
 function queueIndexFromItemKey(key: string | number): number {
@@ -288,6 +288,18 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     document.documentElement.classList.toggle('immersive', immersive)
     return () => document.documentElement.classList.remove('immersive')
   }, [immersive])
+
+  /* A subida da hero é o único gesto da entrada. As cores do painel e o
+     `cover-in` também disparavam no mount, somando duas animações à mesma
+     abertura; ficam suspensos até a subida terminar. */
+  const [heroReady, setHeroReady] = useState(false)
+  useEffect(() => {
+    const timer = setTimeout(
+      () => setHeroReady(true),
+      TRANSITION.surfaceEnter.duration * 1000,
+    )
+    return () => clearTimeout(timer)
+  }, [])
 
   // Leva à página do artista da faixa, onde o usuário pode explorar novas faixas dele
   const visitArtist = useCallback((artistId: string) => {
@@ -741,7 +753,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
          mesmo gesto do player expandido (o modal anima o `y` de 100% para 0).
          No modal esta raiz não anima — o `motion.div` de fora já faz isso, e
          dois gestos juntos dariam um salto duplo. */
-      className={`now-playing h-full relative flex flex-col overflow-hidden ${onClose ? '' : 'animate-hero-rise'}`}
+      className={`now-playing h-full relative flex flex-col overflow-hidden ${onClose ? '' : 'animate-hero-rise'} ${heroReady ? '' : 'hero-entering'}`}
       style={{
         /* A reserva inferior acompanha o chrome real (nav + player + safe
            area) em vez dos antigos `pb-14`/`pb-20` fixos, que deixavam o
@@ -812,7 +824,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 key={currentTrack.id}
                 src={displayCover}
                 alt={currentTrack.name}
-                className="w-full h-full rounded-2xl object-cover animate-cover-in"
+                className="w-full h-full rounded-2xl object-cover"
                 style={{ boxShadow: coverShadow }}
                 onError={(e) => {
                   // Fallback seguro: se a HD falhar, repara para a capa base (v.2_reordenar);
@@ -826,7 +838,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                 }}
               />
             ) : (
-              <div key={currentTrack.id} className="w-full h-full rounded-2xl flex items-center justify-center animate-cover-in" style={{ backgroundColor: 'var(--bg-surface)' }}>
+              <div key={currentTrack.id} className="w-full h-full rounded-2xl flex items-center justify-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
                 <Music className="w-16 h-16" style={{ color: 'var(--text-disabled)' }} />
               </div>
             )}

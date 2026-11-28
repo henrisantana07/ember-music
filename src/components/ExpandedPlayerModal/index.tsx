@@ -35,10 +35,17 @@ export function ExpandedPlayerModal() {
   useEffect(() => {
     if (isExpandedOpen) {
       setRender(true)
-      // Um frame entre montar e marcar `shown` garante que o navegador pinte
-      // `translateY(100%)` antes de transicionar para 0.
-      const frame = requestAnimationFrame(() => setShown(true))
-      return () => cancelAnimationFrame(frame)
+      // Dois frames: o primeiro garante que o navegador pinte
+      // `translateY(100%)`; só no segundo mandamos para 0. Com um frame só,
+      // o rAF rodava antes da primeira pintura e a subida não interpolava.
+      let second = 0
+      const first = requestAnimationFrame(() => {
+        second = requestAnimationFrame(() => setShown(true))
+      })
+      return () => {
+        cancelAnimationFrame(first)
+        cancelAnimationFrame(second)
+      }
     }
     setShown(false)
     if (fallback.current) clearTimeout(fallback.current)

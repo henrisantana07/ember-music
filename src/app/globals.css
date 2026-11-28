@@ -567,6 +567,18 @@ body {
   animation: cover-in 300ms ease-out;
 }
 
+/* Enquanto a hero sobe, só a subida deve ser vista: o crossfade das cores do
+   painel (900ms) e o `cover-in` (300ms) também disparavam no mount e liam como
+   uma segunda animação sobreposta. Depois da subida voltam a valer em trocas
+   de faixa. */
+.hero-entering .now-cover-panel {
+  transition: none !important;
+}
+
+.hero-entering .animate-cover-in {
+  animation: none !important;
+}
+
 /* Reserva vertical: pb-20 80 + main 16 + coluna 24 + (pt-2 8 + título 70 +
    ações 48 + 2 gaps de 16 + pb-4 16) ≈ 300px de conteúdo real.
 
