@@ -90,6 +90,24 @@ export type Database = {
         }
         Relationships: []
       }
+      music_genres: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       playlist_tracks: {
         Row: {
           added_at: string | null
@@ -121,6 +139,39 @@ export type Database = {
             columns: ["playlist_id"]
             isOneToOne: false
             referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_favorite_genres: {
+        Row: {
+          created_at: string
+          genre_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          genre_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          genre_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_favorite_genres_genre_id_fkey"
+            columns: ["genre_id"]
+            isOneToOne: false
+            referencedRelation: "music_genres"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_favorite_genres_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]

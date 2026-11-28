@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Toggle } from '@/components/Settings/Toggle'
 import { Slider } from '@/components/Settings/Slider'
+import { FilterChip } from '@/components/ui/FilterChip'
 import type { User } from '@supabase/supabase-js'
 
 type Section = 'perfil' | 'aparencia' | 'reproducao' | 'notificacoes'
@@ -52,7 +53,9 @@ export default function ConfiguracoesPage() {
   const [email, setEmail] = useState('')
   const [memberSince, setMemberSince] = useState('')
   const [favCount, setFavCount] = useState(0)
-  const [preferredGenre, setPreferredGenre] = useState('')
+  /** Catálogo compartilhado (tabela music_genres) e seleção do usuário. */
+  const [genreOptions, setGenreOptions] = useState<{ id: string; name: string }[]>([])
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([])
 
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
@@ -109,8 +112,19 @@ export default function ConfiguracoesPage() {
       setDisplayName(profile.display_name ?? user.user_metadata?.full_name ?? '')
       setBio(profile.bio ?? '')
       setAvatarUrl(profile.avatar_url ?? user.user_metadata?.avatar_url ?? '')
-      setPreferredGenre(profile.preferred_genre ?? '')
     }
+
+    const { data: genreRows } = await supabase
+      .from('music_genres')
+      .select('id, name')
+      .order('name', { ascending: true })
+    setGenreOptions(genreRows ?? [])
+
+    const { data: ownGenres } = await supabase
+      .from('user_favorite_genres')
+      .select('genre_id')
+      .eq('user_id', user.id)
+    setSelectedGenres((ownGenres ?? []).map((row) => row.genre_id))
 
     const { count } = await supabase
       .from('favorites')
@@ -152,14 +166,13 @@ export default function ConfiguracoesPage() {
 
   // --- Auto-save helpers ---
   const saveProfileField = useCallback(
-    async (field: 'display_name' | 'bio' | 'preferred_genre', value: string) => {
+    async (field: 'display_name' | 'bio', value: string) => {
       if (!user) return
       setProfileSaving(true)
       setProfileSaved(false)
       const payload: Record<string, string> = { id: user.id }
       if (field === 'display_name') payload.display_name = value
-      else if (field === 'bio') payload.bio = value
-      else payload.preferred_genre = value
+      else payload.bio = value
       const { error } = await supabase.from('profiles').upsert(payload as any)
       setProfileSaving(false)
       if (!error) {
@@ -190,7 +203,6 @@ export default function ConfiguracoesPage() {
   // --- Text field debounce ---
   const nameTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const bioTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const genreTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function handleNameChange(v: string) {
     if (v.length > 50) return
@@ -206,11 +218,31 @@ export default function ConfiguracoesPage() {
     bioTimer.current = setTimeout(() => saveProfileField('bio', v), 800)
   }
 
-  function handleGenreChange(v: string) {
-    setPreferredGenre(v)
-    if (genreTimer.current) clearTimeout(genreTimer.current)
-    genreTimer.current = setTimeout(() => saveProfileField('preferred_genre', v), 800)
+  /* Cada chip é uma linha em user_favorite_genres: a seleção é imediata na UI
+     e revertida se o banco recusar a escrita. */
+  async function toggleGenre(id: string) {
+    if (!user) return
+    const isOn = selectedGenres.includes(id)
+    setSelectedGenres((prev) => isOn ? prev.filter((g) => g !== id) : [...prev, id])
+    setProfileSaving(true)
+    setProfileSaved(false)
+
+    const { error } = isOn
+      ? await supabase.from('user_favorite_genres').delete().eq('user_id', user.id).eq('genre_id', id)
+      : await supabase.from('user_favorite_genres').insert({ user_id: user.id, genre_id: id })
+
+    setProfileSaving(false)
+    if (error) {
+      setSelectedGenres((prev) => isOn ? [...prev, id] : prev.filter((g) => g !== id))
+      return
+    }
+    setProfileSaved(true)
+    setTimeout(() => setProfileSaved(false), 2000)
   }
+
+  const favoriteGenresLabel = selectedGenres
+    .map((id) => genreOptions.find((g) => g.id === id)?.name ?? id)
+    .join(', ')
 
   // --- Avatar crop ---
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -416,7 +448,7 @@ export default function ConfiguracoesPage() {
                     <p className="text-body-medium mt-0.5" style={{ color: 'var(--text-secondary)' }}>Favoritas</p>
                   </div>
                   <div className="p-3 rounded-lg min-w-[100px] text-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
-                    <p className="text-xl font-bold gradient-accent-text">{preferredGenre || '—'}</p>
+                    <p className="text-xl font-bold gradient-accent-text break-words">{favoriteGenresLabel || '—'}</p>
                     <p className="text-body-medium mt-0.5" style={{ color: 'var(--text-secondary)' }}>Gênero</p>
                   </div>
                   <div className="flex items-center">
@@ -478,23 +510,31 @@ export default function ConfiguracoesPage() {
                 <p className="text-body-medium mt-1 text-right" style={{ color: 'var(--text-secondary)' }}>{displayName.length}/50</p>
               </div>
 
-              {/* Gênero favorito */}
+              {/* Gêneros favoritos — filtros prontos do catálogo compartilhado. */}
               <div className="mb-5 max-w-2xl">
-                <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-primary)' }}>Gênero musical favorito</label>
-                <input
-                  type="text"
-                  value={preferredGenre}
-                  onChange={(e) => handleGenreChange(e.target.value)}
-                  placeholder="Ex: rock, jazz, electronic…"
-                  className="w-full min-h-[48px] px-4 rounded-lg border text-body-large transition-colors "
-                  style={{
-                    backgroundColor: 'var(--bg-surface)',
-                    borderColor: 'var(--bg-elevated)',
-                    color: 'var(--text-primary)',
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = 'var(--accent-solid)'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--bg-elevated)'}
-                />
+                <div className="flex items-center">
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-primary)' }}>Gêneros musicais favoritos</label>
+                  <SaveIndicator saving={profileSaving} saved={profileSaved} />
+                </div>
+                <p className="text-body-medium mb-3" style={{ color: 'var(--text-secondary)' }}>
+                  Escolha quantos quiser. Os filtros vêm do catálogo salvo no banco.
+                </p>
+                {genreOptions.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {genreOptions.map((genre) => (
+                      <FilterChip
+                        key={genre.id}
+                        selected={selectedGenres.includes(genre.id)}
+                        onClick={() => toggleGenre(genre.id)}
+                        ariaLabel={`Gênero ${genre.name}`}
+                      >
+                        {genre.name}
+                      </FilterChip>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-body-medium" style={{ color: 'var(--text-disabled)' }}>Carregando gêneros…</p>
+                )}
               </div>
 
               {/* Bio */}
