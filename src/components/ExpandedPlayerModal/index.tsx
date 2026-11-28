@@ -17,7 +17,8 @@ import { EASE, TRANSITION } from '@/lib/motion'
  * é desmontado depois do `transitionend` (com um timeout de segurança).
  */
 const ENTER_MS = TRANSITION.surfaceEnter.duration * 1000
-const EXIT_MS = TRANSITION.surfaceExit.duration * 1000
+/** A saída usa a mesma duração da entrada; só o easing é diferente. */
+const EXIT_MS = ENTER_MS
 
 function easing(ease: readonly number[] | string): string {
   return typeof ease === 'string' ? ease : `cubic-bezier(${ease.join(',')})`
