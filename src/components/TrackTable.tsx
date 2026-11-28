@@ -143,7 +143,7 @@ function SortHeader({
   const ariaSort: 'ascending' | 'descending' | 'none' = active ? (dir === 'desc' ? 'descending' : 'ascending') : 'none'
 
   if (!onSort) {
-    return <th scope="col" className={`py-3 px-3 text-left text-label-large font-semibold ${className}`} style={{ color: 'var(--text-disabled)' }}>{label}</th>
+    return <th scope="col" className={`py-3 px-3 text-left text-label-large font-semibold ${className}`} style={{ color: 'var(--text-secondary)' }}>{label}</th>
   }
 
   return (
@@ -153,7 +153,7 @@ function SortHeader({
         onClick={() => onSort(sortKey)}
         /* Mesmo `px-3` das células: rótulo e dado começam na mesma margem.
            O alvo de toque continua em 48px de altura. */
-        className={`inline-flex items-center gap-1 text-label-large font-semibold transition-colors state-layer rounded py-1 min-h-[48px] ${active ? 'text-[var(--accent-solid)]' : 'text-[var(--text-disabled)] hover:text-[var(--text-primary)]'}`}
+        className={`inline-flex items-center gap-1 text-label-large font-semibold transition-colors state-layer rounded py-1 min-h-[48px] ${active ? 'text-[var(--accent-solid)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
       >
         {label}
         <svg className={`w-4 h-4 transition-transform ${active && dir === 'desc' ? 'rotate-180' : ''} ${active ? 'opacity-100' : 'opacity-30'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
@@ -235,15 +235,15 @@ export function TrackTable({
         <caption className="sr-only">Faixas</caption>
         <thead>
           <tr className="border-b border-outline-variant">
-            <th scope="col" className="w-14 py-3 px-3 text-right text-label-large font-semibold" style={{ color: 'var(--text-disabled)' }}>
+            <th scope="col" className="w-14 py-3 px-3 text-right text-label-large font-semibold" style={{ color: 'var(--text-secondary)' }}>
               Nº
             </th>
-            <th scope="col" className="py-3 px-3 text-left text-label-large font-semibold" style={{ color: 'var(--text-disabled)' }}>
+            <th scope="col" className="py-3 px-3 text-left text-label-large font-semibold" style={{ color: 'var(--text-secondary)' }}>
               Título
             </th>
             <SortHeader label="Álbum" sortKey="album" current={sort} dir={sortDir} onSort={onSort} className="hidden md:table-cell w-44" />
             <SortHeader label="Adicionada em" sortKey="date" current={sort} dir={sortDir} onSort={onSort} className="hidden lg:table-cell w-36" />
-            <th scope="col" className="w-28 py-3 px-3 text-left text-label-large font-semibold" style={{ color: 'var(--text-disabled)' }}>
+            <th scope="col" className="w-28 py-3 px-3 text-left text-label-large font-semibold" style={{ color: 'var(--text-secondary)' }}>
               Ações
             </th>
             <SortHeader label="Duração" sortKey="duration" current={sort} dir={sortDir} onSort={onSort} className="text-right w-24" />
@@ -276,7 +276,7 @@ export function TrackTable({
                     onClick={(e) => playToggle(track, e)}
                     aria-label={isActive ? `Pausar ${track.name}` : `Tocar ${track.name}`}
                     className="inline-flex h-12 w-12 items-center justify-center text-label-large"
-                    style={{ color: isActive ? 'var(--accent-solid)' : 'var(--text-disabled)' }}
+                    style={{ color: isActive ? 'var(--accent-solid)' : 'var(--text-secondary)' }}
                   >
                     {isActive ? (
                       <PlayingIndicator playing={isPlayingThis} />
@@ -324,7 +324,7 @@ export function TrackTable({
                 </td>
 
                 {/* 06 — duration + quality */}
-                <td className="py-3 px-3 text-right whitespace-nowrap text-body-medium" style={{ color: 'var(--text-disabled)' }}>
+                <td className="py-3 px-3 text-right whitespace-nowrap text-body-medium" style={{ color: 'var(--text-secondary)' }}>
                   <span className="inline-flex items-center gap-2">
                     {badges?.(track)}
                     {formatDuration(track.duration)}
@@ -373,7 +373,7 @@ export function TrackTable({
                 {cleanDisplayTitle(track.name, track.artist_name)}
               </p>
               <p className="mt-0.5 truncate text-body-medium" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
-              <p className="mt-0.5 text-body-small" style={{ color: 'var(--text-disabled)' }}>
+              <p className="mt-0.5 text-body-small" style={{ color: 'var(--text-secondary)' }}>
                 {badges?.(track)}
                 {formatDuration(track.duration)}
               </p>

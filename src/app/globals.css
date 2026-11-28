@@ -618,6 +618,13 @@ h1, h2 {
   animation: hero-kawarp-dim 700ms cubic-bezier(0.2, 0, 0, 1) both;
 }
 
+/* Sobre a faixa Kawarp, cinzas escuros somem. A biblioteca usa uma escala de
+   texto mais clara para rótulos e colunas continuarem legíveis como informação. */
+.library-contrast {
+  --text-secondary: #D6D3CF;
+  --text-disabled: #A8A29A;
+}
+
 
 /* Reserva vertical: pb-20 80 + main 16 + coluna 24 + (pt-2 8 + título 70 +
    ações 48 + 2 gaps de 16 + pb-4 16) ≈ 300px de conteúdo real.
