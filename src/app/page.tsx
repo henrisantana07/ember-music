@@ -338,8 +338,10 @@ function HomeContent() {
               presença: o Kawarp recebe a capa em escala maior e o scrim só
               fecha no rodapé, para o texto continuar legível. */}
           <SectionKawarp
+            key={heroTrack.id}
             coverUrl={heroTrack.image}
-            className="inset-0"
+            className="inset-0 hero-kawarp-settle"
+            dimClassName="hero-kawarp-dim"
             dimLevel={0.05}
             saturation={1.7}
             tintIntensity={0.42}

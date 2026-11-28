@@ -21,6 +21,8 @@ interface SectionKawarpProps {
   palette?: { primary: string; secondary: string; tertiary?: string; base?: string } | null
   /** Realce de brilho/saturação para capas escuras — usar só na hero. */
   boost?: boolean
+  /** Classe extra para a camada de escurecimento (ex.: animação da hero). */
+  dimClassName?: string
 }
 
 /**
@@ -38,6 +40,7 @@ export function SectionKawarp({
   scrim = 'linear-gradient(to bottom, transparent 30%, var(--bg-base) 100%)',
   palette,
   boost = false,
+  dimClassName = '',
 }: SectionKawarpProps) {
   if (!coverUrl) return null
 
@@ -60,6 +63,7 @@ export function SectionKawarp({
       />
       {/* Scrim funcional: não é decoração, é o que garante contraste do texto. */}
       <div className="absolute inset-0" style={{ background: scrim }} />
+      {dimClassName && <div className={`absolute inset-0 ${dimClassName}`} />}
     </div>
   )
 }
