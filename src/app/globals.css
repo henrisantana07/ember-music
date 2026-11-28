@@ -693,6 +693,15 @@ h1, h2 {
   --text-accent: #ff8700;
 }
 
+/* Qualquer superfície com Kawarp atrás usa a mesma escala de texto da
+   biblioteca: rótulos e metadados não se dissolvem na cor da capa. A regra
+   vem depois de `.now-playing` para vencer o neutro local da hero. */
+.over-kawarp-contrast,
+.now-playing.over-kawarp-contrast {
+  --text-secondary: #D6D3CF;
+  --text-disabled: #A8A29A;
+}
+
 /* ── Player expandido: posição ──────────────────────────────────────────────
    O painel do `ExpandedPlayerModal` ocupa a tela inteira, mas a classe
    `md:top-16` (abaixo do Topbar) e o `left` ligado em `--sidebar-w` mudam

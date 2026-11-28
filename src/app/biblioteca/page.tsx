@@ -478,7 +478,7 @@ function BibliotecaContent() {
   if (!user) return null
 
   return (
-    <div className="library-contrast mx-auto w-full relative isolate">
+    <div className="library-contrast over-kawarp-contrast mx-auto w-full relative isolate">
       {/* Bleed horizontal: `left-0/right-0` parava na borda do conteúdo depois
           dos `px-4 md:px-6` do `MainContainer` — o glow nascia 16/24px depois
           da linha da coluna de navegação. Os offsets espelham esses paddings:

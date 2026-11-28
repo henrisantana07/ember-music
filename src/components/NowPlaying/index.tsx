@@ -722,7 +722,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
          mesmo gesto do player expandido (o modal anima o `y` de 100% para 0).
          No modal esta raiz não anima — o `motion.div` de fora já faz isso, e
          dois gestos juntos dariam um salto duplo. */
-      className={`now-playing h-full relative flex flex-col overflow-hidden ${onClose ? '' : 'animate-hero-rise'} ${heroReady ? '' : 'hero-entering'}`}
+      className={`now-playing over-kawarp-contrast h-full relative flex flex-col overflow-hidden ${onClose ? '' : 'animate-hero-rise'} ${heroReady ? '' : 'hero-entering'}`}
       style={{
         /* A reserva inferior acompanha o chrome real (nav + player + safe
            area) em vez dos antigos `pb-14`/`pb-20` fixos, que deixavam o

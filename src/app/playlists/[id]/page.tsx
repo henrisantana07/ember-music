@@ -398,7 +398,7 @@ function PlaylistContent() {
   const totalDuration = parsedTracks.reduce((acc, t) => acc + (t?.duration ?? 0), 0)
 
   return (
-    <div className="w-full relative">
+    <div className="over-kawarp-contrast w-full relative">
       {/* Mesmo bleed da biblioteca: banda full-bleed até a linha da coluna
           de navegação, offsets espelhando os `px-4 md:px-6` do MainContainer. */}
       <SectionKawarp coverUrl={coverColorSource} className="-top-6 -left-4 -right-4 md:-left-6 md:-right-6 h-[400px]" />

@@ -333,7 +333,7 @@ function HomeContent() {
   return (
     <>
       {heroTrack && (
-        <section className="home-hero relative isolate mb-10 rounded-[var(--shape-extra-large)]">
+        <section className="home-hero over-kawarp-contrast relative isolate mb-10 rounded-[var(--shape-extra-large)]">
           {/* A hero é o único lugar onde gastamos o movimento/cor com mais
               presença: o Kawarp recebe a capa em escala maior e o scrim só
               fecha no rodapé, para o texto continuar legível. */}
