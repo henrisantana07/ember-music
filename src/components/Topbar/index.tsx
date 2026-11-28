@@ -124,10 +124,21 @@ export function Topbar() {
         /* Glass leve só depois que o conteúdo começa a rolar: no topo o
            header continua sólido e não disputa com a hero/Kawarp. */
         backgroundColor: scrolled
-          ? 'color-mix(in srgb, var(--bg-base) 78%, transparent)'
+          ? 'color-mix(in srgb, var(--bg-base) 64%, transparent)'
           : 'var(--bg-base)',
-        backdropFilter: scrolled ? 'blur(16px) saturate(1.2)' : 'none',
-        transition: 'background-color 240ms ease, backdrop-filter 240ms ease',
+        /* O topbar não sobrepõe o scroll, então o blur sozinho quase não se
+           via. O brilho superior + borda fina dão a leitura de vidro. */
+        backgroundImage: scrolled
+          ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent)'
+          : 'none',
+        backdropFilter: scrolled ? 'blur(20px) saturate(1.4)' : 'none',
+        borderBottomColor: scrolled
+          ? 'color-mix(in srgb, var(--outline-variant) 60%, transparent)'
+          : 'var(--outline-variant)',
+        boxShadow: scrolled
+          ? 'inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 24px rgba(0, 0, 0, 0.22)'
+          : 'none',
+        transition: 'background-color 240ms ease, background-image 240ms ease, backdrop-filter 240ms ease, border-color 240ms ease, box-shadow 240ms ease',
         /* A hero em tela cheia cobre o Topbar por z-index (30 < 60), sem
            `display:none`: removê-lo do fluxo empurrava o conteúdo da página. */
         height: 'calc(var(--topbar-h) + var(--safe-top))',
