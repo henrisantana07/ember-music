@@ -23,6 +23,17 @@ import { TRANSITION } from '@/lib/motion'
  * POSICAO da caixa (`top`/`left`), e isso e a transicao da classe
  * `.expanded-player` no `globals.css`: sem ela o painel saltava de lugar.
  */
+/**
+ * Variantes nomeadas em vez de objetos inline: o `AnimatePresence` precisa
+ * resolver a transição da saída como uma variante estável, senão o painel
+ * recebe o valor final (`y: 100%`) num frame e é desmontado antes de animar.
+ */
+const EXPANDED_VARIANTS = {
+  hidden: { y: '100%' },
+  visible: { y: 0, transition: TRANSITION.surfaceEnter },
+  exit: { y: '100%', transition: TRANSITION.surfaceExit },
+} as const
+
 export function ExpandedPlayerModal() {
   const isExpandedOpen = usePlayerStore((s) => s.isExpandedOpen)
   const closeExpanded = usePlayerStore((s) => s.closeExpanded)
@@ -44,9 +55,10 @@ export function ExpandedPlayerModal() {
           aria-label="Player expandido"
           className={`expanded-player fixed top-0 ${immersive ? '' : 'md:top-16'} right-0 bottom-0 left-0 ${immersive ? '' : 'md:left-[var(--sidebar-w,0px)]'} z-[60] overflow-hidden`}
           style={{ backgroundColor: 'var(--bg-base)' }}
-          initial={{ y: '100%' }}
-          animate={{ y: 0, transition: TRANSITION.surfaceEnter }}
-          exit={{ y: '100%', transition: TRANSITION.surfaceExit }}
+          variants={EXPANDED_VARIANTS}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
         >
           <NowPlaying onClose={closeExpanded} />
         </motion.div>
