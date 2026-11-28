@@ -32,7 +32,6 @@ export function Topbar() {
   const avatarUrl = useAvatar(user?.id)
   const sidebarCollapsed = useSidebarStore((s) => s.collapsed)
   const toggleSidebar = useSidebarStore((s) => s.toggle)
-  const immersive = useSidebarStore((s) => s.immersive)
   const { prefs: topLibPrefs, update: updateTopLib } = useLibraryPreferences()
 
   useEffect(() => {
@@ -112,7 +111,8 @@ export function Topbar() {
       className="flex flex-shrink-0 items-center justify-center border-b border-outline-variant px-4 relative z-30 md:px-6"
       style={{
         backgroundColor: 'var(--bg-base)',
-        display: immersive ? 'none' : undefined,
+        /* A hero em tela cheia cobre o Topbar por z-index (30 < 60), sem
+           `display:none`: removê-lo do fluxo empurrava o conteúdo da página. */
         height: 'calc(var(--topbar-h) + var(--safe-top))',
         paddingTop: 'var(--safe-top)',
       }}

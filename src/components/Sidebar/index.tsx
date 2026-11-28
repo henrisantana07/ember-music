@@ -669,15 +669,15 @@ export default function Sidebar() {
     </>
   )
 
-  // `display: none` inline nos dois ramos (coluna e navegação inferior) em vez
-  // de `return null`: há hooks/effects depois deste ponto e sair cedo violaria
-  // as Rules of Hooks. O `aside` ainda tem ResizeObserver — ao sumir, ele
-  // reporta largura 0 e zera `--sidebar-w`, então o modal acompanha sozinho.
+  // `display: none` inline só na navegação inferior (fixed, fora do fluxo) em
+  // vez de `return null`: há hooks/effects depois deste ponto e sair cedo
+  // violaria as Rules of Hooks. A coluna desktop NÃO sai do fluxo — a hero em
+  // tela cheia cobre o aside por z-index; escondê-lo empurrava o conteúdo.
   return (
     <>
       <aside
         ref={desktopAsideRef}
-        style={{ display: immersive ? 'none' : undefined, width: collapsed ? undefined : `${expandedWidth}px` }}
+        style={{ width: collapsed ? undefined : `${expandedWidth}px` }}
         className={`hidden md:flex flex-col h-full overflow-hidden bg-[var(--bg-surface)] flex-shrink-0 relative ${
           collapsed ? 'w-[72px]' : (isDraggingSidebar ? '' : 'transition-[width] duration-[var(--motion-duration-standard)] ease-[var(--motion-easing-standard)]')
         }`}
