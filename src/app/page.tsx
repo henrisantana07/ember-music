@@ -341,20 +341,15 @@ function HomeContent() {
             key={heroTrack.id}
             coverUrl={heroTrack.image}
             className="-top-6 -left-4 -right-4 md:-left-6 md:-right-6 h-[560px] hero-kawarp-settle"
-            dimLevel={0}
-            saturation={1.7}
-            tintIntensity={0.42}
+            dimLevel={0.1}
+            saturation={1.25}
+            tintIntensity={0.25}
             scale={1.12}
-            boost
+            dimClassName="hero-kawarp-dim"
             scrim="linear-gradient(to bottom, transparent 28%, color-mix(in srgb, var(--bg-base) 55%, transparent) 62%, var(--bg-base) 100%)"
             palette={heroColor ? { primary: heroColor, secondary: heroColor, tertiary: heroColor } : null}
           />
-          <div
-            aria-hidden="true"
-            className="absolute inset-0"
-            style={{ background: 'linear-gradient(90deg, var(--bg-base) 8%, color-mix(in srgb, var(--bg-base) 70%, transparent) 65%, transparent)' }}
-          />
-          <div className="relative flex flex-col items-start gap-6 p-6 md:flex-row md:items-center md:p-10">
+          <div className="relative z-10 flex flex-col items-start gap-6 p-6 md:flex-row md:items-center md:p-10">
             <CoverImage
               src={heroTrack.image}
               videoId={heroTrack.youtubeVideoId}
@@ -363,7 +358,7 @@ function HomeContent() {
             />
             <div className="min-w-0">
               <p className="text-label-large mb-2" style={{ color: 'var(--text-accent)' }}>Toque agora</p>
-              <h1 className="text-display-small mb-1 leading-tight md:text-display-medium" title={heroTrack.name}>
+              <h1 className="text-display-small mb-1 leading-tight md:text-display-medium" title={heroTrack.name} style={{ textShadow: '0 2px 18px rgba(0, 0, 0, 0.55)' }}>
                 {heroTrack.name}
               </h1>
               <p className="text-body-large truncate" style={{ color: 'var(--text-secondary)' }}>
