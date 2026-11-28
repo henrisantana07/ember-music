@@ -23,6 +23,8 @@ interface SectionKawarpProps {
   boost?: boolean
   /** Camada escura animada, usada na hero para preservar contraste. */
   dimClassName?: string
+  /** Perda de nitidez progressiva na faixa, sem tocar no conteúdo à frente. */
+  blurGradient?: boolean
 }
 
 /**
@@ -41,6 +43,7 @@ export function SectionKawarp({
   palette,
   boost = false,
   dimClassName = '',
+  blurGradient = false,
 }: SectionKawarpProps) {
   if (!coverUrl) return null
 
@@ -61,6 +64,18 @@ export function SectionKawarp({
         scale={scale}
         palette={palette}
       />
+      {/* O blur é aplicado só ao fundo, com máscara vertical: o topo perto do
+          conteúdo continua nítido e a base dissolve sem perder legibilidade. */}
+      {blurGradient && (
+        <div
+          className="absolute inset-0"
+          style={{
+            backdropFilter: 'blur(10px)',
+            maskImage: 'linear-gradient(to bottom, transparent 8%, black 88%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 8%, black 88%)',
+          }}
+        />
+      )}
       {/* Scrim funcional: não é decoração, é o que garante contraste do texto. */}
       <div className="absolute inset-0" style={{ background: scrim }} />
       {dimClassName && <div className={`absolute inset-0 ${dimClassName}`} />}

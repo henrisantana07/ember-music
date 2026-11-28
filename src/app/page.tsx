@@ -346,6 +346,7 @@ function HomeContent() {
             tintIntensity={0.25}
             scale={1.12}
             dimClassName="hero-kawarp-dim"
+            blurGradient
             scrim="linear-gradient(to bottom, transparent 28%, color-mix(in srgb, var(--bg-base) 55%, transparent) 62%, var(--bg-base) 100%)"
             palette={heroColor ? { primary: heroColor, secondary: heroColor, tertiary: heroColor } : null}
           />

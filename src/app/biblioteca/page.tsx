@@ -13,6 +13,7 @@ import { usePlayerStore } from '@/lib/store'
 import { FollowButton } from '@/components/FollowButton'
 import { ErrorState } from '@/components/ui/states'
 import { SectionKawarp } from '@/components/ui/SectionKawarp'
+import { extractDominantColor } from '@/lib/color/extractDominantColor'
 import { useUser } from '@/hooks/use-user'
 import type { Track } from '@/types/music'
 import type { Json } from '@/types/database'
@@ -139,6 +140,18 @@ function BibliotecaContent() {
         : activeTab === 'recentes'
           ? history[0]?.track_data?.image ?? null
           : tracks[0]?.image ?? history[0]?.track_data?.image ?? null
+
+  /* Mesmo tint da hero "Toque agora": a capa da aba alimenta o Kawarp e a
+     cor dominante evita que capas escuras deixem a seção apagada. */
+  const [coverTint, setCoverTint] = useState<string | null>(null)
+  useEffect(() => {
+    if (!coverColorSource) return
+    let cancelled = false
+    extractDominantColor(coverColorSource).then((color) => {
+      if (!cancelled) setCoverTint(color)
+    })
+    return () => { cancelled = true }
+  }, [coverColorSource])
 
   async function handlePlayPlaylist(pl: PlaylistTabItem) {
     const { data: pts } = await supabase
@@ -471,7 +484,19 @@ function BibliotecaContent() {
           da linha da coluna de navegação. Os offsets espelham esses paddings:
           banda encosta no sidebar à esquerda e na borda da janela à direita,
           sem scrollbar (soma cabe border-box no main). */}
-      <SectionKawarp coverUrl={coverColorSource} className="-top-6 -left-4 -right-4 md:-left-6 md:-right-6 h-[380px]" />
+      <SectionKawarp
+        key={activeTab}
+        coverUrl={coverColorSource}
+        className="-top-6 -left-4 -right-4 md:-left-6 md:-right-6 h-[560px] hero-kawarp-settle"
+        dimLevel={0.1}
+        saturation={1.25}
+        tintIntensity={0.25}
+        scale={1.12}
+        dimClassName="hero-kawarp-dim"
+        blurGradient
+        scrim="linear-gradient(to bottom, transparent 28%, color-mix(in srgb, var(--bg-base) 55%, transparent) 62%, var(--bg-base) 100%)"
+        palette={coverTint ? { primary: coverTint, secondary: coverTint, tertiary: coverTint } : null}
+      />
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold">Biblioteca</h1>
         {activeTab === 'playlists' && (
