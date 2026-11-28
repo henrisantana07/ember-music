@@ -9,7 +9,6 @@ import { useSidebarStore } from '@/lib/sidebar-store'
 import { formatDuration } from '@/lib/spotify'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
-import type { Json } from '@/types/database'
 import type { Track } from '@/types/music'
 import { useEnsureFavorites, useFavoritesStore, useFavoritesSync, useIsFavorite } from '@/lib/favorites-store'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
@@ -17,7 +16,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import {
   Play, Pause, SkipBack, SkipForward,
-  Music, Trash2, MoreHorizontal, Maximize2, Minimize2, Maximize, Minimize, ChevronDown,
+  Music, Trash2, MoreHorizontal, Maximize2, Minimize2, Maximize, Minimize,
 } from 'lucide-react'
 import { TrackProgress } from '@/components/Player/TrackProgress'
 import { useTrackPrev } from '@/hooks/use-player-transport'
@@ -584,36 +583,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
     await toggleFavorite(currentTrack)
   }
 
-  async function handleDownload() {
-    if (isYouTubeTrack) { showToast('Download não disponível para faixas do YouTube'); return }
-    if (!currentTrack?.audio) { showToast('Áudio não disponível para download'); return }
-    if (!user) { showToast('Faça login para baixar músicas'); return }
-    try {
-      const res = await fetch(currentTrack.audio)
-      if (!res.ok) throw new Error('download failed')
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${currentTrack.name} - ${currentTrack.artist_name}.mp3`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-      showToast('Download concluído!')
-      const { error } = await supabase.from('downloads').insert({
-        user_id: user.id,
-        track_id: currentTrack.id,
-        track_name: currentTrack.name,
-        artist_name: currentTrack.artist_name ?? 'Desconhecido',
-        cover_url: currentTrack.image ?? null,
-        file_size_bytes: blob.size,
-        track_data: currentTrack as unknown as Json,
-      })
-      if (error) console.error('Erro ao salvar registro de download:', error)
-    } catch { showToast('Erro ao baixar. Tente novamente.') }
-  }
-
   function showToast(msg: string) {
     setToast(msg)
     if (toastTimer.current) clearTimeout(toastTimer.current)
@@ -858,25 +827,6 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
           </div>
 
           <div className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
-            {/* Fechar a hero pelo botão usa o mesmo caminho do Esc: `onClose`
-                desliga `isExpandedOpen` e o AnimatePresence toca o slide de
-                saída. Antes só existiam o Esc e o swipe — o botão "tela cheia"
-                alterna o modo imersivo e não fechava nada. */}
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors hover:text-[var(--text-primary)] state-layer"
-                aria-label="Fechar player"
-                title="Fechar player"
-              >
-                <ChevronDown className="w-5 h-5" />
-              </button>
-            )}
-            <button onClick={handleDownload} className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors hover:text-[var(--text-primary)] state-layer" aria-label="Download" title="Baixar música">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </button>
             {user && (
               <button onClick={handleFavorite} className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors state-layer" aria-label="Favoritar" aria-pressed={isFav}>
                 <motion.svg
