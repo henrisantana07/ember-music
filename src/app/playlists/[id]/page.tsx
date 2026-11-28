@@ -15,6 +15,7 @@ import { formatDuration } from '@/lib/spotify'
 import { resolveCover, type CoverSource } from '@/lib/playlist/resolveCover'
 import { extractDominantColor } from '@/lib/color/extractDominantColor'
 import { DetailHeaderSkeleton, TrackListSkeleton } from '@/components/Skeleton'
+import { SectionKawarp } from '@/components/ui/SectionKawarp'
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -400,16 +401,7 @@ function PlaylistContent() {
     <div className="w-full relative">
       {/* Mesmo bleed da biblioteca: banda full-bleed até a linha da coluna
           de navegação, offsets espelhando os `px-4 md:px-6` do MainContainer. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-6 -left-4 -right-4 md:-left-6 md:-right-6 h-[400px] transition-opacity duration-500"
-        style={{
-          opacity: coverColor ? 1 : 0,
-          background: coverColor
-            ? `radial-gradient(ellipse 75% 95% at 22% 32%, ${coverColor}66 0%, transparent 62%), radial-gradient(ellipse 70% 85% at 78% 8%, ${coverColor}40 0%, transparent 60%)`
-            : 'none',
-        }}
-      />
+      <SectionKawarp coverUrl={coverColorSource} className="-top-6 -left-4 -right-4 md:-left-6 md:-right-6 h-[400px]" />
       <div className="relative z-10 flex flex-col md:flex-row gap-6 mb-6">
         <div
           className="rounded-lg flex-shrink-0"

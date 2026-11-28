@@ -6,13 +6,13 @@ import { createClient } from '@/lib/supabase/client'
 import { TrackTable } from '@/components/TrackTable'
 import { PlaylistCover } from '@/components/playlist/PlaylistCover'
 import { resolveCover, type CoverSource } from '@/lib/playlist/resolveCover'
-import { extractDominantColor } from '@/lib/color/extractDominantColor'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
 import { usePlaylistsStore } from '@/lib/playlists-store'
 import { useFavoritesStore } from '@/lib/favorites-store'
 import { usePlayerStore } from '@/lib/store'
 import { FollowButton } from '@/components/FollowButton'
 import { ErrorState } from '@/components/ui/states'
+import { SectionKawarp } from '@/components/ui/SectionKawarp'
 import { useUser } from '@/hooks/use-user'
 import type { Track } from '@/types/music'
 import type { Json } from '@/types/database'
@@ -139,22 +139,6 @@ function BibliotecaContent() {
         : activeTab === 'recentes'
           ? history[0]?.track_data?.image ?? null
           : tracks[0]?.image ?? history[0]?.track_data?.image ?? null
-
-  const [coverColorEntry, setCoverColorEntry] = useState<{ src: string; color: string | null } | null>(null)
-
-  useEffect(() => {
-    if (!coverColorSource) return
-    let cancelled = false
-    extractDominantColor(coverColorSource).then((color) => {
-      if (!cancelled) setCoverColorEntry({ src: coverColorSource, color })
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [coverColorSource])
-
-  const coverColor =
-    coverColorSource && coverColorEntry?.src === coverColorSource ? coverColorEntry.color : null
 
   async function handlePlayPlaylist(pl: PlaylistTabItem) {
     const { data: pts } = await supabase
@@ -487,16 +471,7 @@ function BibliotecaContent() {
           da linha da coluna de navegação. Os offsets espelham esses paddings:
           banda encosta no sidebar à esquerda e na borda da janela à direita,
           sem scrollbar (soma cabe border-box no main). */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-6 -left-4 -right-4 md:-left-6 md:-right-6 h-[380px] z-[-1] transition-opacity duration-500"
-        style={{
-          opacity: coverColor ? 1 : 0,
-          background: coverColor
-            ? `radial-gradient(ellipse 75% 95% at 25% 28%, ${coverColor}59 0%, transparent 62%), radial-gradient(ellipse 65% 80% at 80% 5%, ${coverColor}40 0%, transparent 60%)`
-            : 'none',
-        }}
-      />
+      <SectionKawarp coverUrl={coverColorSource} className="-top-6 -left-4 -right-4 md:-left-6 md:-right-6 h-[380px]" />
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold">Biblioteca</h1>
         {activeTab === 'playlists' && (

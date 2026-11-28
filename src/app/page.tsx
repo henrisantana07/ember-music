@@ -26,6 +26,7 @@ import {
 } from '@/lib/personalized-rows'
 import type { Track, Album, Artist, Genre } from '@/types/music'
 import { GenreArt } from '@/components/explore/GenreArt'
+import { SectionKawarp } from '@/components/ui/SectionKawarp'
 
 const GENRE_NAMES = ['pop', 'rock', 'electronic', 'jazz', 'hip hop', 'classical', 'reggae', 'blues', 'metal', 'folk', 'country', 'soul', 'punk', 'alternative', 'indie', 'r&b', 'latin', 'dance', 'ambient', 'funk']
 
@@ -320,11 +321,7 @@ function HomeContent() {
     <>
       {heroTrack && (
         <section className="home-hero relative mb-10 overflow-hidden rounded-[var(--shape-extra-large)]">
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 scale-110 opacity-35 blur-3xl"
-            style={{ backgroundImage: `url("${heroTrack.image ?? ''}")`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-          />
+          <SectionKawarp coverUrl={heroTrack.image} className="inset-0" dimLevel={0.28} />
           <div
             aria-hidden="true"
             className="absolute inset-0"

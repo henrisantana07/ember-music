@@ -22,10 +22,9 @@ const inter = Inter({
 })
 
 const display = Space_Grotesk({
-  subsets: ['latin', 'latin-ext'],
+  subsets: ['latin'],
   variable: '--font-display',
   display: 'swap',
-  weight: ['500', '600', '700'],
 })
 
 export const metadata: Metadata = {
