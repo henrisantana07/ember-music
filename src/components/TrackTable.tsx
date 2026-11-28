@@ -143,19 +143,17 @@ function SortHeader({
   const ariaSort: 'ascending' | 'descending' | 'none' = active ? (dir === 'desc' ? 'descending' : 'ascending') : 'none'
 
   if (!onSort) {
-    return <th scope="col" className={`py-3 text-left text-label-large font-semibold ${className}`} style={{ color: 'var(--text-disabled)' }}>{label}</th>
+    return <th scope="col" className={`py-3 px-3 text-left text-label-large font-semibold ${className}`} style={{ color: 'var(--text-disabled)' }}>{label}</th>
   }
 
   return (
-    <th scope="col" aria-sort={ariaSort} className={`py-3 text-left ${className}`}>
+    <th scope="col" aria-sort={ariaSort} className={`py-3 px-3 text-left ${className}`}>
       <button
         type="button"
         onClick={() => onSort(sortKey)}
-        /* O `-ml-2` cancela o `px-2`: o rótulo começa exatamente na mesma
-           margem do dado da coluna (nome do álbum, data, duração). Sem ele o
-           cabeçalho "Álbum" flutuava 8px longe da coluna que ele rotula. O
-           `px-2` fica — é ele que dá a largura do alvo de toque de 48px. */
-        className={`-ml-2 inline-flex items-center gap-1 text-label-large font-semibold transition-colors state-layer rounded px-2 py-1 min-h-[48px] ${active ? 'text-[var(--accent-solid)]' : 'text-[var(--text-disabled)] hover:text-[var(--text-primary)]'}`}
+        /* Mesmo `px-3` das células: rótulo e dado começam na mesma margem.
+           O alvo de toque continua em 48px de altura. */
+        className={`inline-flex items-center gap-1 text-label-large font-semibold transition-colors state-layer rounded py-1 min-h-[48px] ${active ? 'text-[var(--accent-solid)]' : 'text-[var(--text-disabled)] hover:text-[var(--text-primary)]'}`}
       >
         {label}
         <svg className={`w-4 h-4 transition-transform ${active && dir === 'desc' ? 'rotate-180' : ''} ${active ? 'opacity-100' : 'opacity-30'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
@@ -199,6 +197,12 @@ export function TrackTable({
   useFavoritesSync(user?.id)
   useEnsureFavorites(tracks.map((t) => t.id))
 
+  function playToggle(track: Track, e?: React.SyntheticEvent) {
+    e?.stopPropagation()
+    if (currentTrack?.id === track.id) togglePlay()
+    else play(track, tracks)
+  }
+
   if (loading) {
     return (
       <div className={`space-y-2 ${className}`} aria-busy="true">
@@ -225,20 +229,21 @@ export function TrackTable({
   }
 
   return (
-    <div className={`overflow-x-auto ${className}`}>
+    <>
+    <div className={`hidden overflow-x-auto md:block ${className}`}>
       <table className="w-full text-body-medium table-fixed">
         <caption className="sr-only">Faixas</caption>
         <thead>
           <tr className="border-b border-outline-variant">
-            <th scope="col" className="py-3 pr-3 w-14 text-right text-label-large font-semibold " style={{ color: 'var(--text-disabled)' }}>
+            <th scope="col" className="w-14 py-3 px-3 text-right text-label-large font-semibold" style={{ color: 'var(--text-disabled)' }}>
               Nº
             </th>
-            <th scope="col" className="py-3 text-left text-label-large font-semibold " style={{ color: 'var(--text-disabled)' }}>
+            <th scope="col" className="py-3 px-3 text-left text-label-large font-semibold" style={{ color: 'var(--text-disabled)' }}>
               Título
             </th>
             <SortHeader label="Álbum" sortKey="album" current={sort} dir={sortDir} onSort={onSort} className="hidden md:table-cell w-44" />
             <SortHeader label="Adicionada em" sortKey="date" current={sort} dir={sortDir} onSort={onSort} className="hidden lg:table-cell w-36" />
-            <th scope="col" className="py-3 w-28 text-left text-label-large font-semibold " style={{ color: 'var(--text-disabled)' }}>
+            <th scope="col" className="w-28 py-3 px-3 text-left text-label-large font-semibold" style={{ color: 'var(--text-disabled)' }}>
               Ações
             </th>
             <SortHeader label="Duração" sortKey="duration" current={sort} dir={sortDir} onSort={onSort} className="text-right w-24" />
@@ -248,11 +253,6 @@ export function TrackTable({
           {tracks.map((track, index) => {
             const isActive = currentTrack?.id === track.id
             const isPlayingThis = isActive && isPlaying
-            const playToggle = (e?: React.SyntheticEvent) => {
-              e?.stopPropagation()
-              if (isActive) togglePlay()
-              else play(track, tracks)
-            }
 
             return (
               <motion.tr
@@ -264,16 +264,16 @@ export function TrackTable({
                 initial="hidden"
                 animate="visible"
                 aria-current={isActive ? 'true' : undefined}
-                onClick={() => playToggle()}
+                onClick={() => playToggle(track)}
                 className={`group cursor-pointer transition-colors border-b border-outline-variant/40 ${
                   isActive ? 'bg-[color-mix(in srgb, var(--accent-solid) 10%, transparent)]' : 'hover:bg-state-hover'
                 }`}
               >
                 {/* 01 — index / playback status */}
-                <td className="text-right pr-3 py-3 w-14 align-middle">
+                <td className="w-14 py-3 px-3 text-right align-middle">
                   <button
                     type="button"
-                    onClick={playToggle}
+                    onClick={(e) => playToggle(track, e)}
                     aria-label={isActive ? `Pausar ${track.name}` : `Tocar ${track.name}`}
                     className="inline-flex h-12 w-12 items-center justify-center text-label-large"
                     style={{ color: isActive ? 'var(--accent-solid)' : 'var(--text-disabled)' }}
@@ -290,7 +290,7 @@ export function TrackTable({
                 </td>
 
                 {/* 02 — media + title + artist */}
-                <td className="py-3 pr-3">
+                <td className="py-3 px-3">
                   <div className="flex items-center gap-4 min-w-0">
                     <img src={track.image} alt="" className="w-14 h-14 rounded-[var(--shape-small)] object-cover flex-shrink-0" loading="lazy" />
                     <div className="min-w-0">
@@ -301,17 +301,17 @@ export function TrackTable({
                 </td>
 
                 {/* 03 — album */}
-                <td className="py-3 pr-3 hidden md:table-cell max-w-[180px] truncate text-body-medium" style={{ color: 'var(--text-secondary)' }}>
+                <td className="hidden py-3 px-3 md:table-cell max-w-[180px] truncate text-body-medium" style={{ color: 'var(--text-secondary)' }}>
                   {track.album_name && track.album_name !== 'Unknown Album' ? track.album_name : 'Sem álbum'}
                 </td>
 
                 {/* 04 — added date */}
-                <td className="py-3 pr-3 hidden lg:table-cell whitespace-nowrap text-body-medium" style={{ color: 'var(--text-secondary)' }}>
+                <td className="hidden py-3 px-3 lg:table-cell whitespace-nowrap text-body-medium" style={{ color: 'var(--text-secondary)' }}>
                   {dates?.[track.id] ?? 'Sem data'}
                 </td>
 
                 {/* 05 — quick actions (always visible) */}
-                <td className="py-3">
+                <td className="py-3 px-3">
                   <div className="flex items-center gap-1">
                     <FavoriteButton track={track} user={user} />
                     <RowMenu
@@ -324,7 +324,7 @@ export function TrackTable({
                 </td>
 
                 {/* 06 — duration + quality */}
-                <td className="py-3 text-right whitespace-nowrap text-body-medium" style={{ color: 'var(--text-disabled)' }}>
+                <td className="py-3 px-3 text-right whitespace-nowrap text-body-medium" style={{ color: 'var(--text-disabled)' }}>
                   <span className="inline-flex items-center gap-2">
                     {badges?.(track)}
                     {formatDuration(track.duration)}
@@ -336,5 +336,61 @@ export function TrackTable({
         </tbody>
       </table>
     </div>
+
+    {/* Mobile: a tabela não tem largura para título + capa + ações. Cada faixa
+        vira uma linha com capa de 56px, título em até duas linhas e ações à
+        direita — sem comprimir o nome em poucos pixels. */}
+    <div className={`md:hidden ${className}`} role="list" aria-label="Faixas">
+      {tracks.map((track) => {
+        const isActive = currentTrack?.id === track.id
+        const isPlayingThis = isActive && isPlaying
+        return (
+          <div
+            key={track.id}
+            role="listitem"
+            aria-current={isActive ? 'true' : undefined}
+            className={`flex items-center gap-3 border-b border-outline-variant/40 px-4 py-3 ${
+              isActive ? 'bg-[color-mix(in srgb, var(--accent-solid) 10%, transparent)]' : ''
+            }`}
+          >
+            <button
+              type="button"
+              onClick={(e) => playToggle(track, e)}
+              aria-label={isActive ? `Pausar ${track.name}` : `Tocar ${track.name}`}
+              className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-[var(--shape-small)]"
+            >
+              <img src={track.image} alt="" className="h-full w-full object-cover" loading="lazy" />
+              <span className="absolute inset-0 flex items-center justify-center bg-black/40">
+                {isPlayingThis ? (
+                  <span className="animate-waveform justify-center w-4" aria-hidden="true"><span /><span /><span /></span>
+                ) : (
+                  <svg className="h-5 w-5 text-[var(--text-on-accent)]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+                )}
+              </span>
+            </button>
+            <div className="min-w-0 flex-1" onClick={(e) => playToggle(track, e)}>
+              <p className={`line-clamp-2 text-body-large font-semibold leading-snug ${isActive ? 'text-[var(--accent-solid)]' : 'text-[var(--text-primary)]'}`} title={track.name}>
+                {cleanDisplayTitle(track.name, track.artist_name)}
+              </p>
+              <p className="mt-0.5 truncate text-body-medium" style={{ color: 'var(--text-secondary)' }}>{track.artist_name}</p>
+              <p className="mt-0.5 text-body-small" style={{ color: 'var(--text-disabled)' }}>
+                {badges?.(track)}
+                {formatDuration(track.duration)}
+              </p>
+            </div>
+            <div className="flex flex-shrink-0 items-center gap-1">
+              <FavoriteButton track={track} user={user} />
+              <RowMenu
+                track={track}
+                placement="top"
+                onRemove={onRemove}
+                removeLabel={removeLabel}
+              />
+            </div>
+          </div>
+        )
+      })}
+    </div>
+    </>
   )
 }
