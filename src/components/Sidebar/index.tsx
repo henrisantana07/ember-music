@@ -752,14 +752,14 @@ export default function Sidebar() {
             aria-modal="true"
             aria-label="Biblioteca"
             style={{ paddingTop: 'var(--safe-top)', paddingBottom: 'var(--safe-bottom)' }}
-            className="fixed left-0 top-0 bottom-0 z-[90] flex w-[85vw] max-w-[300px] flex-col bg-[var(--bg-surface)] shadow-2xl md:hidden"
+            className="fixed left-0 top-0 bottom-0 z-[90] flex w-[88vw] max-w-[340px] flex-col bg-[var(--bg-surface)] shadow-2xl md:hidden"
             variants={drawerVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
           >
-            <div className="flex items-center justify-between h-14 px-4 flex-none">
-              <Link href="/" className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+            <div className="flex items-center justify-between h-16 px-4 flex-none border-b border-outline-variant">
+              <Link href="/" onClick={() => setDrawerOpen(false)} className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
                 <span className="gradient-accent-text">Ember</span>
                 <span> Music</span>
               </Link>
@@ -770,44 +770,43 @@ export default function Sidebar() {
               </button>
             </div>
 
-            <nav className="flex-none px-2 space-y-0.5">
-              {NAV_SECTION1.map(item => {
-                const active = isActive(item.href)
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setDrawerOpen(false)}
-                    aria-current={active ? 'page' : undefined}
-                    className={`flex items-center gap-3 px-3 min-h-[48px] rounded-lg text-body-medium transition-all duration-200 state-layer ${
-                      active
-                        ? 'font-bold bg-state-hover text-[var(--text-primary)]'
-                        : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
-                    }`}
-                  >
-                    <NavIcon icon={{ outline: item.outline }} active={active} />
-                    <span>{item.label}</span>
-                  </Link>
-                )
-              })}
+            {/* Início, Explorar e Biblioteca já vivem na bottom nav. O drawer só
+                guarda o destino que a barra não comporta e o conteúdo da
+                biblioteca, para não duplicar comandos na mesma tela. */}
+            <nav className="flex-none px-3 pt-3">
+              <Link
+                href="/biblioteca/local"
+                onClick={() => setDrawerOpen(false)}
+                aria-current={pathname === '/biblioteca/local' ? 'page' : undefined}
+                className={`flex items-center gap-3 px-3 min-h-[56px] rounded-xl text-body-large transition-all duration-200 state-layer ${
+                  pathname === '/biblioteca/local'
+                    ? 'font-bold bg-state-hover text-[var(--text-primary)]'
+                    : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
+                }`}
+              >
+                <NavIcon icon={NAV_SECTION1.find((item) => item.href === '/biblioteca/local') ?? NAV_SECTION1[0]} active={pathname === '/biblioteca/local'} />
+                <span>Biblioteca Local</span>
+              </Link>
             </nav>
 
-            <hr className="mx-4 my-2 border-outline-variant flex-none" />
+            <div className="mx-4 my-3 border-t border-outline-variant flex-none" />
 
-            <div className="hide-scrollbar flex flex-none gap-1 overflow-x-auto px-2 py-1 min-w-0">
+            <p className="px-4 pb-2 text-body-medium flex-none" style={{ color: 'var(--text-disabled)' }}>Sua biblioteca</p>
+
+            <div className="hide-scrollbar flex flex-none gap-2 overflow-x-auto px-3 pb-3 min-w-0">
               {TYPE_FILTERS.map(filter => (
                 <FilterChip
                   key={filter.value}
                   selected={typeFilter === filter.value}
                   onClick={() => setTypeFilter(typeFilter === filter.value ? null : filter.value)}
-                  className="h-7 flex-shrink-0"
+                  className="min-h-[44px] flex-shrink-0"
                 >
                   {filter.label}
                 </FilterChip>
               ))}
             </div>
 
-            <CustomScroll className="px-2 space-y-0.5" wrapperClassName="flex-1 min-h-0" role="list" ariaLabel="Itens da biblioteca">
+            <CustomScroll className="px-2 space-y-2 pb-4" wrapperClassName="flex-1 min-h-0" role="list" ariaLabel="Itens da biblioteca">
               {visibleItems.map(item => {
                 const active = pathname === item.href
                 return (
@@ -816,7 +815,7 @@ export default function Sidebar() {
                     href={item.href}
                     onClick={() => setDrawerOpen(false)}
                     aria-current={active ? 'page' : undefined}
-                    className={`flex items-center gap-3 h-[48px] px-2 rounded-lg text-body-medium transition-all duration-200 state-layer ${
+                    className={`flex items-center gap-3 min-h-[72px] px-3 py-2 rounded-xl text-body-medium transition-all duration-200 state-layer ${
                       active
                         ? 'font-bold bg-state-hover text-[var(--text-primary)]'
                         : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]'
@@ -842,12 +841,12 @@ export default function Sidebar() {
               )}
             </CustomScroll>
               {user && (
-              <div className="flex-none border-t border-outline-variant px-2 py-1">
+              <div className="flex-none border-t border-outline-variant px-3 py-3">
                 <div className="relative">
                   <button
                     onClick={() => { router.push('/configuracoes'); setDrawerOpen(false) }}
                     aria-label="Abrir configurações da conta"
-                    className="flex w-full items-center gap-3 px-2 min-h-[48px] rounded-lg text-body-medium transition-colors duration-200 hover:bg-state-hover state-layer" style={{ color: 'var(--text-secondary)' }}>
+                    className="flex w-full items-center gap-3 px-3 min-h-[56px] rounded-xl text-body-medium transition-colors duration-200 hover:bg-state-hover state-layer" style={{ color: 'var(--text-secondary)' }}>
 
                     {avatarUrl ? (
                       <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
