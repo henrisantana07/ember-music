@@ -17,7 +17,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import {
   Play, Pause, SkipBack, SkipForward,
-  Music, Trash2, MoreHorizontal, Maximize2, Minimize2, Maximize, Minimize,
+  Music, Trash2, MoreHorizontal, Maximize2, Minimize2, Maximize, Minimize, ChevronDown,
 } from 'lucide-react'
 import { TrackProgress } from '@/components/Player/TrackProgress'
 import { useTrackPrev } from '@/hooks/use-player-transport'
@@ -846,6 +846,20 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
           </div>
 
           <div className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+            {/* Fechar a hero pelo botão usa o mesmo caminho do Esc: `onClose`
+                desliga `isExpandedOpen` e o AnimatePresence toca o slide de
+                saída. Antes só existiam o Esc e o swipe — o botão "tela cheia"
+                alterna o modo imersivo e não fechava nada. */}
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors hover:text-[var(--text-primary)] state-layer"
+                aria-label="Fechar player"
+                title="Fechar player"
+              >
+                <ChevronDown className="w-5 h-5" />
+              </button>
+            )}
             <button onClick={handleDownload} className="h-12 w-12 inline-flex items-center justify-center rounded-full transition-colors hover:text-[var(--text-primary)] state-layer" aria-label="Download" title="Baixar música">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
