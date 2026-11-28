@@ -47,6 +47,15 @@ export function PwaRegister() {
     return () => window.removeEventListener('beforeinstallprompt', handler)
   }, [])
 
+  /* Enquanto o aviso está visível, o conteúdo ganha espaço extra na base
+     para que nenhum card fique por baixo dele. */
+  useEffect(() => {
+    const root = document.documentElement
+    if (showInstall) root.style.setProperty('--pwa-banner-space', '176px')
+    else root.style.removeProperty('--pwa-banner-space')
+    return () => { root.style.removeProperty('--pwa-banner-space') }
+  }, [showInstall])
+
   async function handleInstall() {
     if (!deferredPrompt) return
     deferredPrompt.prompt()

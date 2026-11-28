@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import type { Track, Album, Artist } from '@/types/music'
 import { getGenreGradient } from '@/constants/genreColors'
 import { curateGenreCatalog } from '@/lib/genre-curation'
+import { getPlaybackHistory } from '@/lib/playback-history'
+import { tracksFromHistory } from '@/lib/personalized-rows'
 import { CATALOG_GRID } from '@/components/ui/grid'
 import { useUser } from '@/hooks/use-user'
 import { ExploreEmptyState } from './ExploreEmptyState'
@@ -184,18 +186,21 @@ export function ExplorePage() {
   const durationFilter = (searchParams.get('duration') ?? '') as '' | 'short' | 'medium' | 'long'
   const { user } = useUser()
   const [userTracks, setUserTracks] = useState<Track[]>([])
-  const [userLabel, setUserLabel] = useState('Novidades do Jamendo')
+  const [userLabel, setUserLabel] = useState('')
   const activeTab = searchParams.get('tab') ?? 'tudo'
 
   useEffect(() => {
     if (!user || query) return
-    fetch('/api/youtube?endpoint=featured&limit=5')
-      .then(res => res.json())
-      .then(data => {
-        setUserTracks(data.results ?? [])
-        setUserLabel('Baseado nas suas preferências')
+    let cancelled = false
+    getPlaybackHistory(user)
+      .then((history) => {
+        if (cancelled) return
+        const tracks = tracksFromHistory(history).slice(0, 5)
+        setUserTracks(tracks)
+        setUserLabel(tracks.length > 0 ? 'Do que você ouviu' : '')
       })
-      .catch(() => {})
+      .catch(() => { if (!cancelled) setUserTracks([]) })
+    return () => { cancelled = true }
   }, [user, query])
 
   function handleSearch(q: string) {

@@ -25,7 +25,7 @@ import {
   dedupe,
 } from '@/lib/personalized-rows'
 import type { Track, Album, Artist, Genre } from '@/types/music'
-import { getGenreGradient } from '@/constants/genreColors'
+import { GenreArt } from '@/components/explore/GenreArt'
 
 const GENRE_NAMES = ['pop', 'rock', 'electronic', 'jazz', 'hip hop', 'classical', 'reggae', 'blues', 'metal', 'folk', 'country', 'soul', 'punk', 'alternative', 'indie', 'r&b', 'latin', 'dance', 'ambient', 'funk']
 
@@ -392,24 +392,18 @@ function HomeContent() {
         <section className="mb-12">
           <h2 className="text-xl font-bold mb-4">Gêneros musicais</h2>
           <Carousel>
-            {genres.map((genre, index) => {
-              const gradient = getGenreGradient(genre.name)
-              return (
+            {genres.map((genre, index) => (
                 <CarouselItem key={genre.id} index={index} className="w-52 flex-shrink-0">
                   <Link
                     href={`/buscar?q=${encodeURIComponent(genre.name)}`}
                     className="relative block p-3 rounded-xl text-center transition-transform hover:scale-105 overflow-hidden"
                     style={{ backgroundColor: 'var(--bg-elevated)' }}
                   >
-                    <div
-                      className="w-full aspect-square rounded-lg mb-2"
-                      style={{ background: `linear-gradient(135deg, ${gradient.from}, ${gradient.to})` }}
-                    />
+                    <GenreArt name={genre.name} image={genre.image} className="w-full aspect-square rounded-lg mb-2" />
                     <p className="text-body-medium font-semibold truncate">{genre.name}</p>
                   </Link>
                 </CarouselItem>
-              )
-            })}
+            ))}
           </Carousel>
         </section>
       )}

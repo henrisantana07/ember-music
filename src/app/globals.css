@@ -176,8 +176,8 @@
   /* Reserva de espaço no conteúdo e na hero para o chrome inferior. A hero
      cobre a nav, mas o rodapé do player continua por cima dela — por isso o
      padding dela soma `chrome-bottom` + altura do player. */
-  --content-bottom-pad: calc(var(--nav-h) + var(--player-mobile-h) + var(--safe-bottom) + 16px);
-  --hero-bottom-pad: calc(var(--chrome-bottom) + var(--player-mobile-h));
+  --content-bottom-pad: calc(var(--nav-h) + var(--player-mobile-h) + var(--safe-bottom) + 16px + var(--pwa-banner-space, 0px));
+  --hero-bottom-pad: calc(var(--chrome-bottom) + var(--player-mobile-h) + var(--pwa-banner-space, 0px));
   --hero-bottom-pad-mini: calc(var(--chrome-bottom) + var(--player-mini-h));
 
   /* Escala de camadas (menor → maior): conteúdo/sticky 10–20, topbar 30,

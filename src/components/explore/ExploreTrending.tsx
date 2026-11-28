@@ -108,7 +108,9 @@ export function ExploreTrending({ userLabel, userTracks }: ExploreTrendingProps)
         ) : (
           <>
             <TrendingColumn tracks={globalTracks.slice(0, 5)} label="Tendências Globais" subtitle="Em alta no YouTube" />
-            <TrendingColumn tracks={userTracks.slice(0, 5)} label="Para Você" subtitle={userLabel} />
+            {userTracks.length > 0 && (
+              <TrendingColumn tracks={userTracks.slice(0, 5)} label="Para Você" subtitle={userLabel} />
+            )}
           </>
         )}
       </div>

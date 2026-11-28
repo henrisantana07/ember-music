@@ -202,7 +202,7 @@ export function SearchSuggestions({ query, onSelect, onClose, onSearch, inputRef
       {showHistory && (
         <>
           <div className="px-4 py-2 flex items-center justify-between border-b border-outline-variant">
-            <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-disabled)' }}>Buscas recentes</span>
+            <span className="text-[11px] font-bold " style={{ color: 'var(--text-disabled)' }}>Buscas recentes</span>
             <button onClick={clearHistory} className="text-xs font-medium" style={{ color: 'var(--accent-solid)' }}>Limpar histórico</button>
           </div>
           {history.map((entry, index) => (
@@ -288,7 +288,7 @@ function SuggestionSection<T>({ title, items, selectedOffset, onHover, render }:
   render: (item: T, index: number) => ReactNode
 }) {
   if (items.length === 0) return null
-  return <><div className="px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-disabled)' }}>{title}</div>{items.map((item, index) => <div key={selectedOffset + index} onMouseEnter={() => onHover(selectedOffset + index)}>{render(item, selectedOffset + index)}</div>)}</>
+  return <><div className="px-4 py-1.5 text-[11px] font-bold " style={{ color: 'var(--text-disabled)' }}>{title}</div>{items.map((item, index) => <div key={selectedOffset + index} onMouseEnter={() => onHover(selectedOffset + index)}>{render(item, selectedOffset + index)}</div>)}</>
 }
 
 function SuggestionButton({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: ReactNode }) {

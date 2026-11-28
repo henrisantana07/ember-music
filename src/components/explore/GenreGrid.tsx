@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getGenreGradient } from '@/constants/genreColors'
+import { GenreArt } from './GenreArt'
 import { GenreCardSkeleton } from './skeletons/GenreCardSkeleton'
 import { CATALOG_GRID } from '@/components/ui/grid'
 import type { Genre } from '@/types/music'
@@ -37,15 +37,14 @@ export function GenreGrid() {
     <section>
       <h2 className="text-lg font-bold mb-4">Explorar gêneros</h2>
       <div className={CATALOG_GRID}>
-        {genres.map((genre) => {
-          const gradient = getGenreGradient(genre.name)
-          return (
+        {genres.map((genre) => (
             <button
               key={genre.id}
               onClick={() => router.push(`/buscar?genero=${encodeURIComponent(genre.name.toLowerCase())}&genreId=${genre.id}`)}
               className="relative rounded-[var(--shape-extra-large)] overflow-hidden border-0 text-left group"
-              style={{ aspectRatio: '1.6 / 1', background: `linear-gradient(135deg, ${gradient.from}, ${gradient.to})` }}
+              style={{ aspectRatio: '1.6 / 1' }}
             >
+              <GenreArt name={genre.name} image={genre.image} className="absolute inset-0" />
               <div className="absolute inset-0 transition-all duration-200 group-hover:bg-black/20 group-hover:scale-105" />
               <span
                 className="absolute bottom-3 left-3 right-3 truncate text-base font-bold sm:text-lg"
@@ -54,8 +53,7 @@ export function GenreGrid() {
                 {genre.name}
               </span>
             </button>
-          )
-        })}
+        ))}
       </div>
     </section>
   )

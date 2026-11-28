@@ -113,7 +113,7 @@ export default function AlbumPage() {
           className="w-40 h-40 md:w-48 md:h-48 rounded-xl object-cover shadow-lg flex-shrink-0"
           style={{ boxShadow: coverColor ? `0 24px 48px ${coverColor}66` : undefined }} />
         <div className="flex-1 min-w-0 w-full md:w-auto text-center md:text-left">
-          <p className="text-label-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-secondary)' }}>Álbum</p>
+          <p className="text-label-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Álbum</p>
           <h1 className="text-2xl md:text-3xl font-bold mb-2 truncate">{album.name}</h1>
           <Link href={`/artists/${album.artist_id}`} className="text-body-large font-semibold hover:underline inline-block truncate max-w-full" style={{ color: 'var(--text-primary)' }}>
             {album.artist_name}

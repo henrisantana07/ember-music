@@ -27,7 +27,7 @@ export function LocalTrackList({ tracks }: LocalTrackListProps) {
     <div className="overflow-x-auto">
       <table className="w-full text-body-medium table-fixed">
         <thead>
-          <tr className="text-label-large font-semibold uppercase tracking-wider" style={{ color: 'var(--text-disabled)' }}>
+          <tr className="text-label-large font-semibold " style={{ color: 'var(--text-disabled)' }}>
             <th className="text-right pr-3 py-3 w-14">Nº</th>
             <th className="pr-3 py-3 w-16" />
             <th className="text-left py-3">Título</th>

@@ -424,7 +424,7 @@ function PlaylistContent() {
 
         <div className="flex flex-col justify-end flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <p className="text-label-medium font-medium uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-label-medium font-medium " style={{ color: 'var(--text-secondary)' }}>
               Playlist
             </p>
             <span

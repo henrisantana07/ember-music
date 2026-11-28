@@ -52,7 +52,7 @@ export function TopResultCard({ track }: TopResultCardProps) {
       >
         <CoverImage src={track.image} videoId={track.youtubeVideoId} alt={track.name} className="w-[120px] h-[120px] rounded-lg object-cover flex-shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-label-medium font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>
+          <p className="text-label-medium font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>
             Resultado principal
           </p>
           <h3 className="text-xl font-bold truncate mb-1" title={track.name}>{cleanDisplayTitle(track.name, track.artist_name)}</h3>

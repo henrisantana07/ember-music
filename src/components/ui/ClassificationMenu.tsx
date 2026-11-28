@@ -15,19 +15,17 @@ export interface ClassificationMenuProps {
   onViewChange: (view: Exclude<ViewOption, 'expand'>) => void
 }
 
-const SORT_ITEMS: readonly { id: SortOption; label: string; disabled: boolean }[] = [
-  { id: 'recent', label: 'Recentes', disabled: false },
-  { id: 'added', label: 'Adicionados recentemente', disabled: false },
-  { id: 'alphabetical', label: 'Ordem alfabética', disabled: false },
-  { id: 'creator', label: 'Criador', disabled: false },
-  { id: 'custom', label: 'Ordem personalizada', disabled: true },
+const SORT_ITEMS: readonly { id: SortOption; label: string }[] = [
+  { id: 'recent', label: 'Recentes' },
+  { id: 'added', label: 'Adicionados recentemente' },
+  { id: 'alphabetical', label: 'Ordem alfabética' },
+  { id: 'creator', label: 'Criador' },
 ]
 
-const VIEW_ITEMS: readonly { id: ViewOption; title: string; icon: ReactNode; disabled: boolean }[] = [
-  { id: 'compact', title: 'Compact', icon: (<svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>), disabled: false },
-  { id: 'list', title: 'Lista detalhada', icon: (<svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg>), disabled: false },
-  { id: 'grid', title: 'Grade compacta', icon: (<svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" /></svg>), disabled: false },
-  { id: 'expand', title: 'Grade expandida', icon: (<svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4h9v4H4zM4 10h16v10H4zM20 4h-5v4h5z" /></svg>), disabled: true },
+const VIEW_ITEMS: readonly { id: ViewOption; title: string; icon: ReactNode }[] = [
+  { id: 'compact', title: 'Compact', icon: (<svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>) },
+  { id: 'list', title: 'Lista detalhada', icon: (<svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg>) },
+  { id: 'grid', title: 'Grade compacta', icon: (<svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" /></svg>) },
 ]
 
 export function ClassificationMenu({ sort, view, onSortChange, onViewChange }: ClassificationMenuProps) {
@@ -84,7 +82,7 @@ export function ClassificationMenu({ sort, view, onSortChange, onViewChange }: C
         style={{ backgroundColor: '#121212', transformOrigin: 'top right', width: '220px' }}
         role="menu"
       >
-        <div className="px-3 pt-2 pb-1 text-label-small uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>Classificar por</div>
+        <div className="px-3 pt-2 pb-1 text-label-small " style={{ color: 'var(--text-disabled)' }}>Classificar por</div>
         <div className="flex flex-col">
           {SORT_ITEMS.map((item) => {
             const active = item.id === sort
@@ -92,22 +90,16 @@ export function ClassificationMenu({ sort, view, onSortChange, onViewChange }: C
               <button
                 type="button"
                 key={item.id}
-                disabled={item.id === 'custom' || false}
                 style={active ? { color: 'white' } : undefined}
                 onClick={() => {
-                  if (!item.disabled) {
-                    onSortChange(item.id as Exclude<SortOption, 'custom'>)
-                    close()
-                  }
+                  onSortChange(item.id as Exclude<SortOption, 'custom'>)
+                  close()
                 }}
                 className={
                   `w-full min-h-[36px] inline-flex items-center gap-2 px-3 text-left ` +
                   `transition-colors duration-200 rounded-md ` +
                   (active
                     ? 'bg-state-hover text-white font-semibold'
-
-                    : item.disabled
-                    ? 'text-[var(--text-disabled)] cursor-not-allowed opacity-60'
                     : 'text-[var(--text-secondary)] hover:bg-state-hover hover:text-[var(--text-primary)]')
                 }
               >
@@ -122,9 +114,9 @@ export function ClassificationMenu({ sort, view, onSortChange, onViewChange }: C
           })}
         </div>
         <div className="h-px my-1 mx-2" aria-hidden="true" style={{ backgroundColor: 'var(--outline-variant)' }} />
-        <div className="px-3 pt-1 pb-1 text-label-small uppercase tracking-widest" style={{ color: 'var(--text-disabled)' }}>Ver como</div>
+        <div className="px-3 pt-1 pb-1 text-label-small " style={{ color: 'var(--text-disabled)' }}>Ver como</div>
         <div className="grid grid-cols-4 gap-1 px-2 pb-1">
-          {VIEW_ITEMS.filter((item) => !item.disabled).map((option) => {
+          {VIEW_ITEMS.map((option) => {
             const active = option.id === view
             return (
               <button
@@ -148,17 +140,6 @@ export function ClassificationMenu({ sort, view, onSortChange, onViewChange }: C
               </button>
             )
           })}
-          {VIEW_ITEMS.filter((item) => item.disabled).map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              disabled
-              aria-label={option.title + ' (em breve)'}
-              className="min-h-[34px] inline-flex items-center justify-center rounded-md text-[var(--text-disabled)] cursor-not-allowed"
-            >
-              {option.icon}
-            </button>
-          ))}
         </div>
       </div>
     </details>

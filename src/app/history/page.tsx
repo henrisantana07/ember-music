@@ -13,7 +13,8 @@ import { TrackListSkeleton } from '@/components/Skeleton'
 function groupByDate(items: { played_at: string; track_data: Track }[]) {
   const groups: Record<string, typeof items> = {}
   for (const item of items) {
-    const date = new Date(item.played_at).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+    const raw = new Date(item.played_at).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+    const date = raw.charAt(0).toUpperCase() + raw.slice(1)
     if (!groups[date]) groups[date] = []
     groups[date].push(item)
   }
@@ -24,6 +25,7 @@ export default function HistoryPage() {
   const router = useRouter()
   const { user, loading: userLoading } = useUser()
   const [items, setItems] = useState<{ played_at: string; track_data: Track }[]>([])
+  const [visibleCount, setVisibleCount] = useState(60)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [attempt, setAttempt] = useState(0)
@@ -86,7 +88,10 @@ export default function HistoryPage() {
     )
   }
 
-  const grouped = groupByDate(items)
+  /* Renderizar centenas de cards de uma vez deixava a página com mais de mil
+     botões. Mostramos por lotes e mantemos a fila completa para reproduzir. */
+  const visibleItems = items.slice(0, visibleCount)
+  const grouped = groupByDate(visibleItems)
   const flatTracks = items.map((i) => i.track_data)
 
   return (
@@ -102,7 +107,7 @@ export default function HistoryPage() {
       ) : (
         Object.entries(grouped).map(([date, group]) => (
           <section key={date} className="mb-8">
-            <h2 className="text-label-medium font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-secondary)' }}>
+            <h2 className="text-label-medium font-semibold mb-3" style={{ color: 'var(--text-secondary)' }}>
               {date}
             </h2>
             <div className={TRACK_GRID}>
@@ -118,6 +123,17 @@ export default function HistoryPage() {
             </div>
           </section>
         ))
+      )}
+
+      {visibleCount < items.length && (
+        <button
+          type="button"
+          onClick={() => setVisibleCount((n) => n + 60)}
+          className="mt-2 inline-flex min-h-[48px] items-center rounded-full px-6 text-label-large font-semibold state-layer"
+          style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}
+        >
+          Mostrar mais faixas
+        </button>
       )}
     </div>
   )

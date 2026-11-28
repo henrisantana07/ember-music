@@ -48,7 +48,7 @@ function queueIndexFromItemKey(key: string | number): number {
 function QueueSection({ label }: { label: string }) {
   return (
     <p
-      className="px-3 pt-4 pb-1 text-label-medium font-semibold uppercase tracking-widest"
+      className="px-3 pt-4 pb-1 text-label-medium font-semibold "
       style={{ color: 'var(--text-disabled)' }}
     >
       {label}
@@ -1176,7 +1176,7 @@ export default function NowPlaying({ onClose }: { onClose?: () => void }) {
                         <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>Nenhuma faixa na fila</p>
                         {!queueMinimized && suggestions.length > 0 && (
                           <div className="w-full mt-4 text-left">
-                            <p className="text-label-medium font-semibold uppercase tracking-widest mb-1.5" style={{ color: 'var(--text-disabled)' }}>
+                            <p className="text-label-medium font-semibold mb-1.5" style={{ color: 'var(--text-disabled)' }}>
                               Faixas relacionadas
                             </p>
                             {suggestions.map((track) => (

@@ -232,7 +232,7 @@ function FolderSidebar({
         </button>
       </div>
       <div className="p-3 border-b" style={{ borderColor: 'var(--border)' }}>
-        <h3 className="text-label-medium font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-disabled)' }}>
+        <h3 className="text-label-medium font-semibold mb-2" style={{ color: 'var(--text-disabled)' }}>
           Pastas
         </h3>
         {folders.map((folder) => (
