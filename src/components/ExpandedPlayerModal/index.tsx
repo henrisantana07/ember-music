@@ -31,7 +31,7 @@ import { TRANSITION } from '@/lib/motion'
 const EXPANDED_VARIANTS = {
   hidden: { y: '100%' },
   visible: { y: 0, transition: TRANSITION.surfaceEnter },
-  exit: { y: '100%', transition: TRANSITION.surfaceExit },
+  exit: { opacity: 0, transition: { duration: 1 } },
 } as const
 
 export function ExpandedPlayerModal() {
