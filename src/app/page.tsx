@@ -9,11 +9,13 @@ import { AlbumRow } from '@/components/AlbumRow'
 import { TrackCardSkeleton, HomeSkeleton, SectionSkeleton, TrackListSkeleton } from '@/components/Skeleton'
 import { Carousel, CarouselItem } from '@/components/Carousel'
 import { EmptyState } from '@/components/ui/states'
+import { CoverImage } from '@/components/ui/CoverImage'
 import { Lottie } from '@/components/ui/LottieLazy'
 import { useInfiniteScroll } from '@/lib/use-infinite-scroll'
 import { useUser } from '@/hooks/use-user'
 import { useArtistsStore } from '@/lib/artists-store'
 import { getPlaybackHistory } from '@/lib/playback-history'
+import { usePlayerStore } from '@/lib/store'
 import {
   rankArtistsFromHistory,
   tracksFromHistory,
@@ -170,6 +172,7 @@ function HomeContent() {
   const [moreLoading, setMoreLoading] = useState(false)
   const [loadedGenres, setLoadedGenres] = useState<Set<number>>(new Set())
   const [initialLoading, setInitialLoading] = useState(true)
+  const play = usePlayerStore((s) => s.play)
 
   // Fileiras personalizadas. O histórico responde rápido e pinta na hora;
   // o detalhamento dos5 canais custa uma chamada por artista e chega depois,
@@ -304,16 +307,57 @@ function HomeContent() {
 
   const { sentinelRef } = useInfiniteScroll({ onLoadMore: loadMore, hasMore, loading: moreLoading })
 
+  /* A abertura da home é a música em si: a faixa que você mais ouviu, ou a
+     primeira em alta quando ainda não há histórico. Saudação genérica saiu. */
+  const heroTrack = topTracks[0] ?? trending[0]
+  const heroQueue = topTracks.length > 0 ? topTracks : trending
+
   if (initialLoading) {
     return <HomeSkeleton />
   }
 
   return (
     <>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-1">Bem-vindo ao Ember Music</h1>
-        <p className="text-body-medium" style={{ color: 'var(--text-secondary)' }}>Descubra música com Ember Music!</p>
-      </div>
+      {heroTrack && (
+        <section className="home-hero relative mb-10 overflow-hidden rounded-[var(--shape-extra-large)]">
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 scale-110 opacity-35 blur-3xl"
+            style={{ backgroundImage: `url("${heroTrack.image ?? ''}")`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+          />
+          <div
+            aria-hidden="true"
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(90deg, var(--bg-base) 8%, color-mix(in srgb, var(--bg-base) 70%, transparent) 65%, transparent)' }}
+          />
+          <div className="relative flex flex-col items-start gap-6 p-6 md:flex-row md:items-center md:p-10">
+            <CoverImage
+              src={heroTrack.image}
+              videoId={heroTrack.youtubeVideoId}
+              alt=""
+              className="h-32 w-32 flex-shrink-0 rounded-[var(--shape-large)] object-cover shadow-elevation-3 md:h-44 md:w-44"
+            />
+            <div className="min-w-0">
+              <p className="text-label-large mb-2" style={{ color: 'var(--text-accent)' }}>Toque agora</p>
+              <h1 className="text-display-small mb-1 leading-tight md:text-display-medium" title={heroTrack.name}>
+                {heroTrack.name}
+              </h1>
+              <p className="text-body-large truncate" style={{ color: 'var(--text-secondary)' }}>
+                {heroTrack.artist_name}
+              </p>
+              <button
+                type="button"
+                onClick={() => play(heroTrack, heroQueue)}
+                className="mt-5 inline-flex min-h-[48px] items-center gap-2 rounded-full px-5 text-label-large font-semibold state-layer"
+                style={{ backgroundColor: 'var(--accent-solid)', color: 'var(--text-on-accent)' }}
+              >
+                <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                Reproduzir
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Personalizadas do histórico — chegam junto com o primeiro paint */}
       {displayTopArtists.length > 0 && <ArtistRow title="Artistas mais ouvidos" artists={displayTopArtists} />}

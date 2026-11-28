@@ -105,7 +105,10 @@
   --text-on-accent: #F5F1ED;
 
   --text-primary: #F5F1ED;
-  --text-secondary: #ff8700;
+  /* Neutro por definição: o laranja é identidade, não hierarquia. Links e
+   'live' usam --text-accent; textos de apoio não competem com a capa. */
+  --text-secondary: #A1A1AA;
+  --text-accent: #ff8700;
   --text-disabled: #5C564F;
 
   --success: #4CAF6D;
@@ -231,6 +234,14 @@ body {
   color: var(--text-primary);
   font-family: var(--font-inter, system-ui, -apple-system, sans-serif);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Tipografia com papéis: a interface fala em Inter, os títulos em Space
+   Grotesk. O tracking negativo é o que separa display de texto corrido. */
+h1, h2 {
+  font-family: var(--font-display, var(--font-inter, system-ui, sans-serif));
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .gradient-accent {

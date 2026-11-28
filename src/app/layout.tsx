@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { MotionConfig } from 'motion/react'
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Space_Grotesk } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
 import Sidebar from '@/components/Sidebar'
@@ -13,10 +13,19 @@ import { MainContainer } from '@/components/MainContainer'
 import { KeyboardShortcuts } from '@/components/KeyboardShortcuts'
 import { YouTubePlayerProvider } from '@/components/YouTubePlayer/context'
 
+/* Dois papéis distintos: Inter conduz a interface e os textos longos;
+   Space Grotesk aparece só nos títulos, onde a marca precisa de presença. */
 const inter = Inter({
-  subsets: ['latin'],
+  subsets: ['latin', 'latin-ext'],
   variable: '--font-inter',
   display: 'swap',
+})
+
+const display = Space_Grotesk({
+  subsets: ['latin', 'latin-ext'],
+  variable: '--font-display',
+  display: 'swap',
+  weight: ['500', '600', '700'],
 })
 
 export const metadata: Metadata = {
@@ -54,7 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   `
 
   return (
-    <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
+    <html lang="pt-BR" className={`${inter.variable} ${display.variable}`} suppressHydrationWarning>
       {/* `100dvh` acompanha a barra de URL dinâmica do mobile; `h-screen`
           permanece como fallback para browsers sem suporte a dvh. */}
       <body className="flex flex-col h-screen h-[100dvh] overflow-hidden">
