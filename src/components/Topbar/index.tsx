@@ -18,6 +18,8 @@ export function Topbar() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
+  /** O scroll acontece no `.main-container`, não na janela. */
+  const [scrolled, setScrolled] = useState(false)
   const mobileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const pathname = usePathname()
@@ -41,6 +43,15 @@ export function Topbar() {
       setSearchQuery(q)
     }
   }, [searchParams])
+
+  useEffect(() => {
+    const scroller = document.querySelector<HTMLElement>('.main-container')
+    if (!scroller) return
+    const update = () => setScrolled(scroller.scrollTop > 8)
+    scroller.addEventListener('scroll', update, { passive: true })
+    update()
+    return () => scroller.removeEventListener('scroll', update)
+  }, [pathname])
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -110,7 +121,13 @@ export function Topbar() {
     <header
       className="flex flex-shrink-0 items-center justify-center border-b border-outline-variant px-4 relative z-30 md:px-6"
       style={{
-        backgroundColor: 'var(--bg-base)',
+        /* Glass leve só depois que o conteúdo começa a rolar: no topo o
+           header continua sólido e não disputa com a hero/Kawarp. */
+        backgroundColor: scrolled
+          ? 'color-mix(in srgb, var(--bg-base) 78%, transparent)'
+          : 'var(--bg-base)',
+        backdropFilter: scrolled ? 'blur(16px) saturate(1.2)' : 'none',
+        transition: 'background-color 240ms ease, backdrop-filter 240ms ease',
         /* A hero em tela cheia cobre o Topbar por z-index (30 < 60), sem
            `display:none`: removê-lo do fluxo empurrava o conteúdo da página. */
         height: 'calc(var(--topbar-h) + var(--safe-top))',

@@ -591,8 +591,8 @@ h1, h2 {
 }
 
 /* "Toque agora": quando a faixa muda, o Kawarp entra desfocado e saturado e
-   assenta nítido, com menos cor e um leve escurecimento de fundo. É o único
-   gesto de entrada da home — nada mais se anima junto. */
+   assenta nítido e com menos cor. É o único gesto de entrada da home — nada
+   mais se anima junto. */
 @keyframes hero-kawarp-settle {
   from {
     filter: blur(18px) saturate(1.9) brightness(1.4);
@@ -604,19 +604,10 @@ h1, h2 {
   }
 }
 
-@keyframes hero-kawarp-dim {
-  from { opacity: 0; }
-  to { opacity: 0.18; }
-}
-
 .hero-kawarp-settle {
   animation: hero-kawarp-settle 700ms cubic-bezier(0.2, 0, 0, 1) both;
 }
 
-.hero-kawarp-dim {
-  background-color: var(--bg-base);
-  animation: hero-kawarp-dim 700ms cubic-bezier(0.2, 0, 0, 1) both;
-}
 
 /* Reserva vertical: pb-20 80 + main 16 + coluna 24 + (pt-2 8 + título 70 +
    ações 48 + 2 gaps de 16 + pb-4 16) ≈ 300px de conteúdo real.

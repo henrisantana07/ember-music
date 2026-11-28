@@ -341,8 +341,7 @@ function HomeContent() {
             key={heroTrack.id}
             coverUrl={heroTrack.image}
             className="-top-6 -left-4 -right-4 md:-left-6 md:-right-6 h-[560px] hero-kawarp-settle"
-            dimClassName="hero-kawarp-dim"
-            dimLevel={0.05}
+            dimLevel={0}
             saturation={1.7}
             tintIntensity={0.42}
             scale={1.12}
