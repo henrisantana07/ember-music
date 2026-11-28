@@ -333,21 +333,21 @@ function HomeContent() {
   return (
     <>
       {heroTrack && (
-        <section className="home-hero relative mb-10 overflow-hidden rounded-[var(--shape-extra-large)]">
+        <section className="home-hero relative isolate mb-10 rounded-[var(--shape-extra-large)]">
           {/* A hero é o único lugar onde gastamos o movimento/cor com mais
               presença: o Kawarp recebe a capa em escala maior e o scrim só
               fecha no rodapé, para o texto continuar legível. */}
           <SectionKawarp
             key={heroTrack.id}
             coverUrl={heroTrack.image}
-            className="inset-0 hero-kawarp-settle"
+            className="-top-6 -left-4 -right-4 md:-left-6 md:-right-6 h-[560px] hero-kawarp-settle"
             dimClassName="hero-kawarp-dim"
             dimLevel={0.05}
             saturation={1.7}
             tintIntensity={0.42}
             scale={1.12}
             boost
-            scrim="linear-gradient(to bottom, transparent 78%, color-mix(in srgb, var(--bg-base) 75%, transparent) 100%)"
+            scrim="linear-gradient(to bottom, transparent 28%, color-mix(in srgb, var(--bg-base) 55%, transparent) 62%, var(--bg-base) 100%)"
             palette={heroColor ? { primary: heroColor, secondary: heroColor, tertiary: heroColor } : null}
           />
           <div
